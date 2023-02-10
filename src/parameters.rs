@@ -1,7 +1,6 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
-use crate::io_utils::{Cli, parse_input_file};
-
+use crate::io_utils::{parse_input_file, Cli};
 
 #[derive(Debug)]
 enum Shape {
@@ -9,6 +8,7 @@ enum Shape {
     Brick,
     Sphere,
 }
+
 #[derive(Debug)]
 struct GeometryParameters {
     material_name: String,
@@ -285,10 +285,43 @@ impl SimulationParameters {
     }
 
     pub fn from_cli(cli: &Cli) -> Self {
-        let simulation_params = Self::default();
+        let mut simulation_params = Self::default();
 
         // use the cli to override defaults
-        
+        macro_rules! fetch_from_cli {
+            ($f: ident) => {
+                match &cli.$f {
+                    Some(val) => simulation_params.$f = val.to_owned(),
+                    None => (),
+                }
+            };
+        }
+        // same order as the struct declaration
+        fetch_from_cli!(input_file);
+        fetch_from_cli!(energy_spectrum);
+        fetch_from_cli!(cross_sections_out);
+        fetch_from_cli!(dt);
+        fetch_from_cli!(f_max);
+        simulation_params.load_balance = cli.load_balance;
+        simulation_params.cycle_timers = cli.load_balance;
+        // debug thread level?
+        fetch_from_cli!(lx);
+        fetch_from_cli!(ly);
+        fetch_from_cli!(lz);
+        fetch_from_cli!(n_particles);
+        fetch_from_cli!(batch_size);
+        fetch_from_cli!(n_batches);
+        fetch_from_cli!(n_steps);
+        fetch_from_cli!(nx);
+        fetch_from_cli!(ny);
+        fetch_from_cli!(nz);
+        fetch_from_cli!(seed);
+        //fetch_from_cli!(x_dom);
+        //fetch_from_cli!(y_dom);
+        //fetch_from_cli!(z_dom);
+        fetch_from_cli!(balance_tally_replications);
+        fetch_from_cli!(flux_tally_replications);
+        fetch_from_cli!(cell_tally_replications);
 
         simulation_params
     }
@@ -339,9 +372,7 @@ pub struct Parameters {
     cross_section_params: HashMap<String, CrossSectionParameters>,
 }
 
-impl Parameters {
-
-}
+impl Parameters {}
 
 pub fn get_parameters(cli: Cli) -> Parameters {
     // structs init
@@ -350,7 +381,12 @@ pub fn get_parameters(cli: Cli) -> Parameters {
     let material_params: HashMap<String, MaterialParameters> = HashMap::new();
     let cross_section_params: HashMap<String, CrossSectionParameters> = HashMap::new();
 
-    let mut params = Parameters { simulation_params, geometry_params, material_params, cross_section_params };
+    let mut params = Parameters {
+        simulation_params,
+        geometry_params,
+        material_params,
+        cross_section_params,
+    };
 
     match cli.input_file {
         Some(filename) => parse_input_file(filename, &mut params),
@@ -372,12 +408,16 @@ pub fn get_parameters(cli: Cli) -> Parameters {
 
 fn supply_defaults(params: &mut Parameters) {
     // no need for default problem
-    if !params.geometry_params.is_empty() { return }
+    if !params.geometry_params.is_empty() {
+        return;
+    }
 
     // add a flat cross section
     let mut flat_cross_section = CrossSectionParameters::default();
     flat_cross_section.name = "flat".to_string();
-    params.cross_section_params.insert(flat_cross_section.name.to_owned(), flat_cross_section);
+    params
+        .cross_section_params
+        .insert(flat_cross_section.name.to_owned(), flat_cross_section);
 
     // add source material data
     let mut source_material = MaterialParameters::default();
@@ -388,7 +428,9 @@ fn supply_defaults(params: &mut Parameters) {
     source_material.absorption_cross_section = "flat".to_string();
     source_material.fission_cross_section = "flat".to_string();
     source_material.fission_cross_section_ratio = 0.1;
-    params.material_params.insert(source_material.name.to_owned(), source_material);
+    params
+        .material_params
+        .insert(source_material.name.to_owned(), source_material);
 
     // add source geometry. source material occupies all the space
     let mut source_geometry: GeometryParameters = GeometryParameters::default();
@@ -398,5 +440,4 @@ fn supply_defaults(params: &mut Parameters) {
     source_geometry.y_max = params.simulation_params.ly;
     source_geometry.z_max = params.simulation_params.lz;
     params.geometry_params.push(source_geometry);
-
 }
