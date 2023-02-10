@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap};
+
+use crate::io_utils::{Cli, parse_input_file};
+
 
 #[derive(Debug)]
 enum Shape {
@@ -83,7 +86,7 @@ struct MaterialParameters {
     n_reactions: u32,
     source_rate: f64,
     scattering_cross_section: String,
-    absorbtion_cross_section: String,
+    absorption_cross_section: String,
     fission_cross_section: String,
     scattering_cross_section_ratio: f64,
     absorbtion_cross_section_ratio: f64,
@@ -99,7 +102,7 @@ impl MaterialParameters {
         n_reactions: u32,
         source_rate: f64,
         scattering_cross_section: String,
-        absorbtion_cross_section: String,
+        absorption_cross_section: String,
         fission_cross_section: String,
         scattering_cross_section_ratio: f64,
         absorbtion_cross_section_ratio: f64,
@@ -113,7 +116,7 @@ impl MaterialParameters {
             n_reactions,
             source_rate,
             scattering_cross_section,
-            absorbtion_cross_section,
+            absorption_cross_section,
             fission_cross_section,
             scattering_cross_section_ratio,
             absorbtion_cross_section_ratio,
@@ -132,7 +135,7 @@ impl Default for MaterialParameters {
             n_reactions: 9,
             source_rate: 0.0,
             scattering_cross_section: Default::default(),
-            absorbtion_cross_section: Default::default(),
+            absorption_cross_section: Default::default(),
             fission_cross_section: Default::default(),
             scattering_cross_section_ratio: 1.0,
             absorbtion_cross_section_ratio: 1.0,
@@ -280,6 +283,15 @@ impl SimulationParameters {
             cell_tally_replications,
         }
     }
+
+    pub fn from_cli(cli: &Cli) -> Self {
+        let simulation_params = Self::default();
+
+        // use the cli to override defaults
+        
+
+        simulation_params
+    }
 }
 
 impl Default for SimulationParameters {
@@ -327,6 +339,64 @@ pub struct Parameters {
     cross_section_params: HashMap<String, CrossSectionParameters>,
 }
 
-pub fn get_parameters() -> Parameters {
-    todo!()
+impl Parameters {
+
+}
+
+pub fn get_parameters(cli: Cli) -> Parameters {
+    // structs init
+    let simulation_params: SimulationParameters = SimulationParameters::from_cli(&cli);
+    let geometry_params: Vec<GeometryParameters> = Vec::new();
+    let material_params: HashMap<String, MaterialParameters> = HashMap::new();
+    let cross_section_params: HashMap<String, CrossSectionParameters> = HashMap::new();
+
+    let mut params = Parameters { simulation_params, geometry_params, material_params, cross_section_params };
+
+    match cli.input_file {
+        Some(filename) => parse_input_file(filename, &mut params),
+        None => (),
+    };
+    match cli.energy_spectrum {
+        Some(filename) => params.simulation_params.energy_spectrum = filename,
+        None => (),
+    };
+    match cli.cross_sections_out {
+        Some(filename) => params.simulation_params.cross_sections_out = filename,
+        None => (),
+    };
+
+    supply_defaults(&mut params);
+
+    params
+}
+
+fn supply_defaults(params: &mut Parameters) {
+    // no need for default problem
+    if !params.geometry_params.is_empty() { return }
+
+    // add a flat cross section
+    let mut flat_cross_section = CrossSectionParameters::default();
+    flat_cross_section.name = "flat".to_string();
+    params.cross_section_params.insert(flat_cross_section.name.to_owned(), flat_cross_section);
+
+    // add source material data
+    let mut source_material = MaterialParameters::default();
+    source_material.name = "source_material".to_string();
+    source_material.mass = 1000.0;
+    source_material.source_rate = 1e10;
+    source_material.scattering_cross_section = "flat".to_string();
+    source_material.absorption_cross_section = "flat".to_string();
+    source_material.fission_cross_section = "flat".to_string();
+    source_material.fission_cross_section_ratio = 0.1;
+    params.material_params.insert(source_material.name.to_owned(), source_material);
+
+    // add source geometry. source material occupies all the space
+    let mut source_geometry: GeometryParameters = GeometryParameters::default();
+    source_geometry.material_name = "source_material".to_string();
+    source_geometry.shape = Shape::Brick;
+    source_geometry.x_max = params.simulation_params.lx;
+    source_geometry.y_max = params.simulation_params.ly;
+    source_geometry.z_max = params.simulation_params.lz;
+    params.geometry_params.push(source_geometry);
+
 }

@@ -1,5 +1,14 @@
 use clap::{Parser,};
 
+use crate::parameters::Parameters;
+
+enum InputError {
+    BadInputFile,
+    BadGeometryBlock,
+    BadMaterialBlock,
+    BadCrossSectionBlock,
+}
+
 #[derive(Debug, Parser)]
 #[command(author, version, about, arg_required_else_help(true))]
 pub struct Cli {
@@ -102,4 +111,6 @@ pub struct Cli {
     pub c_tally: Option<u32>,
 }
 
-pub fn parse_input_file() {}
+pub fn parse_input_file(filename: String, params: &mut Parameters) {
+    //todo!()
+}
