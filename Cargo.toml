@@ -1,5 +1,5 @@
 [package]
-name = "rusteel"
+name = "fastiron"
 version = "0.1.0"
 edition = "2021"
 about = "[This is an about text]"
@@ -8,3 +8,5 @@ about = "[This is an about text]"
 
 [dependencies]
 clap = {version="4.1.4", features=["cargo", "derive"]}
+serde = {version="1.0.152", features=["derive"]}
+serde_yaml = {version="0.9.17", features=[]}

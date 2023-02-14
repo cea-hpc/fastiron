@@ -1,16 +1,21 @@
 use std::collections::HashMap;
 
-use crate::io_utils::{parse_input_file, Cli};
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug)]
-enum Shape {
+use crate::io_utils::{self, InputError};
+
+pub type Block = HashMap<String,String>;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Shape {
     Undefined,
     Brick,
     Sphere,
 }
 
-#[derive(Debug)]
-struct GeometryParameters {
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct GeometryParameters {
     material_name: String,
     shape: Shape,
     radius: f64,
@@ -55,9 +60,66 @@ impl GeometryParameters {
             z_max,
         }
     }
+
+    pub fn from_block(block: Block) -> Result<Self, InputError> {
+        let mut geometry_params = Self::default();
+
+        for (key, val) in block {
+            match key.as_ref() {
+                "material" => geometry_params.material_name = val,
+                "shape" => geometry_params.shape = match val.as_ref() {
+                    "brick" => Shape::Brick,
+                    "sphere" => Shape::Sphere,
+                    _ => return Err(InputError::BadGeometryBlock),
+                },
+                "radius" => geometry_params.radius = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                },
+                "xCenter" => geometry_params.x_center = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                },
+                "yCenter" => geometry_params.y_center = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                },
+                "zCenter" => geometry_params.z_center = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                },
+                "xMin" => geometry_params.x_min = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                },
+                "yMin" => geometry_params.y_min = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                },
+                "zMin" => geometry_params.z_min = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                },
+                "xMax" => geometry_params.x_max= match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                },
+                "yMax" => geometry_params.y_max= match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                },
+                "zMax" => geometry_params.z_max= match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                },
+                _ => return Err(InputError::BadGeometryBlock),
+            }
+        }
+
+        Ok(geometry_params)
+    }
 }
 
-// we define default init value using traits
 impl Default for GeometryParameters {
     fn default() -> Self {
         Self {
@@ -77,8 +139,9 @@ impl Default for GeometryParameters {
     }
 }
 
-#[derive(Debug)]
-struct MaterialParameters {
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct MaterialParameters {
     name: String,
     mass: f64,
     total_cross_section: f64,
@@ -123,6 +186,64 @@ impl MaterialParameters {
             fission_cross_section_ratio,
         }
     }
+
+    /// Creates a MaterialParameter object from a block of an input file.
+    pub fn from_block(block: Block) -> Result<Self, InputError> {
+        let mut material_params = Self::default();
+
+        for (key, val) in block {
+            match key.as_ref() {
+                "name" => material_params.name = val,
+                "mass" => material_params.mass = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                "totalCrossSection" => material_params.total_cross_section = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                "nIsotopes" => material_params.n_isotopes = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                "nReactions" => material_params.n_reactions = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                "sourceRate" => material_params.source_rate = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                "scatteringCrossSection" => material_params.scattering_cross_section = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                "absorptionCrossSection" => material_params.absorption_cross_section = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                "fissionCrossSection" => material_params.fission_cross_section = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                "scatteringCrossSectionRatio" => material_params.scattering_cross_section_ratio = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                "absorptionCrossSectionRatio" => material_params.absorbtion_cross_section_ratio = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                "fissionCrossSectionRatio" => material_params.fission_cross_section_ratio = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                },
+                _ => return Err(InputError::BadMaterialBlock),
+            }
+        }
+
+        Ok(material_params)
+    }
 }
 
 impl Default for MaterialParameters {
@@ -144,8 +265,9 @@ impl Default for MaterialParameters {
     }
 }
 
-#[derive(Debug)]
-struct CrossSectionParameters {
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct CrossSectionParameters {
     name: String,
     aa: f64,
     bb: f64,
@@ -167,6 +289,42 @@ impl CrossSectionParameters {
             nu_bar,
         }
     }
+
+    pub fn from_block(block: Block) -> Result<Self, InputError>{
+        let mut cross_section = Self::default();
+
+        for (key, val) in block {
+            match key.as_ref() {
+                "name" => cross_section.name = val,
+                "A" => cross_section.aa = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadCrossSectionBlock),
+                },
+                "B" => cross_section.bb = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadCrossSectionBlock),
+                },
+                "C" => cross_section.cc = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadCrossSectionBlock),
+                },
+                "D" => cross_section.dd = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadCrossSectionBlock),
+                },
+                "E" => cross_section.ee = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadCrossSectionBlock),
+                },
+                "nuBar" => cross_section.nu_bar = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadCrossSectionBlock),
+                },
+                _ => return Err(InputError::BadCrossSectionBlock),
+            }
+        }
+        Ok(cross_section)
+    }
 }
 
 impl Default for CrossSectionParameters {
@@ -183,8 +341,9 @@ impl Default for CrossSectionParameters {
     }
 }
 
-#[derive(Debug)]
-struct SimulationParameters {
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct SimulationParameters {
     input_file: String,
     energy_spectrum: String,
     cross_sections_out: String,
@@ -284,7 +443,7 @@ impl SimulationParameters {
         }
     }
 
-    pub fn from_cli(cli: &Cli) -> Self {
+    pub fn from_cli(cli: &io_utils::Cli) -> Self {
         let mut simulation_params = Self::default();
 
         // use the cli to override defaults
@@ -372,9 +531,135 @@ pub struct Parameters {
     cross_section_params: HashMap<String, CrossSectionParameters>,
 }
 
-impl Parameters {}
 
-pub fn get_parameters(cli: Cli) -> Parameters {
+impl Parameters {
+    pub fn update_simulation_parameters(&mut self, sim_block: Block) -> Result<(),InputError> {
+        for (key, val) in sim_block {
+            match key.as_ref() {
+                "inputFile" => self.simulation_params.input_file = val,
+                "energySpectrum" => self.simulation_params.energy_spectrum = val,
+                "crossSectionsOut" => self.simulation_params.cross_sections_out = val,
+                "boundaryCondition" => self.simulation_params.boundary_condition = val,
+                "loadBalance" => self.simulation_params.load_balance = match val.as_ref() {
+                    "0" => false,
+                    _ => true,
+                },
+                "cycleTimers" => self.simulation_params.cycle_timers = match val.as_ref() {
+                    "0" => false,
+                    _ => true,
+                },
+                "debugThreads" => self.simulation_params.debug_threads = match val.as_ref() {
+                    "0" => false,
+                    _ => true,
+                },
+                "nParticles" => self.simulation_params.n_particles = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "batchSize" => self.simulation_params.batch_size = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "nBatches" => self.simulation_params.n_batches = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "nSteps" => self.simulation_params.n_steps = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "nx" => self.simulation_params.nx = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "ny" => self.simulation_params.ny = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "nz" => self.simulation_params.nz = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "seed" => self.simulation_params.seed = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "xDom" | "yDom" | "zDom" => (),
+                "dt" => self.simulation_params.dt = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "fMax" => self.simulation_params.f_max = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "lx" => self.simulation_params.lx = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "ly" => self.simulation_params.ly = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "lz" => self.simulation_params.lz = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "eMin" => self.simulation_params.e_min = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "eMax" => self.simulation_params.e_max = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "nGroups" => self.simulation_params.n_groups = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "lowWeightCutoff" => self.simulation_params.low_weight_cutoff = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "balanceTallyReplications" => self.simulation_params.balance_tally_replications = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "fluxTallyReplications" => self.simulation_params.flux_tally_replications = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "cellTallyReplications" => self.simulation_params.cell_tally_replications = match val.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                },
+                "mpiThreadMultiple" => (),
+                _ => return Err(InputError::BadSimulationBlock),
+            }
+        }
+        Ok(())
+    }
+    pub fn add_geometry_parameter(&mut self, some_geometry: GeometryParameters) {
+        self.geometry_params.push(some_geometry);
+    }
+    pub fn add_material_parameter(&mut self, some_material: MaterialParameters) {
+        self.material_params.insert(some_material.name.to_owned(), some_material);
+    }
+    pub fn add_cross_section_parameter(&mut self, cross_section: CrossSectionParameters) {
+        self.cross_section_params.insert(cross_section.name.to_owned(), cross_section);
+    }
+
+}
+
+impl Default for Parameters { // useful for tests
+    fn default() -> Self {
+        Self { simulation_params: Default::default(), geometry_params: Default::default(), material_params: Default::default(), cross_section_params: Default::default() }
+    }
+}
+
+/// Use the cli arguments to initiali e parameters of the simulation. The function will 
+/// fail if it cannot read or find a specified input_file.
+pub fn get_parameters(cli: io_utils::Cli) -> Result<Parameters, io_utils::InputError> {
     // structs init
     let simulation_params: SimulationParameters = SimulationParameters::from_cli(&cli);
     let geometry_params: Vec<GeometryParameters> = Vec::new();
@@ -389,7 +674,7 @@ pub fn get_parameters(cli: Cli) -> Parameters {
     };
 
     match cli.input_file {
-        Some(filename) => parse_input_file(filename, &mut params),
+        Some(filename) => io_utils::parse_input_file(filename, &mut params)?,
         None => (),
     };
     match cli.energy_spectrum {
@@ -403,9 +688,11 @@ pub fn get_parameters(cli: Cli) -> Parameters {
 
     supply_defaults(&mut params);
 
-    params
+    Ok(params)
 }
 
+/// Supply default parameters for the simulation if needed. The default problem 
+/// is provided if no geometries were specified.
 fn supply_defaults(params: &mut Parameters) {
     // no need for default problem
     if !params.geometry_params.is_empty() {

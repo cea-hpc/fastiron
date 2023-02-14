@@ -1,13 +1,19 @@
+use std::{fs::File, io::Read};
+
 use clap::Parser;
 
-use crate::parameters::Parameters;
+use crate::parameters::{Parameters, GeometryParameters, MaterialParameters, CrossSectionParameters, Block};
 
-enum InputError {
+#[derive(Debug)]
+pub enum InputError {
     BadInputFile,
+    BadSimulationBlock,
     BadGeometryBlock,
     BadMaterialBlock,
     BadCrossSectionBlock,
+    BadBlockType,
 }
+
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, arg_required_else_help(true))]
@@ -146,6 +152,48 @@ pub struct Cli {
     pub cell_tally_replications: Option<u32>,
 }
 
-pub fn parse_input_file(filename: String, params: &mut Parameters) {
-    //todo!()
+/// Updates the Parameters structure passed as argument using the
+/// provided input file. 
+pub fn parse_input_file(filename: String, params: &mut Parameters) -> Result<(), InputError>{
+    let mut content = String::new();
+
+    let mut file = match File::open(filename) {
+        Ok(file) => file,
+        Err(_) => return Err(InputError::BadInputFile),
+    };
+
+    file.read_to_string(&mut content).unwrap();
+
+    content.rsplit("\n\n").for_each(|raw_block| {
+        match raw_block.find('\n') {
+            Some(val) => {
+                let some_struct: Block = serde_yaml::from_str(&raw_block[val+1..]).unwrap();
+                //println!("{:#?}", some_struct); // uncomment if a parsing issue occur. 
+                match &raw_block[0..val] {
+                    "Simulation:" => match params.update_simulation_parameters(some_struct) {
+                        Ok(()) => (),
+                        Err(e) => println!("Error: {:?}, continuing to parse", e),
+                    },
+                    "Geometry:" => match GeometryParameters::from_block(some_struct) {
+                        Ok(some_geometry) => params.add_geometry_parameter(some_geometry),
+                        Err(e) => println!("Error: {:?}, continuing to parse", e),
+                    }, 
+                    "Material:" => match MaterialParameters::from_block(some_struct) {
+                        Ok(some_material) => params.add_material_parameter(some_material),
+                        Err(e) => println!("Error: {:?}, continuing to parse", e),
+                    },
+                    "CrossSection:" => match CrossSectionParameters::from_block(some_struct) {
+                        Ok(some_cross_section) => params.add_cross_section_parameter(some_cross_section),
+                        Err(e) => println!("Error: {:?}, continuing to parse", e),
+                    },
+                    _ => println!("Error: {:?}, continuing to parse", InputError::BadBlockType),
+                }
+                
+            }
+            None => (),
+        };
+        
+    });
+
+    Ok(())
 }
