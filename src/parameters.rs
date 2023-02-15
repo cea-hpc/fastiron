@@ -2,8 +2,11 @@ use std::collections::HashMap;
 
 use crate::io_utils::{self, InputError};
 
+/// Alias between Block and [HashMap<String,String>]. This allows for
+/// better readability.
 pub type Block = HashMap<String, String>;
 
+/// Enum used to describe a geometry's shape.
 #[derive(Debug, PartialEq)]
 pub enum Shape {
     Undefined,
@@ -11,6 +14,8 @@ pub enum Shape {
     Sphere,
 }
 
+/// Structure used to describe a geometry, i.e. a physical space of a
+/// certain shape and certain material.
 #[derive(Debug)]
 pub struct GeometryParameters {
     material_name: String,
@@ -28,6 +33,7 @@ pub struct GeometryParameters {
 }
 
 impl GeometryParameters {
+    /// Constructor.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         material_name: String,
@@ -59,6 +65,14 @@ impl GeometryParameters {
         }
     }
 
+    /// Creates a [GeometryParameters] object using the [Block] passed as
+    /// argument. Any field not specified in the block will have its default
+    /// value as defined in the [Default] implementation. May return an error
+    /// if the block isn't a proper Geometry block, i.e.:
+    /// - There is an unknown field
+    /// - A value associated to a valid field is invalid
+    /// In that case, the [GeometryParameters] object is scrapped instead of being
+    /// returned as incomplete or potentially erroneous.
     pub fn from_block(block: Block) -> Result<Self, InputError> {
         let mut geometry_params = Self::default();
 
@@ -159,6 +173,8 @@ impl Default for GeometryParameters {
     }
 }
 
+/// Struct used to describe a material, i.e. its name and relevant physical
+/// properties.
 #[derive(Debug)]
 pub struct MaterialParameters {
     name: String,
@@ -176,6 +192,7 @@ pub struct MaterialParameters {
 }
 
 impl MaterialParameters {
+    /// Constructor.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         name: String,
@@ -207,7 +224,14 @@ impl MaterialParameters {
         }
     }
 
-    /// Creates a MaterialParameter object from a block of an input file.
+    /// Creates a [MaterialParameters] object using the [Block] passed as
+    /// argument. Any field not specified in the block will have its default
+    /// value as defined in the [Default] implementation. May return an error
+    /// if the block isn't a proper Material block, i.e.:
+    /// - There is an unknown field
+    /// - A value associated to a valid field is invalid
+    /// In that case, the [MaterialParameters] object is scrapped instead of being
+    /// returned as incomplete or potentially erroneous.
     pub fn from_block(block: Block) -> Result<Self, InputError> {
         let mut material_params = Self::default();
 
@@ -307,6 +331,8 @@ impl Default for MaterialParameters {
     }
 }
 
+/// Structure used to describe a cross section, i.e. a probability density
+/// representation.
 #[derive(Debug)]
 pub struct CrossSectionParameters {
     name: String,
@@ -319,6 +345,7 @@ pub struct CrossSectionParameters {
 }
 
 impl CrossSectionParameters {
+    /// Constructor.
     pub fn new(name: String, aa: f64, bb: f64, cc: f64, dd: f64, ee: f64, nu_bar: f64) -> Self {
         Self {
             name,
@@ -331,6 +358,14 @@ impl CrossSectionParameters {
         }
     }
 
+    /// Creates a [CrossSectionParameters] object using the [Block] passed as
+    /// argument. Any field not specified in the block will have its default
+    /// value as defined in the [Default] implementation. May return an error
+    /// if the block isn't a proper CrossSection block, i.e.:
+    /// - There is an unknown field
+    /// - A value associated to a valid field is invalid
+    /// In that case, the [CrossSectionParameters] object is scrapped instead of
+    /// being returned as incomplete or potentially erroneous.
     pub fn from_block(block: Block) -> Result<Self, InputError> {
         let mut cross_section = Self::default();
 
@@ -503,7 +538,7 @@ impl SimulationParameters {
         }
     }
 
-    /// Initialize a SimulationParameter object using a Cli object created
+    /// Initialize a [SimulationParameters] object using a Cli object created
     /// from the arguments supplied via command line.
     ///
     /// ```rust
@@ -519,7 +554,6 @@ impl SimulationParameters {
     /// println!("{:#?}", simulation_params);
     ///
     /// ```
-    ///
     pub fn from_cli(cli: &io_utils::Cli) -> Self {
         let mut simulation_params = Self::default();
 
@@ -603,7 +637,6 @@ impl Default for SimulationParameters {
 
 /// Strucure encompassing all the problem's parameters. It is
 /// created, completed and returned by the [get_parameters] method.
-///
 #[derive(Debug, Default)]
 pub struct Parameters {
     simulation_params: SimulationParameters,
@@ -613,6 +646,11 @@ pub struct Parameters {
 }
 
 impl Parameters {
+    /// Update the object's [SimulationParameters] field using the [Block] passed
+    /// as argument. May return an error if the block isn't a proper Simulation
+    /// block, i.e.:
+    /// - There is an unknown field
+    /// - A value associated to a valid field is invalid
     pub fn update_simulation_parameters(&mut self, sim_block: Block) -> Result<(), InputError> {
         for (key, val) in sim_block {
             match key.as_ref() {
@@ -775,9 +813,11 @@ impl Parameters {
         }
         Ok(())
     }
+    /// Add a new [GeometryParameters] object to the internal list.
     pub fn add_geometry_parameter(&mut self, some_geometry: GeometryParameters) {
         self.geometry_params.push(some_geometry);
     }
+    /// Add a new [MaterialParameters] object to the internal map.
     pub fn add_material_parameter(&mut self, some_material: MaterialParameters) {
         self.material_params
             .insert(some_material.name.to_owned(), some_material);

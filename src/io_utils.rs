@@ -6,6 +6,7 @@ use crate::parameters::{
     Block, CrossSectionParameters, GeometryParameters, MaterialParameters, Parameters,
 };
 
+/// Enum used to categorize error related to the input of the program.
 #[derive(Debug)]
 pub enum InputError {
     BadInputFile,
@@ -16,6 +17,7 @@ pub enum InputError {
     BadBlockType,
 }
 
+/// Structure used to parse command line arguments using [clap].
 #[derive(Debug, Parser)]
 #[command(author, version, about, arg_required_else_help(true))]
 pub struct Cli {
@@ -154,7 +156,9 @@ pub struct Cli {
 }
 
 /// Updates the Parameters structure passed as argument using the
-/// provided input file.
+/// provided input file. The file is first separated into blocks
+/// with the rsplit call. The blocks are then used to complete the
+/// parameter structure passed as argument.
 pub fn parse_input_file(filename: String, params: &mut Parameters) -> Result<(), InputError> {
     let mut content = String::new();
 
