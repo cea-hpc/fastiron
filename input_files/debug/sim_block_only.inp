@@ -1,0 +1,15 @@
+Simulation:
+   dt: 1e-06
+   fMax: 0.1
+   inputFile: sim_block_only.inp
+   boundaryCondition: reflect
+   loadBalance: 0
+   cycleTimers: 0
+   debugThreads: 0
+   mpiThreadMultiple: 0
+   nSteps: 10
+   seed: 1029384756
+   eMax: 20
+   eMin: 1e-09
+   nGroups: 230
+   lowWeightCutoff: 0.001

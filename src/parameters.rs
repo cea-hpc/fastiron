@@ -6,6 +6,22 @@ use crate::io_utils::{self, InputError};
 /// better readability.
 pub type Block = HashMap<String, String>;
 
+/// Enum used to categorize inconsistencies within parameters.
+/// - NoGeometry: there are no specified geometries
+/// - UndefinedGeometry: a [GeometryParameters] object has an undefined [Shape]
+/// - MissingMaterial: there is a missing reference to a material; the string
+/// contains the name of the aforementioned material
+/// - MissingCrossSection: there is a missing reference to a cross section;
+/// the string contains the name of the aforementionned cross section and
+/// the material refering to it
+#[derive(Debug, PartialEq)]
+pub enum ParameterError {
+    NoGeometry,
+    UndefinedGeometry,
+    MissingMaterial(String),
+    MissingCrossSection(String),
+}
+
 /// Enum used to describe a geometry's shape.
 #[derive(Debug, PartialEq)]
 pub enum Shape {
@@ -829,8 +845,9 @@ impl Parameters {
 }
 
 /// Use the cli arguments to initialize parameters of the simulation, complete the
-/// structure and return it.The function will fail if it cannot read or find the
-/// specified input_file (if specified).
+/// structure and return it. The function will fail if
+/// - it cannot read or find the specified input_file (if specified)
+/// - the resulting [Parameters] object is compromised
 pub fn get_parameters(cli: io_utils::Cli) -> Result<Parameters, io_utils::InputError> {
     // structs init
     let simulation_params: SimulationParameters = SimulationParameters::from_cli(&cli);
@@ -856,14 +873,17 @@ pub fn get_parameters(cli: io_utils::Cli) -> Result<Parameters, io_utils::InputE
     };
 
     supply_defaults(&mut params);
-    check_parameters_integrity(&params);
+    if let Err(e) = check_parameters_integrity(&params) {
+        println!("{e:?}");
+        return Err(InputError::BadInputFile);
+    };
 
     Ok(params)
 }
 
 /// Supply default parameters for the simulation if needed. The default problem
 /// is provided if no geometries were specified.
-fn supply_defaults(params: &mut Parameters) {
+pub fn supply_defaults(params: &mut Parameters) {
     // no need for default problem
     if !params.geometry_params.is_empty() {
         return;
@@ -911,24 +931,53 @@ fn supply_defaults(params: &mut Parameters) {
 /// 2. All geometries shape are defined, i.e. set as brick or sphere
 /// 3. All material referenced in geometries exist in the material list
 /// 4. All cross sections referenced in materials exist in the cross section list
-fn check_parameters_integrity(params: &Parameters) {
+pub fn check_parameters_integrity(params: &Parameters) -> Result<(), Vec<ParameterError>> {
+    let mut errors: Vec<ParameterError> = Vec::new();
     // 1.
-    assert!(!params.geometry_params.is_empty());
+    if params.geometry_params.is_empty() {
+        errors.push(ParameterError::NoGeometry);
+    }
     // 2. and 3.
-    params.geometry_params.iter().for_each(|g| {
-        assert!(g.shape != Shape::Undefined);
-        assert!(params.material_params.contains_key(&g.material_name))
-    });
+    params
+        .geometry_params
+        .iter()
+        .for_each(|g: &GeometryParameters| {
+            if g.shape == Shape::Undefined {
+                errors.push(ParameterError::UndefinedGeometry);
+            }
+            if !params.material_params.contains_key(&g.material_name) {
+                errors.push(ParameterError::MissingMaterial(g.material_name.to_owned()));
+            }
+        });
     // 4.
     params.material_params.iter().for_each(|(_, val)| {
-        assert!(params
+        if !params
             .cross_section_params
-            .contains_key(&val.absorption_cross_section));
-        assert!(params
+            .contains_key(&val.absorption_cross_section)
+        {
+            errors.push(ParameterError::MissingCrossSection(
+                val.name.to_owned() + ":" + val.absorption_cross_section.as_ref(),
+            ));
+        }
+        if !params
             .cross_section_params
-            .contains_key(&val.scattering_cross_section));
-        assert!(params
+            .contains_key(&val.scattering_cross_section)
+        {
+            errors.push(ParameterError::MissingCrossSection(
+                val.name.to_owned() + ":" + val.scattering_cross_section.as_ref(),
+            ));
+        }
+        if !params
             .cross_section_params
-            .contains_key(&val.fission_cross_section));
+            .contains_key(&val.fission_cross_section)
+        {
+            errors.push(ParameterError::MissingCrossSection(
+                val.name.to_owned() + ":" + val.fission_cross_section.as_ref(),
+            ));
+        }
     });
+    if errors.is_empty() {
+        return Ok(());
+    }
+    Err(errors)
 }

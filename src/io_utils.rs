@@ -7,7 +7,7 @@ use crate::parameters::{
 };
 
 /// Enum used to categorize error related to the input of the program.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum InputError {
     BadInputFile,
     BadSimulationBlock,
@@ -173,6 +173,7 @@ pub fn parse_input_file(filename: String, params: &mut Parameters) -> Result<(),
         if let Some(val) = raw_block.find('\n') {
             let some_struct: Block = serde_yaml::from_str(&raw_block[val + 1..]).unwrap();
             //println!("{:#?}", some_struct); // uncomment if a parsing issue occur.
+
             match &raw_block[0..val] {
                 "Simulation:" => match params.update_simulation_parameters(some_struct) {
                     Ok(()) => (),

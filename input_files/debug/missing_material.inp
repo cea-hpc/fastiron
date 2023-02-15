@@ -1,7 +1,7 @@
 Simulation:
    dt: 1e-06
    fMax: 0.1
-   inputFile: missing_cross_section.inp
+   inputFile: missing_material.inp
    boundaryCondition: reflect
    loadBalance: 0
    cycleTimers: 0
@@ -25,16 +25,12 @@ Geometry:
    zMax: 1000
    zMin: 0
 
-Material:
-   name: sourceMaterial
-   mass: 12.011
-   nIsotopes: 10
-   nReactions: 9
-   sourceRate: 1e+10
-   totalCrossSection: 0.1
-   absorptionCrossSection: flat
-   fissionCrossSection: flat
-   scatteringCrossSection: flat
-   absorptionCrossSectionRatio: 0.1086
-   fissionCrossSectionRatio: 0.0969
-   scatteringCrossSectionRatio: 0.7946
+CrossSection:
+   name: flat
+   A: 0
+   B: 0
+   C: 0
+   D: 0
+   E: 1
+   nuBar: 1.0
+
