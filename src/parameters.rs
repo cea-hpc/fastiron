@@ -517,7 +517,7 @@ impl SimulationParameters {
     /// // compare the structures...
     /// println!("{:#?}", cli);
     /// println!("{:#?}", simulation_params);
-    /// 
+    ///
     /// ```
     ///
     pub fn from_cli(cli: &io_utils::Cli) -> Self {
@@ -788,8 +788,6 @@ impl Parameters {
     }
 }
 
-
-
 /// Use the cli arguments to initialize parameters of the simulation, complete the
 /// structure and return it.The function will fail if it cannot read or find the
 /// specified input_file (if specified).
@@ -807,9 +805,15 @@ pub fn get_parameters(cli: io_utils::Cli) -> Result<Parameters, io_utils::InputE
         cross_section_params,
     };
 
-    if let Some(filename) = cli.input_file { io_utils::parse_input_file(filename, &mut params)? };
-    if let Some(filename) = cli.energy_spectrum { params.simulation_params.energy_spectrum = filename };
-    if let Some(filename) = cli.cross_sections_out { params.simulation_params.cross_sections_out = filename };
+    if let Some(filename) = cli.input_file {
+        io_utils::parse_input_file(filename, &mut params)?
+    };
+    if let Some(filename) = cli.energy_spectrum {
+        params.simulation_params.energy_spectrum = filename
+    };
+    if let Some(filename) = cli.cross_sections_out {
+        params.simulation_params.cross_sections_out = filename
+    };
 
     supply_defaults(&mut params);
     check_parameters_integrity(&params);
@@ -826,13 +830,19 @@ fn supply_defaults(params: &mut Parameters) {
     }
 
     // add a flat cross section
-    let flat_cross_section = CrossSectionParameters { name: "flat".to_string(), ..Default::default()};
+    let flat_cross_section = CrossSectionParameters {
+        name: "flat".to_string(),
+        ..Default::default()
+    };
     params
         .cross_section_params
         .insert(flat_cross_section.name.to_owned(), flat_cross_section);
 
     // add source material data
-    let mut source_material = MaterialParameters {name: "source_material".to_string(), ..Default::default()};
+    let mut source_material = MaterialParameters {
+        name: "source_material".to_string(),
+        ..Default::default()
+    };
     source_material.mass = 1000.0;
     source_material.source_rate = 1e10;
     source_material.scattering_cross_section = "flat".to_string();
@@ -844,7 +854,10 @@ fn supply_defaults(params: &mut Parameters) {
         .insert(source_material.name.to_owned(), source_material);
 
     // add source geometry. source material occupies all the space
-    let mut source_geometry: GeometryParameters = GeometryParameters { material_name: "source_material".to_string(), ..Default::default()};
+    let mut source_geometry: GeometryParameters = GeometryParameters {
+        material_name: "source_material".to_string(),
+        ..Default::default()
+    };
     source_geometry.shape = Shape::Brick;
     source_geometry.x_max = params.simulation_params.lx;
     source_geometry.y_max = params.simulation_params.ly;
