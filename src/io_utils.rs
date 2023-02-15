@@ -166,33 +166,30 @@ pub fn parse_input_file(filename: String, params: &mut Parameters) -> Result<(),
     file.read_to_string(&mut content).unwrap();
 
     content.rsplit("\n\n").for_each(|raw_block| {
-        match raw_block.find('\n') {
-            Some(val) => {
-                let some_struct: Block = serde_yaml::from_str(&raw_block[val + 1..]).unwrap();
-                //println!("{:#?}", some_struct); // uncomment if a parsing issue occur.
-                match &raw_block[0..val] {
-                    "Simulation:" => match params.update_simulation_parameters(some_struct) {
-                        Ok(()) => (),
-                        Err(e) => println!("Error: {:?}, continuing to parse", e),
-                    },
-                    "Geometry:" => match GeometryParameters::from_block(some_struct) {
-                        Ok(some_geometry) => params.add_geometry_parameter(some_geometry),
-                        Err(e) => println!("Error: {:?}, continuing to parse", e),
-                    },
-                    "Material:" => match MaterialParameters::from_block(some_struct) {
-                        Ok(some_material) => params.add_material_parameter(some_material),
-                        Err(e) => println!("Error: {:?}, continuing to parse", e),
-                    },
-                    "CrossSection:" => match CrossSectionParameters::from_block(some_struct) {
-                        Ok(some_cross_section) => {
-                            params.add_cross_section_parameter(some_cross_section)
-                        }
-                        Err(e) => println!("Error: {:?}, continuing to parse", e),
-                    },
-                    _ => println!("Error: {:?}, continuing to parse", InputError::BadBlockType),
-                }
+        if let Some(val) = raw_block.find('\n') {
+            let some_struct: Block = serde_yaml::from_str(&raw_block[val + 1..]).unwrap();
+            //println!("{:#?}", some_struct); // uncomment if a parsing issue occur.
+            match &raw_block[0..val] {
+                "Simulation:" => match params.update_simulation_parameters(some_struct) {
+                    Ok(()) => (),
+                    Err(e) => println!("Error: {e:?}, continuing to parse"),
+                },
+                "Geometry:" => match GeometryParameters::from_block(some_struct) {
+                    Ok(some_geometry) => params.add_geometry_parameter(some_geometry),
+                    Err(e) => println!("Error: {e:?}, continuing to parse"),
+                },
+                "Material:" => match MaterialParameters::from_block(some_struct) {
+                    Ok(some_material) => params.add_material_parameter(some_material),
+                    Err(e) => println!("Error: {e:?}, continuing to parse"),
+                },
+                "CrossSection:" => match CrossSectionParameters::from_block(some_struct) {
+                    Ok(some_cross_section) => {
+                        params.add_cross_section_parameter(some_cross_section)
+                    }
+                    Err(e) => println!("Error: {e:?}, continuing to parse"),
+                },
+                _ => println!("Error: {:?}, continuing to parse", InputError::BadBlockType),
             }
-            None => (),
         };
     });
 

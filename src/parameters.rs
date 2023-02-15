@@ -28,6 +28,7 @@ pub struct GeometryParameters {
 }
 
 impl GeometryParameters {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         material_name: String,
         shape: Shape,
@@ -175,6 +176,7 @@ pub struct MaterialParameters {
 }
 
 impl MaterialParameters {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         name: String,
         mass: f64,
@@ -432,6 +434,7 @@ pub struct SimulationParameters {
 
 impl SimulationParameters {
     /// Constructor.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         input_file: String,
         energy_spectrum: String,
@@ -508,13 +511,13 @@ impl SimulationParameters {
     /// use fastiron::io_utils::Cli;
     /// use fastiron::parameters::SimulationParameters;
     ///
-    /// fn main() {
-    ///     let cli = Cli::parse_from("./fastiron -i somefile -c -l".split(' '));
-    ///     let simulation_params = SimulationParameters::from_cli(&cli);
-    ///     // compare the structures...
-    ///     println!("{:#?}", cli);
-    ///     println!("{:#?}", simulation_params);
-    /// }
+    ///
+    /// let cli = Cli::parse_from("./fastiron -i somefile -c -l".split(' '));
+    /// let simulation_params = SimulationParameters::from_cli(&cli);
+    /// // compare the structures...
+    /// println!("{:#?}", cli);
+    /// println!("{:#?}", simulation_params);
+    /// 
     /// ```
     ///
     pub fn from_cli(cli: &io_utils::Cli) -> Self {
@@ -601,7 +604,7 @@ impl Default for SimulationParameters {
 /// Strucure encompassing all the problem's parameters. It is
 /// created, completed and returned by the [get_parameters] method.
 ///
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Parameters {
     simulation_params: SimulationParameters,
     geometry_params: Vec<GeometryParameters>,
@@ -785,17 +788,7 @@ impl Parameters {
     }
 }
 
-impl Default for Parameters {
-    // useful for tests
-    fn default() -> Self {
-        Self {
-            simulation_params: Default::default(),
-            geometry_params: Default::default(),
-            material_params: Default::default(),
-            cross_section_params: Default::default(),
-        }
-    }
-}
+
 
 /// Use the cli arguments to initialize parameters of the simulation, complete the
 /// structure and return it.The function will fail if it cannot read or find the
@@ -814,18 +807,9 @@ pub fn get_parameters(cli: io_utils::Cli) -> Result<Parameters, io_utils::InputE
         cross_section_params,
     };
 
-    match cli.input_file {
-        Some(filename) => io_utils::parse_input_file(filename, &mut params)?,
-        None => (),
-    };
-    match cli.energy_spectrum {
-        Some(filename) => params.simulation_params.energy_spectrum = filename,
-        None => (),
-    };
-    match cli.cross_sections_out {
-        Some(filename) => params.simulation_params.cross_sections_out = filename,
-        None => (),
-    };
+    if let Some(filename) = cli.input_file { io_utils::parse_input_file(filename, &mut params)? };
+    if let Some(filename) = cli.energy_spectrum { params.simulation_params.energy_spectrum = filename };
+    if let Some(filename) = cli.cross_sections_out { params.simulation_params.cross_sections_out = filename };
 
     supply_defaults(&mut params);
     check_parameters_integrity(&params);
@@ -842,15 +826,13 @@ fn supply_defaults(params: &mut Parameters) {
     }
 
     // add a flat cross section
-    let mut flat_cross_section = CrossSectionParameters::default();
-    flat_cross_section.name = "flat".to_string();
+    let flat_cross_section = CrossSectionParameters { name: "flat".to_string(), ..Default::default()};
     params
         .cross_section_params
         .insert(flat_cross_section.name.to_owned(), flat_cross_section);
 
     // add source material data
-    let mut source_material = MaterialParameters::default();
-    source_material.name = "source_material".to_string();
+    let mut source_material = MaterialParameters {name: "source_material".to_string(), ..Default::default()};
     source_material.mass = 1000.0;
     source_material.source_rate = 1e10;
     source_material.scattering_cross_section = "flat".to_string();
@@ -862,8 +844,7 @@ fn supply_defaults(params: &mut Parameters) {
         .insert(source_material.name.to_owned(), source_material);
 
     // add source geometry. source material occupies all the space
-    let mut source_geometry: GeometryParameters = GeometryParameters::default();
-    source_geometry.material_name = "source_material".to_string();
+    let mut source_geometry: GeometryParameters = GeometryParameters { material_name: "source_material".to_string(), ..Default::default()};
     source_geometry.shape = Shape::Brick;
     source_geometry.x_max = params.simulation_params.lx;
     source_geometry.y_max = params.simulation_params.ly;
