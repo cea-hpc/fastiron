@@ -8,5 +8,4 @@ about = "[This is an about text]"
 
 [dependencies]
 clap = {version="4.1.4", features=["cargo", "derive"]}
-serde = {version="1.0.152", features=["derive"]}
 serde_yaml = {version="0.9.17", features=[]}

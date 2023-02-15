@@ -882,12 +882,19 @@ fn check_parameters_integrity(params: &Parameters) {
     assert!(!params.geometry_params.is_empty());
     // 2. and 3.
     params.geometry_params.iter().for_each(|g| {
-        assert!(g.shape == Shape::Undefined);
+        assert!(g.shape != Shape::Undefined);
         assert!(params.material_params.contains_key(&g.material_name))
     });
     // 4.
-    params
-        .material_params
-        .iter()
-        .for_each(|(_, val)| assert!(params.cross_section_params.contains_key(&val.name)));
+    params.material_params.iter().for_each(|(_, val)| {
+        assert!(params
+            .cross_section_params
+            .contains_key(&val.absorption_cross_section));
+        assert!(params
+            .cross_section_params
+            .contains_key(&val.scattering_cross_section));
+        assert!(params
+            .cross_section_params
+            .contains_key(&val.fission_cross_section));
+    });
 }
