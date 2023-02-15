@@ -1,7 +1,7 @@
 Simulation:
    dt: 1e-06
    fMax: 0.1
-   inputFile: homogeneous.inp
+   inputFile: missing_cross_section.inp
    boundaryCondition: reflect
    loadBalance: 0
    cycleTimers: 0

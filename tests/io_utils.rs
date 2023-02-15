@@ -13,5 +13,5 @@ fn verify_cli() {
 fn verify_input_file_compatibility() {
     let mut params = Parameters::default();
     // we just verify that the file could be parsed, not if it was parsed correctly
-    parse_input_file("input_files/hg7.inp".to_string(), &mut params).unwrap();
+    parse_input_file("input_files/debug/homogeneous.inp".to_string(), &mut params).unwrap();
 }
