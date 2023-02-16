@@ -1,3 +1,4 @@
+pub mod energy_spectrum;
 pub mod io_utils;
 pub mod material_database;
 pub mod mc;

@@ -1,4 +1,4 @@
-/// Enum representing a reaction type. Named `Enum` in 
+/// Enum representing a reaction type. Named `Enum` in
 /// the original code.
 #[derive(Debug)]
 pub enum ReactionType {
@@ -26,15 +26,15 @@ pub struct NuclearDataReaction {
     pub nu_bar: f64,
 }
 
-/// Structure used to hold a list of reactions. Not defined 
+/// Structure used to hold a list of reactions. Not defined
 /// via an alias because we need an impl block.
 #[derive(Debug)]
 pub struct NuclearDataSpecies {
-    reactions: Vec<NuclearDataReaction>,
+    pub reactions: Vec<NuclearDataReaction>,
 }
 
 /// Structure used to store cross sections for a given isotope?
-type NuclearDataIsotope = Vec<NuclearDataSpecies>;
+pub type NuclearDataIsotope = Vec<NuclearDataSpecies>;
 
 /// Top level structure used to handle all things related to
 /// nuclear data.
