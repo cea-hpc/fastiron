@@ -24,3 +24,7 @@ struct MonteCarlo {
 
     pub source_particle_weight: f64,
 }
+
+impl MonteCarlo {
+    fn new(params: &Parameters) {}
+}
