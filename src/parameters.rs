@@ -488,7 +488,7 @@ impl Parameters {
 /// structure and return it. The function will fail if
 /// - it cannot read or find the specified input_file (if specified)
 /// - the resulting [Parameters] object is compromised
-pub fn get_parameters(cli: io_utils::Cli) -> Result<Parameters, io_utils::InputError> {
+pub fn get_parameters(cli: io_utils::Cli) -> Result<Parameters, Vec<io_utils::InputError>> {
     // structs init
     let simulation_params: SimulationParameters = SimulationParameters::from_cli(&cli);
     let geometry_params: Vec<GeometryParameters> = Vec::new();
@@ -515,7 +515,7 @@ pub fn get_parameters(cli: io_utils::Cli) -> Result<Parameters, io_utils::InputE
     supply_defaults(&mut params);
     if let Err(e) = check_parameters_integrity(&params) {
         println!("{e:?}");
-        return Err(InputError::BadInputFile);
+        return Err(vec![InputError::BadInputFile]);
     };
 
     Ok(params)

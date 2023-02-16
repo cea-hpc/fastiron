@@ -7,7 +7,7 @@ use crate::parameters::{
 };
 
 /// Enum used to categorize error related to the input of the program.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum InputError {
     BadInputFile,
     BadSimulationBlock,
@@ -162,44 +162,57 @@ pub struct Cli {
 /// provided input file. The file is first separated into blocks
 /// with the rsplit call. The blocks are then used to complete the
 /// parameter structure passed as argument.
-pub fn parse_input_file(filename: String, params: &mut Parameters) -> Result<(), InputError> {
+pub fn parse_input_file(filename: String, params: &mut Parameters) -> Result<(), Vec<InputError>> {
     let mut content = String::new();
 
     let mut file = match File::open(filename) {
         Ok(file) => file,
-        Err(_) => return Err(InputError::BadInputFile),
+        Err(_) => return Err(vec![InputError::BadInputFile]),
     };
 
     file.read_to_string(&mut content).unwrap();
 
-    content.rsplit("\n\n").for_each(|raw_block| {
-        if let Some(val) = raw_block.find('\n') {
-            let some_struct: Block = serde_yaml::from_str(&raw_block[val + 1..]).unwrap();
-            //println!("{:#?}", some_struct); // uncomment if a parsing issue occur.
+    let res: Vec<Result<(), InputError>> = content
+        .rsplit("\n\n")
+        .map(|raw_block| {
+            if let Some(val) = raw_block.find('\n') {
+                let some_struct: Block = serde_yaml::from_str(&raw_block[val + 1..]).unwrap();
+                //println!("{:#?}", some_struct); // uncomment if a parsing issue occur.
 
-            match &raw_block[0..val] {
-                "Simulation:" => match params.update_simulation_parameters(some_struct) {
-                    Ok(()) => (),
-                    Err(e) => println!("Error: {e:?}, continuing to parse"),
-                },
-                "Geometry:" => match GeometryParameters::from_block(some_struct) {
-                    Ok(some_geometry) => params.add_geometry_parameter(some_geometry),
-                    Err(e) => println!("Error: {e:?}, continuing to parse"),
-                },
-                "Material:" => match MaterialParameters::from_block(some_struct) {
-                    Ok(some_material) => params.add_material_parameter(some_material),
-                    Err(e) => println!("Error: {e:?}, continuing to parse"),
-                },
-                "CrossSection:" => match CrossSectionParameters::from_block(some_struct) {
-                    Ok(some_cross_section) => {
-                        params.add_cross_section_parameter(some_cross_section)
-                    }
-                    Err(e) => println!("Error: {e:?}, continuing to parse"),
-                },
-                _ => println!("Error: {:?}, continuing to parse", InputError::BadBlockType),
+                match &raw_block[0..val] {
+                    "Simulation:" => params.update_simulation_parameters(some_struct),
+                    "Geometry:" => match GeometryParameters::from_block(some_struct) {
+                        Ok(some_geometry) => {
+                            params.add_geometry_parameter(some_geometry);
+                            return Ok(());
+                        }
+                        Err(e) => Err(e),
+                    },
+                    "Material:" => match MaterialParameters::from_block(some_struct) {
+                        Ok(some_material) => {
+                            params.add_material_parameter(some_material);
+                            return Ok(());
+                        }
+                        Err(e) => Err(e),
+                    },
+                    "CrossSection:" => match CrossSectionParameters::from_block(some_struct) {
+                        Ok(some_cross_section) => {
+                            params.add_cross_section_parameter(some_cross_section);
+                            return Ok(());
+                        }
+                        Err(e) => Err(e),
+                    },
+                    _ => Err(InputError::BadBlockType),
+                }?;
             }
-        };
-    });
+            Ok(())
+        })
+        .collect();
 
-    Ok(())
+    let errors: Vec<InputError> = res.iter().filter_map(|r| r.clone().err()).collect();
+
+    if errors.is_empty() {
+        return Ok(());
+    }
+    Err(errors)
 }

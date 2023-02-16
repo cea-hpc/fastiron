@@ -42,10 +42,11 @@ fn verify_input_file_compatibility() {
 #[test]
 fn missing_input_file() {
     let mut params = Parameters::default();
-    assert_eq!(
-        parse_input_file("input_files/do_not_exist.inp".to_string(), &mut params),
-        Err(InputError::BadInputFile)
-    );
+    if let Err(v) = parse_input_file("input_files/do_not_exist.inp".to_string(), &mut params) {
+        assert!(v.contains(&InputError::BadInputFile));
+    } else {
+        unreachable!()
+    }
 }
 
 #[test]
