@@ -1,12 +1,35 @@
 use fastiron::{
     io_utils::{parse_input_file, Cli, InputError},
-    parameters::{check_parameters_integrity, supply_defaults, ParameterError, Parameters},
+    parameters::{
+        check_parameters_integrity, supply_defaults, ParameterError, Parameters,
+        SimulationParameters,
+    },
 };
 
 #[test]
 fn verify_cli() {
     use clap::CommandFactory;
     Cli::command().debug_assert();
+}
+
+#[test]
+fn verify_cli_parsing() {
+    use clap::Parser;
+    let cmd_line = "./fastiron -i somefile.inp -c -l -e out1 -S out2.dat -X 10 -Y 10 -Z 10.0 -s 123456 -n 1000 -b 10";
+    let cli = Cli::parse_from(cmd_line.split(' '));
+    let simulation_params = SimulationParameters::from_cli(&cli);
+    assert_eq!(simulation_params.input_file, "somefile.inp");
+    assert!(simulation_params.cycle_timers);
+    assert!(simulation_params.load_balance);
+    assert!(!simulation_params.debug_threads);
+    assert_eq!(simulation_params.energy_spectrum, "out1");
+    assert_eq!(simulation_params.cross_sections_out, "out2.dat");
+    assert_eq!(simulation_params.lx, 10.0);
+    assert_eq!(simulation_params.ly, 10.0);
+    assert_eq!(simulation_params.lz, 10.0);
+    assert_eq!(simulation_params.seed, 123456);
+    assert_eq!(simulation_params.n_particles, 1000);
+    assert_eq!(simulation_params.n_batches, 10);
 }
 
 #[test]

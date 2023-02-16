@@ -49,7 +49,10 @@ pub struct Cli {
     #[arg(short = 'c', long = "cycle-timers", num_args(0))]
     pub cycle_timers: bool,
 
-    // TO ADD: debug thread level?
+    /// enable thread debugging if present
+    #[arg(short = 't', long = "debug-threads", num_args(0))]
+    pub debug_threads: bool,
+
     /// x-size of simulation in cm
     #[arg(short = 'X', long = "lx", num_args(1), allow_negative_numbers(false))]
     pub lx: Option<f64>,

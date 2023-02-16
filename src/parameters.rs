@@ -34,53 +34,21 @@ pub enum Shape {
 /// certain shape and certain material.
 #[derive(Debug)]
 pub struct GeometryParameters {
-    material_name: String,
-    shape: Shape,
-    radius: f64,
-    x_center: f64,
-    y_center: f64,
-    z_center: f64,
-    x_min: f64,
-    y_min: f64,
-    z_min: f64,
-    x_max: f64,
-    y_max: f64,
-    z_max: f64,
+    pub material_name: String,
+    pub shape: Shape,
+    pub radius: f64,
+    pub x_center: f64,
+    pub y_center: f64,
+    pub z_center: f64,
+    pub x_min: f64,
+    pub y_min: f64,
+    pub z_min: f64,
+    pub x_max: f64,
+    pub y_max: f64,
+    pub z_max: f64,
 }
 
 impl GeometryParameters {
-    /// Constructor.
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        material_name: String,
-        shape: Shape,
-        radius: f64,
-        x_center: f64,
-        y_center: f64,
-        z_center: f64,
-        x_min: f64,
-        y_min: f64,
-        z_min: f64,
-        x_max: f64,
-        y_max: f64,
-        z_max: f64,
-    ) -> Self {
-        Self {
-            material_name,
-            shape,
-            radius,
-            x_center,
-            y_center,
-            z_center,
-            x_min,
-            y_min,
-            z_min,
-            x_max,
-            y_max,
-            z_max,
-        }
-    }
-
     /// Creates a [GeometryParameters] object using the [Block] passed as
     /// argument. Any field not specified in the block will have its default
     /// value as defined in the [Default] implementation. May return an error
@@ -92,6 +60,14 @@ impl GeometryParameters {
     pub fn from_block(block: Block) -> Result<Self, InputError> {
         let mut geometry_params = Self::default();
 
+        macro_rules! fetch_data {
+            ($f: ident, $v: expr) => {
+                geometry_params.$f = match $v.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadGeometryBlock),
+                }
+            };
+        }
         for (key, val) in block {
             match key.as_ref() {
                 "material" => geometry_params.material_name = val,
@@ -102,66 +78,16 @@ impl GeometryParameters {
                         _ => return Err(InputError::BadGeometryBlock),
                     }
                 }
-                "radius" => {
-                    geometry_params.radius = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadGeometryBlock),
-                    }
-                }
-                "xCenter" => {
-                    geometry_params.x_center = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadGeometryBlock),
-                    }
-                }
-                "yCenter" => {
-                    geometry_params.y_center = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadGeometryBlock),
-                    }
-                }
-                "zCenter" => {
-                    geometry_params.z_center = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadGeometryBlock),
-                    }
-                }
-                "xMin" => {
-                    geometry_params.x_min = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadGeometryBlock),
-                    }
-                }
-                "yMin" => {
-                    geometry_params.y_min = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadGeometryBlock),
-                    }
-                }
-                "zMin" => {
-                    geometry_params.z_min = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadGeometryBlock),
-                    }
-                }
-                "xMax" => {
-                    geometry_params.x_max = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadGeometryBlock),
-                    }
-                }
-                "yMax" => {
-                    geometry_params.y_max = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadGeometryBlock),
-                    }
-                }
-                "zMax" => {
-                    geometry_params.z_max = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadGeometryBlock),
-                    }
-                }
+                "radius" => fetch_data!(radius, val),
+                "xCenter" => fetch_data!(x_center, val),
+                "yCenter" => fetch_data!(y_center, val),
+                "zCenter" => fetch_data!(z_center, val),
+                "xMin" => fetch_data!(x_min, val),
+                "yMin" => fetch_data!(y_min, val),
+                "zMin" => fetch_data!(z_min, val),
+                "xMax" => fetch_data!(x_max, val),
+                "yMax" => fetch_data!(y_max, val),
+                "zMax" => fetch_data!(z_max, val),
                 _ => return Err(InputError::BadGeometryBlock),
             }
         }
@@ -193,53 +119,21 @@ impl Default for GeometryParameters {
 /// properties.
 #[derive(Debug)]
 pub struct MaterialParameters {
-    name: String,
-    mass: f64,
-    total_cross_section: f64,
-    n_isotopes: u32,
-    n_reactions: u32,
-    source_rate: f64,
-    scattering_cross_section: String,
-    absorption_cross_section: String,
-    fission_cross_section: String,
-    scattering_cross_section_ratio: f64,
-    absorbtion_cross_section_ratio: f64,
-    fission_cross_section_ratio: f64,
+    pub name: String,
+    pub mass: f64,
+    pub total_cross_section: f64,
+    pub n_isotopes: u32,
+    pub n_reactions: u32,
+    pub source_rate: f64,
+    pub scattering_cross_section: String,
+    pub absorption_cross_section: String,
+    pub fission_cross_section: String,
+    pub scattering_cross_section_ratio: f64,
+    pub absorbtion_cross_section_ratio: f64,
+    pub fission_cross_section_ratio: f64,
 }
 
 impl MaterialParameters {
-    /// Constructor.
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        name: String,
-        mass: f64,
-        total_cross_section: f64,
-        n_isotopes: u32,
-        n_reactions: u32,
-        source_rate: f64,
-        scattering_cross_section: String,
-        absorption_cross_section: String,
-        fission_cross_section: String,
-        scattering_cross_section_ratio: f64,
-        absorbtion_cross_section_ratio: f64,
-        fission_cross_section_ratio: f64,
-    ) -> Self {
-        Self {
-            name,
-            mass,
-            total_cross_section,
-            n_isotopes,
-            n_reactions,
-            source_rate,
-            scattering_cross_section,
-            absorption_cross_section,
-            fission_cross_section,
-            scattering_cross_section_ratio,
-            absorbtion_cross_section_ratio,
-            fission_cross_section_ratio,
-        }
-    }
-
     /// Creates a [MaterialParameters] object using the [Block] passed as
     /// argument. Any field not specified in the block will have its default
     /// value as defined in the [Default] implementation. May return an error
@@ -251,75 +145,28 @@ impl MaterialParameters {
     pub fn from_block(block: Block) -> Result<Self, InputError> {
         let mut material_params = Self::default();
 
+        macro_rules! fetch_data {
+            ($f: ident, $v: expr) => {
+                material_params.$f = match $v.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadMaterialBlock),
+                }
+            };
+        }
         for (key, val) in block {
             match key.as_ref() {
                 "name" => material_params.name = val,
-                "mass" => {
-                    material_params.mass = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
-                "totalCrossSection" => {
-                    material_params.total_cross_section = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
-                "nIsotopes" => {
-                    material_params.n_isotopes = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
-                "nReactions" => {
-                    material_params.n_reactions = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
-                "sourceRate" => {
-                    material_params.source_rate = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
-                "scatteringCrossSection" => {
-                    material_params.scattering_cross_section = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
-                "absorptionCrossSection" => {
-                    material_params.absorption_cross_section = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
-                "fissionCrossSection" => {
-                    material_params.fission_cross_section = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
-                "scatteringCrossSectionRatio" => {
-                    material_params.scattering_cross_section_ratio = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
-                "absorptionCrossSectionRatio" => {
-                    material_params.absorbtion_cross_section_ratio = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
-                "fissionCrossSectionRatio" => {
-                    material_params.fission_cross_section_ratio = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadMaterialBlock),
-                    }
-                }
+                "mass" => fetch_data!(mass, val),
+                "totalCrossSection" => fetch_data!(total_cross_section, val),
+                "nIsotopes" => fetch_data!(n_isotopes, val),
+                "nReactions" => fetch_data!(n_reactions, val),
+                "sourceRate" => fetch_data!(source_rate, val),
+                "scatteringCrossSection" => fetch_data!(scattering_cross_section, val),
+                "absorptionCrossSection" => fetch_data!(absorption_cross_section, val),
+                "fissionCrossSection" => fetch_data!(fission_cross_section, val),
+                "scatteringCrossSectionRatio" => fetch_data!(scattering_cross_section_ratio, val),
+                "absorptionCrossSectionRatio" => fetch_data!(absorbtion_cross_section_ratio, val),
+                "fissionCrossSectionRatio" => fetch_data!(fission_cross_section_ratio, val),
                 _ => return Err(InputError::BadMaterialBlock),
             }
         }
@@ -351,29 +198,16 @@ impl Default for MaterialParameters {
 /// representation.
 #[derive(Debug)]
 pub struct CrossSectionParameters {
-    name: String,
-    aa: f64,
-    bb: f64,
-    cc: f64,
-    dd: f64,
-    ee: f64,
-    nu_bar: f64,
+    pub name: String,
+    pub aa: f64,
+    pub bb: f64,
+    pub cc: f64,
+    pub dd: f64,
+    pub ee: f64,
+    pub nu_bar: f64,
 }
 
 impl CrossSectionParameters {
-    /// Constructor.
-    pub fn new(name: String, aa: f64, bb: f64, cc: f64, dd: f64, ee: f64, nu_bar: f64) -> Self {
-        Self {
-            name,
-            aa,
-            bb,
-            cc,
-            dd,
-            ee,
-            nu_bar,
-        }
-    }
-
     /// Creates a [CrossSectionParameters] object using the [Block] passed as
     /// argument. Any field not specified in the block will have its default
     /// value as defined in the [Default] implementation. May return an error
@@ -385,45 +219,24 @@ impl CrossSectionParameters {
     pub fn from_block(block: Block) -> Result<Self, InputError> {
         let mut cross_section = Self::default();
 
+        macro_rules! fetch_data {
+            ($f: ident, $v: expr) => {
+                cross_section.$f = match $v.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadCrossSectionBlock),
+                }
+            };
+        }
+
         for (key, val) in block {
             match key.as_ref() {
                 "name" => cross_section.name = val,
-                "A" => {
-                    cross_section.aa = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadCrossSectionBlock),
-                    }
-                }
-                "B" => {
-                    cross_section.bb = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadCrossSectionBlock),
-                    }
-                }
-                "C" => {
-                    cross_section.cc = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadCrossSectionBlock),
-                    }
-                }
-                "D" => {
-                    cross_section.dd = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadCrossSectionBlock),
-                    }
-                }
-                "E" => {
-                    cross_section.ee = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadCrossSectionBlock),
-                    }
-                }
-                "nuBar" => {
-                    cross_section.nu_bar = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadCrossSectionBlock),
-                    }
-                }
+                "A" => fetch_data!(aa, val),
+                "B" => fetch_data!(bb, val),
+                "C" => fetch_data!(cc, val),
+                "D" => fetch_data!(dd, val),
+                "E" => fetch_data!(ee, val),
+                "nuBar" => fetch_data!(nu_bar, val),
                 _ => return Err(InputError::BadCrossSectionBlock),
             }
         }
@@ -450,110 +263,40 @@ impl Default for CrossSectionParameters {
 /// then optionally updated with a specified input file.
 #[derive(Debug)]
 pub struct SimulationParameters {
-    input_file: String,
-    energy_spectrum: String,
-    cross_sections_out: String,
-    boundary_condition: String,
-    load_balance: bool,
-    cycle_timers: bool,
-    debug_threads: bool,
-    n_particles: u64,
-    batch_size: u64,
-    n_batches: u64,
-    n_steps: u32,
-    nx: u32,
-    ny: u32,
-    nz: u32,
-    seed: u32,
+    pub input_file: String,
+    pub energy_spectrum: String,
+    pub cross_sections_out: String,
+    pub boundary_condition: String,
+    pub load_balance: bool,
+    pub cycle_timers: bool,
+    pub debug_threads: bool,
+    pub n_particles: u64,
+    pub batch_size: u64,
+    pub n_batches: u64,
+    pub n_steps: u32,
+    pub nx: u32,
+    pub ny: u32,
+    pub nz: u32,
+    pub seed: u32,
     //x_dom: u32,
     //y_dom: u32,
     //z_dom: u32,
-    dt: f64,
-    f_max: f64,
-    lx: f64,
-    ly: f64,
-    lz: f64,
-    e_min: f64,
-    e_max: f64,
-    n_groups: u32,
-    low_weight_cutoff: f64,
-    balance_tally_replications: u32,
-    flux_tally_replications: u32,
-    cell_tally_replications: u32,
-    coral_benchmark: bool,
+    pub dt: f64,
+    pub f_max: f64,
+    pub lx: f64,
+    pub ly: f64,
+    pub lz: f64,
+    pub e_min: f64,
+    pub e_max: f64,
+    pub n_groups: u32,
+    pub low_weight_cutoff: f64,
+    pub balance_tally_replications: u32,
+    pub flux_tally_replications: u32,
+    pub cell_tally_replications: u32,
+    pub coral_benchmark: bool,
 }
 
 impl SimulationParameters {
-    /// Constructor.
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        input_file: String,
-        energy_spectrum: String,
-        cross_sections_out: String,
-        boundary_condition: String,
-        load_balance: bool,
-        cycle_timers: bool,
-        debug_threads: bool,
-        n_particles: u64,
-        batch_size: u64,
-        n_batches: u64,
-        n_steps: u32,
-        nx: u32,
-        ny: u32,
-        nz: u32,
-        seed: u32,
-        //x_dom: u32,
-        //y_dom: u32,
-        //z_dom: u32,
-        dt: f64,
-        f_max: f64,
-        lx: f64,
-        ly: f64,
-        lz: f64,
-        e_min: f64,
-        e_max: f64,
-        n_groups: u32,
-        low_weight_cutoff: f64,
-        balance_tally_replications: u32,
-        flux_tally_replications: u32,
-        cell_tally_replications: u32,
-        coral_benchmark: bool,
-    ) -> Self {
-        Self {
-            input_file,
-            energy_spectrum,
-            cross_sections_out,
-            boundary_condition,
-            load_balance,
-            cycle_timers,
-            debug_threads,
-            n_particles,
-            batch_size,
-            n_batches,
-            n_steps,
-            nx,
-            ny,
-            nz,
-            seed,
-            //x_dom,
-            //y_dom,
-            //z_dom,
-            dt,
-            f_max,
-            lx,
-            ly,
-            lz,
-            e_min,
-            e_max,
-            n_groups,
-            low_weight_cutoff,
-            balance_tally_replications,
-            flux_tally_replications,
-            cell_tally_replications,
-            coral_benchmark,
-        }
-    }
-
     /// Initialize a [SimulationParameters] object using a Cli object created
     /// from the arguments supplied via command line.
     ///
@@ -590,7 +333,7 @@ impl SimulationParameters {
         fetch_from_cli!(f_max);
         simulation_params.load_balance = cli.load_balance;
         simulation_params.cycle_timers = cli.cycle_timers;
-        // debug thread level?
+        simulation_params.debug_threads = cli.debug_threads;
         fetch_from_cli!(lx);
         fetch_from_cli!(ly);
         fetch_from_cli!(lz);
@@ -668,162 +411,59 @@ impl Parameters {
     /// - There is an unknown field
     /// - A value associated to a valid field is invalid
     pub fn update_simulation_parameters(&mut self, sim_block: Block) -> Result<(), InputError> {
+        macro_rules! fetch_data {
+            ($f: ident, $v: expr) => {
+                self.simulation_params.$f = match $v.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(InputError::BadSimulationBlock),
+                }
+            };
+        }
+        macro_rules! fetch_bool {
+            ($f: ident, $v: expr) => {
+                self.simulation_params.load_balance = match $v.as_ref() {
+                    "0" => false,
+                    "1" => true,
+                    _ => return Err(InputError::BadSimulationBlock),
+                }
+            };
+        }
+
         for (key, val) in sim_block {
             match key.as_ref() {
                 "inputFile" => self.simulation_params.input_file = val,
                 "energySpectrum" => self.simulation_params.energy_spectrum = val,
                 "crossSectionsOut" => self.simulation_params.cross_sections_out = val,
                 "boundaryCondition" => self.simulation_params.boundary_condition = val,
-                "loadBalance" => {
-                    self.simulation_params.load_balance = match val.as_ref() {
-                        "0" => false,
-                        "1" => true,
-                        _ => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "cycleTimers" => {
-                    self.simulation_params.cycle_timers = match val.as_ref() {
-                        "0" => false,
-                        "1" => true,
-                        _ => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "debugThreads" => {
-                    self.simulation_params.debug_threads = match val.as_ref() {
-                        "0" => false,
-                        "1" => true,
-                        _ => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "nParticles" => {
-                    self.simulation_params.n_particles = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "batchSize" => {
-                    self.simulation_params.batch_size = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "nBatches" => {
-                    self.simulation_params.n_batches = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "nSteps" => {
-                    self.simulation_params.n_steps = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "nx" => {
-                    self.simulation_params.nx = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "ny" => {
-                    self.simulation_params.ny = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "nz" => {
-                    self.simulation_params.nz = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "seed" => {
-                    self.simulation_params.seed = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
+
+                "loadBalance" => fetch_bool!(load_balance, val),
+                "cycleTimers" => fetch_bool!(cycle_timers, val),
+                "debugThreads" => fetch_bool!(debug_threads, val),
+                "coralBenchmark" => fetch_bool!(coral_benchmark, val),
+
+                "nParticles" => fetch_data!(n_particles, val),
+                "batchSize" => fetch_data!(batch_size, val),
+                "nBatches" => fetch_data!(n_batches, val),
+                "nSteps" => fetch_data!(n_steps, val),
+                "nx" => fetch_data!(nx, val),
+                "ny" => fetch_data!(ny, val),
+                "nz" => fetch_data!(nz, val),
+                "seed" => fetch_data!(seed, val),
+                "dt" => fetch_data!(dt, val),
+                "fMax" => fetch_data!(f_max, val),
+                "lx" => fetch_data!(lx, val),
+                "ly" => fetch_data!(ly, val),
+                "lz" => fetch_data!(lz, val),
+                "eMin" => fetch_data!(e_min, val),
+                "eMax" => fetch_data!(e_max, val),
+                "nGroups" => fetch_data!(n_groups, val),
+                "lowWeightCutoff" => fetch_data!(low_weight_cutoff, val),
+                "balanceTallyReplications" => fetch_data!(balance_tally_replications, val),
+                "fluxTallyReplications" => fetch_data!(flux_tally_replications, val),
+                "cellTallyReplications" => fetch_data!(cell_tally_replications, val),
+
                 "xDom" | "yDom" | "zDom" => (),
-                "dt" => {
-                    self.simulation_params.dt = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "fMax" => {
-                    self.simulation_params.f_max = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "lx" => {
-                    self.simulation_params.lx = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "ly" => {
-                    self.simulation_params.ly = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "lz" => {
-                    self.simulation_params.lz = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "eMin" => {
-                    self.simulation_params.e_min = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "eMax" => {
-                    self.simulation_params.e_max = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "nGroups" => {
-                    self.simulation_params.n_groups = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "lowWeightCutoff" => {
-                    self.simulation_params.low_weight_cutoff = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "balanceTallyReplications" => {
-                    self.simulation_params.balance_tally_replications = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "fluxTallyReplications" => {
-                    self.simulation_params.flux_tally_replications = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
-                "cellTallyReplications" => {
-                    self.simulation_params.cell_tally_replications = match val.parse() {
-                        Ok(v) => v,
-                        Err(_) => return Err(InputError::BadSimulationBlock),
-                    }
-                }
                 "mpiThreadMultiple" => (),
-                "coralBenchmark" => {
-                    self.simulation_params.coral_benchmark = match val.as_ref() {
-                        "0" => false,
-                        "1" => true,
-                        _ => return Err(InputError::BadSimulationBlock),
-                    }
-                }
                 _ => return Err(InputError::BadSimulationBlock),
             }
         }
