@@ -398,10 +398,10 @@ impl Default for SimulationParameters {
 /// created, completed and returned by the [get_parameters] method.
 #[derive(Debug, Default)]
 pub struct Parameters {
-    simulation_params: SimulationParameters,
-    geometry_params: Vec<GeometryParameters>,
-    material_params: HashMap<String, MaterialParameters>,
-    cross_section_params: HashMap<String, CrossSectionParameters>,
+    pub simulation_params: SimulationParameters,
+    pub geometry_params: Vec<GeometryParameters>,
+    pub material_params: HashMap<String, MaterialParameters>,
+    pub cross_section_params: HashMap<String, CrossSectionParameters>,
 }
 
 impl Parameters {

@@ -80,8 +80,8 @@ CrossSection:
    B: 0
    C: 0
    D: -0.8446
-   D: -0.5243
-   E: -2.22
+   E: -0.5243
+   nuBar: -2.22
 
 CrossSection:
    name: fission

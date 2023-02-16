@@ -1,8 +1,8 @@
 use fastiron::{
     io_utils::{parse_input_file, Cli, InputError},
     parameters::{
-        check_parameters_integrity, supply_defaults, ParameterError, Parameters,
-        SimulationParameters,
+        check_parameters_integrity, supply_defaults, GeometryParameters, ParameterError,
+        Parameters, Shape, SimulationParameters,
     },
 };
 
@@ -102,4 +102,130 @@ fn no_geometry_supplied() {
     // call supply_defaults and check that a default geometry was indeed supplied
     supply_defaults(&mut params);
     check_parameters_integrity(&params).unwrap();
+}
+
+#[test]
+fn verify_file_parsing() {
+    let mut params = Parameters::default();
+    parse_input_file("input_files/debug/parsing.inp".to_string(), &mut params).unwrap();
+    // check for obvious issues
+    check_parameters_integrity(&params).unwrap();
+    // lots of assert!
+    // sim block
+    assert_eq!(params.simulation_params.dt, 1e-06);
+    assert_eq!(params.simulation_params.f_max, 0.1);
+    assert_eq!(params.simulation_params.input_file, "parsing.inp");
+    assert_eq!(params.simulation_params.boundary_condition, "reflect");
+    assert!(!params.simulation_params.load_balance);
+    assert!(!params.simulation_params.cycle_timers);
+    assert!(!params.simulation_params.debug_threads);
+    assert_eq!(params.simulation_params.n_steps, 10);
+    assert_eq!(params.simulation_params.seed, 1029384756);
+    assert_eq!(params.simulation_params.e_max, 20.0);
+    assert_eq!(params.simulation_params.e_min, 1e-09);
+    assert_eq!(params.simulation_params.n_groups, 230);
+    assert_eq!(params.simulation_params.low_weight_cutoff, 0.001);
+
+    // geometry blocks
+    fn match_a_block(g: &GeometryParameters) -> bool {
+        let match_b1: bool = (g.material_name == "sourceMaterial")
+            & matches!(g.shape, Shape::Brick)
+            & (g.x_max == 1000.0)
+            & (g.x_min == 0.0)
+            & (g.y_max == 1000.0)
+            & (g.y_min == 0.0)
+            & (g.z_max == 1000.0)
+            & (g.z_min == 0.0);
+
+        let match_b2: bool = (g.material_name == "mat1")
+            & matches!(g.shape, Shape::Brick)
+            & (g.x_max == 2000.0)
+            & (g.x_min == 1000.0)
+            & (g.y_max == 1000.0)
+            & (g.y_min == 0.0)
+            & (g.z_max == 1000.0)
+            & (g.z_min == 0.0);
+
+        match_b1 | match_b2
+    }
+    for g in params.geometry_params {
+        assert!(match_a_block(&g));
+    }
+
+    // material blocks
+    for (key, val) in params.material_params {
+        match key.as_ref() {
+            "sourceMaterial" => {
+                assert_eq!(val.name, key);
+                assert_eq!(val.mass, 12.011);
+                assert_eq!(val.n_isotopes, 10);
+                assert_eq!(val.n_reactions, 9);
+                assert_eq!(val.source_rate, 1e+10);
+                assert_eq!(val.total_cross_section, 0.1);
+                assert_eq!(val.absorption_cross_section, "flat");
+                assert_eq!(val.fission_cross_section, "flat");
+                assert_eq!(val.scattering_cross_section, "flat");
+                assert_eq!(val.absorbtion_cross_section_ratio, 0.1086);
+                assert_eq!(val.fission_cross_section_ratio, 0.0969);
+                assert_eq!(val.scattering_cross_section_ratio, 0.7946);
+            }
+            "mat1" => {
+                assert_eq!(val.name, key);
+                assert_eq!(val.mass, 12.011);
+                assert_eq!(val.n_isotopes, 10);
+                assert_eq!(val.n_reactions, 9);
+                assert_eq!(val.source_rate, 1e+10);
+                assert_eq!(val.total_cross_section, 0.1);
+                assert_eq!(val.absorption_cross_section, "absorb");
+                assert_eq!(val.fission_cross_section, "fission");
+                assert_eq!(val.scattering_cross_section, "scatter");
+                assert_eq!(val.absorbtion_cross_section_ratio, 0.1086);
+                assert_eq!(val.fission_cross_section_ratio, 0.0969);
+                assert_eq!(val.scattering_cross_section_ratio, 0.7946);
+            }
+            _ => panic!(),
+        }
+    }
+
+    // cross section blocks
+    for (key, val) in params.cross_section_params {
+        match key.as_ref() {
+            "flat" => {
+                assert_eq!(val.name, key);
+                assert_eq!(val.aa, 0.0);
+                assert_eq!(val.bb, 0.0);
+                assert_eq!(val.cc, 0.0);
+                assert_eq!(val.dd, 0.0);
+                assert_eq!(val.ee, 1.0);
+                assert_eq!(val.nu_bar, 1.0);
+            }
+            "absorb" => {
+                assert_eq!(val.name, key);
+                assert_eq!(val.aa, 0.0);
+                assert_eq!(val.bb, 0.0);
+                assert_eq!(val.cc, -0.0);
+                assert_eq!(val.dd, -0.8446);
+                assert_eq!(val.ee, -0.5243);
+                assert_eq!(val.nu_bar, -2.22);
+            }
+            "fission" => {
+                assert_eq!(val.name, key);
+                assert_eq!(val.aa, 0.0);
+                assert_eq!(val.bb, 0.0);
+                assert_eq!(val.cc, 0.0);
+                assert_eq!(val.dd, -0.342);
+                assert_eq!(val.ee, 0.0);
+                assert_eq!(val.nu_bar, 2.4);
+            }
+            "scatter" => {
+                assert_eq!(val.name, key);
+                assert_eq!(val.aa, 0.0);
+                assert_eq!(val.bb, 0.0);
+                assert_eq!(val.cc, 0.0);
+                assert_eq!(val.dd, 0.0);
+                assert_eq!(val.ee, 0.7);
+            }
+            _ => panic!(),
+        }
+    }
 }
