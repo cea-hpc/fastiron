@@ -1,3 +1,4 @@
+pub mod mc_base_particle;
 pub mod mc_cell_state;
 pub mod mc_domain;
 pub mod mc_facet_adjacency;

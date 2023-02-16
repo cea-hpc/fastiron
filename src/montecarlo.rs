@@ -26,5 +26,7 @@ struct MonteCarlo {
 }
 
 impl MonteCarlo {
-    fn new(params: &Parameters) {}
+    pub fn new(params: &Parameters) {
+        todo!()
+    }
 }

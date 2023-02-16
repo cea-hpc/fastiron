@@ -1,3 +1,5 @@
+/// Structure used to represent a cell's state, i.e.
+/// properties relevant to the simulation.
 #[derive(Debug)]
 pub struct MCCellState {
     material: u32,   // gid of material; usize?

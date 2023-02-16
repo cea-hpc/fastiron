@@ -1,5 +1,7 @@
 use super::mc_location::MCLocation;
 
+/// Enum used to categorize the event a particle
+/// undergo when reaching a given facet.
 #[derive(Debug)]
 pub enum MCSubfacetAdjacencyEvent {
     AdjacencyUndefined,
@@ -9,6 +11,7 @@ pub enum MCSubfacetAdjacencyEvent {
     TransitOffProcessor,
 }
 
+/// Sub-structure for adjacent facet representation.
 #[derive(Debug)]
 pub struct SubfacetAdjacency {
     event: MCSubfacetAdjacencyEvent,
@@ -19,6 +22,7 @@ pub struct SubfacetAdjacency {
     neighbor_foreman: usize,
 }
 
+/// Structure for adjacent facet representation
 #[derive(Debug)]
 pub struct MCFacetAdjacency {
     subfacet: SubfacetAdjacency,
@@ -26,6 +30,7 @@ pub struct MCFacetAdjacency {
     point: [u32; 3],
 }
 
+/// Structure encompassing all adjacent facet to a cell.
 #[derive(Debug)]
 pub struct MCFacetAdjacencyCell {
     facet: Vec<MCFacetAdjacency>,

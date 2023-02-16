@@ -1,6 +1,7 @@
 use crate::energy_spectrum::EnergySpectrum;
 
 /// Enum representing a tally event.
+#[derive(Debug)]
 pub enum MCTallyEvent {
     Collision,
     FacetCrossingTransitExit,

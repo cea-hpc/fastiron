@@ -18,4 +18,5 @@ pub struct MCGeneralPlane {
 ///     int _size;
 /// };
 /// ```
+/// Other structures have had a similar change in this port.
 pub type MCFacetGeometryCell = Vec<MCGeneralPlane>;
