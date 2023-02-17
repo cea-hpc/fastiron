@@ -1,8 +1,10 @@
+use std::fmt::Display;
+
 use num::Float;
 
 use crate::{direction_cosine::DirectionCosine, tallies::MCTallyEvent};
 
-use super::mc_vector::MCVector;
+use super::{mc_base_particle::MCBaseParticle, mc_location::MCLocation, mc_vector::MCVector};
 
 /// Structure used to represent a particle.
 #[derive(Debug)]
@@ -55,4 +57,42 @@ pub struct MCParticle<T: Float> {
     pub facet: u32,
     /// When crossing a facet, keep the surface normal dot product
     pub normal_dot: T,
+}
+
+impl<T: Float> MCParticle<T> {
+    pub fn new(from_particle: &MCBaseParticle<T>) -> Self {
+        todo!()
+    }
+
+    pub fn get_location(&self) -> MCLocation {
+        todo!()
+    }
+
+    // Not implementing this one beforehand, will do when necessary
+    // pub fn copy_particle_to_string(&self) -> String {
+    //    todo!()
+    //}
+
+    /// Update the particle's field to model its movement along the specified
+    /// direction and distance
+    pub fn move_particle(&self, direction_cosine: &DirectionCosine<T>, distance: T) {
+        todo!()
+    }
+
+    /// May be removed in favor to direct access; depends on the "reference need"
+    pub fn get_direction_cosine(&self) -> &DirectionCosine<T> {
+        todo!()
+    }
+
+    /// May be removed in favor to direct access; depends on the "reference need"
+    pub fn get_velocity(&self) -> &MCVector<T> {
+        todo!()
+    }
+}
+
+// replaces original method `PrintParticle`
+impl<T: Float> Display for MCParticle<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
 }

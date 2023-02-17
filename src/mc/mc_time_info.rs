@@ -10,3 +10,9 @@ pub struct MCTimeInfo<T: Float> {
     pub time: T,
     pub time_step: T,
 }
+
+impl<T: Float> Default for MCTimeInfo<T> {
+    fn default() -> Self {
+        todo!()
+    }
+}

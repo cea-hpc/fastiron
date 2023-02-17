@@ -4,7 +4,7 @@ use num::Float;
 
 use crate::tallies::MCTallyEvent;
 
-use super::{mc_vector::MCVector, mc_particle::MCParticle, mc_location::MCLocation};
+use super::{mc_location::MCLocation, mc_particle::MCParticle, mc_vector::MCVector};
 
 /// Structure used to represent a base particle, i.e. a fresh
 /// particle with no direction.
@@ -50,7 +50,7 @@ pub struct MCBaseParticle<T: Float> {
 }
 
 impl<T: Float> MCBaseParticle<T> {
-    /// Constructor from a [MCParticle] object. To construct from a 
+    /// Constructor from a [MCParticle] object. To construct from a
     /// [MCBaseParticle] object, [Clone] will be implemented.
     pub fn new(particle: &MCParticle<T>) -> Self {
         todo!()
@@ -61,7 +61,7 @@ impl<T: Float> MCBaseParticle<T> {
         todo!()
     }
 
-    /// Invalidate a Particle; This is done by setting its type as UNKNOWN; 
+    /// Invalidate a Particle; This is done by setting its type as UNKNOWN;
     /// The function will fail if it is already set as UNKNOWN.
     pub fn invalidate(&mut self) -> Result<(), Error> {
         todo!()
@@ -78,7 +78,7 @@ impl<T: Float> MCBaseParticle<T> {
     }
 
     // Not implementing this one beforehand, will do when necessary
-    //pub fn to_string(&self) -> String {
+    // pub fn copy_particle_to_string(&self) -> String {
     //    todo!()
     //}
 
