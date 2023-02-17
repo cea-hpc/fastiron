@@ -18,19 +18,32 @@ pub type Fluence = Vec<FluenceDomain>;
 /// Structure used to regulate the number of event in the simulation.
 #[derive(Debug)]
 pub struct Balance {
-    pub absorb: u64,       // Number of particles absorbed
-    pub census: u64,       // Number of particles that enter census
-    pub escape: u64,       // Number of particles that escape
-    pub collision: u64,    // Number of collisions
-    pub end: u64,          // Number of particles at end of cycle
-    pub fission: u64,      // Number of fission events
-    pub produce: u64,      // Number of particles created by collisions
-    pub scatter: u64,      // Number of scatters
-    pub start: u64,        // Number of particles at beginning of cycle
-    pub source: u64,       // Number of particles sourced in
-    pub rr: u64,           // Number of particles Russian Rouletted in population control
-    pub split: u64,        // Number of particles split in population control
-    pub num_segments: u64, // Number of segements
+    /// Number of particles absorbed
+    pub absorb: u64,
+    /// Number of particles that enter census
+    pub census: u64,
+    /// Number of particles that escape
+    pub escape: u64,
+    /// Number of collisions
+    pub collision: u64,
+    /// Number of particles at end of cycle
+    pub end: u64,
+    /// Number of fission events
+    pub fission: u64,
+    /// Number of particles created by collisions
+    pub produce: u64,
+    /// Number of scatters
+    pub scatter: u64,
+    /// Number of particles at beginning of cycle
+    pub start: u64,
+    /// Number of particles sourced in
+    pub source: u64,
+    /// Number of particles Russian Rouletted in population control
+    pub rr: u64,
+    /// Number of particles split in population control
+    pub split: u64,
+    /// Number of segements
+    pub num_segments: u64,
 }
 
 /// May need to change it to a full-fledged structure later.

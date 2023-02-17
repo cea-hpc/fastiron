@@ -14,25 +14,25 @@ pub enum MCSubfacetAdjacencyEvent {
 /// Sub-structure for adjacent facet representation.
 #[derive(Debug)]
 pub struct SubfacetAdjacency {
-    event: MCSubfacetAdjacencyEvent,
-    current: MCLocation,
-    adjacent: MCLocation,
-    neighbor_index: usize,
-    neighbor_global_domain: usize,
-    neighbor_foreman: usize,
+    pub event: MCSubfacetAdjacencyEvent,
+    pub current: MCLocation,
+    pub adjacent: MCLocation,
+    pub neighbor_index: usize,
+    pub neighbor_global_domain: usize,
+    pub neighbor_foreman: usize,
 }
 
 /// Structure for adjacent facet representation
 #[derive(Debug)]
 pub struct MCFacetAdjacency {
-    subfacet: SubfacetAdjacency,
-    num_points: u32,
-    point: [u32; 3],
+    pub subfacet: SubfacetAdjacency,
+    pub num_points: u32,
+    pub point: [u32; 3],
 }
 
 /// Structure encompassing all adjacent facet to a cell.
 #[derive(Debug)]
 pub struct MCFacetAdjacencyCell {
-    facet: Vec<MCFacetAdjacency>,
-    point: Vec<u32>,
+    pub facet: Vec<MCFacetAdjacency>,
+    pub point: Vec<u32>,
 }

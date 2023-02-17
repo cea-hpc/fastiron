@@ -9,6 +9,8 @@ pub enum ReactionType {
 }
 
 /// Structure used to represent a polynomial function.
+/// Private field represent the coefficient, `aa`
+/// corresponding to `x^4`, `ee` to `x^0`.
 #[derive(Debug)]
 pub struct Polynomial {
     aa: f64,
