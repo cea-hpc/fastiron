@@ -1,32 +1,34 @@
+use num::Float;
+
 use crate::{direction_cosine::DirectionCosine, tallies::MCTallyEvent};
 
 use super::mc_vector::MCVector;
 
 /// Structure used to represent a particle.
 #[derive(Debug)]
-pub struct MCParticle {
+pub struct MCParticle<T: Float> {
     /// Current position
-    pub coordinate: MCVector,
+    pub coordinate: MCVector<T>,
     /// Current velocity
-    pub velocity: MCVector,
+    pub velocity: MCVector<T>,
     /// Direction of the particle
-    pub direction_cosine: DirectionCosine,
+    pub direction_cosine: DirectionCosine<T>,
     /// Kinetic energy
-    pub kinetic_energy: f64,
+    pub kinetic_energy: T,
     /// Weight
-    pub weight: f64,
+    pub weight: T,
     /// Time remaining before this particle hit census
-    pub time_to_census: f64,
+    pub time_to_census: T,
     /// Cache-ing the current total cross section
-    pub total_cross_section: f64,
+    pub total_cross_section: T,
     /// Age
-    pub age: f64,
+    pub age: T,
     /// Number of mean free paths to a collision (should be an integer?)
-    pub num_mean_free_paths: f64,
+    pub num_mean_free_paths: T,
     /// Distance to a collision
-    pub mean_free_path: f64,
+    pub mean_free_path: T,
     /// Distance this particle travels in a segment
-    pub segment_path_length: f64,
+    pub segment_path_length: T,
     /// Random number seed for the rng for this particle
     pub random_number_seed: u64,
     /// Unique ID used to identify and track individual particles (should be usize?)
@@ -52,5 +54,5 @@ pub struct MCParticle {
     /// Facet to be crossed? (should be usize?)
     pub facet: u32,
     /// When crossing a facet, keep the surface normal dot product
-    pub normal_dot: f64,
+    pub normal_dot: T,
 }

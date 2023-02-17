@@ -1,15 +1,17 @@
+use num::Float;
+
 /// Structure used to represent a cell's state, i.e.
 /// properties relevant to the simulation.
 #[derive(Debug)]
-pub struct MCCellState {
+pub struct MCCellState<T: Float> {
     /// Global id of the material (should be usize?)
     pub material: u32,
     /// Energy groups
-    pub total: Vec<f64>,
+    pub total: Vec<T>,
     /// Cell volume
-    pub volume: f64,
+    pub volume: T,
     /// ?
-    pub cell_number_density: f64,
+    pub cell_number_density: T,
     /// Cell identifier
     pub id: usize,
     /// ?

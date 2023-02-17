@@ -1,3 +1,5 @@
+use num::Float;
+
 use crate::material_database::MaterialDatabase;
 use crate::mc::{
     mc_domain::MCDomain, mc_fast_timer::MCFastTimer, mc_particle_buffer::MCParticleBuffer,
@@ -9,15 +11,15 @@ use crate::particle_vault_container::ParticleVaultContainer;
 use crate::tallies::Tallies;
 
 #[derive(Debug)]
-pub struct MonteCarlo {
-    pub domain: Vec<MCDomain>,
+pub struct MonteCarlo<T: Float> {
+    pub domain: Vec<MCDomain<T>>,
 
     pub params: Parameters,
     pub nuclear_data: NuclearData,
-    pub particle_vault_container: ParticleVaultContainer,
+    pub particle_vault_container: ParticleVaultContainer<T>,
     pub material_database: MaterialDatabase,
-    pub tallies: Tallies,
-    pub time_info: MCTimeInfo,
+    pub tallies: Tallies<T>,
+    pub time_info: MCTimeInfo<T>,
     pub fast_timer: MCFastTimer,
     pub processor_info: MCProcessorInfo,
     pub particle_buffer: MCParticleBuffer,
@@ -25,14 +27,14 @@ pub struct MonteCarlo {
     pub source_particle_weight: f64,
 }
 
-impl MonteCarlo {
+impl<T: Float> MonteCarlo<T> {
     /// Constructor
     pub fn new(params: &Parameters) -> Self {
         todo!()
     }
 }
 
-impl MonteCarlo {
+impl<T: Float> MonteCarlo<T> {
     /// Clear the cross section cache for each domain.
     pub fn clear_cross_section_cache(&mut self) {
         todo!()

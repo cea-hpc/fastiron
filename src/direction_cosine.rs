@@ -1,6 +1,8 @@
+use num::Float;
+
 #[derive(Debug, Clone)]
-pub struct DirectionCosine {
-    pub alpha: f64,
-    pub beta: f64,
-    pub gamma: f64,
+pub struct DirectionCosine<T: Float> {
+    pub alpha: T,
+    pub beta: T,
+    pub gamma: T,
 }

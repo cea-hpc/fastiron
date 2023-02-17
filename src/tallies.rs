@@ -1,3 +1,5 @@
+use num::Float;
+
 use crate::{
     bulk_storage::BulkStorage, energy_spectrum::EnergySpectrum, mc::mc_domain::MCDomain,
     montecarlo::MonteCarlo,
@@ -16,7 +18,7 @@ pub enum MCTallyEvent {
 }
 
 /// May need to change it to a full-fledged structure later.
-pub type Fluence = Vec<FluenceDomain>;
+pub type Fluence<T: Float> = Vec<FluenceDomain<T>>;
 
 /// Structure used to regulate the number of event in the simulation.
 #[derive(Debug)]
@@ -62,17 +64,17 @@ impl Balance {
 }
 
 /// May need to change it to a full-fledged structure later.
-type ScalarFluxCell = Vec<f64>;
+type ScalarFluxCell<T: Float> = Vec<T>;
 
 /// ?
 #[derive(Debug)]
-pub struct CellTallyTask {
-    pub cell: Vec<f64>,
+pub struct CellTallyTask<T: Float> {
+    pub cell: Vec<T>,
 }
 
-impl CellTallyTask {
+impl<T: Float> CellTallyTask<T> {
     /// Constructor
-    pub fn new(domain: &MCDomain) -> Self {
+    pub fn new(domain: &MCDomain<T>) -> Self {
         todo!()
     }
 
@@ -82,21 +84,21 @@ impl CellTallyTask {
     }
 
     /// Add another [CellTallyTask]'s value to its own. Replace by an overload?
-    pub fn add(&mut self, cell_tally_task: &CellTallyTask) {
+    pub fn add(&mut self, cell_tally_task: &CellTallyTask<T>) {
         todo!()
     }
 }
 
 /// ?
 #[derive(Debug)]
-pub struct ScalarFluxTask {
-    pub cell: Vec<ScalarFluxCell>,
-    pub scalar_flux_cell_storage: BulkStorage<f64>,
+pub struct ScalarFluxTask<T: Float> {
+    pub cell: Vec<ScalarFluxCell<T>>,
+    pub scalar_flux_cell_storage: BulkStorage<T>,
 }
 
-impl ScalarFluxTask {
+impl<T: Float> ScalarFluxTask<T> {
     /// Constructor
-    pub fn new(domain: &MCDomain, num_groups: u32) -> Self {
+    pub fn new(domain: &MCDomain<T>, num_groups: u32) -> Self {
         todo!()
     }
 
@@ -106,49 +108,49 @@ impl ScalarFluxTask {
     }
 
     /// Add another [ScalarFluxTask]'s value to its own. Replace by an overload?
-    pub fn add(&mut self, scalar_flux_task: &ScalarFluxTask) {
+    pub fn add(&mut self, scalar_flux_task: &ScalarFluxTask<T>) {
         todo!()
     }
 }
 
 /// ?
 #[derive(Debug)]
-pub struct CellTallyDomain {
-    pub task: Vec<CellTallyTask>,
+pub struct CellTallyDomain<T: Float> {
+    pub task: Vec<CellTallyTask<T>>,
 }
 
-impl CellTallyDomain {
+impl<T: Float> CellTallyDomain<T> {
     /// Constructor
-    pub fn new(domain: &MCDomain, cell_tally_replications: u32) -> Self {
+    pub fn new(domain: &MCDomain<T>, cell_tally_replications: u32) -> Self {
         todo!()
     }
 }
 
 /// ?
 #[derive(Debug)]
-pub struct ScalarFluxDomain {
-    pub task: Vec<ScalarFluxTask>,
+pub struct ScalarFluxDomain<T: Float> {
+    pub task: Vec<ScalarFluxTask<T>>,
 }
 
-impl ScalarFluxDomain {
+impl<T: Float> ScalarFluxDomain<T> {
     // Constructor
-    pub fn new(domain: &MCDomain, num_groups: u32, flux_replications: u32) -> Self {
+    pub fn new(domain: &MCDomain<T>, num_groups: u32, flux_replications: u32) -> Self {
         todo!()
     }
 }
 
 /// ?
 #[derive(Debug)]
-pub struct FluenceDomain {
-    pub cell: Vec<f64>,
+pub struct FluenceDomain<T: Float> {
+    pub cell: Vec<T>,
 }
 
-impl FluenceDomain {
-    pub fn add_cell(&mut self, index: usize, val: f64) {
+impl<T: Float> FluenceDomain<T> {
+    pub fn add_cell(&mut self, index: usize, val: T) {
         todo!()
     }
 
-    pub fn get_cell(&self, index: usize) -> f64 {
+    pub fn get_cell(&self, index: usize) -> T {
         todo!()
     }
 
@@ -159,18 +161,18 @@ impl FluenceDomain {
 
 /// Structure used as tallies.
 #[derive(Debug)]
-pub struct Tallies {
+pub struct Tallies<T: Float> {
     pub balance_cumulative: Balance,
     pub balance_task: Vec<Balance>,
-    pub scalar_flux_domain: Vec<CellTallyDomain>,
-    pub fluence: Fluence,
-    pub spectrum: EnergySpectrum,
+    pub scalar_flux_domain: Vec<CellTallyDomain<T>>,
+    pub fluence: Fluence<T>,
+    pub spectrum: EnergySpectrum<T>,
     num_balance_replications: u32,
     num_flux_replications: u32,
     num_cell_tally_replications: u32,
 }
 
-impl Tallies {
+impl<T: Float> Tallies<T> {
     /// Constructor.
     pub fn new(
         bal_rep: u32,
@@ -197,7 +199,7 @@ impl Tallies {
 
     pub fn initialize_tallies(
         &mut self,
-        monte_carlo: &MonteCarlo,
+        monte_carlo: &MonteCarlo<T>,
         balance_replications: u32,
         flux_replications: u32,
         cell_replications: u32,
@@ -205,7 +207,7 @@ impl Tallies {
         todo!()
     }
 
-    pub fn cycle_initialize(&mut self, mcco: &MonteCarlo) {
+    pub fn cycle_initialize(&mut self, mcco: &MonteCarlo<T>) {
         todo!()
     }
 
@@ -213,17 +215,17 @@ impl Tallies {
         todo!()
     }
 
-    pub fn cycle_finalize(&mut self, mcco: &MonteCarlo) {
+    pub fn cycle_finalize(&mut self, mcco: &MonteCarlo<T>) {
         todo!()
     }
 
-    pub fn print_summary(&self, mcco: &MonteCarlo) {
+    pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
         todo!()
     }
 
     pub fn tally_scalar_flux(
         &mut self,
-        value: f64,
+        value: T,
         domain: usize,
         task: usize,
         cell: usize,
@@ -232,11 +234,11 @@ impl Tallies {
         todo!()
     }
 
-    pub fn tally_cell_value(&mut self, value: f64, domain: usize, task: usize, cell: usize) {
+    pub fn tally_cell_value(&mut self, value: T, domain: usize, task: usize, cell: usize) {
         todo!()
     }
 
-    pub fn scalar_flux_sum(mcco: &MonteCarlo) -> f64 {
+    pub fn scalar_flux_sum(mcco: &MonteCarlo<T>) -> T {
         todo!()
     }
 }

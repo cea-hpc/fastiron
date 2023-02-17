@@ -1,3 +1,5 @@
+use num::Float;
+
 use crate::tallies::MCTallyEvent;
 
 use super::mc_vector::MCVector;
@@ -5,23 +7,23 @@ use super::mc_vector::MCVector;
 /// Structure used to represent a base particle, i.e. a fresh
 /// particle with no direction.
 #[derive(Debug)]
-pub struct MCBaseParticle {
+pub struct MCBaseParticle<T: Float> {
     /// Current position
-    pub coordinate: MCVector,
+    pub coordinate: MCVector<T>,
     /// Current velocity
-    pub velocity: MCVector,
+    pub velocity: MCVector<T>,
     /// Kinetic energy
-    pub kinetic_energy: f64,
+    pub kinetic_energy: T,
     /// Weight
-    pub weight: f64,
+    pub weight: T,
     /// Time remaining before this particle hit census
-    pub time_to_census: f64,
+    pub time_to_census: T,
     /// Age
-    pub age: f64,
+    pub age: T,
     /// Number of mean free paths to a collision (should be an integer?)
-    pub num_mean_free_paths: f64,
+    pub num_mean_free_paths: T,
     /// Number of segments the particle travelled?
-    pub num_segments: f64,
+    pub num_segments: T,
 
     /// Random number seed for the rng for this particle
     pub random_number_seed: u64,

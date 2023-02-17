@@ -1,10 +1,9 @@
+use num::Float;
+
 use crate::{
-    bulk_storage::BulkStorage,
-    decomposition_object::DecompositionObject,
-    global_fcc_grid::GlobalFccGrid,
-    material_database::{self, MaterialDatabase},
-    mesh_partition::{self, MeshPartition},
-    parameters::Parameters,
+    bulk_storage::BulkStorage, decomposition_object::DecompositionObject,
+    global_fcc_grid::GlobalFccGrid, material_database::MaterialDatabase,
+    mesh_partition::MeshPartition, parameters::Parameters,
 };
 
 use super::{
@@ -16,22 +15,22 @@ use super::{
 
 /// Structure that manages a data set on a mesh_like geometry
 #[derive(Debug)]
-pub struct MCMeshDomain {
+pub struct MCMeshDomain<T: Float> {
     pub domain_gid: usize,
 
     pub nbr_domain_gid: Vec<usize>, // maybe not usize
     pub nbr_rank: Vec<usize>,       // maybe not usize
 
-    pub node: Vec<MCVector>,
+    pub node: Vec<MCVector<T>>,
     pub cell_connectivity: Vec<MCFacetAdjacency>,
 
-    pub cell_geometry: Vec<MCFacetGeometryCell>,
+    pub cell_geometry: Vec<MCFacetGeometryCell<T>>,
     pub connectivity_facet_storage: BulkStorage<MCFacetAdjacency>,
     pub connectivity_point_storage: BulkStorage<i32>,
-    pub geom_facet_storage: BulkStorage<MCGeneralPlane>,
+    pub geom_facet_storage: BulkStorage<MCGeneralPlane<T>>,
 }
 
-impl MCMeshDomain {
+impl<T: Float> MCMeshDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition,
@@ -45,15 +44,15 @@ impl MCMeshDomain {
 
 /// Structure used to manage a region on a domain
 #[derive(Debug)]
-pub struct MCDomain {
+pub struct MCDomain<T: Float> {
     // pub domain_index: usize, // unused?
     pub global_domain: usize,
-    pub cell_state: Vec<MCCellState>,
+    pub cell_state: Vec<MCCellState<T>>,
     pub cached_cross_section_storage: BulkStorage<f64>,
-    pub mesh: MCMeshDomain,
+    pub mesh: MCMeshDomain<T>,
 }
 
-impl MCDomain {
+impl<T: Float> MCDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition,
@@ -66,7 +65,5 @@ impl MCDomain {
         todo!()
     }
 
-    pub fn clear_cross_section_cache(num_energy_groups: u32) {
-
-    }
+    pub fn clear_cross_section_cache(num_energy_groups: u32) {}
 }
