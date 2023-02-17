@@ -1,8 +1,12 @@
+pub mod bulk_storage;
+pub mod decomposition_object;
 pub mod direction_cosine;
 pub mod energy_spectrum;
+pub mod global_fcc_grid;
 pub mod io_utils;
 pub mod material_database;
 pub mod mc;
+pub mod mesh_partition;
 pub mod montecarlo;
 pub mod nuclear_data;
 pub mod parameters;
@@ -10,4 +14,3 @@ pub mod particle_vault;
 pub mod particle_vault_container;
 pub mod send_queue;
 pub mod tallies;
-pub mod bulk_storage;

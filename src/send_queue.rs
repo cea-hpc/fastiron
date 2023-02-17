@@ -43,7 +43,5 @@ impl SendQueue {
     }
 
     /// Clear the queue.
-    fn clear(&mut self) {
-
-    }
+    fn clear(&mut self) {}
 }

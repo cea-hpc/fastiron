@@ -1,6 +1,7 @@
-use std::cell::Cell;
-
-use crate::{energy_spectrum::EnergySpectrum, bulk_storage::BulkStorage, mc::mc_domain::MCDomain, montecarlo::MonteCarlo};
+use crate::{
+    bulk_storage::BulkStorage, energy_spectrum::EnergySpectrum, mc::mc_domain::MCDomain,
+    montecarlo::MonteCarlo,
+};
 
 /// Enum representing a tally event.
 #[derive(Debug)]
@@ -54,7 +55,7 @@ impl Balance {
         todo!()
     }
 
-    /// Add another [Balance]'s value to its own. Replace by an overload? 
+    /// Add another [Balance]'s value to its own. Replace by an overload?
     pub fn add(&mut self, bal: &Balance) {
         todo!()
     }
@@ -79,8 +80,8 @@ impl CellTallyTask {
     pub fn reset(&mut self) {
         todo!()
     }
-    
-    /// Add another [CellTallyTask]'s value to its own. Replace by an overload? 
+
+    /// Add another [CellTallyTask]'s value to its own. Replace by an overload?
     pub fn add(&mut self, cell_tally_task: &CellTallyTask) {
         todo!()
     }
@@ -104,7 +105,7 @@ impl ScalarFluxTask {
         todo!()
     }
 
-    /// Add another [ScalarFluxTask]'s value to its own. Replace by an overload? 
+    /// Add another [ScalarFluxTask]'s value to its own. Replace by an overload?
     pub fn add(&mut self, scalar_flux_task: &ScalarFluxTask) {
         todo!()
     }
@@ -131,7 +132,7 @@ pub struct ScalarFluxDomain {
 
 impl ScalarFluxDomain {
     // Constructor
-    pub fn new(domain: &MCDomain,num_groups: u32, flux_replications: u32) -> Self {
+    pub fn new(domain: &MCDomain, num_groups: u32, flux_replications: u32) -> Self {
         todo!()
     }
 }
@@ -147,7 +148,7 @@ impl FluenceDomain {
         todo!()
     }
 
-    pub fn get_cell(&self, index:usize) -> f64 {
+    pub fn get_cell(&self, index: usize) -> f64 {
         todo!()
     }
 
@@ -171,7 +172,13 @@ pub struct Tallies {
 
 impl Tallies {
     /// Constructor.
-    pub fn new(bal_rep: u32, flux_rep: u32, cell_rep: u32, spectrum_name: String, spectrum_size: u64) -> Self {
+    pub fn new(
+        bal_rep: u32,
+        flux_rep: u32,
+        cell_rep: u32,
+        spectrum_name: String,
+        spectrum_size: u64,
+    ) -> Self {
         todo!()
     }
 
@@ -188,7 +195,13 @@ impl Tallies {
         todo!()
     }
 
-    pub fn initialize_tallies(&mut self, monte_carlo: &MonteCarlo, balance_replications: u32, flux_replications: u32, cell_replications: u32) {
+    pub fn initialize_tallies(
+        &mut self,
+        monte_carlo: &MonteCarlo,
+        balance_replications: u32,
+        flux_replications: u32,
+        cell_replications: u32,
+    ) {
         todo!()
     }
 
@@ -208,7 +221,14 @@ impl Tallies {
         todo!()
     }
 
-    pub fn tally_scalar_flux(&mut self, value: f64, domain: usize, task: usize, cell: usize, group: usize) {
+    pub fn tally_scalar_flux(
+        &mut self,
+        value: f64,
+        domain: usize,
+        task: usize,
+        cell: usize,
+        group: usize,
+    ) {
         todo!()
     }
 
