@@ -1,4 +1,4 @@
-use crate::energy_spectrum::EnergySpectrum;
+use crate::{energy_spectrum::EnergySpectrum, bulk_storage::BulkStorage};
 
 /// Enum representing a tally event.
 #[derive(Debug)]
@@ -59,7 +59,7 @@ pub struct CellTallyTask {
 #[derive(Debug)]
 pub struct ScalarFluxTask {
     pub cell: Vec<ScalarFluxCell>,
-    //pub scalar_flux_cell_storage: BulkStorage<f64>,
+    pub scalar_flux_cell_storage: BulkStorage<f64>,
 }
 
 /// ?

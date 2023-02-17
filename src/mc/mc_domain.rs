@@ -1,6 +1,8 @@
+use crate::bulk_storage::BulkStorage;
+
 use super::{
     mc_cell_state::MCCellState, mc_facet_adjacency::MCFacetAdjacency,
-    mc_facet_geometry::MCFacetGeometryCell, mc_vector::MCVector,
+    mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane}, mc_vector::MCVector,
 };
 
 /// Structure that manages a data set on a mesh_like geometry
@@ -15,9 +17,9 @@ pub struct MCMeshDomain {
     pub cell_connectivity: Vec<MCFacetAdjacency>,
 
     pub cell_geometry: Vec<MCFacetGeometryCell>,
-    // pub connectivity_facet_storage: BulkStorage<MCFacetAdjacency>,
-    // pub connectivity_point_storage: BulkStorage<some_int>,
-    // pub geom_facet_storage: BulkStorage<MCGeneralPlane>,
+    pub connectivity_facet_storage: BulkStorage<MCFacetAdjacency>,
+    pub connectivity_point_storage: BulkStorage<i32>,
+    pub geom_facet_storage: BulkStorage<MCGeneralPlane>,
 }
 
 /// Structure used to manage a region on a domain
