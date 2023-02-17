@@ -9,7 +9,7 @@ use crate::particle_vault_container::ParticleVaultContainer;
 use crate::tallies::Tallies;
 
 #[derive(Debug)]
-struct MonteCarlo {
+pub struct MonteCarlo {
     pub domain: Vec<MCDomain>,
 
     pub params: Parameters,
