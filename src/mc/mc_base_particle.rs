@@ -1,8 +1,10 @@
+use std::fmt::Error;
+
 use num::Float;
 
 use crate::tallies::MCTallyEvent;
 
-use super::mc_vector::MCVector;
+use super::{mc_vector::MCVector, mc_particle::MCParticle, mc_location::MCLocation};
 
 /// Structure used to represent a base particle, i.e. a fresh
 /// particle with no direction.
@@ -45,4 +47,60 @@ pub struct MCBaseParticle<T: Float> {
     // num_base_ints
     // num_base_floats ?
     // num_base_chars
+}
+
+impl<T: Float> MCBaseParticle<T> {
+    /// Constructor from a [MCParticle] object. To construct from a 
+    /// [MCBaseParticle] object, [Clone] will be implemented.
+    pub fn new(particle: &MCParticle<T>) -> Self {
+        todo!()
+    }
+
+    /// Undefined in original code?
+    pub fn particle_id_number(&self) -> u32 {
+        todo!()
+    }
+
+    /// Invalidate a Particle; This is done by setting its type as UNKNOWN; 
+    /// The function will fail if it is already set as UNKNOWN.
+    pub fn invalidate(&mut self) -> Result<(), Error> {
+        todo!()
+    }
+
+    /// Not implementing this one beforehand, will do when necessary
+    pub fn serialize() {
+        todo!()
+    }
+
+    /// Return the current particle's location.
+    pub fn get_location(&self) -> MCLocation {
+        todo!()
+    }
+
+    // Not implementing this one beforehand, will do when necessary
+    //pub fn to_string(&self) -> String {
+    //    todo!()
+    //}
+
+    pub fn typ(&self) -> u32 {
+        todo!()
+    }
+    pub fn index(&self) -> u32 {
+        todo!()
+    }
+    pub fn is_valid(&self) -> bool {
+        todo!()
+    }
+}
+
+impl<T: Float> Default for MCBaseParticle<T> {
+    fn default() -> Self {
+        todo!()
+    }
+}
+
+impl<T: Float> Clone for MCBaseParticle<T> {
+    fn clone(&self) -> Self {
+        todo!()
+    }
 }

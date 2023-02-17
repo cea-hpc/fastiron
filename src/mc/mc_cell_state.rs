@@ -17,3 +17,9 @@ pub struct MCCellState<T: Float> {
     /// ?
     pub source_tally: usize,
 }
+
+impl<T: Float> Default for MCCellState<T> {
+    fn default() -> Self {
+        todo!()
+    }
+}

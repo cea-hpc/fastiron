@@ -22,6 +22,12 @@ pub struct SubfacetAdjacency {
     pub neighbor_foreman: usize,
 }
 
+impl Default for SubfacetAdjacency {
+    fn default() -> Self {
+        todo!()
+    }
+}
+
 /// Structure for adjacent facet representation
 #[derive(Debug)]
 pub struct MCFacetAdjacency {
@@ -30,9 +36,21 @@ pub struct MCFacetAdjacency {
     pub point: [u32; 3],
 }
 
+impl Default for MCFacetAdjacency {
+    fn default() -> Self {
+        todo!()
+    }
+}
+
 /// Structure encompassing all adjacent facet to a cell.
 #[derive(Debug)]
 pub struct MCFacetAdjacencyCell {
     pub facet: Vec<MCFacetAdjacency>,
     pub point: Vec<u32>,
+}
+
+impl Default for MCFacetAdjacencyCell {
+    fn default() -> Self {
+        todo!()
+    }
 }

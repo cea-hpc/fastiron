@@ -1,5 +1,7 @@
 use num::Float;
 
+use super::mc_vector::MCVector;
+
 /// Structure representing a plane of equation `A*x + B*y + C*z + D = 0`
 /// (A,B,C) is normalized.
 #[derive(Debug)]
@@ -8,6 +10,12 @@ pub struct MCGeneralPlane<T: Float> {
     pub b: T,
     pub c: T,
     pub d: T,
+}
+
+impl<T: Float> MCGeneralPlane<T> {
+    pub fn new(r0: &MCVector<T>, r1: &MCVector<T>, r2: &MCVector<T>) -> Self {
+        todo!()
+    }
 }
 
 /// I think this is supposed to be a list of MCGeneralPlane in QS,
