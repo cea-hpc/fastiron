@@ -26,7 +26,15 @@ struct MonteCarlo {
 }
 
 impl MonteCarlo {
+    /// Constructor
     pub fn new(params: &Parameters) -> Self {
+        todo!()
+    }
+}
+
+impl MonteCarlo {
+    /// Clear the cross section cache for each domain.
+    pub fn clear_cross_section_cache(&mut self) {
         todo!()
     }
 }
