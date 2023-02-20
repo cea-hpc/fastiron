@@ -1,6 +1,7 @@
 use num::Float;
 
 use crate::material_database::MaterialDatabase;
+use crate::mc::mc_fast_timer::MCFastTimerContainer;
 use crate::mc::{
     mc_domain::MCDomain, mc_fast_timer::MCFastTimer, mc_particle_buffer::MCParticleBuffer,
     mc_processor_info::MCProcessorInfo, mc_time_info::MCTimeInfo,
@@ -20,7 +21,7 @@ pub struct MonteCarlo<T: Float> {
     pub material_database: MaterialDatabase<T>,
     pub tallies: Tallies<T>,
     pub time_info: MCTimeInfo<T>,
-    pub fast_timer: MCFastTimer,
+    pub fast_timer: MCFastTimerContainer,
     pub processor_info: MCProcessorInfo,
     pub particle_buffer: MCParticleBuffer,
 
