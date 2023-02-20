@@ -17,31 +17,31 @@ pub struct SendQueue {
 
 impl SendQueue {
     /// Get the total size of the SendQueue.
-    fn size(&self) -> usize {
+    pub fn size(&self) -> usize {
         todo!()
     }
 
     /// Reserve capacity ... Exact behavior TBD
-    fn reserve(&self, size: usize) {
+    pub fn reserve(&self, size: usize) {
         todo!()
     }
 
     /// Get the number of items in SendQueue going to a specific neighbor.
-    fn neighbor_size(&self, index: usize) -> u64 {
+    pub fn neighbor_size(&self, index: usize) -> u64 {
         todo!()
     }
 
     /// Get a [SendQueueTuple] from the SendQueue. `index`is the index
     /// of the desination neighbor i.e. the current process id?
-    fn get_tuple(&self, index: usize) -> SendQueueTuple {
+    pub fn get_tuple(&self, index: usize) -> SendQueueTuple {
         todo!()
     }
 
     /// Add items to the SendQueue ... Exact behavior TBD
-    fn push(&mut self, neighbor: u32, vault_index: usize) {
+    pub fn push(&mut self, neighbor: u32, vault_index: usize) {
         todo!()
     }
 
     /// Clear the queue.
-    fn clear(&mut self) {}
+    pub fn clear(&mut self) {}
 }

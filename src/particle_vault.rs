@@ -9,12 +9,24 @@ pub struct ParticleVault<T: Float> {
 }
 
 impl<T: Float> ParticleVault<T> {
+    pub fn empty(&self) -> bool {
+        self.particles.is_empty()
+    }
+
+    pub fn size(&self) -> usize {
+        self.particles.len()
+    }
+
     pub fn append(vault2: &ParticleVault<T>) {
         todo!()
     }
 
     pub fn collapse(fill_size: usize, vault2: &ParticleVault<T>) {
         todo!()
+    }
+
+    pub fn clear(&mut self) {
+        self.particles.clear();
     }
 
     pub fn push_particle(particle: MCParticle<T>) {
@@ -37,7 +49,7 @@ impl<T: Float> ParticleVault<T> {
         todo!()
     }
 
-    pub fn get_base_particle(particle: MCBaseParticle<T>, index: usize) -> bool {
+    pub fn get_base_particle(&self, index: usize) -> MCBaseParticle<T> {
         todo!()
     }
 

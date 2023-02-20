@@ -23,7 +23,7 @@ pub struct MonteCarlo<T: Float> {
     pub time_info: MCTimeInfo<T>,
     pub fast_timer: MCFastTimerContainer,
     pub processor_info: MCProcessorInfo,
-    pub particle_buffer: MCParticleBuffer,
+    pub particle_buffer: MCParticleBuffer<T>,
 
     pub source_particle_weight: f64,
 }
