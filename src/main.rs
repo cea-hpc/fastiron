@@ -30,8 +30,8 @@ fn main() {
     mc_fast_timer::start(mcco.clone(), Section::Main as usize);
 
     for _ in 0..n_steps {
-        cycle_init(mcco.clone(), load_balance); // put the borrow inside the functions?
-        cycle_tracking(mcco.clone()); // put the borrow inside the functions?
+        cycle_init(mcco.clone(), load_balance);
+        cycle_tracking(mcco.clone());
         cycle_finalize(mcco.clone());
 
         mcco.borrow().fast_timer.last_cycle_report();
