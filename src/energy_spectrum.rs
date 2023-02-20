@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use num::Float;
 
 use crate::montecarlo::MonteCarlo;
@@ -7,7 +9,7 @@ use crate::montecarlo::MonteCarlo;
 /// among energy levels.
 #[derive(Debug)]
 pub struct EnergySpectrum<T: Float> {
-    f_used: T,
+    float_type: PhantomData<T>,
     file_name: String,
     census_energy_spectrum: Vec<u64>,
 }

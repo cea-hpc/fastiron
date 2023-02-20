@@ -15,9 +15,9 @@ pub struct MonteCarlo<T: Float> {
     pub domain: Vec<MCDomain<T>>,
 
     pub params: Parameters,
-    pub nuclear_data: NuclearData,
+    pub nuclear_data: NuclearData<T>,
     pub particle_vault_container: ParticleVaultContainer<T>,
-    pub material_database: MaterialDatabase,
+    pub material_database: MaterialDatabase<T>,
     pub tallies: Tallies<T>,
     pub time_info: MCTimeInfo<T>,
     pub fast_timer: MCFastTimer,

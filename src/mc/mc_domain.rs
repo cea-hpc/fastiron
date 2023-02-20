@@ -33,10 +33,10 @@ pub struct MCMeshDomain<T: Float> {
 impl<T: Float> MCMeshDomain<T> {
     /// Constructor.
     pub fn new(
-        mesh_partition: &MeshPartition,
+        mesh_partition: &MeshPartition<T>,
         grid: &GlobalFccGrid,
         ddc: &DecompositionObject,
-        boundary_condition: &Vec<MCSubfacetAdjacencyEvent>,
+        boundary_condition: &[MCSubfacetAdjacencyEvent],
     ) -> Self {
         todo!()
     }
@@ -55,11 +55,11 @@ pub struct MCDomain<T: Float> {
 impl<T: Float> MCDomain<T> {
     /// Constructor.
     pub fn new(
-        mesh_partition: &MeshPartition,
+        mesh_partition: &MeshPartition<T>,
         grid: &GlobalFccGrid,
         ddc: &DecompositionObject,
         params: &Parameters,
-        material_database: &MaterialDatabase,
+        material_database: &MaterialDatabase<T>,
         num_energy_groups: u32, // maybe usize?
     ) -> Self {
         todo!()
