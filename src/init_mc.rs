@@ -1,6 +1,6 @@
-use crate::{parameters::Parameters, montecarlo::MonteCarlo};
+use crate::{montecarlo::MonteCarlo, parameters::Parameters};
 use num::Float;
 
-pub fn init_mc<T: Float>(params: Parameters) -> MonteCarlo<T> {
+pub fn init_mc<T: Float>(params: &Parameters) -> MonteCarlo<T> {
     todo!()
 }

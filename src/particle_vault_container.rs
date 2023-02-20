@@ -1,6 +1,10 @@
 use num::Float;
 
-use crate::{particle_vault::ParticleVault, send_queue::SendQueue, mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle}};
+use crate::{
+    mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
+    particle_vault::ParticleVault,
+    send_queue::SendQueue,
+};
 
 /// Container for ParticleVaults. Can be used to define chunks
 /// according to the user's specification. These chunks can be used
@@ -46,7 +50,11 @@ impl<T: Float> ParticleVaultContainer<T> {
         todo!()
     }
 
-    pub fn add_processing_particle(&mut self, particle: &MCBaseParticle<T>, fill_vault_index: &usize) {
+    pub fn add_processing_particle(
+        &mut self,
+        particle: &MCBaseParticle<T>,
+        fill_vault_index: &usize,
+    ) {
         todo!()
     }
 

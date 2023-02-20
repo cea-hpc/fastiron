@@ -1,4 +1,4 @@
-use std::{time::Instant};
+use std::time::Instant;
 
 use num::Float;
 
@@ -6,7 +6,7 @@ use crate::montecarlo::MonteCarlo;
 
 #[derive(Debug)]
 pub enum Section {
-    Main=0,
+    Main = 0,
     CycleInit,
     CycleTracking,
     CycleTrackingKernel,
@@ -38,7 +38,7 @@ impl Default for MCFastTimer {
 
 #[derive(Debug)]
 pub struct MCFastTimerContainer {
-    pub timers: [MCFastTimer;7]
+    pub timers: [MCFastTimer; 7],
 }
 
 impl MCFastTimerContainer {
@@ -61,12 +61,12 @@ pub fn start<T: Float>(mcco: &mut MonteCarlo<T>, index: usize) {
 
 pub fn stop<T: Float>(mcco: &mut MonteCarlo<T>, index: usize) {
     mcco.fast_timer.timers[index].end_clock = Instant::now();
-    mcco.fast_timer.timers[index].last_cycle_clock += 
-        mcco.fast_timer.timers[index].end_clock
+    mcco.fast_timer.timers[index].last_cycle_clock += mcco.fast_timer.timers[index]
+        .end_clock
         .duration_since(mcco.fast_timer.timers[index].start_clock)
         .as_micros();
-    mcco.fast_timer.timers[index].cumulative_clock += 
-        mcco.fast_timer.timers[index].end_clock
+    mcco.fast_timer.timers[index].cumulative_clock += mcco.fast_timer.timers[index]
+        .end_clock
         .duration_since(mcco.fast_timer.timers[index].start_clock)
         .as_micros();
     mcco.fast_timer.timers[index].num_calls += 1;

@@ -31,7 +31,13 @@ pub struct NuclearDataReaction<T: Float> {
 }
 
 impl<T: Float> NuclearDataReaction<T> {
-    pub fn new(rtype: ReactionType, nu_bar: T, energies: &[T], polynomial: &Polynomial<T>, reaction_cross_section: T) -> Self {
+    pub fn new(
+        rtype: ReactionType,
+        nu_bar: T,
+        energies: &[T],
+        polynomial: &Polynomial<T>,
+        reaction_cross_section: T,
+    ) -> Self {
         todo!()
     }
 
@@ -39,7 +45,15 @@ impl<T: Float> NuclearDataReaction<T> {
         todo!()
     }
 
-    pub fn sample_collision(incident_energy: T, material_mass: T, energy_out: &T, angle_out: &T, n_out: u32, seed: &u64, max_production_size: u32) {
+    pub fn sample_collision(
+        incident_energy: T,
+        material_mass: T,
+        energy_out: &T,
+        angle_out: &T,
+        n_out: u32,
+        seed: &u64,
+        max_production_size: u32,
+    ) {
         todo!()
     }
 }
@@ -52,7 +66,8 @@ pub struct NuclearDataSpecies<T: Float> {
 }
 
 impl<T: Float> NuclearDataSpecies<T> {
-    pub fn add_reaction(&mut self,
+    pub fn add_reaction(
+        &mut self,
         rtype: ReactionType,
         nu_bar: T,
         energies: &[T],
@@ -110,7 +125,12 @@ impl<T: Float> NuclearData<T> {
         todo!()
     }
 
-    pub fn get_reaction_cross_section(&self, react_index: usize, isotope_index: usize, group: usize) -> T {
+    pub fn get_reaction_cross_section(
+        &self,
+        react_index: usize,
+        isotope_index: usize,
+        group: usize,
+    ) -> T {
         todo!()
     }
 }
