@@ -14,3 +14,4 @@ pub mod particle_vault;
 pub mod particle_vault_container;
 pub mod send_queue;
 pub mod tallies;
+pub mod init_mc;
