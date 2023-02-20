@@ -1,5 +1,6 @@
 pub mod bulk_storage;
 pub mod coral_benchmark_correctness;
+pub mod cycle_tracking;
 pub mod decomposition_object;
 pub mod direction_cosine;
 pub mod energy_spectrum;
@@ -17,4 +18,3 @@ pub mod particle_vault_container;
 pub mod population_control;
 pub mod send_queue;
 pub mod tallies;
-pub mod cycle_tracking;

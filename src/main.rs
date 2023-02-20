@@ -3,7 +3,6 @@ use std::rc::Rc;
 
 use clap::Parser;
 
-use fastiron::{coral_benchmark_correctness, mc};
 use fastiron::cycle_tracking::cycle_tracking_guts;
 use fastiron::init_mc::init_mc;
 use fastiron::io_utils::Cli;
@@ -12,6 +11,7 @@ use fastiron::mc::mc_source_now;
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::get_parameters;
 use fastiron::population_control;
+use fastiron::{coral_benchmark_correctness, mc};
 use num::Float;
 
 fn main() {
@@ -51,13 +51,21 @@ pub fn cycle_init<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, load_balance: bool
 
     // mcco.tallies.cycle_initialize(mcco); // literally an empty function
 
-    mcco.borrow_mut().particle_vault_container
+    mcco.borrow_mut()
+        .particle_vault_container
         .swap_processing_processed_vaults();
-    mcco.borrow_mut().particle_vault_container.collapse_processed();
-    mcco.borrow_mut().particle_vault_container.collapse_processing();
+    mcco.borrow_mut()
+        .particle_vault_container
+        .collapse_processed();
+    mcco.borrow_mut()
+        .particle_vault_container
+        .collapse_processing();
 
-    mcco.borrow_mut().tallies.balance_task[0].start =
-        mcco.borrow().particle_vault_container.processing_vaults.len() as u64;
+    mcco.borrow_mut().tallies.balance_task[0].start = mcco
+        .borrow()
+        .particle_vault_container
+        .processing_vaults
+        .len() as u64;
 
     mcco.borrow_mut().particle_buffer.initialize();
 
@@ -84,20 +92,26 @@ pub fn cycle_tracking<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
             let mut fill_vault: u64 = 0;
 
             for processing_vault_idx in 0..my_particle_vault.processing_vaults.len() {
-
                 // Computing block
                 mc_fast_timer::start(mcco.clone(), Section::CycleTrackingKernel as usize);
 
-                let processed_vault_idx: usize = my_particle_vault.get_first_empty_processed_vault();
+                let processed_vault_idx: usize =
+                    my_particle_vault.get_first_empty_processed_vault();
 
-                let processing_vault = &mut my_particle_vault.processing_vaults[processing_vault_idx];
+                let processing_vault =
+                    &mut my_particle_vault.processing_vaults[processing_vault_idx];
                 let processed_vault = &mut my_particle_vault.processed_vaults[processed_vault_idx];
 
                 let mut num_particles = processing_vault.size();
                 // match ExecPolicy cpu
-                if num_particles!=0 {
+                if num_particles != 0 {
                     for particle_index in 0..num_particles {
-                        cycle_tracking_guts(mcco.clone(), particle_index, processing_vault, processed_vault);
+                        cycle_tracking_guts(
+                            mcco.clone(),
+                            particle_index,
+                            processing_vault,
+                            processed_vault,
+                        );
                     }
                 }
 

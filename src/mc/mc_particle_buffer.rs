@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell};
+use std::{cell::RefCell, rc::Rc};
 
 use num::Float;
 
@@ -7,7 +7,6 @@ use crate::montecarlo::MonteCarlo;
 #[derive(Debug)]
 pub struct MCParticleBuffer<T: Float> {
     pub mcco: Rc<RefCell<MonteCarlo<T>>>,
-
 }
 
 impl<T: Float> MCParticleBuffer<T> {
