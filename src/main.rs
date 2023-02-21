@@ -8,7 +8,7 @@ use fastiron::cycle_tracking::cycle_tracking_guts;
 use fastiron::init_mc::init_mc;
 use fastiron::io_utils::Cli;
 use fastiron::mc::mc_fast_timer::{self, Section};
-use fastiron::mc::mc_source_now;
+use fastiron::mc::mc_utils;
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::get_parameters;
 use fastiron::population_control;
@@ -69,7 +69,7 @@ pub fn cycle_init<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, load_balance: bool
 
     mcco.borrow_mut().particle_buffer.initialize();
 
-    mc_source_now::source_now(mcco.clone());
+    mc_utils::source_now(mcco.clone());
 
     population_control::population_control(mcco.clone(), load_balance);
     population_control::roulette_low_weight_particles(mcco.clone());

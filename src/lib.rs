@@ -20,3 +20,4 @@ pub mod send_queue;
 pub mod tallies;
 pub mod physical_constants;
 pub mod collision_event;
+pub mod macro_cross_section;
