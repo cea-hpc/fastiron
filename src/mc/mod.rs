@@ -12,3 +12,6 @@ pub mod mc_utils;
 pub mod mc_time_info;
 pub mod mc_vector;
 pub mod mc_facet_crossing_event;
+pub mod mc_nearest_facet;
+pub mod mc_segment_outcome;
+pub mod mct;
