@@ -29,4 +29,4 @@ impl<T: Float> MCGeneralPlane<T> {
 /// };
 /// ```
 /// Other structures have had a similar conversion in this port.
-pub type MCFacetGeometryCell<T: Float> = Vec<MCGeneralPlane<T>>;
+pub type MCFacetGeometryCell<T> = Vec<MCGeneralPlane<T>>;

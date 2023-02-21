@@ -79,7 +79,7 @@ impl<T: Float> NuclearDataSpecies<T> {
 }
 
 /// Structure used to store cross sections for a given isotope?
-pub type NuclearDataIsotope<T: Float> = Vec<NuclearDataSpecies<T>>;
+pub type NuclearDataIsotope<T> = Vec<NuclearDataSpecies<T>>;
 
 /// Top level structure used to handle all things related to
 /// nuclear data.

@@ -34,7 +34,7 @@ impl<T: Float> MCMeshDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition<T>,
-        grid: &GlobalFccGrid,
+        grid: &GlobalFccGrid<T>,
         ddc: &DecompositionObject,
         boundary_condition: &[MCSubfacetAdjacencyEvent],
     ) -> Self {
@@ -56,7 +56,7 @@ impl<T: Float> MCDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition<T>,
-        grid: &GlobalFccGrid,
+        grid: &GlobalFccGrid<T>,
         ddc: &DecompositionObject,
         params: &Parameters,
         material_database: &MaterialDatabase<T>,

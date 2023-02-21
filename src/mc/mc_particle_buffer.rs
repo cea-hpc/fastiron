@@ -27,10 +27,6 @@ impl<T: Float> MCParticleBuffer<T> {
         todo!()
     }
 
-    pub fn get_domain_buffer(&self) -> &[MCParticle<T>] {
-        todo!()
-    }
-
     /// Put the given MCParticle in the corresponding buffer. The buffer
     /// indexing is coherent with the neighbor indexing.
     pub fn buffer_particle(&mut self, mcb_particle: MCBaseParticle<T>, buffer_idx: usize) {

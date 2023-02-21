@@ -18,7 +18,7 @@ pub enum MCTallyEvent {
 }
 
 /// May need to change it to a full-fledged structure later.
-pub type Fluence<T: Float> = Vec<FluenceDomain<T>>;
+pub type Fluence<T> = Vec<FluenceDomain<T>>;
 
 /// Structure used to regulate the number of event in the simulation.
 #[derive(Debug)]
@@ -64,7 +64,7 @@ impl Balance {
 }
 
 /// May need to change it to a full-fledged structure later.
-type ScalarFluxCell<T: Float> = Vec<T>;
+type ScalarFluxCell<T> = Vec<T>;
 
 /// ?
 #[derive(Debug)]

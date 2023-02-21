@@ -45,7 +45,7 @@ impl<T: Float> MeshPartition<T> {
         todo!()
     }
 
-    pub fn build_mesh_partition(grid: &GlobalFccGrid, centers: Vec<MCVector<T>>) {
+    pub fn build_mesh_partition(grid: &GlobalFccGrid<T>, centers: Vec<MCVector<T>>) {
         todo!()
     }
 }
