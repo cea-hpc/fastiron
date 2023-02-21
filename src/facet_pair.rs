@@ -1,5 +1,6 @@
 use crate::mc::mc_location::MCLocation;
 
+/// Structure used to pair facet that joins two domains.
 #[derive(Debug)]
 pub struct FacetPair {
     pub domain_gid1: usize,
@@ -13,6 +14,7 @@ pub struct FacetPair {
 }
 
 impl FacetPair {
+    /// Constructor.
     pub fn new(
         domain_gid1: usize,
         loc1: &MCLocation,
