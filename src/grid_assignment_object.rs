@@ -1,8 +1,8 @@
-use std::{collections::VecDeque};
+use std::collections::VecDeque;
 
 use num::Float;
 
-use crate::{mc::mc_vector::MCVector, global_fcc_grid::Tuple};
+use crate::{global_fcc_grid::Tuple, mc::mc_vector::MCVector};
 
 #[derive(Debug)]
 pub struct GridCell {

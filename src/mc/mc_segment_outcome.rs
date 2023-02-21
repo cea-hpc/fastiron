@@ -19,6 +19,10 @@ pub enum MCCollisionEventReturn {
     ContinueCollision,
 }
 
-pub fn outcome<T: Float>(mcco: &MonteCarlo<T>, mc_particle: &MCParticle<T>, flux_tally_idx: &usize) -> MCSegmentOutcome {
+pub fn outcome<T: Float>(
+    mcco: &MonteCarlo<T>,
+    mc_particle: &MCParticle<T>,
+    flux_tally_idx: &usize,
+) -> MCSegmentOutcome {
     todo!()
 }

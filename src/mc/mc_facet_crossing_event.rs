@@ -4,6 +4,11 @@ use crate::{montecarlo::MonteCarlo, particle_vault::ParticleVault, tallies::MCTa
 
 use super::mc_particle::MCParticle;
 
-pub fn event<T: Float>(mc_particle: &MCParticle<T>, mcco: &MonteCarlo<T>, particle_idx: usize, processing_vault: &ParticleVault<T>) -> MCTallyEvent {
+pub fn event<T: Float>(
+    mc_particle: &MCParticle<T>,
+    mcco: &MonteCarlo<T>,
+    particle_idx: usize,
+    processing_vault: &ParticleVault<T>,
+) -> MCTallyEvent {
     todo!()
 }
