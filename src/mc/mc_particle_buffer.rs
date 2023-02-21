@@ -9,6 +9,9 @@ use super::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 #[derive(Debug)]
 pub struct MCPTestDone {}
 
+/// Structure used as a buffer for particles crossing into different domains.
+/// "Useless" in single threaded mode, but will be useful if parallelizing
+/// on space division.
 #[derive(Debug)]
 pub struct MCParticleBuffer<T: Float> {
     /// Reference to the MonteCarlo object for ease of access.
@@ -19,10 +22,12 @@ pub struct MCParticleBuffer<T: Float> {
 }
 
 impl<T: Float> MCParticleBuffer<T> {
+    /// Prepare the buffers for use.
     pub fn initialize(&mut self) {
         todo!()
     }
 
+    /// Check if there are no more particle transfer?
     pub fn test_done_new(&self) -> bool {
         todo!()
     }
@@ -38,5 +43,6 @@ impl<T: Float> MCParticleBuffer<T> {
         todo!()
     }
 
+    /// Clear the buffers
     pub fn clear(&mut self) {}
 }

@@ -60,10 +60,12 @@ pub struct MCParticle<T: Float> {
 }
 
 impl<T: Float> MCParticle<T> {
+    /// Constructor from a [MCBaseParticle] object.
     pub fn new(from_particle: &MCBaseParticle<T>) -> Self {
         todo!()
     }
 
+    /// Returns the location of the particle as a [MCLocation] object.
     pub fn get_location(&self) -> MCLocation {
         todo!()
     }

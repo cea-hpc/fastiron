@@ -38,7 +38,7 @@ pub struct MCBaseParticle<T: Float> {
     pub num_collisions: u32,
     /// Breed of the particle, i.e. how it was produced (should be usize?)
     pub breed: u32,
-    /// Species of the particle (should be usize?)
+    /// Species of the particle (should be usize? changed to enum?)
     pub species: u32,
     /// Current domain in the spatial grid (should be usize?)
     pub domain: u32,
@@ -82,12 +82,15 @@ impl<T: Float> MCBaseParticle<T> {
     //    todo!()
     //}
 
+    /// Returns the integer representing the particle's type.
     pub fn typ(&self) -> u32 {
         todo!()
     }
+    /// ?
     pub fn index(&self) -> u32 {
         todo!()
     }
+    /// Returns true if the particle is valid, false otherwise.
     pub fn is_valid(&self) -> bool {
         todo!()
     }

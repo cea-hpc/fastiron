@@ -4,6 +4,7 @@ use crate::{montecarlo::MonteCarlo, particle_vault::ParticleVault, tallies::MCTa
 
 use super::mc_particle::MCParticle;
 
+/// Computes and transform accordingly a [MCParticle] object crossing a facet.
 pub fn event<T: Float>(
     mc_particle: &MCParticle<T>,
     mcco: &MonteCarlo<T>,

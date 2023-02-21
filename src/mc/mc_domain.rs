@@ -13,20 +13,27 @@ use super::{
     mc_vector::MCVector,
 };
 
-/// Structure that manages a data set on a mesh_like geometry
+/// Structure that manages a data set on a mesh-like geometry
 #[derive(Debug)]
 pub struct MCMeshDomain<T: Float> {
+    /// Global identifier of the domain
     pub domain_gid: usize,
-
+    /// List of domain global identifiers
     pub nbr_domain_gid: Vec<usize>, // maybe not usize
+    /// List of ranks
     pub nbr_rank: Vec<usize>,       // maybe not usize
-
+    /// List of nodes
     pub node: Vec<MCVector<T>>,
+    /// List of connectivity between cells
     pub cell_connectivity: Vec<MCFacetAdjacency>,
-
+    /// List of cells
     pub cell_geometry: Vec<MCFacetGeometryCell<T>>,
+
+    /// Needs replacement
     pub connectivity_facet_storage: BulkStorage<MCFacetAdjacency>,
+    /// Needs replacement
     pub connectivity_point_storage: BulkStorage<i32>,
+    /// Needs replacement
     pub geom_facet_storage: BulkStorage<MCGeneralPlane<T>>,
 }
 
@@ -46,9 +53,13 @@ impl<T: Float> MCMeshDomain<T> {
 #[derive(Debug)]
 pub struct MCDomain<T: Float> {
     // pub domain_index: usize, // unused?
+    /// Global domain number
     pub global_domain: usize,
+    /// List of cells and their state (See [MCCellState] for more)
     pub cell_state: Vec<MCCellState<T>>,
+    /// Needs replacement
     pub cached_cross_section_storage: BulkStorage<f64>,
+    /// Mesh of the domain
     pub mesh: MCMeshDomain<T>,
 }
 
@@ -65,5 +76,6 @@ impl<T: Float> MCDomain<T> {
         todo!()
     }
 
+    /// Clears the cross section cache for future uses.
     pub fn clear_cross_section_cache(num_energy_groups: u32) {}
 }

@@ -4,6 +4,8 @@ use num::Float;
 
 use crate::montecarlo::MonteCarlo;
 
+/// Enum used to identify sections and their corresponding
+/// timers.
 #[derive(Debug)]
 pub enum Section {
     Main = 0,
@@ -15,6 +17,7 @@ pub enum Section {
     CycleFinalize,
 }
 
+/// Structure used to represent a single timer.
 #[derive(Debug)]
 pub struct MCFastTimer {
     pub start_clock: Instant,
@@ -36,6 +39,8 @@ impl Default for MCFastTimer {
     }
 }
 
+/// Structure used as a container for the 7 timers used through
+/// the simulation for performance testing.
 #[derive(Debug)]
 pub struct MCFastTimerContainer {
     pub timers: [MCFastTimer; 7],
