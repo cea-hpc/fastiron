@@ -2,8 +2,8 @@ use num::Float;
 
 use crate::mc::mc_vector::MCVector;
 
-type Tuple = (usize, usize, usize);
-type Tuple4 = (usize, usize, usize, usize);
+pub type Tuple = (usize, usize, usize);
+pub type Tuple4 = (usize, usize, usize, usize);
 
 #[derive(Debug)]
 pub struct GlobalFccGrid<T: Float> {
