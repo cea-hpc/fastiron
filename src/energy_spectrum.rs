@@ -21,7 +21,7 @@ impl<T: Float> EnergySpectrum<T> {
     }
 
     /// Print the spectrum.
-    pub fn print_spectrum(monte_carlo: &MonteCarlo<T>) {
+    pub fn print_spectrum(&self, monte_carlo: &MonteCarlo<T>) {
         todo!()
     }
 }
