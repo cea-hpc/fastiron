@@ -53,7 +53,7 @@ impl<T: Float> ParticleVaultContainer<T> {
     pub fn add_processing_particle(
         &mut self,
         particle: &MCBaseParticle<T>,
-        fill_vault_index: &usize,
+        fill_vault_index: &mut usize,
     ) {
         todo!()
     }

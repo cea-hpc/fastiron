@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use clap::Parser;
 
+use fastiron::coral_benchmark_correctness;
 use fastiron::cycle_tracking::cycle_tracking_guts;
 use fastiron::init_mc::init_mc;
 use fastiron::io_utils::Cli;
@@ -11,7 +12,6 @@ use fastiron::mc::mc_source_now;
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::get_parameters;
 use fastiron::population_control;
-use fastiron::{coral_benchmark_correctness, mc};
 use num::Float;
 
 fn main() {
@@ -86,10 +86,10 @@ pub fn cycle_tracking<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     //
     //
     loop {
-        let mut particle_count: u64 = 0;
+        //let mut particle_count: u64 = 0;
 
         while !done {
-            let mut fill_vault: u64 = 0;
+            let mut fill_vault: usize = 0;
 
             for processing_vault_idx in 0..my_particle_vault.processing_vaults.len() {
                 // Computing block
@@ -102,7 +102,7 @@ pub fn cycle_tracking<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
                     &mut my_particle_vault.processing_vaults[processing_vault_idx];
                 let processed_vault = &mut my_particle_vault.processed_vaults[processed_vault_idx];
 
-                let mut num_particles = processing_vault.size();
+                let num_particles = processing_vault.size();
                 // match ExecPolicy cpu
                 if num_particles != 0 {
                     for particle_index in 0..num_particles {
@@ -115,7 +115,7 @@ pub fn cycle_tracking<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
                     }
                 }
 
-                particle_count += num_particles as u64;
+                //particle_count += num_particles as u64;
 
                 mc_fast_timer::stop(mcco.clone(), Section::CycleTrackingKernel as usize);
 
@@ -128,16 +128,18 @@ pub fn cycle_tracking<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
                     let send_q_t = send_q.get_tuple(idx);
                     let mcb_particle = processing_vault.get_base_particle(idx);
 
-                    //let buffer = mcco.borrow().particle_buffer...
-                    //mcco.borrow().particle_buffer...
+                    mcco.borrow_mut()
+                        .particle_buffer
+                        .buffer_particle(mcb_particle, send_q_t.neighbor as usize);
                 }
 
-                //mcco.borrow().particle_buffer...
                 processing_vault.clear();
                 send_q.clear();
 
                 my_particle_vault.clean_extra_vaults();
-                //mcco.borrow_mut().particle_buffer...
+                mcco.borrow_mut()
+                    .particle_buffer
+                    .read_buffers(&mut fill_vault);
 
                 mc_fast_timer::stop(mcco.clone(), Section::CycleTrackingMPI as usize);
             }
@@ -150,6 +152,9 @@ pub fn cycle_tracking<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
 
             mc_fast_timer::stop(mcco.clone(), Section::CycleTrackingMPI as usize);
         }
+
+        done = mcco.borrow().particle_buffer.test_done_new();
+
         if done {
             break;
         }

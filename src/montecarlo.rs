@@ -3,8 +3,8 @@ use num::Float;
 use crate::material_database::MaterialDatabase;
 use crate::mc::mc_fast_timer::MCFastTimerContainer;
 use crate::mc::{
-    mc_domain::MCDomain, mc_fast_timer::MCFastTimer, mc_particle_buffer::MCParticleBuffer,
-    mc_processor_info::MCProcessorInfo, mc_time_info::MCTimeInfo,
+    mc_domain::MCDomain, mc_particle_buffer::MCParticleBuffer, mc_processor_info::MCProcessorInfo,
+    mc_time_info::MCTimeInfo,
 };
 use crate::nuclear_data::NuclearData;
 use crate::parameters::Parameters;
