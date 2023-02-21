@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+/// Whatever this is
 #[derive(Debug)]
 pub struct BulkStorage<T> {
     bulk_storage: Rc<Vec<T>>,

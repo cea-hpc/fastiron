@@ -21,7 +21,7 @@ pub struct MCMeshDomain<T: Float> {
     /// List of domain global identifiers
     pub nbr_domain_gid: Vec<usize>, // maybe not usize
     /// List of ranks
-    pub nbr_rank: Vec<usize>,       // maybe not usize
+    pub nbr_rank: Vec<usize>, // maybe not usize
     /// List of nodes
     pub node: Vec<MCVector<T>>,
     /// List of connectivity between cells

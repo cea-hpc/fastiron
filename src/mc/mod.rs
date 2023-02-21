@@ -1,5 +1,6 @@
 pub mod mc_base_particle;
 pub mod mc_cell_state;
+pub mod mc_distance_to_facet;
 pub mod mc_domain;
 pub mod mc_facet_adjacency;
 pub mod mc_facet_crossing_event;
@@ -10,10 +11,9 @@ pub mod mc_nearest_facet;
 pub mod mc_particle;
 pub mod mc_particle_buffer;
 pub mod mc_processor_info;
+pub mod mc_rng_state;
 pub mod mc_segment_outcome;
 pub mod mc_time_info;
 pub mod mc_utils;
 pub mod mc_vector;
 pub mod mct;
-pub mod mc_rng_state;
-pub mod mc_distance_to_facet;
