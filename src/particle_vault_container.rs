@@ -30,26 +30,35 @@ pub struct ParticleVaultContainer<T: Float> {
 }
 
 impl<T: Float> ParticleVaultContainer<T> {
+    /// Returns the index of the first empty vault in among the processed vaults.
     pub fn get_first_empty_processed_vault(&self) -> usize {
         todo!()
     }
 
+    /// Returns a reference to the internal [SendQueue] object.
     pub fn get_send_queue(&self) -> &SendQueue {
         todo!()
     }
 
+    /// Collapse the processing vaults in the lowest amount 
+    /// of vaults needed to hold them. Removes excess vaults.
     pub fn collapse_processing(&mut self) {
         todo!()
     }
 
+    /// Collapse the processed vaults in the lowest amount 
+    /// of vaults needed to hold them. Removes excess vaults.
     pub fn collapse_processed(&mut self) {
         todo!()
     }
 
+    /// Swap the processing and processed vault. Useful when finishing
+    /// an iteration and starting the next.
     pub fn swap_processing_processed_vaults(&mut self) {
         todo!()
     }
 
+    /// Add a particle to the specified processing vault.
     pub fn add_processing_particle(
         &mut self,
         particle: &MCBaseParticle<T>,
@@ -58,10 +67,12 @@ impl<T: Float> ParticleVaultContainer<T> {
         todo!()
     }
 
+    /// Add a particle to an extra vault.
     pub fn add_extra_particle(&mut self, particle: &MCParticle<T>) {
         todo!()
     }
 
+    /// Cleans up the extra vaults.
     pub fn clean_extra_vaults(&mut self) {
         todo!()
     }

@@ -398,9 +398,13 @@ impl Default for SimulationParameters {
 /// created, completed and returned by the [get_parameters] method.
 #[derive(Debug, Default)]
 pub struct Parameters {
+    /// Object used to store simulation parameters
     pub simulation_params: SimulationParameters,
+    /// List of geometries. See [GeometryParameters] for more.
     pub geometry_params: Vec<GeometryParameters>,
+    /// Map of materials. See [MaterialParameters] for more.
     pub material_params: HashMap<String, MaterialParameters>,
+    /// Map of cross sections. See [CrossSectionParameters] for more.
     pub cross_section_params: HashMap<String, CrossSectionParameters>,
 }
 

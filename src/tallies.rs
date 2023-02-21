@@ -197,6 +197,7 @@ impl<T: Float> Tallies<T> {
         todo!()
     }
 
+    /// Prepare the tallies for use.
     pub fn initialize_tallies(
         &mut self,
         monte_carlo: &MonteCarlo<T>,
@@ -207,22 +208,29 @@ impl<T: Float> Tallies<T> {
         todo!()
     }
 
+    /* 
     pub fn cycle_initialize(&mut self, mcco: &MonteCarlo<T>) {
         todo!()
     }
+    */
 
+    /// Sums the task-level data. This is used when replications
+    /// is active.
     pub fn sum_tasks(&mut self) {
         todo!()
     }
 
+    /// End-of-simulation routine that updates its own data and other structures'.
     pub fn cycle_finalize(&mut self, mcco: &MonteCarlo<T>) {
         todo!()
     }
 
+    /// Prints summarized data recorded by the tallies.
     pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
         todo!()
     }
 
+    /// Atomic add?
     pub fn tally_scalar_flux(
         &mut self,
         value: T,
@@ -234,10 +242,12 @@ impl<T: Float> Tallies<T> {
         todo!()
     }
 
+    /// Atomic add?
     pub fn tally_cell_value(&mut self, value: T, domain: usize, task: usize, cell: usize) {
         todo!()
     }
 
+    /// Sums above all ?
     pub fn scalar_flux_sum(mcco: &MonteCarlo<T>) -> T {
         todo!()
     }

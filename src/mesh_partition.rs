@@ -6,11 +6,16 @@ use crate::{global_fcc_grid::GlobalFccGrid, mc::mc_vector::MCVector};
 
 type MapType = HashMap<u64, CellInfo>;
 
+/// Structure used to hold cell information.
 #[derive(Debug)]
 pub struct CellInfo {
+    /// Domain global identifier.
     pub domain_gid: usize,
+    /// ?
     pub foreman: usize, // ?
+    /// Domain index?
     pub domain_index: usize,
+    /// Cell index.
     pub cell_index: usize,
 }
 
@@ -20,32 +25,30 @@ impl Default for CellInfo {
     }
 }
 
+/// Structure used to represent the mesh partition of the space.
+/// Holds the different cells' information.
 #[derive(Debug)]
 pub struct MeshPartition<T: Float> {
-    domain_gid: usize,
-    domain_index: usize,
-    foreman: usize,
+    /// Domain global identifier.
+    pub domain_gid: usize,
+    /// Domain index?
+    pub domain_index: usize,
+    /// ?
+    pub foreman: usize,
+    /// Map linking cell global identifier to thair [CellInfo] structure
     pub cell_info_map: MapType,
-    nbr_domains: Vec<usize>,
+    /// ?
+    pub nbr_domains: Vec<usize>,
     float_type: PhantomData<T>,
 }
 
 impl<T: Float> MeshPartition<T> {
-    // Getters
-    pub fn domain_gid(&self) -> &usize {
+    /// Constructor. The structure is NOT ready to be used directly.
+    pub fn new(domain_gid: usize, domain_index: usize, foreman: usize) -> Self {
         todo!()
     }
-    pub fn domain_index(&self) -> &usize {
-        todo!()
-    }
-    pub fn foreman(&self) -> &usize {
-        todo!()
-    }
-    pub fn nbr_domains(&self) -> &Vec<usize> {
-        todo!()
-    }
-
-    pub fn build_mesh_partition(grid: &GlobalFccGrid<T>, centers: Vec<MCVector<T>>) {
+    /// Builds the mesh partition.
+    pub fn build_mesh_partition(&mut self, grid: &GlobalFccGrid<T>, centers: Vec<MCVector<T>>) {
         todo!()
     }
 }
