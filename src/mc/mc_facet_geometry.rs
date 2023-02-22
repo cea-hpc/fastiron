@@ -1,11 +1,21 @@
+use num::Float;
+
+use super::mc_vector::MCVector;
+
 /// Structure representing a plane of equation `A*x + B*y + C*z + D = 0`
 /// (A,B,C) is normalized.
 #[derive(Debug)]
-pub struct MCGeneralPlane {
-    pub a: f64,
-    pub b: f64,
-    pub c: f64,
-    pub d: f64,
+pub struct MCGeneralPlane<T: Float> {
+    pub a: T,
+    pub b: T,
+    pub c: T,
+    pub d: T,
+}
+
+impl<T: Float> MCGeneralPlane<T> {
+    pub fn new(r0: &MCVector<T>, r1: &MCVector<T>, r2: &MCVector<T>) -> Self {
+        todo!()
+    }
 }
 
 /// I think this is supposed to be a list of MCGeneralPlane in QS,
@@ -18,5 +28,5 @@ pub struct MCGeneralPlane {
 ///     int _size;
 /// };
 /// ```
-/// Other structures have had a similar change in this port.
-pub type MCFacetGeometryCell = Vec<MCGeneralPlane>;
+/// Other structures have had a similar conversion in this port.
+pub type MCFacetGeometryCell<T> = Vec<MCGeneralPlane<T>>;

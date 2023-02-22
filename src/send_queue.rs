@@ -5,12 +5,43 @@ use std::collections::VecDeque;
 #[derive(Debug)]
 pub struct SendQueueTuple {
     pub neighbor: u32,
-    pub particle_index: u32, // usize?
+    pub particle_index: usize,
 }
 
-/// Structre used to store particle index and neighbor index
+/// Structure used to store particle index and neighbor index
 /// for particles that hit TransitOffProcessor (See MCSubfacetAdjacencyEvent).
 #[derive(Debug)]
 pub struct SendQueue {
     data: VecDeque<SendQueueTuple>,
+}
+
+impl SendQueue {
+    /// Get the total size of the SendQueue.
+    pub fn size(&self) -> usize {
+        todo!()
+    }
+
+    /// Reserve capacity ... Exact behavior TBD
+    pub fn reserve(&self, size: usize) {
+        todo!()
+    }
+
+    /// Get the number of items in SendQueue going to a specific neighbor.
+    pub fn neighbor_size(&self, index: usize) -> u64 {
+        todo!()
+    }
+
+    /// Get a [SendQueueTuple] from the SendQueue. `index`is the index
+    /// of the desination neighbor i.e. the current process id?
+    pub fn get_tuple(&self, index: usize) -> SendQueueTuple {
+        todo!()
+    }
+
+    /// Add items to the SendQueue ... Exact behavior TBD
+    pub fn push(&mut self, neighbor: u32, vault_index: usize) {
+        todo!()
+    }
+
+    /// Clear the queue.
+    pub fn clear(&mut self) {}
 }
