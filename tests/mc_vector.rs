@@ -1,12 +1,14 @@
 // Testing for correct results
 // Benchmarking is done using criterion
 
-
 // What to look for in those tests: floating-point errors.
 // We might need to use an approximative equality test such as
 // a == b <=> (a-b) < smallnumber
 
 use fastiron::mc::mc_vector::MCVector;
+use num::Float;
+
+// Basic operations
 
 #[test]
 fn add() {
@@ -73,4 +75,33 @@ fn div_assign() {
 fn div_assign_zero() {
     let mut uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
     uu /= 0.0;
+}
+
+// Methods
+
+#[test]
+pub fn length() {
+    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
+    assert_eq!(uu.length(), 3.0.sqrt());
+}
+
+#[test]
+pub fn distance() {
+    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
+    let ww = MCVector {x: 2.0, y: 2.0, z: 2.0};
+    assert_eq!(uu.distance(&ww), 3.0.sqrt());
+}
+
+#[test]
+pub fn dot_product() {
+    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
+    let ww = MCVector {x: 2.0, y: 2.0, z: 2.0};
+    assert_eq!(uu.dot(&ww), 6.0);
+}
+
+#[test]
+pub fn cross_product() {
+    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
+    let ww = MCVector {x: 2.0, y: 2.0, z: 2.0};
+    assert_eq!(uu.cross(&ww), MCVector::default()); // default is the zero element
 }
