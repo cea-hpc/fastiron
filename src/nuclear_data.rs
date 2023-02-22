@@ -47,11 +47,11 @@ impl<T: Float> NuclearDataReaction<T> {
         todo!()
     }
 
-    /// Uses RNG to get new angle and energy after a reaction. This 
-    /// needs to be Rustified right away as this is too C-like. 
+    /// Uses RNG to get new angle and energy after a reaction. This
+    /// needs to be Rustified right away as this is too C-like.
     /// The current function takes to pointer as arguments that act as
-    /// arrays (energy/angle_out), a max length for those arrays (max_...) 
-    /// and a pointer to an integer that gets updated with the actual 
+    /// arrays (energy/angle_out), a max length for those arrays (max_...)
+    /// and a pointer to an integer that gets updated with the actual
     /// length of the arrays (n_out). Change this asap
     pub fn sample_collision(
         incident_energy: T,

@@ -46,7 +46,10 @@ fn main() {
 
 pub fn game_over<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     mcco.borrow().fast_timer.cumulative_report();
-    mcco.borrow().tallies.spectrum.print_spectrum(&mcco.borrow());
+    mcco.borrow()
+        .tallies
+        .spectrum
+        .print_spectrum(&mcco.borrow());
 }
 
 pub fn cycle_init<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, load_balance: bool) {

@@ -9,7 +9,7 @@ pub fn population_control<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, load_balan
     todo!()
 }
 
-/// Play russian-roulette with low-weight particles relative 
+/// Play russian-roulette with low-weight particles relative
 /// to the source particle weight.
 pub fn roulette_low_weight_particles<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     todo!()

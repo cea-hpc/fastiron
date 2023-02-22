@@ -4,7 +4,7 @@ use num::Float;
 
 use crate::{global_fcc_grid::Tuple, mc::mc_vector::MCVector};
 
-/// Internal structure of [GridAssignmentObject]. 
+/// Internal structure of [GridAssignmentObject].
 /// Represents a cell.
 #[derive(Debug)]
 pub struct GridCell {
@@ -72,7 +72,7 @@ impl<T: Float> GridAssignmentObject<T> {
         todo!()
     }
 
-    /// Finds a lower bound of the squared distance from the point 
+    /// Finds a lower bound of the squared distance from the point
     /// r to the cell with index cell_idx.
     fn min_dist2(&self, r: MCVector<T>, cell_idx: usize) -> T {
         todo!()
