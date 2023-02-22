@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// Enum representing a tally event.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum MCTallyEvent {
     Collision,
     FacetCrossingTransitExit,
@@ -15,6 +15,12 @@ pub enum MCTallyEvent {
     FacetCrossingEscape,
     FacetCrossingReflection,
     FacetCrossingCommunication,
+}
+
+impl Default for MCTallyEvent {
+    fn default() -> Self {
+        Self::Census
+    }
 }
 
 /// May need to change it to a full-fledged structure later.

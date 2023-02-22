@@ -10,12 +10,11 @@ pub struct MCVector<T: Float> {
     pub z: T,
 }
 
-impl<T: Float + Debug> MCVector<T> {
+impl<T: Float> MCVector<T> {
     /// Returns true if the vector is almost the zero element. This method is
     /// necessary because of floating-point errors.
     /// NEED TO FIND A WAY TO HARDCODE THE THRESHOLD WITH THE T GENERIC TYPE
     pub fn is_almost_zero(&self, threshold: T) -> bool {
-        println!("{self:?}");
         (self.x.abs() < threshold) & (self.y.abs() < threshold) & (self.z.abs() < threshold)
     }
 
