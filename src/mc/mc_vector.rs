@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use num::{Float, Zero};
 
 /// Custom type for vector representation.
@@ -8,7 +10,21 @@ pub struct MCVector<T: Float> {
     pub z: T,
 }
 
-impl<T: Float> MCVector<T> {
+impl<T: Float + Debug> MCVector<T> {
+    /// Returns true if the vector is almost the zero element. This method is
+    /// necessary because of floating-point errors.
+    /// NEED TO FIND A WAY TO HARDCODE THE THRESHOLD WITH THE T GENERIC TYPE
+    pub fn is_almost_zero(&self, threshold: T) -> bool {
+        println!("{self:?}");
+        (self.x.abs() < threshold) & (self.y.abs() < threshold) & (self.z.abs() < threshold)
+    }
+
+    /// Returns true if the vectors are almost equal. This method is
+    /// necessary because of floating-point errors.
+    pub fn is_almost_equal(&self, vv: &MCVector<T>, threshold: T) -> bool {
+        (*self - *vv).is_almost_zero(threshold)
+    }
+
     /// Return the vector's euclidian norm.
     pub fn length(&self) -> T {
         // using num implem might be the safest since x,y,z are T: Float
@@ -20,7 +36,7 @@ impl<T: Float> MCVector<T> {
     pub fn distance(&self, vv: &MCVector<T>) -> T {
         // distance is the norm of the difference
         // need to test whether this is better/different/worse than a regular computation
-        (self.clone() - vv.clone()).length()
+        (*self - *vv).length()
     }
 
     /// Return the scalar product with the specified vector.
