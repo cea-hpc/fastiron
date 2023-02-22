@@ -12,7 +12,7 @@ impl<T: Float> MCVector<T> {
     /// Return the vector's euclidian norm.
     pub fn length(&self) -> T {
         // using num implem might be the safest since x,y,z are T: Float
-        (self.x*self.x + self.y*self.y + self.z*self.z).sqrt() 
+        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
     /// Return the distance from this vector to another point,
@@ -20,27 +20,31 @@ impl<T: Float> MCVector<T> {
     pub fn distance(&self, vv: &MCVector<T>) -> T {
         // distance is the norm of the difference
         // need to test whether this is better/different/worse than a regular computation
-        (self.clone()-vv.clone()).length()
+        (self.clone() - vv.clone()).length()
     }
 
     /// Return the scalar product with the specified vector.
     pub fn dot(&self, vv: &MCVector<T>) -> T {
-        self.x*vv.x + self.y*vv.y + self.z*vv.z
+        self.x * vv.x + self.y * vv.y + self.z * vv.z
     }
 
     /// Return the vector product with the specified vector.
     pub fn cross(&self, vv: &MCVector<T>) -> MCVector<T> {
-        MCVector { 
-            x: self.y*vv.z - self.z*vv.y, 
-            y: self.z*vv.x - self.x*vv.z, 
-            z: self.x*vv.y - self.y*vv.x,
+        MCVector {
+            x: self.y * vv.z - self.z * vv.y,
+            y: self.z * vv.x - self.x * vv.z,
+            z: self.x * vv.y - self.y * vv.x,
         }
     }
 }
 
 impl<T: Float> Default for MCVector<T> {
     fn default() -> Self {
-        MCVector { x: Zero::zero(), y: Zero::zero(), z: Zero::zero() }
+        MCVector {
+            x: Zero::zero(),
+            y: Zero::zero(),
+            z: Zero::zero(),
+        }
     }
 }
 
@@ -75,9 +79,9 @@ impl<T: Float> core::ops::Mul<T> for MCVector<T> {
     type Output = MCVector<T>;
     fn mul(self, f: T) -> Self::Output {
         MCVector {
-            x: self.x*f,
-            y: self.y*f,
-            z: self.z*f,
+            x: self.x * f,
+            y: self.y * f,
+            z: self.z * f,
         }
     }
 }
@@ -102,9 +106,9 @@ impl<T: Float> core::ops::SubAssign<MCVector<T>> for MCVector<T> {
 
 impl<T: Float> core::ops::MulAssign<T> for MCVector<T> {
     fn mul_assign(&mut self, f: T) {
-        self.x = self.x*f;
-        self.y = self.y*f;
-        self.z = self.z*f;
+        self.x = self.x * f;
+        self.y = self.y * f;
+        self.z = self.z * f;
     }
 }
 
@@ -112,8 +116,8 @@ impl<T: Float> core::ops::DivAssign<T> for MCVector<T> {
     fn div_assign(&mut self, f: T) {
         // cant make *= 1.0/f work :(
         assert!(!f.is_zero());
-        self.x = self.x/f;
-        self.y = self.y/f;
-        self.z = self.z/f;
+        self.x = self.x / f;
+        self.y = self.y / f;
+        self.z = self.z / f;
     }
 }

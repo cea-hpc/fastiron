@@ -2,12 +2,12 @@ use num::Float;
 
 use crate::mc::mc_vector::MCVector;
 
-/// Custom alias for readability. Might change 
-/// name so that it doesn't overlap with the 
+/// Custom alias for readability. Might change
+/// name so that it doesn't overlap with the
 /// primitive.
 pub type Tuple = (usize, usize, usize);
-/// Custom alias for readability. Might change 
-/// name so that it doesn't overlap with the 
+/// Custom alias for readability. Might change
+/// name so that it doesn't overlap with the
 /// primitive.
 pub type Tuple4 = (usize, usize, usize, usize);
 

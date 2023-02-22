@@ -208,7 +208,7 @@ impl<T: Float> Tallies<T> {
         todo!()
     }
 
-    /* 
+    /*
     pub fn cycle_initialize(&mut self, mcco: &MonteCarlo<T>) {
         todo!()
     }

@@ -56,14 +56,13 @@ impl<T: Float> ParticleVault<T> {
         todo!()
     }
 
-
-    /// Get the index corresponding particle from the vault. 
+    /// Get the index corresponding particle from the vault.
     /// Change to return an option/result asap.
     pub fn get_particle(particle: MCParticle<T>, index: usize) -> bool {
         todo!()
     }
 
-    /// Get the index corresponding base particle from the vault. 
+    /// Get the index corresponding base particle from the vault.
     /// Change to return an option/result asap.
     pub fn get_base_particle(&self, index: usize) -> MCBaseParticle<T> {
         todo!()
@@ -84,7 +83,7 @@ impl<T: Float> ParticleVault<T> {
         todo!()
     }
 
-    /// Swaps the particle at the specified index with the last one, 
+    /// Swaps the particle at the specified index with the last one,
     /// delete the last one. This was done by resizing in C++.
     pub fn erase_swap_particles(index: usize) {
         todo!()

@@ -40,13 +40,13 @@ impl<T: Float> ParticleVaultContainer<T> {
         todo!()
     }
 
-    /// Collapse the processing vaults in the lowest amount 
+    /// Collapse the processing vaults in the lowest amount
     /// of vaults needed to hold them. Removes excess vaults.
     pub fn collapse_processing(&mut self) {
         todo!()
     }
 
-    /// Collapse the processed vaults in the lowest amount 
+    /// Collapse the processed vaults in the lowest amount
     /// of vaults needed to hold them. Removes excess vaults.
     pub fn collapse_processed(&mut self) {
         todo!()

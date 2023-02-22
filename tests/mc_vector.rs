@@ -12,60 +12,132 @@ use num::Float;
 
 #[test]
 fn add() {
-    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let vv = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let ww = MCVector {x: 2.0, y: 2.0, z: 2.0};
+    let uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let vv = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let ww = MCVector {
+        x: 2.0,
+        y: 2.0,
+        z: 2.0,
+    };
     assert_eq!(uu + vv, ww);
 }
 
 #[test]
 fn add_assign() {
-    let mut uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let vv = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let ww = MCVector {x: 2.0, y: 2.0, z: 2.0};
+    let mut uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let vv = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let ww = MCVector {
+        x: 2.0,
+        y: 2.0,
+        z: 2.0,
+    };
     uu += vv;
     assert_eq!(uu, ww);
 }
 
 #[test]
 fn sub() {
-    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let vv = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let ww = MCVector {x: 0.0, y: 0.0, z: 0.0};
+    let uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let vv = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let ww = MCVector {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    };
     assert_eq!(uu - vv, ww);
 }
 
 #[test]
 fn sub_assign() {
-    let mut uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let vv = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let ww = MCVector {x: 0.0, y: 0.0, z: 0.0};
+    let mut uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let vv = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let ww = MCVector {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    };
     uu -= vv;
     assert_eq!(uu, ww);
 }
 
 #[test]
 fn mul() {
-    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
+    let uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
     let f = 2.0;
-    let ww = MCVector {x: 2.0, y: 2.0, z: 2.0};
-    assert_eq!(uu*f, ww);
+    let ww = MCVector {
+        x: 2.0,
+        y: 2.0,
+        z: 2.0,
+    };
+    assert_eq!(uu * f, ww);
 }
 
 #[test]
 fn mul_assign() {
-    let mut uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
+    let mut uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
     let f = 2.0;
-    let ww = MCVector {x: 2.0, y: 2.0, z: 2.0};
+    let ww = MCVector {
+        x: 2.0,
+        y: 2.0,
+        z: 2.0,
+    };
     uu *= f;
     assert_eq!(uu, ww);
 }
 
 #[test]
 fn div_assign() {
-    let mut uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
+    let mut uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
     let f = 2.0;
-    let ww = MCVector {x: 0.5, y: 0.5, z: 0.5};
+    let ww = MCVector {
+        x: 0.5,
+        y: 0.5,
+        z: 0.5,
+    };
     uu /= f;
     assert_eq!(uu, ww);
 }
@@ -73,7 +145,11 @@ fn div_assign() {
 #[test]
 #[should_panic]
 fn div_assign_zero() {
-    let mut uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
+    let mut uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
     uu /= 0.0;
 }
 
@@ -81,27 +157,55 @@ fn div_assign_zero() {
 
 #[test]
 pub fn length() {
-    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
+    let uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
     assert_eq!(uu.length(), 3.0.sqrt());
 }
 
 #[test]
 pub fn distance() {
-    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let ww = MCVector {x: 2.0, y: 2.0, z: 2.0};
+    let uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let ww = MCVector {
+        x: 2.0,
+        y: 2.0,
+        z: 2.0,
+    };
     assert_eq!(uu.distance(&ww), 3.0.sqrt());
 }
 
 #[test]
 pub fn dot_product() {
-    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let ww = MCVector {x: 2.0, y: 2.0, z: 2.0};
+    let uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let ww = MCVector {
+        x: 2.0,
+        y: 2.0,
+        z: 2.0,
+    };
     assert_eq!(uu.dot(&ww), 6.0);
 }
 
 #[test]
 pub fn cross_product() {
-    let uu = MCVector {x: 1.0, y: 1.0, z: 1.0};
-    let ww = MCVector {x: 2.0, y: 2.0, z: 2.0};
+    let uu = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let ww = MCVector {
+        x: 2.0,
+        y: 2.0,
+        z: 2.0,
+    };
     assert_eq!(uu.cross(&ww), MCVector::default()); // default is the zero element
 }

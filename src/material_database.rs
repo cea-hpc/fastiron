@@ -58,7 +58,7 @@ impl<T: Float> MaterialDatabase<T> {
         todo!()
     }
 
-    /// Returns the index of the material passed as argument. 
+    /// Returns the index of the material passed as argument.
     /// !!!! Undefined behavior if absent or duplicate !!!!
     pub fn find_material(&self, name: &str) -> usize {
         todo!()
