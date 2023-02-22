@@ -1,7 +1,7 @@
 use num::{Float, Zero};
 
 /// Custom type for vector representation.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct MCVector<T: Float> {
     pub x: T,
     pub y: T,
