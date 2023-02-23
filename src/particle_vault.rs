@@ -3,7 +3,7 @@ use num::Float;
 use crate::mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 
 /// Struture used to group particle in batches.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ParticleVault<T: Float> {
     pub particles: Vec<MCBaseParticle<T>>,
 }
@@ -56,7 +56,7 @@ impl<T: Float> ParticleVault<T> {
     }
 
     /// Put a base particle into the vault.
-    pub fn push_base_partcile(&mut self, particle: MCBaseParticle<T>) {
+    pub fn push_base_particle(&mut self, particle: MCBaseParticle<T>) {
         self.particles.push(particle);
     }
 

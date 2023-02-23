@@ -104,7 +104,7 @@ pub fn cycle_tracking<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
                 mc_fast_timer::start(mcco.clone(), Section::CycleTrackingKernel as usize);
 
                 let processed_vault_idx: usize =
-                    my_particle_vault.get_first_empty_processed_vault();
+                    my_particle_vault.get_first_empty_processed_vault().unwrap();
 
                 let processing_vault =
                     &mut my_particle_vault.processing_vaults[processing_vault_idx];
