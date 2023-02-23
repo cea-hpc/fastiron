@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::AddAssign};
+use std::{fmt::Display};
 
 use num::{zero, Float};
 
@@ -59,7 +59,7 @@ pub struct MCParticle<T: Float> {
     pub normal_dot: T,
 }
 
-impl<T: Float + AddAssign> MCParticle<T> {
+impl<T: Float> MCParticle<T> {
     /// Constructor from a [MCBaseParticle] object.
     pub fn new(from_particle: &MCBaseParticle<T>) -> Self {
         let speed = from_particle.velocity.length();
@@ -114,9 +114,9 @@ impl<T: Float + AddAssign> MCParticle<T> {
     /// Update the particle's field to model its movement along the specified
     /// direction and distance
     pub fn move_particle(&mut self, direction_cosine: &DirectionCosine<T>, distance: T) {
-        self.coordinate.x += direction_cosine.alpha * distance;
-        self.coordinate.y += direction_cosine.beta * distance;
-        self.coordinate.z += direction_cosine.gamma * distance;
+        self.coordinate.x = self.coordinate.x + direction_cosine.alpha * distance;
+        self.coordinate.y = self.coordinate.y + direction_cosine.beta * distance;
+        self.coordinate.z = self.coordinate.z + direction_cosine.gamma * distance;
     }
 }
 

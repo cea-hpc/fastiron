@@ -138,7 +138,7 @@ pub fn cycle_tracking<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
 
                     mcco.borrow_mut()
                         .particle_buffer
-                        .buffer_particle(mcb_particle, send_q_t.neighbor as usize);
+                        .buffer_particle(mcb_particle.unwrap(), send_q_t.neighbor as usize);
                 }
 
                 processing_vault.clear();
