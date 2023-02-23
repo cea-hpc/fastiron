@@ -40,26 +40,26 @@ impl<T: Float> ParticleVaultContainer<T> {
         self.processed_vaults.len()
     }
 
-    /// Returns the processing [ParticleVault] that is currently pointed to 
-    /// by the index. May be able to remove the mutable property depending 
+    /// Returns the processing [ParticleVault] that is currently pointed to
+    /// by the index. May be able to remove the mutable property depending
     /// on usage or even return the object directly.
-    pub fn get_task_processing_vault(&mut self, index: usize) -> &mut ParticleVault<T>{
+    pub fn get_task_processing_vault(&mut self, index: usize) -> &mut ParticleVault<T> {
         &mut self.processing_vaults[index]
     }
 
-    /// Returns the processed [ParticleVault] that is currently pointed to 
-    /// by the index. May be able to remove the mutable property depending 
+    /// Returns the processed [ParticleVault] that is currently pointed to
+    /// by the index. May be able to remove the mutable property depending
     /// on usage or even return the object directly.
-    pub fn get_task_processed_vault(&mut self, index: usize) -> &mut ParticleVault<T>{
+    pub fn get_task_processed_vault(&mut self, index: usize) -> &mut ParticleVault<T> {
         &mut self.processed_vaults[index]
     }
-    
+
     /// Returns the index of the first empty vault in among the processed vaults.
     /// Does the original function even work correctly?
     pub fn get_first_empty_processed_vault(&self) -> Option<usize> {
         for idx in 0..self.processed_vaults.len() {
             if self.processed_vaults[idx].empty() {
-                return Some(idx)
+                return Some(idx);
             }
         }
         None
@@ -74,7 +74,9 @@ impl<T: Float> ParticleVaultContainer<T> {
     pub fn particles_processing_size(&self) -> usize {
         let mut total: usize = 0;
 
-        self.processing_vaults.iter().for_each(|vv| total += vv.size());
+        self.processing_vaults
+            .iter()
+            .for_each(|vv| total += vv.size());
 
         total
     }
@@ -83,7 +85,9 @@ impl<T: Float> ParticleVaultContainer<T> {
     pub fn particles_processed_size(&self) -> usize {
         let mut total: usize = 0;
 
-        self.processed_vaults.iter().for_each(|vv| total += vv.size());
+        self.processed_vaults
+            .iter()
+            .for_each(|vv| total += vv.size());
 
         total
     }
@@ -114,7 +118,7 @@ impl<T: Float> ParticleVaultContainer<T> {
                 let mut from_vault = self.processing_vaults[from_vault_index].clone();
                 self.processing_vaults[fill_vault_index].collapse(fill_size, &mut from_vault);
                 self.processing_vaults[from_vault_index] = from_vault;
-            }   
+            }
         }
     }
 
@@ -135,7 +139,7 @@ impl<T: Float> ParticleVaultContainer<T> {
                 let mut from_vault = self.processed_vaults[from_vault_index].clone();
                 self.processed_vaults[fill_vault_index].collapse(fill_size, &mut from_vault);
                 self.processed_vaults[from_vault_index] = from_vault;
-            }   
+            }
         }
     }
 
@@ -147,16 +151,21 @@ impl<T: Float> ParticleVaultContainer<T> {
         // Particles are all in front of the list
         self.collapse_processed();
 
-        let mut processed_vault:usize = 0;
-        
+        let mut processed_vault: usize = 0;
+
         // while there are processing vaults (not empty since we collapsed them before)
         while processed_vault < self.processed_size() {
-            core::mem::swap(&mut self.processed_vaults[processed_vault], &mut self.processing_vaults[processed_vault]);
+            core::mem::swap(
+                &mut self.processed_vaults[processed_vault],
+                &mut self.processing_vaults[processed_vault],
+            );
             processed_vault += 1;
 
             // no more processing vaults?
             if processed_vault == self.processing_size() {
-                let mut vault: ParticleVault<T> = ParticleVault {particles: Vec::new()};
+                let mut vault: ParticleVault<T> = ParticleVault {
+                    particles: Vec::new(),
+                };
                 vault.reserve(self.vault_size);
                 self.processing_vaults.push(vault);
             }
@@ -169,12 +178,14 @@ impl<T: Float> ParticleVaultContainer<T> {
         particle: MCBaseParticle<T>,
         fill_vault_index: &mut usize,
     ) {
-        while ! self.processing_vaults[*fill_vault_index].size() < self.vault_size {
+        while !self.processing_vaults[*fill_vault_index].size() < self.vault_size {
             *fill_vault_index += 1;
 
             // no more processing vaults?
             if *fill_vault_index == self.processing_size() {
-                let mut vault: ParticleVault<T> = ParticleVault {particles: Vec::new()};
+                let mut vault: ParticleVault<T> = ParticleVault {
+                    particles: Vec::new(),
+                };
                 vault.reserve(self.vault_size);
                 self.processing_vaults.push(vault);
             }
@@ -194,9 +205,13 @@ impl<T: Float> ParticleVaultContainer<T> {
     pub fn clean_extra_vaults(&mut self) {
         let n = self.particles_extra_size();
         if n == 0 {
-            return
+            return;
         }
-        let num_extra = if n%self.vault_size == 0 {n / self.vault_size} else { n/ self.vault_size + 1};
+        let num_extra = if n % self.vault_size == 0 {
+            n / self.vault_size
+        } else {
+            n / self.vault_size + 1
+        };
 
         let mut extra_idx: usize = 0;
         let mut processing_idx: usize = 0;
@@ -205,18 +220,21 @@ impl<T: Float> ParticleVaultContainer<T> {
             if self.extra_vault[extra_idx].size() == 0 {
                 // current extra vault empty
                 extra_idx += 1;
-            } else if processing_idx == self.processing_size() { 
+            } else if processing_idx == self.processing_size() {
                 // no more processing vaults
-                let mut vault: ParticleVault<T> = ParticleVault {particles: Vec::new()};
+                let mut vault: ParticleVault<T> = ParticleVault {
+                    particles: Vec::new(),
+                };
                 vault.reserve(self.vault_size);
                 self.processing_vaults.push(vault);
             } else if self.processing_vaults[processing_idx].size() == self.vault_size {
                 // current processing vault full
-                processing_idx += 1; 
+                processing_idx += 1;
             } else {
                 // we move the particle
                 let fill_size = self.vault_size - self.processing_vaults[processing_idx].size();
-                self.processing_vaults[processing_idx].collapse(fill_size, &mut self.extra_vault[extra_idx]);
+                self.processing_vaults[processing_idx]
+                    .collapse(fill_size, &mut self.extra_vault[extra_idx]);
             }
         }
     }

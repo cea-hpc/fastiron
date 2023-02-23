@@ -37,19 +37,31 @@ impl<T: Float> MCParticleBuffer<T> {
     /// Check if there are no more particle transfer. The exact conditions
     /// to look for might change.
     pub fn test_done_new(&self) -> bool {
-        if (self.mcco.borrow().particle_vault_container.send_queue.size() == 0) 
-        & self.is_empty()
-        & (self.mcco.borrow().particle_vault_container.processing_size() == 0) {
-            // with these three conditions, there should be a bit of 
-            // leeway as to where we can call the function 
+        if (self
+            .mcco
+            .borrow()
+            .particle_vault_container
+            .send_queue
+            .size()
+            == 0)
+            & self.is_empty()
+            & (self
+                .mcco
+                .borrow()
+                .particle_vault_container
+                .processing_size()
+                == 0)
+        {
+            // with these three conditions, there should be a bit of
+            // leeway as to where we can call the function
             return true;
         }
         false
     }
 
     /// Put the given MCParticle in the corresponding buffer. The buffer
-    /// indexing is coherent with the neighbor indexing so that the 
-    /// function can easily be called using the two elements of a 
+    /// indexing is coherent with the neighbor indexing so that the
+    /// function can easily be called using the two elements of a
     /// SendQueueTuple.
     pub fn buffer_particle(&mut self, mcb_particle: MCBaseParticle<T>, buffer_idx: usize) {
         self.buffers[buffer_idx].push(MCParticle::new(&mcb_particle));
@@ -57,14 +69,17 @@ impl<T: Float> MCParticleBuffer<T> {
 
     /// Read the buffers and unpack the particles in the given vault.
     /// Since we are not parallelizing over a spatial division, this
-    /// function just unpacks everything. 
+    /// function just unpacks everything.
     pub fn read_buffers(&mut self, fill_vault: &mut usize) {
-        // If we were parallelizing, we would add a condition for 
+        // If we were parallelizing, we would add a condition for
         // unpacking like (current thread nbr == buffer nbr)
         // instead of just iterating over all buffers.
         self.buffers.iter().for_each(|b| {
             b.iter().for_each(|particle| {
-                self.mcco.borrow_mut().particle_vault_container.add_processing_particle(MCBaseParticle::new(particle), fill_vault)
+                self.mcco
+                    .borrow_mut()
+                    .particle_vault_container
+                    .add_processing_particle(MCBaseParticle::new(particle), fill_vault)
             })
         });
         // maybe calling clear() directly here is best?

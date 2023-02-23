@@ -16,9 +16,9 @@ impl<T: Float> ParticleVault<T> {
 
     /// Reserve the size for the container of particles.
     pub fn reserve(&mut self, n: usize) {
-        // The operation is needed as the reserve method on Vec takes an 
+        // The operation is needed as the reserve method on Vec takes an
         // additional size as argument, not total size.
-        self.particles.reserve(n-self.size());  
+        self.particles.reserve(n - self.size());
     }
 
     /// Returns the size of the vault.
@@ -39,7 +39,8 @@ impl<T: Float> ParticleVault<T> {
         if vault2.size() < fill_size {
             self.particles.append(&mut vault2.particles);
         } else {
-            self.particles.extend_from_slice(&vault2.particles[..fill_size]);
+            self.particles
+                .extend_from_slice(&vault2.particles[..fill_size]);
             vault2.particles = Vec::from(&vault2.particles[fill_size..]);
         }
     }
@@ -96,7 +97,7 @@ impl<T: Float> ParticleVault<T> {
         self.particles[index].species = -1; // will panic if out of bounds
     }
 
-    /* 
+    /*
     /// Swap vaults with the specified one. Undefined in original code?
     pub fn swap_vaults(vault: &mut ParticleVault<T>) {
         todo!()
