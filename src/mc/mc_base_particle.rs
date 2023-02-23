@@ -6,6 +6,18 @@ use crate::tallies::MCTallyEvent;
 
 use super::{mc_location::MCLocation, mc_particle::MCParticle, mc_vector::MCVector};
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Species {
+    Unknown,
+    Known, // \o/
+}
+
+impl Default for Species {
+    fn default() -> Self {
+        Species::Unknown
+    }
+}
+
 /// Structure used to represent a base particle, i.e. a fresh
 /// particle with no direction.
 #[derive(Debug, Clone)]
@@ -39,7 +51,7 @@ pub struct MCBaseParticle<T: Float> {
     /// Breed of the particle, i.e. how it was produced (should be usize?)
     pub breed: u32,
     /// Species of the particle (should be usize? changed to enum?)
-    pub species: i32,
+    pub species: Species,
     /// Current domain in the spatial grid (should be usize?)
     pub domain: u32,
     /// Current cell in the current domain (should be usize?)
@@ -74,7 +86,7 @@ impl<T: Float> MCBaseParticle<T> {
     /// The function will fail if it is already set as UNKNOWN.
     pub fn invalidate(&mut self) -> Result<(), Error> {
         if self.is_valid() {
-            self.species = -1;
+            self.species = Species::Unknown;
             return Ok(());
         }
         Err(Error)
@@ -96,7 +108,7 @@ impl<T: Float> MCBaseParticle<T> {
 
     /// Returns true if the particle is valid, false otherwise.
     pub fn is_valid(&self) -> bool {
-        self.species >= 0
+        self.species != Species::Unknown
     }
 }
 
@@ -116,7 +128,7 @@ impl<T: Float> Default for MCBaseParticle<T> {
             last_event: Default::default(),
             num_collisions: 0,
             breed: 0,
-            species: -1,
+            species: Default::default(),
             domain: 0,
             cell: 0,
         }

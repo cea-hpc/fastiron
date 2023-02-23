@@ -4,7 +4,7 @@ use num::{zero, Float};
 
 use crate::{direction_cosine::DirectionCosine, tallies::MCTallyEvent};
 
-use super::{mc_base_particle::MCBaseParticle, mc_location::MCLocation, mc_vector::MCVector};
+use super::{mc_base_particle::{MCBaseParticle, Species}, mc_location::MCLocation, mc_vector::MCVector};
 
 /// Structure used to represent a particle.
 #[derive(Debug, Default)]
@@ -44,7 +44,7 @@ pub struct MCParticle<T: Float> {
     /// Task working on (should be usize?)
     pub task: u32,
     /// Species of the particle (should be usize?)
-    pub species: i32,
+    pub species: Species,
     /// Breed of the particle, i.e. how it was produced (should be usize?)
     pub breed: u32,
     //// Current energy group the particle belong to (should be usize?)
@@ -152,7 +152,7 @@ impl<T: Float + Display> Display for MCParticle<T> {
         writeln!(f, "num collisions: {}", self.num_collisions)?;
         writeln!(f, "num segments: {}", self.num_segments)?;
         writeln!(f, "task: {}", self.task)?;
-        writeln!(f, "species: {}", self.species)?;
+        writeln!(f, "species: {:?}", self.species)?;
         writeln!(f, "breed: {}", self.breed)?;
         writeln!(f, "energy group: {}", self.energy_group)?;
         writeln!(f, "domain: {}", self.domain)?;
