@@ -5,7 +5,7 @@ use crate::mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 /// Struture used to group particle in batches.
 #[derive(Debug, Clone)]
 pub struct ParticleVault<T: Float> {
-    pub particles: Vec<MCBaseParticle<T>>,
+    pub particles: Vec<Option<MCBaseParticle<T>>>,
 }
 
 impl<T: Float> ParticleVault<T> {
@@ -53,48 +53,48 @@ impl<T: Float> ParticleVault<T> {
     /// Put a particle into the vault, casting it into a [MCBaseParticle].
     /// Has an atomic increment in the original code.
     pub fn push_particle(&mut self, particle: MCParticle<T>) {
-        self.particles.push(MCBaseParticle::new(&particle));
+        self.particles.push(Some(MCBaseParticle::new(&particle)));
     }
 
     /// Put a base particle into the vault.
     pub fn push_base_particle(&mut self, particle: MCBaseParticle<T>) {
-        self.particles.push(particle);
+        self.particles.push(Some(particle));
     }
 
     /// Get a particle from the vault. Change to return an option/result asap.
     pub fn pop_particle(&mut self) -> Option<MCParticle<T>> {
         if let Some(pp) = self.particles.pop() {
-            return Some(MCParticle::new(&pp));
+            return Some(MCParticle::new(&pp.unwrap()));
         }
         None
     }
 
     /// Get a base particle from the vault. Change to return an option/result asap.
     pub fn pop_base_particle(&mut self) -> Option<MCBaseParticle<T>> {
-        self.particles.pop()
+        self.particles.pop().unwrap() // or map(unwrap())?
     }
 
     /// Get the index-corresponding particle from the vault.
     pub fn get_particle(&self, index: usize) -> Option<MCParticle<T>> {
         if let Some(pp) = self.particles.get(index) {
-            return Some(MCParticle::new(pp));
+            return Some(MCParticle::new(& pp.clone().unwrap()));
         }
         None
     }
 
     /// Get the index-corresponding base particle from the vault.
     pub fn get_base_particle(&self, index: usize) -> Option<MCBaseParticle<T>> {
-        self.particles.get(index).cloned()
+        self.particles.get(index).unwrap().clone()
     }
 
     /// Put a particle into the vault, at a specific index.
     pub fn put_particle(&mut self, particle: MCParticle<T>, index: usize) {
-        self.particles[index] = MCBaseParticle::new(&particle); // will panic if out of bounds
+        self.particles[index] = Some(MCBaseParticle::new(&particle)); // will panic if out of bounds
     }
 
     /// Invalidate the particle at the specified index.
     pub fn invalidate_particle(&mut self, index: usize) {
-        self.particles[index].species = -1; // will panic if out of bounds
+        self.particles[index] = None; // will panic if out of bounds
     }
 
     /*
@@ -114,7 +114,7 @@ impl<T: Float> ParticleVault<T> {
 // may be convenient to access particles directly. Either this or get_base_particle
 // might be deleted later
 impl<T: Float> core::ops::Index<usize> for ParticleVault<T> {
-    type Output = MCBaseParticle<T>;
+    type Output = Option<MCBaseParticle<T>>;
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.particles[index]
