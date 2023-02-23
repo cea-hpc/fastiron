@@ -6,9 +6,7 @@ use crate::{
     send_queue::SendQueue,
 };
 
-/// Container for ParticleVaults. Can be used to define chunks
-/// according to the user's specification. These chunks can be used
-/// for further parallelization.
+/// Container for ParticleVaults.
 #[derive(Debug)]
 pub struct ParticleVaultContainer<T: Float> {
     /// Size of the [ParticleVault]. Fixed at runtime for each run.
@@ -57,12 +55,7 @@ impl<T: Float> ParticleVaultContainer<T> {
     /// Returns the index of the first empty vault in among the processed vaults.
     /// Does the original function even work correctly?
     pub fn get_first_empty_processed_vault(&self) -> Option<usize> {
-        for idx in 0..self.processed_vaults.len() {
-            if self.processed_vaults[idx].empty() {
-                return Some(idx);
-            }
-        }
-        None
+        (0..self.processed_vaults.len()).find(|&idx| self.processed_vaults[idx].empty())
     }
 
     /// Returns a reference to the internal [SendQueue] object.

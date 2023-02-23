@@ -77,7 +77,7 @@ impl<T: Float> ParticleVault<T> {
     /// Get the index-corresponding particle from the vault.
     pub fn get_particle(&self, index: usize) -> Option<MCParticle<T>> {
         if let Some(pp) = self.particles.get(index) {
-            return Some(MCParticle::new(& pp.clone().unwrap()));
+            return Some(MCParticle::new(&pp.clone().unwrap()));
         }
         None
     }

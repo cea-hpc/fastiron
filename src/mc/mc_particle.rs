@@ -4,7 +4,11 @@ use num::{zero, Float};
 
 use crate::{direction_cosine::DirectionCosine, tallies::MCTallyEvent};
 
-use super::{mc_base_particle::{MCBaseParticle, Species}, mc_location::MCLocation, mc_vector::MCVector};
+use super::{
+    mc_base_particle::{MCBaseParticle, Species},
+    mc_location::MCLocation,
+    mc_vector::MCVector,
+};
 
 /// Structure used to represent a particle.
 #[derive(Debug, Default)]
@@ -43,7 +47,7 @@ pub struct MCParticle<T: Float> {
     pub num_segments: T,
     /// Task working on (should be usize?)
     pub task: u32,
-    /// Species of the particle (should be usize?)
+    /// Species of the particle
     pub species: Species,
     /// Breed of the particle, i.e. how it was produced (should be usize?)
     pub breed: u32,
@@ -105,11 +109,6 @@ impl<T: Float> MCParticle<T> {
             facet: self.facet,
         }
     }
-
-    // Not implementing this one beforehand, will do when necessary
-    // pub fn copy_particle_to_string(&self) -> String {
-    //    todo!()
-    //}
 
     /// Update the particle's field to model its movement along the specified
     /// direction and distance

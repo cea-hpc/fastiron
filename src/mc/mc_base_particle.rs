@@ -42,7 +42,7 @@ pub struct MCBaseParticle<T: Float> {
     /// Random number seed for the rng for this particle
     pub random_number_seed: u64,
     /// Unique ID used to identify and track individual particles (should be usize?)
-    pub identifier: u64, // usize?
+    pub identifier: u64,
 
     /// Last event this particle underwent
     pub last_event: MCTallyEvent,
@@ -50,7 +50,7 @@ pub struct MCBaseParticle<T: Float> {
     pub num_collisions: u32,
     /// Breed of the particle, i.e. how it was produced (should be usize?)
     pub breed: u32,
-    /// Species of the particle (should be usize? changed to enum?)
+    /// Species of the particle
     pub species: Species,
     /// Current domain in the spatial grid (should be usize?)
     pub domain: u32,
@@ -100,11 +100,6 @@ impl<T: Float> MCBaseParticle<T> {
             facet: 0,
         }
     }
-
-    // Not implementing this one beforehand, will do when necessary
-    // pub fn copy_particle_to_string(&self) -> String {
-    //    todo!()
-    //}
 
     /// Returns true if the particle is valid, false otherwise.
     pub fn is_valid(&self) -> bool {

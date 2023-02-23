@@ -1,13 +1,12 @@
 use std::{cell::RefCell, rc::Rc};
 
-use num::{Float, zero};
+use num::{zero, Float};
 
 use crate::{montecarlo::MonteCarlo, particle_vault::ParticleVault};
 
 use super::mc_particle::MCParticle;
 
-/// Copies a single particle from the particle-vault data structure into
-/// the active-particle data structure.
+/// Copies a single particle from the particle-vault data and returns it.
 pub fn load_particle<T: Float>(
     mcco: &MonteCarlo<T>,
     particle_vault: &ParticleVault<T>,
