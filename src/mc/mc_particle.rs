@@ -44,7 +44,7 @@ pub struct MCParticle<T: Float> {
     /// Task working on (should be usize?)
     pub task: u32,
     /// Species of the particle (should be usize?)
-    pub species: u32,
+    pub species: i32,
     /// Breed of the particle, i.e. how it was produced (should be usize?)
     pub breed: u32,
     //// Current energy group the particle belong to (should be usize?)

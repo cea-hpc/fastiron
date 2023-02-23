@@ -1,6 +1,6 @@
 use std::fmt::Error;
 
-use num::Float;
+use num::{zero, Float};
 
 use crate::tallies::MCTallyEvent;
 
@@ -8,7 +8,7 @@ use super::{mc_location::MCLocation, mc_particle::MCParticle, mc_vector::MCVecto
 
 /// Structure used to represent a base particle, i.e. a fresh
 /// particle with no direction.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MCBaseParticle<T: Float> {
     /// Current position
     pub coordinate: MCVector<T>,
@@ -39,42 +39,54 @@ pub struct MCBaseParticle<T: Float> {
     /// Breed of the particle, i.e. how it was produced (should be usize?)
     pub breed: u32,
     /// Species of the particle (should be usize? changed to enum?)
-    pub species: u32,
+    pub species: i32,
     /// Current domain in the spatial grid (should be usize?)
     pub domain: u32,
     /// Current cell in the current domain (should be usize?)
     pub cell: u32,
-    // num_base_ints
-    // num_base_floats ?
-    // num_base_chars
 }
 
 impl<T: Float> MCBaseParticle<T> {
     /// Constructor from a [MCParticle] object. To construct from a
-    /// [MCBaseParticle] object, [Clone] will be implemented.
+    /// [MCBaseParticle] object, we derive the [Clone] trait.
     pub fn new(particle: &MCParticle<T>) -> Self {
-        todo!()
-    }
-
-    /// Undefined in original code?
-    pub fn particle_id_number(&self) -> u32 {
-        todo!()
+        MCBaseParticle {
+            coordinate: particle.coordinate,
+            velocity: particle.velocity,
+            kinetic_energy: particle.kinetic_energy,
+            weight: particle.weight,
+            time_to_census: particle.time_to_census,
+            age: particle.age,
+            num_mean_free_paths: particle.num_mean_free_paths,
+            num_segments: particle.num_segments,
+            random_number_seed: particle.random_number_seed,
+            identifier: particle.identifier,
+            last_event: particle.last_event,
+            num_collisions: particle.num_collisions,
+            breed: particle.breed,
+            species: particle.species,
+            domain: particle.domain,
+            cell: particle.cell,
+        }
     }
 
     /// Invalidate a Particle; This is done by setting its type as UNKNOWN;
     /// The function will fail if it is already set as UNKNOWN.
     pub fn invalidate(&mut self) -> Result<(), Error> {
-        todo!()
-    }
-
-    /// Not implementing this one beforehand, will do when necessary
-    pub fn serialize() {
-        todo!()
+        if self.is_valid() {
+            self.species = -1;
+            return Ok(());
+        }
+        Err(Error)
     }
 
     /// Return the current particle's location.
     pub fn get_location(&self) -> MCLocation {
-        todo!()
+        MCLocation {
+            domain: self.domain,
+            cell: self.cell,
+            facet: 0,
+        }
     }
 
     // Not implementing this one beforehand, will do when necessary
@@ -82,28 +94,31 @@ impl<T: Float> MCBaseParticle<T> {
     //    todo!()
     //}
 
-    /// Returns the integer representing the particle's type.
-    pub fn typ(&self) -> u32 {
-        todo!()
-    }
-    /// ?
-    pub fn index(&self) -> u32 {
-        todo!()
-    }
     /// Returns true if the particle is valid, false otherwise.
     pub fn is_valid(&self) -> bool {
-        todo!()
+        self.species >= 0
     }
 }
 
 impl<T: Float> Default for MCBaseParticle<T> {
     fn default() -> Self {
-        todo!()
-    }
-}
-
-impl<T: Float> Clone for MCBaseParticle<T> {
-    fn clone(&self) -> Self {
-        todo!()
+        MCBaseParticle {
+            coordinate: Default::default(),
+            velocity: Default::default(),
+            kinetic_energy: zero(),
+            weight: zero(),
+            time_to_census: zero(),
+            age: zero(),
+            num_mean_free_paths: zero(),
+            num_segments: zero(),
+            random_number_seed: 0,
+            identifier: 0,
+            last_event: Default::default(),
+            num_collisions: 0,
+            breed: 0,
+            species: -1,
+            domain: 0,
+            cell: 0,
+        }
     }
 }
