@@ -62,7 +62,7 @@ impl<T: Float> ParticleVault<T> {
         self.particles.push(Some(particle));
     }
 
-    /// Get a particle from the vault. Change to return an option/result asap.
+    /// Get a particle from the vault.
     pub fn pop_particle(&mut self) -> Option<MCParticle<T>> {
         if let Some(pp) = self.particles.pop() {
             return Some(MCParticle::new(&pp.unwrap()));
@@ -70,7 +70,7 @@ impl<T: Float> ParticleVault<T> {
         None
     }
 
-    /// Get a base particle from the vault. Change to return an option/result asap.
+    /// Get a base particle from the vault.
     pub fn pop_base_particle(&mut self) -> Option<MCBaseParticle<T>> {
         self.particles.pop().unwrap() // or map(unwrap())?
     }

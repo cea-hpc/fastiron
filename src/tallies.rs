@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// Enum representing a tally event.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MCTallyEvent {
     Collision,
     FacetCrossingTransitExit,
