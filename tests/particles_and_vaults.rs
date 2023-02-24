@@ -57,24 +57,3 @@ fn collapse_missing_space() {
     assert_eq!(vault1.size(), 10);
     assert_eq!(vault2.size(), 6);
 }
-
-#[test]
-fn collapse_dummy_test() {
-    let mut v1: Vec<u32> = vec![1, 2, 3, 4, 5, 6, 7, 8];
-    let mut v2: Vec<u32> = vec![9, 10, 11, 12, 13, 14, 15, 16];
-
-    collapse_dummy(&mut v1, 10, &mut v2);
-    println!("v1: {v1:?}");
-    println!("v2: {v2:?}");
-    assert_eq!(v1.len(), 10);
-    assert_eq!(v2.len(), 6);
-}
-
-fn collapse_dummy(v1: &mut Vec<u32>, fill_size: usize, v2: &mut Vec<u32>) {
-    if v1.len() + v2.len() < fill_size {
-        v1.append(v2);
-    } else {
-        v1.extend_from_slice(&v2[..fill_size-v1.len()]);
-        *v2 = Vec::from(&v2[fill_size-v1.len()..]);
-    }
-}
