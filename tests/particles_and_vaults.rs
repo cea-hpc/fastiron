@@ -92,15 +92,23 @@ fn put_invalidate() {
 
 #[test]
 fn erase_swap_particles() {
-    let p1: Option<MCBaseParticle<f64>> = Some(MCBaseParticle {identifier: 103, ..Default::default()});
-    let p2: Option<MCBaseParticle<f64>> = Some(MCBaseParticle {identifier: 406, ..Default::default()});
-    let mut vault = ParticleVault { particles: vec![None, None, p1, None, None, None, p2]};
+    let p1: Option<MCBaseParticle<f64>> = Some(MCBaseParticle {
+        identifier: 103,
+        ..Default::default()
+    });
+    let p2: Option<MCBaseParticle<f64>> = Some(MCBaseParticle {
+        identifier: 406,
+        ..Default::default()
+    });
+    let mut vault = ParticleVault {
+        particles: vec![None, None, p1, None, None, None, p2],
+    };
     // vault is size 7
     assert_eq!(vault.size(), 7);
-    
+
     //println!("before: {vault:#?}");
     vault.erase_swap_particles(2); // p1 and p2 switch; p1 is popped into oblivion
-    //println!("after: {vault:#?}");
+                                   //println!("after: {vault:#?}");
 
     // vault should be size 6
     assert_eq!(vault.size(), 6);

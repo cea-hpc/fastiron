@@ -63,8 +63,8 @@ impl<T: Float> ParticleVault<T> {
     }
 
     /// Get a particle from the vault.
-    /// Note that there is currently no difference made between a None 
-    /// returned if self.particles is empty and a None returned because 
+    /// Note that there is currently no difference made between a None
+    /// returned if self.particles is empty and a None returned because
     /// the last particle is invalid. Because of this, this function cannot
     /// be used to detect if the vault is empty.
     pub fn pop_particle(&mut self) -> Option<MCParticle<T>> {
@@ -76,8 +76,8 @@ impl<T: Float> ParticleVault<T> {
     }
 
     /// Get a base particle from the vault.
-    /// Note that there is currently no difference made between a None 
-    /// returned if self.particles is empty and a None returned because 
+    /// Note that there is currently no difference made between a None
+    /// returned if self.particles is empty and a None returned because
     /// the last particle is invalid. Because of this, this function cannot
     /// be used to detect if the vault is empty.
     pub fn pop_base_particle(&mut self) -> Option<MCBaseParticle<T>> {
