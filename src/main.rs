@@ -13,7 +13,7 @@ use fastiron::mc::mc_utils;
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::get_parameters;
 use fastiron::population_control;
-use num::Float;
+use num::{Float, FromPrimitive};
 
 fn main() {
     let cli = Cli::parse();
@@ -45,7 +45,7 @@ fn main() {
     coral_benchmark_correctness::coral_benchmark_correctness(mcco, &params);
 }
 
-pub fn game_over<T: Float + Display>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
+pub fn game_over<T: Float + Display + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     mcco.borrow().fast_timer.cumulative_report();
     mcco.borrow()
         .tallies

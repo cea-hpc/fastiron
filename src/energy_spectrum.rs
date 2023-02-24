@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 use std::{marker::PhantomData, fs::File};
 use std::io::Write;
 
-use num::Float;
+use num::{Float, FromPrimitive};
 
 use crate::{montecarlo::MonteCarlo, mc::mc_utils::load_particle};
 
@@ -16,7 +16,7 @@ pub struct EnergySpectrum<T: Float> {
     census_energy_spectrum: Vec<u64>,
 }
 
-impl<T: Float + Display> EnergySpectrum<T> {
+impl<T: Float + Display + FromPrimitive> EnergySpectrum<T> {
     /// Update its fields using the [MonteCarlo] Object.
     pub fn update_spectrum(&mut self, mcco: &MonteCarlo<T>) {
         if self.file_name.is_empty() {
