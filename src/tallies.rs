@@ -1,4 +1,4 @@
-use num::Float;
+use num::{Float, zero};
 
 use crate::{
     bulk_storage::BulkStorage, energy_spectrum::EnergySpectrum, mc::mc_domain::MCDomain,
@@ -27,7 +27,7 @@ impl Default for MCTallyEvent {
 pub type Fluence<T> = Vec<FluenceDomain<T>>;
 
 /// Structure used to regulate the number of event in the simulation.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Balance {
     /// Number of particles absorbed
     pub absorb: u64,
@@ -60,12 +60,24 @@ pub struct Balance {
 impl Balance {
     /// Reset fields to their default value i.e. 0.
     pub fn reset(&mut self) {
-        todo!()
+        *self = Self::default(); // is the old value correctly dropped or just shadowed?
     }
 
     /// Add another [Balance]'s value to its own. Replace by an overload?
     pub fn add(&mut self, bal: &Balance) {
-        todo!()
+        self.absorb += bal.absorb;
+        self.census += bal.census;
+        self.escape += bal.escape;
+        self.collision += bal.collision;
+        self.end += bal.end;
+        self.fission += bal.fission;
+        self.produce += bal.produce;
+        self.scatter += bal.scatter;
+        self.start += bal.start;
+        self.source += bal.source;
+        self.rr += bal.rr;
+        self.split += bal.split;
+        self.num_segments += bal.num_segments;
     }
 }
 
@@ -73,7 +85,7 @@ impl Balance {
 type ScalarFluxCell<T> = Vec<T>;
 
 /// ?
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct CellTallyTask<T: Float> {
     pub cell: Vec<T>,
 }
@@ -81,17 +93,18 @@ pub struct CellTallyTask<T: Float> {
 impl<T: Float> CellTallyTask<T> {
     /// Constructor
     pub fn new(domain: &MCDomain<T>) -> Self {
-        todo!()
+        Self { cell: vec![zero(); domain.cell_state.len()] }
     }
 
     /// Reset fields to their default value i.e. 0.
     pub fn reset(&mut self) {
-        todo!()
+        self.cell.clear(); // no effect on allocated capacity
     }
 
     /// Add another [CellTallyTask]'s value to its own. Replace by an overload?
     pub fn add(&mut self, cell_tally_task: &CellTallyTask<T>) {
-        todo!()
+        //assert_eq!(self.cell.len(), cell_tally_task.cell.len());
+        (0..self.cell.len()).into_iter().for_each(|ii| self.cell[ii] = self.cell[ii] + cell_tally_task.cell[ii]);
     }
 }
 
@@ -99,23 +112,32 @@ impl<T: Float> CellTallyTask<T> {
 #[derive(Debug)]
 pub struct ScalarFluxTask<T: Float> {
     pub cell: Vec<ScalarFluxCell<T>>,
-    pub scalar_flux_cell_storage: BulkStorage<T>,
 }
 
 impl<T: Float> ScalarFluxTask<T> {
     /// Constructor
-    pub fn new(domain: &MCDomain<T>, num_groups: u32) -> Self {
-        todo!()
+    pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
+        let mut cell = Vec::with_capacity(domain.cell_state.len());
+
+        // originally uses BulkStorage object for contiguous memory
+        (0..domain.cell_state.len()).into_iter().for_each(|_| cell.push(Vec::with_capacity(num_groups)));
+
+        Self { cell }
     }
 
     /// Reset fields to their default value i.e. 0.
     pub fn reset(&mut self) {
-        todo!()
+        self.cell.clear();
     }
 
     /// Add another [ScalarFluxTask]'s value to its own. Replace by an overload?
     pub fn add(&mut self, scalar_flux_task: &ScalarFluxTask<T>) {
-        todo!()
+        let n_groups = self.cell[0].len();
+        (0..self.cell.len()).into_iter().for_each(|cell_idx| {
+            (0..n_groups).into_iter().for_each(|group_idx| {
+                self.cell[cell_idx][group_idx] = self.cell[cell_idx][group_idx] + scalar_flux_task.cell[cell_idx][group_idx];
+            })
+        });
     }
 }
 
@@ -127,8 +149,10 @@ pub struct CellTallyDomain<T: Float> {
 
 impl<T: Float> CellTallyDomain<T> {
     /// Constructor
-    pub fn new(domain: &MCDomain<T>, cell_tally_replications: u32) -> Self {
-        todo!()
+    pub fn new(domain: &MCDomain<T>, cell_tally_replications: usize) -> Self {
+        let mut task = Vec::with_capacity(cell_tally_replications);
+        (0..cell_tally_replications).into_iter().for_each(|_| task.push(CellTallyTask::new(domain)));
+        Self { task }
     }
 }
 
@@ -140,8 +164,10 @@ pub struct ScalarFluxDomain<T: Float> {
 
 impl<T: Float> ScalarFluxDomain<T> {
     // Constructor
-    pub fn new(domain: &MCDomain<T>, num_groups: u32, flux_replications: u32) -> Self {
-        todo!()
+    pub fn new(domain: &MCDomain<T>, num_groups: usize, flux_replications: usize) -> Self {
+        let mut task = Vec::with_capacity(flux_replications);
+        (0..flux_replications).into_iter().for_each(|_| task.push(ScalarFluxTask::new(domain, num_groups)));
+        Self { task }
     }
 }
 
@@ -153,15 +179,15 @@ pub struct FluenceDomain<T: Float> {
 
 impl<T: Float> FluenceDomain<T> {
     pub fn add_cell(&mut self, index: usize, val: T) {
-        todo!()
+        self.cell[index] = self.cell[index] + val;
     }
 
     pub fn get_cell(&self, index: usize) -> T {
-        todo!()
+        self.cell[index]
     }
 
     pub fn size(&self) -> usize {
-        todo!()
+        self.cell.len()
     }
 }
 
@@ -170,12 +196,13 @@ impl<T: Float> FluenceDomain<T> {
 pub struct Tallies<T: Float> {
     pub balance_cumulative: Balance,
     pub balance_task: Vec<Balance>,
-    pub scalar_flux_domain: Vec<CellTallyDomain<T>>,
+    pub scalar_flux_domain: Vec<ScalarFluxDomain<T>>,
+    pub cell_tally_domain: Vec<CellTallyDomain<T>>,
     pub fluence: Fluence<T>,
     pub spectrum: EnergySpectrum<T>,
-    num_balance_replications: u32,
-    num_flux_replications: u32,
-    num_cell_tally_replications: u32,
+    pub num_balance_replications: u32,
+    pub num_flux_replications: u32,
+    pub num_cell_tally_replications: u32,
 }
 
 impl<T: Float> Tallies<T> {
@@ -187,19 +214,6 @@ impl<T: Float> Tallies<T> {
         spectrum_name: String,
         spectrum_size: u64,
     ) -> Self {
-        todo!()
-    }
-
-    /// Getter.
-    pub fn get_num_balance_replications(&self) -> u32 {
-        todo!()
-    }
-    /// Getter.
-    pub fn get_num_flux_replications(&self) -> u32 {
-        todo!()
-    }
-    /// Getter.
-    pub fn get_num_cell_tally_replications(&self) -> u32 {
         todo!()
     }
 
