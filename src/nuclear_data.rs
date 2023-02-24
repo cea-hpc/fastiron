@@ -242,8 +242,31 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
 
     /// Returns the energy group a specific energy belongs to.
     pub fn get_energy_groups(&self, energy: T) -> usize {
-        //usize?
-        todo!()
+        let num_energies = self.energies.len();
+
+        // extreme low
+        if energy <= self.energies[0] {
+            return 0;
+        }
+        // extreme high
+        if energy >= self.energies[num_energies-1] {
+            return num_energies-1;
+        }
+
+        // dichotomy search
+        let mut high = num_energies-1;
+        let mut low: usize = 0;
+
+        while high != low+1 {
+            let mid = (high + low)/2;
+            if energy < self.energies[mid] {
+                high = mid;
+            } else {
+                low = mid;
+            }
+        }
+
+        low
     }
 
     /// Returns the number of reactions for a given isotope.
@@ -253,7 +276,14 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
 
     /// Returns the total cross section for a given energy group.
     pub fn get_total_cross_section(&self, isotope_index: usize, group: usize) -> T {
-        todo!()
+        let num_reactions = self.isotopes[isotope_index][0].reactions.len();
+        let mut total_xsection: T = zero();
+
+        (0..num_reactions).into_iter().for_each(|r_idx| {
+            total_xsection = total_xsection + self.isotopes[isotope_index][0].reactions[r_idx].get_cross_section(group);
+        });
+
+        total_xsection
     }
 
     /// Returns the reaction-specific cross section for a given energy_group.
@@ -263,6 +293,6 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
         isotope_index: usize,
         group: usize,
     ) -> T {
-        todo!()
+        self.isotopes[isotope_index][0].reactions[react_index].get_cross_section(group)
     }
 }
