@@ -1,4 +1,4 @@
-use num::{Float, zero};
+use num::{zero, Float};
 
 use crate::{
     bulk_storage::BulkStorage, energy_spectrum::EnergySpectrum, mc::mc_domain::MCDomain,
@@ -93,7 +93,9 @@ pub struct CellTallyTask<T: Float> {
 impl<T: Float> CellTallyTask<T> {
     /// Constructor
     pub fn new(domain: &MCDomain<T>) -> Self {
-        Self { cell: vec![zero(); domain.cell_state.len()] }
+        Self {
+            cell: vec![zero(); domain.cell_state.len()],
+        }
     }
 
     /// Reset fields to their default value i.e. 0.
@@ -104,7 +106,9 @@ impl<T: Float> CellTallyTask<T> {
     /// Add another [CellTallyTask]'s value to its own. Replace by an overload?
     pub fn add(&mut self, cell_tally_task: &CellTallyTask<T>) {
         //assert_eq!(self.cell.len(), cell_tally_task.cell.len());
-        (0..self.cell.len()).into_iter().for_each(|ii| self.cell[ii] = self.cell[ii] + cell_tally_task.cell[ii]);
+        (0..self.cell.len())
+            .into_iter()
+            .for_each(|ii| self.cell[ii] = self.cell[ii] + cell_tally_task.cell[ii]);
     }
 }
 
@@ -120,7 +124,9 @@ impl<T: Float> ScalarFluxTask<T> {
         let mut cell = Vec::with_capacity(domain.cell_state.len());
 
         // originally uses BulkStorage object for contiguous memory
-        (0..domain.cell_state.len()).into_iter().for_each(|_| cell.push(Vec::with_capacity(num_groups)));
+        (0..domain.cell_state.len())
+            .into_iter()
+            .for_each(|_| cell.push(Vec::with_capacity(num_groups)));
 
         Self { cell }
     }
@@ -135,7 +141,8 @@ impl<T: Float> ScalarFluxTask<T> {
         let n_groups = self.cell[0].len();
         (0..self.cell.len()).into_iter().for_each(|cell_idx| {
             (0..n_groups).into_iter().for_each(|group_idx| {
-                self.cell[cell_idx][group_idx] = self.cell[cell_idx][group_idx] + scalar_flux_task.cell[cell_idx][group_idx];
+                self.cell[cell_idx][group_idx] =
+                    self.cell[cell_idx][group_idx] + scalar_flux_task.cell[cell_idx][group_idx];
             })
         });
     }
@@ -151,7 +158,9 @@ impl<T: Float> CellTallyDomain<T> {
     /// Constructor
     pub fn new(domain: &MCDomain<T>, cell_tally_replications: usize) -> Self {
         let mut task = Vec::with_capacity(cell_tally_replications);
-        (0..cell_tally_replications).into_iter().for_each(|_| task.push(CellTallyTask::new(domain)));
+        (0..cell_tally_replications)
+            .into_iter()
+            .for_each(|_| task.push(CellTallyTask::new(domain)));
         Self { task }
     }
 }
@@ -166,7 +175,9 @@ impl<T: Float> ScalarFluxDomain<T> {
     // Constructor
     pub fn new(domain: &MCDomain<T>, num_groups: usize, flux_replications: usize) -> Self {
         let mut task = Vec::with_capacity(flux_replications);
-        (0..flux_replications).into_iter().for_each(|_| task.push(ScalarFluxTask::new(domain, num_groups)));
+        (0..flux_replications)
+            .into_iter()
+            .for_each(|_| task.push(ScalarFluxTask::new(domain, num_groups)));
         Self { task }
     }
 }

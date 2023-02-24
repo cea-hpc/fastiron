@@ -1,4 +1,4 @@
-use num::{Float, zero, FromPrimitive};
+use num::{zero, Float, FromPrimitive};
 
 /// Structure used to represent an isotope.
 #[derive(Debug)]
@@ -11,7 +11,10 @@ pub struct Isotope<T: Float> {
 
 impl<T: Float> Default for Isotope<T> {
     fn default() -> Self {
-        Self { gid: 0, atom_fraction: zero() }
+        Self {
+            gid: 0,
+            atom_fraction: zero(),
+        }
     }
 }
 
@@ -29,7 +32,10 @@ pub struct Material<T: Float> {
 impl<T: Float + FromPrimitive> Material<T> {
     /// Constructor.
     pub fn new(name: &str) -> Self {
-        Material { name: name.to_string(), ..Default::default() }
+        Material {
+            name: name.to_string(),
+            ..Default::default()
+        }
     }
 
     /// Adds an [Isotope] to the internal list.
@@ -41,7 +47,11 @@ impl<T: Float + FromPrimitive> Material<T> {
 impl<T: Float + FromPrimitive> Default for Material<T> {
     fn default() -> Self {
         let m: T = FromPrimitive::from_f32(1000.0).unwrap();
-        Self { name: "0".to_string(), mass: m, iso: Vec::new() }
+        Self {
+            name: "0".to_string(),
+            mass: m,
+            iso: Vec::new(),
+        }
     }
 }
 
@@ -63,6 +73,6 @@ impl<T: Float> MaterialDatabase<T> {
     /// If there is a duplicate, only the first one in the list
     /// will be "visible".
     pub fn find_material(&self, name: &str) -> Option<usize> {
-        self.mat.iter().position(|m| m.name==name)
+        self.mat.iter().position(|m| m.name == name)
     }
 }
