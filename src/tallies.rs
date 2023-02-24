@@ -1,9 +1,8 @@
-use num::{zero, Float};
+use std::fmt::Display;
 
-use crate::{
-    bulk_storage::BulkStorage, energy_spectrum::EnergySpectrum, mc::mc_domain::MCDomain,
-    montecarlo::MonteCarlo,
-};
+use num::{zero, Float, FromPrimitive};
+
+use crate::{energy_spectrum::EnergySpectrum, mc::mc_domain::MCDomain, montecarlo::MonteCarlo};
 
 /// Enum representing a tally event.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -183,7 +182,7 @@ impl<T: Float> ScalarFluxDomain<T> {
 }
 
 /// ?
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct FluenceDomain<T: Float> {
     pub cell: Vec<T>,
 }
@@ -216,16 +215,27 @@ pub struct Tallies<T: Float> {
     pub num_cell_tally_replications: u32,
 }
 
-impl<T: Float> Tallies<T> {
+impl<T: Float + Display + FromPrimitive> Tallies<T> {
     /// Constructor.
     pub fn new(
         bal_rep: u32,
         flux_rep: u32,
         cell_rep: u32,
         spectrum_name: String,
-        spectrum_size: u64,
+        spectrum_size: usize,
     ) -> Self {
-        todo!()
+        let spectrum = EnergySpectrum::new(spectrum_name, spectrum_size);
+        Self {
+            balance_cumulative: Balance::default(),
+            balance_task: Vec::new(),
+            scalar_flux_domain: Vec::new(),
+            cell_tally_domain: Vec::new(),
+            fluence: Fluence::default(),
+            spectrum,
+            num_balance_replications: bal_rep,
+            num_flux_replications: flux_rep,
+            num_cell_tally_replications: cell_rep,
+        }
     }
 
     /// Prepare the tallies for use.
@@ -238,12 +248,6 @@ impl<T: Float> Tallies<T> {
     ) {
         todo!()
     }
-
-    /*
-    pub fn cycle_initialize(&mut self, mcco: &MonteCarlo<T>) {
-        todo!()
-    }
-    */
 
     /// Sums the task-level data. This is used when replications
     /// is active.
@@ -270,16 +274,43 @@ impl<T: Float> Tallies<T> {
         cell: usize,
         group: usize,
     ) {
-        todo!()
+        self.scalar_flux_domain[domain].task[task].cell[cell][group] =
+            self.scalar_flux_domain[domain].task[task].cell[cell][group] + value;
     }
 
     /// Atomic add?
     pub fn tally_cell_value(&mut self, value: T, domain: usize, task: usize, cell: usize) {
-        todo!()
+        self.cell_tally_domain[domain].task[task].cell[cell] =
+            self.cell_tally_domain[domain].task[task].cell[cell] + value;
     }
 
     /// Sums above all ?
-    pub fn scalar_flux_sum(mcco: &MonteCarlo<T>) -> T {
-        todo!()
+    pub fn scalar_flux_sum(&self) -> T {
+        let mut sum: T = zero();
+
+        // single threaded for now so this should cover all
+        // actual hell loop
+        let n_domain = self.scalar_flux_domain.len();
+        (0..n_domain).into_iter().for_each(|domain_idx| {
+            (0..self.num_flux_replications)
+                .into_iter()
+                .for_each(|rep_idx| {
+                    let n_cells = self.scalar_flux_domain[domain_idx].task[rep_idx as usize]
+                        .cell
+                        .len();
+                    (0..n_cells).into_iter().for_each(|cell_idx| {
+                        let n_groups = self.scalar_flux_domain[domain_idx].task[rep_idx as usize]
+                            .cell[cell_idx]
+                            .len();
+                        (0..n_groups).into_iter().for_each(|group_idx| {
+                            sum = sum
+                                + self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
+                                    [cell_idx][group_idx];
+                        })
+                    })
+                })
+        });
+
+        sum
     }
 }

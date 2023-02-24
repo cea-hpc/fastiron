@@ -17,6 +17,14 @@ pub struct EnergySpectrum<T: Float> {
 }
 
 impl<T: Float + Display + FromPrimitive> EnergySpectrum<T> {
+    pub fn new(name: String, size: usize) -> Self {
+        Self {
+            float_type: Default::default(),
+            file_name: name,
+            census_energy_spectrum: Vec::with_capacity(size),
+        }
+    }
+
     /// Update its fields using the [MonteCarlo] Object.
     pub fn update_spectrum(&mut self, mcco: &MonteCarlo<T>) {
         if self.file_name.is_empty() {
