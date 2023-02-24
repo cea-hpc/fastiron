@@ -63,14 +63,23 @@ impl<T: Float> ParticleVault<T> {
     }
 
     /// Get a particle from the vault.
+    /// Note that there is currently no difference made between a None 
+    /// returned if self.particles is empty and a None returned because 
+    /// the last particle is invalid. Because of this, this function cannot
+    /// be used to detect if the vault is empty.
     pub fn pop_particle(&mut self) -> Option<MCParticle<T>> {
         if let Some(pp) = self.particles.pop() {
+            pp.as_ref()?; // Particle is invalid?
             return Some(MCParticle::new(&pp.unwrap()));
         }
-        None
+        None // Currently empty
     }
 
     /// Get a base particle from the vault.
+    /// Note that there is currently no difference made between a None 
+    /// returned if self.particles is empty and a None returned because 
+    /// the last particle is invalid. Because of this, this function cannot
+    /// be used to detect if the vault is empty.
     pub fn pop_base_particle(&mut self) -> Option<MCBaseParticle<T>> {
         self.particles.pop().unwrap() // or map(unwrap())?
     }
@@ -97,13 +106,6 @@ impl<T: Float> ParticleVault<T> {
     pub fn invalidate_particle(&mut self, index: usize) {
         self.particles[index] = None; // will panic if out of bounds
     }
-
-    /*
-    /// Swap vaults with the specified one. Undefined in original code?
-    pub fn swap_vaults(vault: &mut ParticleVault<T>) {
-        todo!()
-    }
-    */
 
     /// Swaps the particle at the specified index with the last one,
     /// delete the last one.
