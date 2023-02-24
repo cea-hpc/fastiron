@@ -1,4 +1,6 @@
-use num::Float;
+use num::{Float, FromPrimitive, zero};
+
+use crate::mc::mc_rng_state::rng_sample;
 
 /// Enum representing a reaction type. Named `Enum` in
 /// the original code.
@@ -11,7 +13,7 @@ pub enum ReactionType {
 }
 
 /// Structure used to represent a polynomial function.
-/// Private field represent the coefficient, `aa`
+/// Private fields represent the coefficients, `aa`
 /// corresponding to `x^4`, `ee` to `x^0`.
 #[derive(Debug)]
 pub struct Polynomial<T: Float> {
@@ -22,6 +24,13 @@ pub struct Polynomial<T: Float> {
     ee: T,
 }
 
+impl<T: Float> Polynomial<T> {
+    /// Returns the value of the polynomial function in xx.
+    pub fn val(&self, xx: T) -> T {
+        self.ee + xx * (self.dd + xx * (self.cc + xx * (self.bb + xx * self.aa)))
+    }
+}
+
 /// Lowest-level structure to represent a reaction.
 #[derive(Debug)]
 pub struct NuclearDataReaction<T: Float> {
@@ -30,7 +39,7 @@ pub struct NuclearDataReaction<T: Float> {
     pub nu_bar: T,
 }
 
-impl<T: Float> NuclearDataReaction<T> {
+impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
     /// Constructor.
     pub fn new(
         rtype: ReactionType,
@@ -39,30 +48,83 @@ impl<T: Float> NuclearDataReaction<T> {
         polynomial: &Polynomial<T>,
         reaction_cross_section: T,
     ) -> Self {
-        todo!()
+        let n_groups = energies.len()-1;
+        let mut xsection: Vec<T> = Vec::with_capacity(n_groups);
+
+        let mut normal_value: T = zero();
+        let one: T = FromPrimitive::from_f32(1.0).unwrap();
+
+        (0..n_groups).into_iter().for_each(|ii| {
+            let factor: T = FromPrimitive::from_f32(2.0).unwrap();
+            let energy: T = (energies[ii] + energies[ii+1]) / factor;
+            // 10^(Poly(log10(energy)))
+            let base: T = FromPrimitive::from_f32(10.0).unwrap();
+            xsection[ii] = base.powf(polynomial.val(energy.log10()));
+
+            if (normal_value==zero()) & (xsection[ii] > one) {
+                normal_value = xsection[ii];
+            }
+
+            let scale = reaction_cross_section/normal_value;
+            // replace with map later?
+            (0..n_groups).into_iter().for_each(|ii| {
+                xsection[ii] = xsection[ii]*scale;
+            });
+        });
+
+        Self { cross_section: xsection, reaction_type: rtype, nu_bar }
     }
 
-    /// Get the cross section for the specified group.
-    pub fn get_cross_section(group: usize) -> T {
-        todo!()
+    /// Get the cross section for the specified group. Delete and make 
+    /// cross_section public?
+    pub fn get_cross_section(&self, group: usize) -> T {
+        self.cross_section[group]
     }
 
-    /// Uses RNG to get new angle and energy after a reaction. This
-    /// needs to be Rustified right away as this is too C-like.
-    /// The current function takes to pointer as arguments that act as
-    /// arrays (energy/angle_out), a max length for those arrays (max_...)
-    /// and a pointer to an integer that gets updated with the actual
-    /// length of the arrays (n_out). Change this asap
-    pub fn sample_collision(
+    /// Uses RNG to get new angle and energy after a reaction. In
+    /// case of fission, at most `max_production_size` particles 
+    /// can result. Since reaction type is specified when the 
+    /// method is called, we assume that the result will be treated
+    /// correctly by the calling code.
+    pub fn sample_collision(&self, 
         incident_energy: T,
         material_mass: T,
-        energy_out: &T,
-        angle_out: &T,
-        n_out: u32,
-        seed: &u64,
-        max_production_size: u32,
-    ) {
-        todo!()
+        seed: &mut u64,
+        //max_production_size: usize,
+    ) -> (Vec<T>, Vec<T>){
+        let one: T = FromPrimitive::from_f32(1.0).unwrap();
+        let two: T = one+one;
+        let mut energy_out: Vec<T> = Vec::new();
+        let mut angle_out: Vec<T> = Vec::new();
+        match self.reaction_type {
+            ReactionType::Scatter => {
+                let mut rand_n: T = rng_sample(seed);
+                energy_out.push(incident_energy * (one - rand_n*(one/material_mass)));
+                rand_n = rng_sample(seed); 
+                angle_out.push(rand_n*(two) - one)
+            },
+            ReactionType::Absorption => (),
+            ReactionType::Fission => {
+                // the expected behavior of this part in the original code
+                // is quite unclear. There is an assert but it only prints 
+                // a message, not stop the method
+                let num_particle_out = (self.nu_bar + rng_sample(seed)).to_usize().unwrap();
+                energy_out.reserve(num_particle_out);
+                angle_out.reserve(num_particle_out);
+                (0..num_particle_out).into_iter().for_each(|ii| {
+                    let mut rand_n: T = rng_sample(seed);
+                    rand_n = (rand_n + one) / two;
+                    let twenty: T = FromPrimitive::from_f32(20.0).unwrap();
+                    energy_out[ii] = twenty * rand_n * rand_n;
+                    rand_n = rng_sample(seed);
+                    angle_out[ii] = rand_n*two - one;
+                })
+            },
+            ReactionType::Undefined => {
+                panic!()
+            }
+        }
+        (energy_out, angle_out)
     }
 }
 
