@@ -52,7 +52,7 @@ pub struct MCParticle<T: Float> {
     /// Breed of the particle, i.e. how it was produced (should be usize?)
     pub breed: u32,
     //// Current energy group the particle belong to (should be usize?)
-    pub energy_group: u32,
+    pub energy_group: usize,
     /// Current domain in the spatial grid (should be usize?)
     pub domain: u32,
     /// Current cell in the current domain (should be usize?)

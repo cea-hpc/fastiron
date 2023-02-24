@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::fmt::Display;
 
 use clap::Parser;
 
@@ -44,7 +45,7 @@ fn main() {
     coral_benchmark_correctness::coral_benchmark_correctness(mcco, &params);
 }
 
-pub fn game_over<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
+pub fn game_over<T: Float + Display>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     mcco.borrow().fast_timer.cumulative_report();
     mcco.borrow()
         .tallies

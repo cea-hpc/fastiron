@@ -127,7 +127,7 @@ impl<T: Float> NuclearData<T> {
     }
 
     /// Returns the energy group a specific energy belongs to.
-    pub fn get_energy_groups(&self, energy: T) -> u32 {
+    pub fn get_energy_groups(&self, energy: T) -> usize {
         //usize?
         todo!()
     }
