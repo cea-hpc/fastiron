@@ -1,6 +1,6 @@
 use std::cell::RefCell;
-use std::rc::Rc;
 use std::fmt::Display;
+use std::rc::Rc;
 
 use clap::Parser;
 

@@ -1,10 +1,10 @@
 use std::fmt::{Debug, Display};
-use std::{marker::PhantomData, fs::File};
 use std::io::Write;
+use std::{fs::File, marker::PhantomData};
 
 use num::{Float, FromPrimitive};
 
-use crate::{montecarlo::MonteCarlo, mc::mc_utils::load_particle};
+use crate::{mc::mc_utils::load_particle, montecarlo::MonteCarlo};
 
 /// Structure used to represent the energy spectrum
 /// of the problem, i.e. the distribution of particles
@@ -24,21 +24,27 @@ impl<T: Float + Display + FromPrimitive> EnergySpectrum<T> {
         }
         // Check energy levels on processing particles
         // Iterate on processing vaults
-        mcco.particle_vault_container.processing_vaults.iter().for_each(|vv| {
-            // We need to iterate on the index in order to access all particles, even invalid ones
-            (0..vv.size()).into_iter().for_each(|particle_idx| {
-                let pp = load_particle(mcco, vv, particle_idx);
-                self.census_energy_spectrum[pp.energy_group] += 1;
+        mcco.particle_vault_container
+            .processing_vaults
+            .iter()
+            .for_each(|vv| {
+                // We need to iterate on the index in order to access all particles, even invalid ones
+                (0..vv.size()).into_iter().for_each(|particle_idx| {
+                    let pp = load_particle(mcco, vv, particle_idx);
+                    self.census_energy_spectrum[pp.energy_group] += 1;
+                });
             });
-        });
         // Iterate on processed vaults
-        mcco.particle_vault_container.processed_vaults.iter().for_each(|vv| {
-            // We need to iterate on the index in order to access all particles, even invalid ones
-            (0..vv.size()).into_iter().for_each(|particle_idx| {
-                let pp = load_particle(mcco, vv, particle_idx);
-                self.census_energy_spectrum[pp.energy_group] += 1;
+        mcco.particle_vault_container
+            .processed_vaults
+            .iter()
+            .for_each(|vv| {
+                // We need to iterate on the index in order to access all particles, even invalid ones
+                (0..vv.size()).into_iter().for_each(|particle_idx| {
+                    let pp = load_particle(mcco, vv, particle_idx);
+                    self.census_energy_spectrum[pp.energy_group] += 1;
+                });
             });
-        });
     }
 
     /// Print the spectrum.
@@ -51,7 +57,12 @@ impl<T: Float + Display + FromPrimitive> EnergySpectrum<T> {
         writeln!(file, "energy level index | energy level | count").unwrap();
 
         (0..levels).into_iter().for_each(|ii| {
-            writeln!(file, "{}     {}     {}", ii, mcco.nuclear_data.energies[ii], self.census_energy_spectrum[ii]).unwrap();
+            writeln!(
+                file,
+                "{}     {}     {}",
+                ii, mcco.nuclear_data.energies[ii], self.census_energy_spectrum[ii]
+            )
+            .unwrap();
         })
     }
 }
