@@ -1,11 +1,18 @@
-use fastiron::{mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle}, particle_vault::ParticleVault};
+use fastiron::{
+    mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
+    particle_vault::ParticleVault,
+};
 
 #[test]
 fn append_pop_clear() {
     // 2 vaults of 8 particles each
     let pp: Option<MCBaseParticle<f64>> = Some(MCBaseParticle::default());
-    let mut vault1: ParticleVault<f64> = ParticleVault { particles: vec![pp.clone(); 8] };
-    let mut vault2: ParticleVault<f64> = ParticleVault { particles: vec![pp; 8] };
+    let mut vault1: ParticleVault<f64> = ParticleVault {
+        particles: vec![pp.clone(); 8],
+    };
+    let mut vault2: ParticleVault<f64> = ParticleVault {
+        particles: vec![pp; 8],
+    };
 
     vault1.append(&vault2);
     assert_eq!(vault1.size(), 16);
@@ -21,9 +28,13 @@ fn append_pop_clear() {
 fn collapse_enough_space() {
     // 2 vaults of 8 particles each
     let pp: Option<MCBaseParticle<f64>> = Some(MCBaseParticle::default());
-    let mut vault1: ParticleVault<f64> = ParticleVault { particles: vec![pp.clone(); 8] };
-    let mut vault2: ParticleVault<f64> = ParticleVault { particles: vec![pp; 8] };
-    
+    let mut vault1: ParticleVault<f64> = ParticleVault {
+        particles: vec![pp.clone(); 8],
+    };
+    let mut vault2: ParticleVault<f64> = ParticleVault {
+        particles: vec![pp; 8],
+    };
+
     // max size for vault is 20
     vault1.collapse(20, &mut vault2);
     // all particles must have been transfered to the first vault
@@ -35,8 +46,12 @@ fn collapse_enough_space() {
 fn collapse_missing_space() {
     // 2 vaults of 8 particles each
     let pp: Option<MCBaseParticle<f64>> = Some(MCBaseParticle::default());
-    let mut vault1: ParticleVault<f64> = ParticleVault { particles: vec![pp.clone(); 8] };
-    let mut vault2: ParticleVault<f64> = ParticleVault { particles: vec![pp; 8] };
+    let mut vault1: ParticleVault<f64> = ParticleVault {
+        particles: vec![pp.clone(); 8],
+    };
+    let mut vault2: ParticleVault<f64> = ParticleVault {
+        particles: vec![pp; 8],
+    };
 
     // max size for vault is 10
     vault1.collapse(10, &mut vault2);
@@ -48,7 +63,9 @@ fn collapse_missing_space() {
 #[test]
 fn reserve() {
     let pp: Option<MCBaseParticle<f64>> = Some(MCBaseParticle::default());
-    let mut vault1: ParticleVault<f64> = ParticleVault { particles: vec![pp; 8] };
+    let mut vault1: ParticleVault<f64> = ParticleVault {
+        particles: vec![pp; 8],
+    };
     assert_eq!(vault1.size(), 8);
     vault1.reserve(20);
     // capacity should be 20, not 28
@@ -58,7 +75,9 @@ fn reserve() {
 #[test]
 fn put_invalidate() {
     let pp: Option<MCBaseParticle<f64>> = Some(MCBaseParticle::default());
-    let mut vault1: ParticleVault<f64> = ParticleVault { particles: vec![pp; 8] };
+    let mut vault1: ParticleVault<f64> = ParticleVault {
+        particles: vec![pp; 8],
+    };
 
     vault1.invalidate_particle(0);
     vault1.invalidate_particle(4);

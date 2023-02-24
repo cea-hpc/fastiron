@@ -33,7 +33,7 @@ impl<T: Float> ParticleVault<T> {
     }
 
     /// Add all particles of a second vault into this one.
-    /// Second vault is left empty. `fill_size` refers to the maximum 
+    /// Second vault is left empty. `fill_size` refers to the maximum
     /// possible size for the vault.
     pub fn collapse(&mut self, fill_size: usize, vault2: &mut ParticleVault<T>) {
         if self.size() + vault2.size() < fill_size {
@@ -41,8 +41,8 @@ impl<T: Float> ParticleVault<T> {
         } else {
             let old_len = self.size(); // next method call will change self.size since we fill the vault
             self.particles
-                .extend_from_slice(&vault2.particles[..fill_size-self.size()]);
-            vault2.particles = Vec::from(&vault2.particles[fill_size-old_len..]);
+                .extend_from_slice(&vault2.particles[..fill_size - self.size()]);
+            vault2.particles = Vec::from(&vault2.particles[fill_size - old_len..]);
         }
     }
 
