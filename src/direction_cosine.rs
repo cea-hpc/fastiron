@@ -1,6 +1,6 @@
 use num::Float;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DirectionCosine<T: Float> {
     pub alpha: T,
     pub beta: T,
@@ -21,12 +21,6 @@ impl<T: Float> DirectionCosine<T> {
     /// to be rotated. The direction cosine describes global theta and phi
     /// angles that the vector V is to be rotated about.
     pub fn rotate_3d_vector(&mut self, sine_theta: T, cosine_theta: T, sine_phi: T, cosine_phi: T) {
-        todo!()
-    }
-}
-
-impl<T: Float> Default for DirectionCosine<T> {
-    fn default() -> Self {
         todo!()
     }
 }
