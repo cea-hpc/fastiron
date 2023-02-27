@@ -1,4 +1,4 @@
-use num::Float;
+use num::{Float, FromPrimitive};
 
 use crate::{
     mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
@@ -27,7 +27,7 @@ pub struct ParticleVaultContainer<T: Float> {
     pub extra_vault: Vec<ParticleVault<T>>,
 }
 
-impl<T: Float> ParticleVaultContainer<T> {
+impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
     /// Returns the number of processing vaults
     pub fn processing_size(&self) -> usize {
         self.processing_vaults.len()

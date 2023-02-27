@@ -1,6 +1,8 @@
 use std::fmt::Debug;
 
-use num::{Float, Zero};
+use num::{Float, FromPrimitive, Zero};
+
+use crate::physical_constants::TINY_FLOAT;
 
 /// Custom type for vector representation.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -10,18 +12,19 @@ pub struct MCVector<T: Float> {
     pub z: T,
 }
 
-impl<T: Float> MCVector<T> {
+impl<T: Float + FromPrimitive> MCVector<T> {
     /// Returns true if the vector is almost the zero element. This method is
     /// necessary because of floating-point errors.
     /// NEED TO FIND A WAY TO HARDCODE THE THRESHOLD WITH THE T GENERIC TYPE
-    pub fn is_almost_zero(&self, threshold: T) -> bool {
+    pub fn is_almost_zero(&self) -> bool {
+        let threshold: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
         (self.x.abs() < threshold) & (self.y.abs() < threshold) & (self.z.abs() < threshold)
     }
 
     /// Returns true if the vectors are almost equal. This method is
     /// necessary because of floating-point errors.
-    pub fn is_almost_equal(&self, vv: &MCVector<T>, threshold: T) -> bool {
-        (*self - *vv).is_almost_zero(threshold)
+    pub fn is_almost_equal(&self, vv: &MCVector<T>) -> bool {
+        (*self - *vv).is_almost_zero()
     }
 
     /// Return the vector's euclidian norm.

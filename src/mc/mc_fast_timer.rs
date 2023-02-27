@@ -65,11 +65,13 @@ impl MCFastTimerContainer {
     }
 }
 
-pub fn start<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, index: usize) {
+pub fn start<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, section: Section) {
+    let index = section as usize;
     mcco.borrow_mut().fast_timer.timers[index].start_clock = Instant::now();
 }
 
-pub fn stop<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, index: usize) {
+pub fn stop<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, section: Section) {
+    let index = section as usize;
     mcco.borrow_mut().fast_timer.timers[index].end_clock = Instant::now();
     mcco.borrow_mut().fast_timer.timers[index].last_cycle_clock += mcco.borrow().fast_timer.timers
         [index]
@@ -84,6 +86,7 @@ pub fn stop<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, index: usize) {
     mcco.borrow_mut().fast_timer.timers[index].num_calls += 1;
 }
 
-pub fn get_last_cycle<T: Float>(mcco: &mut MonteCarlo<T>, index: usize) -> f64 {
+pub fn get_last_cycle<T: Float>(mcco: &MonteCarlo<T>, section: Section) -> f64 {
+    let index = section as usize;
     mcco.fast_timer.timers[index].last_cycle_clock as f64 / 1000000.0
 }

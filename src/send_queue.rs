@@ -1,47 +1,52 @@
-use std::collections::VecDeque;
-
 /// Structure to record which particles need to be sent to
 /// which neighbor process during tracking.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SendQueueTuple {
-    pub neighbor: u32,
+    pub neighbor: usize,
     pub particle_index: usize,
 }
 
 /// Structure used to store particle index and neighbor index
 /// for particles that hit TransitOffProcessor (See MCSubfacetAdjacencyEvent).
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SendQueue {
-    data: VecDeque<SendQueueTuple>,
+    pub data: Vec<SendQueueTuple>,
 }
 
 impl SendQueue {
     /// Get the total size of the SendQueue.
     pub fn size(&self) -> usize {
-        todo!()
+        self.data.len()
     }
 
-    /// Reserve capacity ... Exact behavior TBD
-    pub fn reserve(&self, size: usize) {
-        todo!()
+    /// Reserve capacity for the queue
+    pub fn reserve(&mut self, size: usize) {
+        if self.data.capacity() < size {
+            self.data.reserve(size - self.data.capacity());
+        }
     }
 
     /// Get the number of items in SendQueue going to a specific neighbor.
+    /// See if it's used and how much it's used. Maybe returning directly a
+    /// filtered iterator is more useful.
     pub fn neighbor_size(&self, index: usize) -> u64 {
-        todo!()
+        self.data
+            .clone()
+            .into_iter()
+            .filter(|t| t.neighbor == index)
+            .count() as u64
     }
 
-    /// Get a [SendQueueTuple] from the SendQueue. `index`is the index
-    /// of the desination neighbor i.e. the current process id?
-    pub fn get_tuple(&self, index: usize) -> SendQueueTuple {
-        todo!()
-    }
-
-    /// Add items to the SendQueue ... Exact behavior TBD
-    pub fn push(&mut self, neighbor: u32, vault_index: usize) {
-        todo!()
+    /// Add items to the SendQueue.
+    pub fn push(&mut self, neighbor: usize, vault_index: usize) {
+        self.data.push(SendQueueTuple {
+            neighbor,
+            particle_index: vault_index,
+        });
     }
 
     /// Clear the queue.
-    pub fn clear(&mut self) {}
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
 }
