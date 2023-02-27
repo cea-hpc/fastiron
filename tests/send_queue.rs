@@ -47,7 +47,7 @@ pub fn push_get_clear() {
     queue.push(3, 4);
     
     assert_eq!(queue.size(), 5);
-    assert_eq!(queue.get_tuple(queue.size()-1).unwrap(), t4);
+    assert_eq!(queue.data[queue.size()-1], t4);
 
     queue.clear();
 
