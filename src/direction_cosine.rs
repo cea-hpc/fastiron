@@ -1,4 +1,4 @@
-use num::{Float, FromPrimitive};
+use num::{Float, FromPrimitive, zero};
 
 use crate::{physical_constants::PI, mc::mc_rng_state::rng_sample};
 
@@ -35,6 +35,29 @@ impl<T: Float + FromPrimitive> DirectionCosine<T> {
     /// to be rotated. The direction cosine describes global theta and phi
     /// angles that the vector V is to be rotated about.
     pub fn rotate_3d_vector(&mut self, sine_theta: T, cosine_theta: T, sine_phi: T, cosine_phi: T) {
-        todo!()
+        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let threshold: T = FromPrimitive::from_f64(1e-6).unwrap(); // order of TINY_FLOAT.sqrt()
+
+        let cos_theta_zero = self.gamma;
+        let sin_theta_zero = (one - cos_theta_zero*cos_theta_zero).sqrt();
+
+        let (cos_phi_zero, sin_phi_zero): (T, T) = if sin_theta_zero < threshold {
+            (one, zero())
+        } else {
+            (self.alpha/sin_theta_zero, self.beta/sin_theta_zero)
+        };
+
+        // compute the rotation
+        self.alpha = cos_theta_zero*cos_phi_zero*(sine_theta*cosine_phi) 
+            - sin_phi_zero*(sine_theta*sine_phi) 
+            + sin_theta_zero*cos_phi_zero*cosine_theta;
+        
+        self.beta = cos_theta_zero*sin_phi_zero*(sine_theta*cosine_phi)
+            + cos_phi_zero*(sine_theta*sine_phi)
+            + sin_theta_zero*sin_phi_zero*cosine_theta;
+        
+        self.gamma = -sin_theta_zero*(sine_theta*cosine_phi)
+            + zero()
+            + cos_theta_zero*cosine_theta;
     }
 }
