@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use num::{Float, Zero, FromPrimitive};
+use num::{Float, FromPrimitive, Zero};
 
 use crate::physical_constants::TINY_FLOAT;
 

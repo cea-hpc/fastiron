@@ -5,7 +5,7 @@
 // We might need to use an approximative equality test such as
 // a == b <=> (a-b) < smallnumber
 
-use fastiron::{mc::mc_vector::MCVector};
+use fastiron::mc::mc_vector::MCVector;
 use num::Float;
 
 // Basic operations

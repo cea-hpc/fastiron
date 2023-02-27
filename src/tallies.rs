@@ -1,8 +1,15 @@
-use std::{fmt::Display, cell::RefCell, rc::Rc};
+use std::{cell::RefCell, fmt::Display, rc::Rc};
 
 use num::{zero, Float, FromPrimitive};
 
-use crate::{energy_spectrum::EnergySpectrum, mc::{mc_domain::MCDomain, mc_fast_timer::{self, Section}}, montecarlo::MonteCarlo};
+use crate::{
+    energy_spectrum::EnergySpectrum,
+    mc::{
+        mc_domain::MCDomain,
+        mc_fast_timer::{self, Section},
+    },
+    montecarlo::MonteCarlo,
+};
 
 /// Enum representing a tally event.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -32,16 +39,21 @@ impl<T: Float> Fluence<T> {
     pub fn compute(&mut self, domain_idx: usize, scalar_flux_domain: &ScalarFluxDomain<T>) {
         let n_cells = scalar_flux_domain.task[0].cell.len();
         while self.domain.len() <= domain_idx {
-            let new_domain: FluenceDomain<T> = FluenceDomain { cell: Vec::with_capacity(n_cells)};
+            let new_domain: FluenceDomain<T> = FluenceDomain {
+                cell: Vec::with_capacity(n_cells),
+            };
             self.domain.push(new_domain);
         }
         (0..n_cells).into_iter().for_each(|cell_idx| {
             let n_groups = scalar_flux_domain.task[0].cell[cell_idx].len();
             (0..n_groups).into_iter().for_each(|group_idx| {
-                self.domain[domain_idx].add_cell(cell_idx, scalar_flux_domain.task[0].cell[cell_idx][group_idx]);
+                self.domain[domain_idx].add_cell(
+                    cell_idx,
+                    scalar_flux_domain.task[0].cell[cell_idx][group_idx],
+                );
             });
         });
-    } 
+    }
 }
 
 /// Structure used to regulate the number of event in the simulation.
@@ -290,9 +302,18 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
         println!("Balance: \n{:?}", self.balance_task[0]);
         let sum = self.scalar_flux_sum();
         println!("Scalar Flux Sum: {sum}");
-        println!("Cycle Initialize: {}", mc_fast_timer::get_last_cycle(& mcco.borrow(), Section::CycleInit));
-        println!("Cycle Tracking: {}", mc_fast_timer::get_last_cycle(& mcco.borrow(), Section::CycleTracking));
-        println!("Cycle Finalize: {}", mc_fast_timer::get_last_cycle(& mcco.borrow(), Section::CycleFinalize));
+        println!(
+            "Cycle Initialize: {}",
+            mc_fast_timer::get_last_cycle(&mcco.borrow(), Section::CycleInit)
+        );
+        println!(
+            "Cycle Tracking: {}",
+            mc_fast_timer::get_last_cycle(&mcco.borrow(), Section::CycleTracking)
+        );
+        println!(
+            "Cycle Finalize: {}",
+            mc_fast_timer::get_last_cycle(&mcco.borrow(), Section::CycleFinalize)
+        );
 
         mc_fast_timer::start(mcco, Section::CycleFinalize);
     }
