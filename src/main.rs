@@ -181,7 +181,7 @@ pub fn cycle_finalize<T: Float + Display + FromPrimitive>(mcco: Rc<RefCell<Monte
         .processed_vaults
         .len() as u64;
 
-    mcco.borrow_mut().tallies.cycle_finalize(&mcco.borrow());
+    mcco.borrow_mut().tallies.cycle_finalize(mcco.clone());
     mcco.borrow_mut().time_info.cycle += 1;
     //mcco.particle_buffer.free_memory();
 
