@@ -23,7 +23,26 @@ impl Default for MCTallyEvent {
 }
 
 /// May need to change it to a full-fledged structure later.
-pub type Fluence<T> = Vec<FluenceDomain<T>>;
+#[derive(Debug, Default)]
+pub struct Fluence<T: Float> {
+    pub domain: Vec<FluenceDomain<T>>,
+}
+
+impl<T: Float> Fluence<T> {
+    pub fn compute(&mut self, domain_idx: usize, scalar_flux_domain: &ScalarFluxDomain<T>) {
+        let n_cells = scalar_flux_domain.task[0].cell.len();
+        while self.domain.len() <= domain_idx {
+            let new_domain: FluenceDomain<T> = FluenceDomain { cell: Vec::with_capacity(n_cells)};
+            self.domain.push(new_domain);
+        }
+        (0..n_cells).into_iter().for_each(|cell_idx| {
+            let n_groups = scalar_flux_domain.task[0].cell[cell_idx].len();
+            (0..n_groups).into_iter().for_each(|group_idx| {
+                self.domain[domain_idx].add_cell(cell_idx, scalar_flux_domain.task[0].cell[cell_idx][group_idx]);
+            });
+        });
+    } 
+}
 
 /// Structure used to regulate the number of event in the simulation.
 #[derive(Debug, Default)]
@@ -230,7 +249,7 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
             balance_task: Vec::new(),
             scalar_flux_domain: Vec::new(),
             cell_tally_domain: Vec::new(),
-            fluence: Fluence::default(),
+            fluence: Fluence { domain: Vec::new() },
             spectrum,
             num_balance_replications: bal_rep,
             num_flux_replications: flux_rep,
