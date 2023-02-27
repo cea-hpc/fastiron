@@ -107,8 +107,10 @@ fn erase_swap_particles() {
     assert_eq!(vault.size(), 7);
 
     //println!("before: {vault:#?}");
+
     vault.erase_swap_particles(2); // p1 and p2 switch; p1 is popped into oblivion
-                                   //println!("after: {vault:#?}");
+
+    //println!("after: {vault:#?}");
 
     // vault should be size 6
     assert_eq!(vault.size(), 6);

@@ -284,12 +284,15 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
         // Initialize the balance tallies
         if self.balance_task.is_empty() {
             if self.balance_task.capacity() == 0 {
-                self.balance_task.reserve(self.num_balance_replications as usize);
+                self.balance_task
+                    .reserve(self.num_balance_replications as usize);
             }
 
-            (0..self.num_balance_replications).into_iter().for_each(|_| {
-                self.balance_task.push(Balance::default());
-            });
+            (0..self.num_balance_replications)
+                .into_iter()
+                .for_each(|_| {
+                    self.balance_task.push(Balance::default());
+                });
         }
 
         // Initialize the cell tallies
@@ -299,7 +302,10 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
             }
 
             (0..mcco.domain.len()).into_iter().for_each(|domain_idx| {
-                self.cell_tally_domain.push(CellTallyDomain::new(&mcco.domain[domain_idx], self.num_cell_tally_replications as usize));
+                self.cell_tally_domain.push(CellTallyDomain::new(
+                    &mcco.domain[domain_idx],
+                    self.num_cell_tally_replications as usize,
+                ));
             });
         }
 
@@ -310,7 +316,11 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
             }
 
             (0..mcco.domain.len()).into_iter().for_each(|domain_idx| {
-                self.scalar_flux_domain.push(ScalarFluxDomain::new(&mcco.domain[domain_idx], mcco.nuclear_data.energies.len(), self.num_flux_replications as usize));
+                self.scalar_flux_domain.push(ScalarFluxDomain::new(
+                    &mcco.domain[domain_idx],
+                    mcco.nuclear_data.energies.len(),
+                    self.num_flux_replications as usize,
+                ));
             });
         }
     }
@@ -318,78 +328,67 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
     /// Sums the task-level data. This is used when replications
     /// is active.
     pub fn sum_tasks(&mut self) {
-        (1..self.num_balance_replications).into_iter().for_each(|rep_idx| {
-            let bal = self.balance_task[rep_idx as usize].clone(); // is there a cheaper way?
-            self.balance_task[0].add(&bal);
-            self.balance_task[rep_idx as usize].reset();
-        });
+        (1..self.num_balance_replications)
+            .into_iter()
+            .for_each(|rep_idx| {
+                let bal = self.balance_task[rep_idx as usize].clone(); // is there a cheaper way?
+                self.balance_task[0].add(&bal);
+                self.balance_task[rep_idx as usize].reset();
+            });
     }
 
     /// End-of-simulation routine that updates its own data and other structures'.
     pub fn cycle_finalize(&mut self, mcco: Rc<RefCell<MonteCarlo<T>>>) {
         self.sum_tasks();
 
-        // useless in single-threaded mode?
-        /* 
-        let tal: Vec<u64> = vec![
-            self.balance_task[0].absorb,
-            self.balance_task[0].census,
-            self.balance_task[0].escape,
-            self.balance_task[0].collision,
-            self.balance_task[0].end,
-            self.balance_task[0].fission,
-            self.balance_task[0].produce,
-            self.balance_task[0].scatter,
-            self.balance_task[0].start,
-            self.balance_task[0].source,
-            self.balance_task[0].rr,
-            self.balance_task[0].split,
-            self.balance_task[0].num_segments,
-        ];
-        */
-
         self.print_summary(mcco.clone());
 
         self.balance_cumulative.add(&self.balance_task[0]);
 
         let new_start: u64 = self.balance_task[0].end;
-        (0..self.balance_task.len()).into_iter().for_each(|balance_idx| {
-            self.balance_task[balance_idx].reset();
-        });
+        (0..self.balance_task.len())
+            .into_iter()
+            .for_each(|balance_idx| {
+                self.balance_task[balance_idx].reset();
+            });
         self.balance_task[0].start = new_start;
 
-        (0..self.scalar_flux_domain.len()).into_iter().for_each(|domain_idx|{
-            // Sum on replicated cell tallies and resets them
-            (1..self.num_cell_tally_replications).into_iter().for_each(|rep_idx| {
-                let val = self.cell_tally_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
-                self.cell_tally_domain[domain_idx].task[0].add(&val);
-                self.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
-            });
+        (0..self.scalar_flux_domain.len())
+            .into_iter()
+            .for_each(|domain_idx| {
+                // Sum on replicated cell tallies and resets them
+                (1..self.num_cell_tally_replications)
+                    .into_iter()
+                    .for_each(|rep_idx| {
+                        let val = self.cell_tally_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                        self.cell_tally_domain[domain_idx].task[0].add(&val);
+                        self.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
+                    });
 
-            // Sum on replciated scalar flux tallies and resets them
-            (1..self.num_flux_replications).into_iter().for_each(|rep_idx| {
-                let val = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
-                self.scalar_flux_domain[domain_idx].task[0].add(&val);
-                self.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
-            });
+                // Sum on replciated scalar flux tallies and resets them
+                (1..self.num_flux_replications)
+                    .into_iter()
+                    .for_each(|rep_idx| {
+                        let val =
+                            self.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                        self.scalar_flux_domain[domain_idx].task[0].add(&val);
+                        self.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
+                    });
 
-            if mcco.borrow().params.simulation_params.coral_benchmark {
-                self.fluence.compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
-            }
-            self.cell_tally_domain[domain_idx].task[0].reset();
-            self.scalar_flux_domain[domain_idx].task[0].reset();
-        });
+                if mcco.borrow().params.simulation_params.coral_benchmark {
+                    self.fluence
+                        .compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
+                }
+                self.cell_tally_domain[domain_idx].task[0].reset();
+                self.scalar_flux_domain[domain_idx].task[0].reset();
+            });
         self.spectrum.update_spectrum(&mcco.borrow());
     }
 
     /// Prints summarized data recorded by the tallies.
     pub fn print_summary(&self, mcco: Rc<RefCell<MonteCarlo<T>>>) {
         mc_fast_timer::stop(mcco.clone(), Section::CycleFinalize);
-        /*
-        if mcco.borrow().time_info.cycle == 0 {
 
-        }
-        */
         println!("Balance: \n{:?}", self.balance_task[0]);
         let sum = self.scalar_flux_sum();
         println!("Scalar Flux Sum: {sum}");
