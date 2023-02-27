@@ -1,8 +1,6 @@
-use std::collections::VecDeque;
-
 /// Structure to record which particles need to be sent to
 /// which neighbor process during tracking.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SendQueueTuple {
     pub neighbor: usize,
     pub particle_index: usize,
@@ -14,7 +12,7 @@ pub struct SendQueueTuple {
 /// original code; Replace it?
 #[derive(Debug, Clone)]
 pub struct SendQueue {
-    data: VecDeque<SendQueueTuple>,
+    pub data: Vec<SendQueueTuple>,
 }
 
 impl SendQueue {
@@ -23,7 +21,7 @@ impl SendQueue {
         self.data.len()
     }
 
-    /// Reserve capacity ... Exact behavior TBD
+    /// Reserve capacity for the queue
     pub fn reserve(&mut self, size: usize) {
         if self.data.capacity() < size {
             self.data.reserve(size - self.data.capacity());
@@ -43,9 +41,11 @@ impl SendQueue {
 
     /// Add items to the SendQueue
     pub fn push(&mut self, neighbor: usize, vault_index: usize) {
-        self.data.push_back(SendQueueTuple { neighbor, particle_index: vault_index });
+        self.data.push(SendQueueTuple { neighbor, particle_index: vault_index });
     }
 
     /// Clear the queue.
-    pub fn clear(&mut self) {}
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
 }
