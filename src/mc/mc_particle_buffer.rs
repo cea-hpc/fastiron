@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use num::Float;
+use num::{Float, FromPrimitive};
 
 use crate::montecarlo::MonteCarlo;
 
@@ -18,7 +18,7 @@ pub struct MCParticleBuffer<T: Float> {
     pub buffers: Vec<Vec<MCParticle<T>>>,
 }
 
-impl<T: Float> MCParticleBuffer<T> {
+impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
     /// Prepare the buffers for use.
     pub fn initialize(&mut self) {
         self.buffers = Vec::with_capacity(self.mcco.borrow().domain.len());

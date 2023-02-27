@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use num::{zero, Float};
+use num::{zero, Float, FromPrimitive};
 
 use crate::{direction_cosine::DirectionCosine, tallies::MCTallyEvent};
 
@@ -63,7 +63,7 @@ pub struct MCParticle<T: Float> {
     pub normal_dot: T,
 }
 
-impl<T: Float> MCParticle<T> {
+impl<T: Float + FromPrimitive> MCParticle<T> {
     /// Constructor from a [MCBaseParticle] object.
     pub fn new(from_particle: &MCBaseParticle<T>) -> Self {
         let speed = from_particle.velocity.length();
