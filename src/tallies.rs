@@ -272,12 +272,47 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
     /// Prepare the tallies for use.
     pub fn initialize_tallies(
         &mut self,
-        monte_carlo: &MonteCarlo<T>,
+        mcco: &MonteCarlo<T>,
         balance_replications: u32,
         flux_replications: u32,
         cell_replications: u32,
     ) {
-        todo!()
+        self.num_balance_replications = balance_replications;
+        self.num_flux_replications = flux_replications;
+        self.num_cell_tally_replications = cell_replications;
+
+        // Initialize the balance tallies
+        if self.balance_task.is_empty() {
+            if self.balance_task.capacity() == 0 {
+                self.balance_task.reserve(self.num_balance_replications as usize);
+            }
+
+            (0..self.num_balance_replications).into_iter().for_each(|_| {
+                self.balance_task.push(Balance::default());
+            });
+        }
+
+        // Initialize the cell tallies
+        if self.cell_tally_domain.is_empty() {
+            if self.cell_tally_domain.capacity() == 0 {
+                self.cell_tally_domain.reserve(mcco.domain.len());
+            }
+
+            (0..mcco.domain.len()).into_iter().for_each(|domain_idx| {
+                self.cell_tally_domain.push(CellTallyDomain::new(&mcco.domain[domain_idx], self.num_cell_tally_replications as usize));
+            });
+        }
+
+        // Initialize the scalar flux tallies
+        if self.scalar_flux_domain.is_empty() {
+            if self.scalar_flux_domain.capacity() == 0 {
+                self.scalar_flux_domain.reserve(mcco.domain.len());
+            }
+
+            (0..mcco.domain.len()).into_iter().for_each(|domain_idx| {
+                self.scalar_flux_domain.push(ScalarFluxDomain::new(&mcco.domain[domain_idx], mcco.nuclear_data.energies.len(), self.num_flux_replications as usize));
+            });
+        }
     }
 
     /// Sums the task-level data. This is used when replications
@@ -295,6 +330,7 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
         self.sum_tasks();
 
         // useless in single-threaded mode?
+        /* 
         let tal: Vec<u64> = vec![
             self.balance_task[0].absorb,
             self.balance_task[0].census,
@@ -310,6 +346,7 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
             self.balance_task[0].split,
             self.balance_task[0].num_segments,
         ];
+        */
 
         self.print_summary(mcco.clone());
 
