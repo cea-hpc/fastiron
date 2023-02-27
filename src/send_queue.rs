@@ -27,15 +27,22 @@ impl SendQueue {
     }
 
     /// Get the number of items in SendQueue going to a specific neighbor.
-    /// See if it's used and how much it's used. Maybe returning directly a 
+    /// See if it's used and how much it's used. Maybe returning directly a
     /// filtered iterator is more useful.
     pub fn neighbor_size(&self, index: usize) -> u64 {
-        self.data.clone().into_iter().filter(|t| t.neighbor == index).count() as u64
+        self.data
+            .clone()
+            .into_iter()
+            .filter(|t| t.neighbor == index)
+            .count() as u64
     }
 
     /// Add items to the SendQueue.
     pub fn push(&mut self, neighbor: usize, vault_index: usize) {
-        self.data.push(SendQueueTuple { neighbor, particle_index: vault_index });
+        self.data.push(SendQueueTuple {
+            neighbor,
+            particle_index: vault_index,
+        });
     }
 
     /// Clear the queue.

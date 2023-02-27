@@ -132,7 +132,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>
                 mc_fast_timer::start(mcco.clone(), Section::CycleTrackingMPI);
 
                 let send_q = &mut my_particle_vault.send_queue;
-                
+
                 for idx in 0..send_q.size() {
                     let send_q_t = send_q.data[idx].clone();
                     let mcb_particle = processing_vault.get_base_particle(idx);
