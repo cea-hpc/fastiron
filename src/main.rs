@@ -134,12 +134,12 @@ pub fn cycle_tracking<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>
                 let send_q = &mut my_particle_vault.send_queue;
                 //mcco.borrow().particle_buffer....
                 for idx in 0..send_q.size() {
-                    let send_q_t = send_q.get_tuple(idx);
+                    let send_q_t = send_q.get_tuple(idx).unwrap();
                     let mcb_particle = processing_vault.get_base_particle(idx);
 
                     mcco.borrow_mut()
                         .particle_buffer
-                        .buffer_particle(mcb_particle.unwrap(), send_q_t.neighbor as usize);
+                        .buffer_particle(mcb_particle.unwrap(), send_q_t.neighbor);
                 }
 
                 processing_vault.clear();
