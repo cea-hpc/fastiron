@@ -4,11 +4,11 @@ use num::{Float, FromPrimitive};
 /// number generator.
 pub fn rng_sample<T: Float + FromPrimitive>(seed: &mut u64) -> T {
     // Reset the state from previous value
-    *seed = 2862933555777941757u64*(*seed) + 3037000493u64;
+    *seed = 2862933555777941757u64 * (*seed) + 3037000493u64;
 
     // Bijection between integers [0; 2^64] and decimal [0; 1]
     //let f: f64 = 5.4210108624275222e-20*(*seed as f64);
-    let f: f64 = 5.421010862427522e-20*(*seed as f64);  // took out one decimal
+    let f: f64 = 5.421010862427522e-20 * (*seed as f64); // took out one decimal
     FromPrimitive::from_f64(f).unwrap()
 }
 
@@ -47,11 +47,11 @@ fn pseudo_des(lword: &mut u32, irword: &mut u32) {
         let mut ia = iswap ^ c1[idx];
         let itmpl: u32 = ia & 0xffff;
         let itmph: u32 = ia >> 16;
-        let ib: u32 = itmpl*itmpl + !(itmph*itmph);
+        let ib: u32 = itmpl * itmpl + !(itmph * itmph);
 
         ia = (ib >> 16) | ((ib & 0xffff) << 16);
 
-        *irword = *lword ^ ((ia ^ c2[idx]) + itmpl*itmph);
+        *irword = *lword ^ ((ia ^ c2[idx]) + itmpl * itmph);
         *lword = iswap;
     }
 }
@@ -59,5 +59,7 @@ fn pseudo_des(lword: &mut u32, irword: &mut u32) {
 fn rebuild_u64(front: u32, back: u32) -> u64 {
     let frt: [u8; 4] = front.to_be_bytes();
     let bck: [u8; 4] = back.to_be_bytes();
-    u64::from_be_bytes([frt[0], frt[1], frt[2], frt[3], bck[0], bck[1], bck[2], bck[3]])
+    u64::from_be_bytes([
+        frt[0], frt[1], frt[2], frt[3], bck[0], bck[1], bck[2], bck[3],
+    ])
 }
