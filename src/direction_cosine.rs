@@ -1,4 +1,6 @@
-use num::Float;
+use num::{Float, FromPrimitive};
+
+use crate::{physical_constants::PI, mc::mc_rng_state::rng_sample};
 
 #[derive(Debug, Clone, Default)]
 pub struct DirectionCosine<T: Float> {
@@ -7,10 +9,22 @@ pub struct DirectionCosine<T: Float> {
     pub gamma: T,
 }
 
-impl<T: Float> DirectionCosine<T> {
+impl<T: Float + FromPrimitive> DirectionCosine<T> {
     /// Generates a random angle.
-    pub fn sample_isotropic(&mut self, seed: &u64) {
-        todo!()
+    pub fn sample_isotropic(&mut self, seed: &mut u64) {
+        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+        let pi: T = FromPrimitive::from_f64(PI).unwrap();
+        
+        // sample gamma
+        self.gamma = one - two*rng_sample(seed);
+
+        let sine_gamma = (one - self.gamma*self.gamma).sqrt();
+        // sample phi and set the other angles using it
+        let phi = pi*(two*rng_sample(seed) - one);
+
+        self.alpha = sine_gamma * phi.cos();
+        self.beta = sine_gamma * phi.sin();
     }
 
     /// Rotates a 3D vector that is defined by the angles Theta and Phi
