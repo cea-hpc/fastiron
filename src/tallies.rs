@@ -1,8 +1,8 @@
-use std::fmt::Display;
+use std::{fmt::Display, cell::RefCell, rc::Rc};
 
 use num::{zero, Float, FromPrimitive};
 
-use crate::{energy_spectrum::EnergySpectrum, mc::mc_domain::MCDomain, montecarlo::MonteCarlo};
+use crate::{energy_spectrum::EnergySpectrum, mc::{mc_domain::MCDomain, mc_fast_timer::{self, Section}}, montecarlo::MonteCarlo};
 
 /// Enum representing a tally event.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -280,8 +280,21 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
     }
 
     /// Prints summarized data recorded by the tallies.
-    pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
-        todo!()
+    pub fn print_summary(&self, mcco: Rc<RefCell<MonteCarlo<T>>>) {
+        mc_fast_timer::stop(mcco.clone(), Section::CycleFinalize);
+        /*
+        if mcco.borrow().time_info.cycle == 0 {
+
+        }
+        */
+        println!("Balance: \n{:?}", self.balance_task[0]);
+        let sum = self.scalar_flux_sum();
+        println!("Scalar Flux Sum: {sum}");
+        println!("Cycle Initialize: {}", mc_fast_timer::get_last_cycle(& mcco.borrow(), Section::CycleInit));
+        println!("Cycle Tracking: {}", mc_fast_timer::get_last_cycle(& mcco.borrow(), Section::CycleTracking));
+        println!("Cycle Finalize: {}", mc_fast_timer::get_last_cycle(& mcco.borrow(), Section::CycleFinalize));
+
+        mc_fast_timer::start(mcco, Section::CycleFinalize);
     }
 
     /// Atomic add?
