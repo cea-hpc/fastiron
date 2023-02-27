@@ -1,4 +1,4 @@
-use num::Float;
+use num::{Float, FromPrimitive};
 
 use crate::mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 
@@ -8,7 +8,7 @@ pub struct ParticleVault<T: Float> {
     pub particles: Vec<Option<MCBaseParticle<T>>>,
 }
 
-impl<T: Float> ParticleVault<T> {
+impl<T: Float + FromPrimitive> ParticleVault<T> {
     /// Returns true if the vault is empty, false otherwise.
     pub fn empty(&self) -> bool {
         self.particles.is_empty()

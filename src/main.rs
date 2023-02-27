@@ -53,7 +53,7 @@ pub fn game_over<T: Float + Display + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo
         .print_spectrum(&mcco.borrow());
 }
 
-pub fn cycle_init<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, load_balance: bool) {
+pub fn cycle_init<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>, load_balance: bool) {
     mc_fast_timer::start(mcco.clone(), Section::CycleInit as usize);
 
     mcco.borrow_mut().clear_cross_section_cache();
@@ -86,7 +86,7 @@ pub fn cycle_init<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>, load_balance: bool
     mc_fast_timer::stop(mcco, Section::CycleInit as usize);
 }
 
-pub fn cycle_tracking<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
+pub fn cycle_tracking<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     mc_fast_timer::start(mcco.clone(), Section::CycleTracking as usize);
     let mut done = false;
     // execution policy

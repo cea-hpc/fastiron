@@ -181,7 +181,7 @@ fn floating_point_error() {
     };
     // instead of checking for exact equality, we check that the
     // difference is close enough to zero
-    assert!((uu - vv).is_almost_equal(&ww, TINY_FLOAT));
+    assert!((uu - vv).is_almost_equal(&ww));
 }
 
 // Methods
