@@ -4,8 +4,8 @@ use num::Float;
 /// properties relevant to the simulation.
 #[derive(Debug)]
 pub struct MCCellState<T: Float> {
-    /// Global id of the material (should be usize?)
-    pub material: u32,
+    /// Global id of the material
+    pub material: usize,
     /// Energy groups
     pub total: Vec<T>,
     /// Cell volume
