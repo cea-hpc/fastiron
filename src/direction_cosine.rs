@@ -34,6 +34,11 @@ impl<T: Float + FromPrimitive> DirectionCosine<T> {
     /// and cos_Phi referenced from the local x-axis to describe the vector V
     /// to be rotated. The direction cosine describes global theta and phi
     /// angles that the vector V is to be rotated about.
+    /// `cos_theta_zero`/`sin_theta_zero` and `cos_phi_zero`/`sin_phi_zero` 
+    /// model the initial position while the arguments of the method caracterize 
+    /// the rotation. See [this][1] for explanation on the formula.
+    /// 
+    /// [1]: https://en.wikipedia.org/wiki/Spherical_coordinate_system#Integration_and_differentiation_in_spherical_coordinates
     pub fn rotate_3d_vector(&mut self, sine_theta: T, cosine_theta: T, sine_phi: T, cosine_phi: T) {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let threshold: T = FromPrimitive::from_f64(1e-6).unwrap(); // order of TINY_FLOAT.sqrt()
