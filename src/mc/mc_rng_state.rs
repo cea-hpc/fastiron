@@ -4,7 +4,7 @@ use num::{Float, FromPrimitive};
 /// number generator.
 pub fn rng_sample<T: Float + FromPrimitive>(seed: &mut u64) -> T {
     // Reset the state from previous value
-    *seed = 2862933555777941757u64 * (*seed) + 3037000493u64;
+    *seed = 2862933555777941757u64.overflowing_mul(*seed).0.overflowing_add(3037000493u64).0;
 
     // Bijection between integers [0; 2^64] and decimal [0; 1]
     //let f: f64 = 5.4210108624275222e-20*(*seed as f64);
@@ -36,7 +36,7 @@ fn breakup_u64(n: u64) -> (u32, u32) {
     (u32::from_be_bytes(tmp1), u32::from_be_bytes(tmp2))
 }
 
-fn pseudo_des(lword: &mut u32, irword: &mut u32) {
+pub fn pseudo_des(lword: &mut u32, irword: &mut u32) {
     let n_iter: usize = 2;
     let c1: [u32; 4] = [0xbaa96887, 0x1e17d32c, 0x03bcdc3c, 0x0f33d1b2];
     let c2: [u32; 4] = [0x4b0f3b58, 0xe874f0c3, 0x6955c5a6, 0x55a7ca46];
@@ -47,11 +47,11 @@ fn pseudo_des(lword: &mut u32, irword: &mut u32) {
         let mut ia = iswap ^ c1[idx];
         let itmpl: u32 = ia & 0xffff;
         let itmph: u32 = ia >> 16;
-        let ib: u32 = itmpl * itmpl + !(itmph * itmph);
+        let ib: u32 = itmpl.overflowing_mul(itmpl.overflowing_add(!(itmph.overflowing_mul(itmph).0)).0).0;
 
         ia = (ib >> 16) | ((ib & 0xffff) << 16);
 
-        *irword = *lword ^ ((ia ^ c2[idx]) + itmpl * itmph);
+        *irword = *lword ^ ((ia ^ c2[idx]).overflowing_add(itmpl.overflowing_mul(itmph).0).0);
         *lword = iswap;
     }
 }
