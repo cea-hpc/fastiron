@@ -1,6 +1,6 @@
-use num::{zero, Float, FromPrimitive};
+use num::{Float, FromPrimitive, zero};
 
-use crate::montecarlo::MonteCarlo;
+use crate::{montecarlo::MonteCarlo, physical_constants::TINY_FLOAT};
 
 /// Computes the reaction-specific number-density-weighted
 /// macroscopic cross section of a cell.
@@ -18,8 +18,9 @@ pub fn macroscopic_cross_section<T: Float + FromPrimitive>(
         mcco.material_database.mat[global_mat_idx].iso[isotope_idx].atom_fraction;
     let cell_number_density: T = mcco.domain[domain_idx].cell_state[cell_idx].cell_number_density;
 
-    // Early return; Change these to use a threshold
-    if (atom_fraction == zero()) | (cell_number_density == zero()) {
+    let threshold: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
+    // comparison to 0 might be possible since it means it's not initialized & it's not a result of a computation?
+    if (atom_fraction < threshold) | (cell_number_density < threshold) { // one of the two is 0
         let res: T = FromPrimitive::from_f64(1e-20).unwrap();
         return res;
     }
@@ -48,8 +49,9 @@ pub fn macroscopic_total_cross_section<T: Float + FromPrimitive>(
         mcco.material_database.mat[global_mat_idx].iso[isotope_idx].atom_fraction;
     let cell_number_density: T = mcco.domain[domain_idx].cell_state[cell_idx].cell_number_density;
 
-    // Early return; Change these to use a threshold
-    if (atom_fraction == zero()) | (cell_number_density == zero()) {
+    let threshold: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
+    // comparison to 0 might be possible since it means it's not initialized & it's not a result of a computation?
+    if (atom_fraction < threshold) | (cell_number_density < threshold) { // one of the two is 0
         let res: T = FromPrimitive::from_f64(1e-20).unwrap();
         return res;
     }
@@ -64,12 +66,28 @@ pub fn macroscopic_total_cross_section<T: Float + FromPrimitive>(
 
 /// Computes the number-density-weighted macroscopic cross section
 /// of the collection of isotopes in a cell.
-pub fn weighted_macroscopic_cross_section<T: Float>(
-    mcco: &MonteCarlo<T>,
-    task_idx: usize,
+pub fn weighted_macroscopic_cross_section<T: Float + FromPrimitive>(
+    mcco: &mut MonteCarlo<T>,
     domain_idx: usize,
     cell_idx: usize,
     energy_group: usize,
 ) -> T {
-    todo!()
+    // early return
+    let precomputed_cross_section = mcco.domain[domain_idx].cell_state[cell_idx].total[energy_group];
+    if precomputed_cross_section > zero() {
+        return precomputed_cross_section;
+    }
+
+    let mut sum: T = zero();
+    let global_material_idx: usize = mcco.domain[domain_idx].cell_state[cell_idx].material;
+    let n_isotopes: usize = mcco.material_database.mat[global_material_idx].iso.len();
+
+    (0..n_isotopes).into_iter().for_each(|isotope_idx| {
+        sum = sum + macroscopic_total_cross_section(mcco, domain_idx, cell_idx, isotope_idx, energy_group)
+    });
+
+    // atomic in original code
+    mcco.domain[domain_idx].cell_state[cell_idx].total[energy_group] = sum;
+
+    sum
 }
