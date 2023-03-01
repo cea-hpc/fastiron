@@ -1,4 +1,4 @@
-use num::{Float, FromPrimitive, zero};
+use num::{zero, Float, FromPrimitive};
 
 use crate::{montecarlo::MonteCarlo, physical_constants::TINY_FLOAT};
 
@@ -20,7 +20,8 @@ pub fn macroscopic_cross_section<T: Float + FromPrimitive>(
 
     let threshold: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
     // comparison to 0 might be possible since it means it's not initialized & it's not a result of a computation?
-    if (atom_fraction < threshold) | (cell_number_density < threshold) { // one of the two is 0
+    if (atom_fraction < threshold) | (cell_number_density < threshold) {
+        // one of the two is 0
         let res: T = FromPrimitive::from_f64(1e-20).unwrap();
         return res;
     }
@@ -51,7 +52,8 @@ pub fn macroscopic_total_cross_section<T: Float + FromPrimitive>(
 
     let threshold: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
     // comparison to 0 might be possible since it means it's not initialized & it's not a result of a computation?
-    if (atom_fraction < threshold) | (cell_number_density < threshold) { // one of the two is 0
+    if (atom_fraction < threshold) | (cell_number_density < threshold) {
+        // one of the two is 0
         let res: T = FromPrimitive::from_f64(1e-20).unwrap();
         return res;
     }
@@ -73,7 +75,8 @@ pub fn weighted_macroscopic_cross_section<T: Float + FromPrimitive>(
     energy_group: usize,
 ) -> T {
     // early return
-    let precomputed_cross_section = mcco.domain[domain_idx].cell_state[cell_idx].total[energy_group];
+    let precomputed_cross_section =
+        mcco.domain[domain_idx].cell_state[cell_idx].total[energy_group];
     if precomputed_cross_section > zero() {
         return precomputed_cross_section;
     }
@@ -83,7 +86,8 @@ pub fn weighted_macroscopic_cross_section<T: Float + FromPrimitive>(
     let n_isotopes: usize = mcco.material_database.mat[global_material_idx].iso.len();
 
     (0..n_isotopes).into_iter().for_each(|isotope_idx| {
-        sum = sum + macroscopic_total_cross_section(mcco, domain_idx, cell_idx, isotope_idx, energy_group)
+        sum = sum
+            + macroscopic_total_cross_section(mcco, domain_idx, cell_idx, isotope_idx, energy_group)
     });
 
     // atomic in original code

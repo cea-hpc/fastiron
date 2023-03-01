@@ -1,10 +1,13 @@
-// Tests used to compare the results of certain computation heavy 
-// functions with their result in the original code. 
+// Tests used to compare the results of certain computation heavy
+// functions with their result in the original code.
 // A nice proper way to do it would be to make external calls
 // to C++ functions and compare the results in the tests.
 // For now, printing will be just fine.
 
-use fastiron::{mc::mc_rng_state::{spawn_rn_seed, pseudo_des}, direction_cosine::DirectionCosine};
+use fastiron::{
+    direction_cosine::DirectionCosine,
+    mc::mc_rng_state::{pseudo_des, spawn_rn_seed},
+};
 use num::Float;
 
 #[test]
@@ -27,7 +30,11 @@ pub fn pseudo_hash() {
 
 #[test]
 pub fn sample_isotropic() {
-    let mut dd: DirectionCosine<f64> = DirectionCosine { alpha: 0.2140, beta: 0.8621, gamma: 0.7821 };
+    let mut dd: DirectionCosine<f64> = DirectionCosine {
+        alpha: 0.2140,
+        beta: 0.8621,
+        gamma: 0.7821,
+    };
     let mut seed: u64 = 90374384094798327;
     dd.sample_isotropic(&mut seed);
     println!("dd: {dd:#?}");
@@ -36,7 +43,11 @@ pub fn sample_isotropic() {
 
 #[test]
 pub fn rotate_vector() {
-    let mut dd: DirectionCosine<f64> = DirectionCosine { alpha: 0.2140, beta: 0.8621, gamma: 0.7821 };
+    let mut dd: DirectionCosine<f64> = DirectionCosine {
+        alpha: 0.2140,
+        beta: 0.8621,
+        gamma: 0.7821,
+    };
     dd.rotate_3d_vector(1.0.sin(), 1.0.cos(), 2.0.sin(), 2.0.cos());
     println!("dd: {dd:#?}");
     //panic!()

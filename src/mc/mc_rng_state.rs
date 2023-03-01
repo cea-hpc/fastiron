@@ -4,7 +4,11 @@ use num::{Float, FromPrimitive};
 /// number generator.
 pub fn rng_sample<T: Float + FromPrimitive>(seed: &mut u64) -> T {
     // Reset the state from previous value
-    *seed = 2862933555777941757u64.overflowing_mul(*seed).0.overflowing_add(3037000493u64).0;
+    *seed = 2862933555777941757u64
+        .overflowing_mul(*seed)
+        .0
+        .overflowing_add(3037000493u64)
+        .0;
 
     // Bijection between integers [0; 2^64] and decimal [0; 1]
     //let f: f64 = 5.4210108624275222e-20*(*seed as f64);
@@ -48,11 +52,16 @@ pub fn pseudo_des(lword: &mut u32, irword: &mut u32) {
 
         let itmpl: u32 = ia & 0xffff;
         let itmph: u32 = ia >> 16;
-        let ib: u32 = (itmpl.overflowing_mul(itmpl).0).overflowing_add(!itmph.overflowing_mul(itmph).0).0;
+        let ib: u32 = (itmpl.overflowing_mul(itmpl).0)
+            .overflowing_add(!itmph.overflowing_mul(itmph).0)
+            .0;
 
         ia = (ib >> 16) | ((ib & 0xffff) << 16);
 
-        *irword = *lword ^ ((ia ^ c2[idx]).overflowing_add(itmpl.overflowing_mul(itmph).0).0);
+        *irword = *lword
+            ^ ((ia ^ c2[idx])
+                .overflowing_add(itmpl.overflowing_mul(itmph).0)
+                .0);
         *lword = iswap;
     }
 }
