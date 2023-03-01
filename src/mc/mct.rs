@@ -1,5 +1,4 @@
 use num::Float;
-use serde_yaml::Location;
 
 use crate::{direction_cosine::DirectionCosine, montecarlo::MonteCarlo};
 
@@ -10,9 +9,9 @@ use super::{
 
 /// Computes which facet is the nearest to a given particle.
 #[allow(clippy::too_many_arguments)]
-pub fn nearest_face<T: Float>(
+pub fn nearest_facet<T: Float>(
     mc_particle: &MCParticle<T>,
-    location: &Location,
+    location: &MCLocation,
     coord: &MCVector<T>,
     direction_cosine: &DirectionCosine<T>,
     distance_threshold: T,
