@@ -55,6 +55,8 @@ int main(int argc, char** argv) {
     MC_Particle pp = MC_Particle();
     MC_Vector vv = MC_Vector(1.0, 1.0, 1.0);
     DirectionCosine d_cos = DirectionCosine(1.0/sqrt(3.0), 1.0/sqrt(3.0), 1.0/sqrt(3.0));
+    pp.direction_cosine = d_cos;
+    pp.velocity = vv;
     uint64_t init_seed_t = 90374384094798327;
     uint64_t* seed_t = &init_seed_t;
     double energy = rngSample(seed_t);
