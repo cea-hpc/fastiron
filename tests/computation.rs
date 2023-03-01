@@ -5,6 +5,7 @@
 // For now, printing will be just fine.
 
 use fastiron::{mc::mc_rng_state::{spawn_rn_seed, pseudo_des}, direction_cosine::DirectionCosine};
+use num::Float;
 
 #[test]
 pub fn rng_spawned_number() {
@@ -30,5 +31,13 @@ pub fn sample_isotropic() {
     let mut seed: u64 = 90374384094798327;
     dd.sample_isotropic(&mut seed);
     println!("dd: {dd:#?}");
-    panic!()
+    //panic!()
+}
+
+#[test]
+pub fn rotate_vector() {
+    let mut dd: DirectionCosine<f64> = DirectionCosine { alpha: 0.2140, beta: 0.8621, gamma: 0.7821 };
+    dd.rotate_3d_vector(1.0.sin(), 1.0.cos(), 2.0.sin(), 2.0.cos());
+    println!("dd: {dd:#?}");
+    //panic!()
 }

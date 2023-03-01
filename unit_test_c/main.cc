@@ -38,4 +38,9 @@ int main(int argc, char** argv) {
     printf("###########################\n");
     printf("#  rotate 3d vector test  #\n");
     printf("###########################\n");
+    DirectionCosine dd_r = DirectionCosine(0.2140, 0.8621, 0.7821);
+    dd_r.Rotate3DVector(sin(1.0), cos(1.0), sin(2.0), cos(2.0));
+    printf("alpha: %17.16f\n",  dd_r.alpha);
+    printf("beta: %17.16f\n" ,  dd_r.beta );
+    printf("gamma: %17.16f\n",  dd_r.gamma);
 }
