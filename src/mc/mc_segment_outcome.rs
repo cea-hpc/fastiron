@@ -1,9 +1,16 @@
 use core::panic;
-use std::{fmt::Display};
+use std::fmt::Display;
 
-use num::{Float, FromPrimitive, zero};
+use num::{zero, Float, FromPrimitive};
 
-use crate::{montecarlo::MonteCarlo, physical_constants::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT}, macro_cross_section::weighted_macroscopic_cross_section, mc::{mc_rng_state::rng_sample, mc_nearest_facet::MCNearestFacet, mct::nearest_facet}, direction_cosine::DirectionCosine, tallies::MCTallyEvent};
+use crate::{
+    direction_cosine::DirectionCosine,
+    macro_cross_section::weighted_macroscopic_cross_section,
+    mc::{mc_nearest_facet::MCNearestFacet, mc_rng_state::rng_sample, mct::nearest_facet},
+    montecarlo::MonteCarlo,
+    physical_constants::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
+    tallies::MCTallyEvent,
+};
 
 use super::mc_particle::MCParticle;
 
@@ -49,7 +56,12 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
 
     // randomly determines the distance to the next collision
     // based upon the current cell data
-    let macroscopic_total_xsection = weighted_macroscopic_cross_section(mcco, mc_particle.domain, mc_particle.cell, mc_particle.energy_group);
+    let macroscopic_total_xsection = weighted_macroscopic_cross_section(
+        mcco,
+        mc_particle.domain,
+        mc_particle.cell,
+        mc_particle.energy_group,
+    );
 
     mc_particle.total_cross_section = macroscopic_total_xsection;
     if macroscopic_total_xsection.abs() < tiny_f {
@@ -60,7 +72,7 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
 
     if mc_particle.num_mean_free_paths.abs() < tiny_f {
         let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
-        mc_particle.num_mean_free_paths = -one*rdm_number.ln();
+        mc_particle.num_mean_free_paths = -one * rdm_number.ln();
     }
 
     // sets distance to collision, nearest facet and census
@@ -69,22 +81,33 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
     if force_collision {
         distance[MCSegmentOutcome::Collision as usize] = small_f;
     } else {
-        distance[MCSegmentOutcome::Collision as usize] = mc_particle.num_mean_free_paths * mc_particle.mean_free_path;
+        distance[MCSegmentOutcome::Collision as usize] =
+            mc_particle.num_mean_free_paths * mc_particle.mean_free_path;
     }
     // census
-    distance[MCSegmentOutcome::Census as usize] = particle_speed*mc_particle.mean_free_path;
+    distance[MCSegmentOutcome::Census as usize] = particle_speed * mc_particle.mean_free_path;
     // nearest facet
     let distance_threshold: T = ten * huge_f;
     let current_best_distance: T = huge_f; // useful?
 
     let d_cosine: &DirectionCosine<T> = &mc_particle.direction_cosine;
-    let new_segment: bool = (mc_particle.num_segments.abs() < tiny_f) || (mc_particle.last_event == MCTallyEvent::Collision);
+    let new_segment: bool = (mc_particle.num_segments.abs() < tiny_f)
+        || (mc_particle.last_event == MCTallyEvent::Collision);
 
-    let nearest_facet: MCNearestFacet<T> = nearest_facet(mc_particle, &mc_particle.get_location(), &mc_particle.coordinate, d_cosine, distance_threshold, current_best_distance, new_segment, mcco);
+    let nearest_facet: MCNearestFacet<T> = nearest_facet(
+        mc_particle,
+        &mc_particle.get_location(),
+        &mc_particle.coordinate,
+        d_cosine,
+        distance_threshold,
+        current_best_distance,
+        new_segment,
+        mcco,
+    );
     mc_particle.normal_dot = nearest_facet.dot_product;
 
     distance[MCSegmentOutcome::FacetCrossing as usize] = nearest_facet.distance_to_facet;
-    
+
     // exit if the tracker failed to bound the particle's volume
     if mc_particle.last_event == MCTallyEvent::FacetCrossingTrackingError {
         return MCSegmentOutcome::FacetCrossing;
@@ -102,7 +125,8 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
         panic!()
     }
     mc_particle.segment_path_length = distance[segment_outcome as usize];
-    mc_particle.num_mean_free_paths = mc_particle.num_mean_free_paths - mc_particle.segment_path_length/mc_particle.mean_free_path;
+    mc_particle.num_mean_free_paths = mc_particle.num_mean_free_paths
+        - mc_particle.segment_path_length / mc_particle.mean_free_path;
 
     // update the last event
     mc_particle.last_event = match segment_outcome {
@@ -116,9 +140,10 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
     match segment_outcome {
         MCSegmentOutcome::Collision => mc_particle.num_mean_free_paths = zero(),
         MCSegmentOutcome::FacetCrossing => mc_particle.facet = nearest_facet.facet,
-        MCSegmentOutcome::Census => mc_particle.time_to_census = zero::<T>().min(mc_particle.time_to_census),
+        MCSegmentOutcome::Census => {
+            mc_particle.time_to_census = zero::<T>().min(mc_particle.time_to_census)
+        }
         MCSegmentOutcome::Initialize => panic!(),
-        
     }
 
     if force_collision {
@@ -127,7 +152,7 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
 
     // skip tallies & early return if the path length is 0
     if mc_particle.segment_path_length.abs() < tiny_f {
-        return segment_outcome
+        return segment_outcome;
     }
 
     // move particle to the end of the segment
@@ -135,7 +160,7 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
     mc_particle.move_particle(&d_cos, mc_particle.segment_path_length);
 
     // decrement time to census & increment age
-    let segment_path_time = mc_particle.segment_path_length/particle_speed;
+    let segment_path_time = mc_particle.segment_path_length / particle_speed;
     mc_particle.time_to_census = mc_particle.time_to_census - segment_path_time;
     mc_particle.age = mc_particle.age + segment_path_time;
     if mc_particle.time_to_census < zero() {
@@ -143,7 +168,13 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
     }
 
     // update tallies
-    mcco.tallies.tally_scalar_flux(mc_particle.segment_path_length*mc_particle.weight, mc_particle.domain, flux_tally_idx, mc_particle.cell, mc_particle.energy_group);
+    mcco.tallies.tally_scalar_flux(
+        mc_particle.segment_path_length * mc_particle.weight,
+        mc_particle.domain,
+        flux_tally_idx,
+        mc_particle.cell,
+        mc_particle.energy_group,
+    );
 
     segment_outcome
 }
