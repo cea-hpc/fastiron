@@ -43,4 +43,10 @@ int main(int argc, char** argv) {
     printf("alpha: %17.16f\n",  dd_r.alpha);
     printf("beta: %17.16f\n" ,  dd_r.beta );
     printf("gamma: %17.16f\n",  dd_r.gamma);
+
+    printf("\n");
+    printf("###########################\n");
+    printf("#  update trajectory test #\n");
+    printf("###########################\n");
+    
 }

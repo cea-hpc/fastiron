@@ -6,7 +6,7 @@
 
 use fastiron::{
     direction_cosine::DirectionCosine,
-    mc::mc_rng_state::{pseudo_des, spawn_rn_seed},
+    mc::{mc_rng_state::{pseudo_des, spawn_rn_seed, rng_sample}, mc_particle::MCParticle, mc_vector::MCVector}, collision_event::update_trajectory,
 };
 use num::Float;
 
@@ -63,4 +63,30 @@ pub fn rotate_vector() {
     println!("#  rotate 3d vector test  #");
     println!("###########################");
     println!("dd: {dd:#?}");
+}
+
+#[test]
+pub fn trajectory() {
+    let mut pp: MCParticle<f64> = MCParticle::default();
+    // sets parameters
+    let vv: MCVector<f64> = MCVector { x: 1.0, y: 1.0, z: 1.0};
+    let d_cos: DirectionCosine<f64> = DirectionCosine { alpha: 1.0/3.0.sqrt(), beta: 1.0/3.0.sqrt(), gamma: 1.0/3.0.sqrt() };
+    let e: f64 = 1.0;
+    pp.velocity = vv;
+    pp.direction_cosine = d_cos;
+    pp.kinetic_energy = e;
+    let mut seed: u64 = 90374384094798327;
+    let energy = rng_sample(&mut seed);
+    let angle = rng_sample(&mut seed);
+
+    // update & print result
+    update_trajectory(energy, angle, &mut pp);
+
+    println!();
+    println!("###########################");
+    println!("#  update trajectory test #");
+    println!("###########################");
+    println!("Energy: {energy}");
+    println!("Angle: {angle}");
+    println!("Particle: {pp:#?}");
 }
