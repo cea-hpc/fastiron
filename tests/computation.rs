@@ -5,8 +5,13 @@
 // For now, printing will be just fine.
 
 use fastiron::{
+    collision_event::update_trajectory,
     direction_cosine::DirectionCosine,
-    mc::{mc_rng_state::{pseudo_des, spawn_rn_seed, rng_sample}, mc_particle::MCParticle, mc_vector::MCVector}, collision_event::update_trajectory,
+    mc::{
+        mc_particle::MCParticle,
+        mc_rng_state::{pseudo_des, rng_sample, spawn_rn_seed},
+        mc_vector::MCVector,
+    },
 };
 use num::Float;
 
@@ -69,8 +74,16 @@ pub fn rotate_vector() {
 pub fn trajectory() {
     let mut pp: MCParticle<f64> = MCParticle::default();
     // sets parameters
-    let vv: MCVector<f64> = MCVector { x: 1.0, y: 1.0, z: 1.0};
-    let d_cos: DirectionCosine<f64> = DirectionCosine { alpha: 1.0/3.0.sqrt(), beta: 1.0/3.0.sqrt(), gamma: 1.0/3.0.sqrt() };
+    let vv: MCVector<f64> = MCVector {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    };
+    let d_cos: DirectionCosine<f64> = DirectionCosine {
+        alpha: 1.0 / 3.0.sqrt(),
+        beta: 1.0 / 3.0.sqrt(),
+        gamma: 1.0 / 3.0.sqrt(),
+    };
     let e: f64 = 1.0;
     pp.velocity = vv;
     pp.direction_cosine = d_cos;
