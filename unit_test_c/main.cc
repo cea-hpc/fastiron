@@ -60,4 +60,8 @@ int main(int argc, char** argv) {
     double energy = rngSample(seed_t);
     double angle = rngSample(seed_t);
     updateTrajectory(energy, angle, pp);
+    printf("energy: %17.16f\n", energy);
+    printf("angle: %17.16f\n", angle);
+    pp.PrintParticle();
+
 }
