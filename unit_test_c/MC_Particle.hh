@@ -112,6 +112,38 @@ public:
 };
 
 //----------------------------------------------------------------------------------------------------------------------
+// MC_Particle Constructor.
+//----------------------------------------------------------------------------------------------------------------------
+inline MC_Particle::MC_Particle()
+   : coordinate(),
+     velocity(),
+     direction_cosine(),
+     kinetic_energy(0.0),
+     weight(0.0),
+     time_to_census(0.0),
+     totalCrossSection(0.0),
+     age(0.0),
+     num_mean_free_paths(0.0),
+     mean_free_path(0.0),
+     segment_path_length(0.0),
+     random_number_seed((uint64_t)0),
+     identifier( (uint64_t)0),
+     //last_event(MC_Tally_Event::Census),
+     num_collisions (0),
+     num_segments(0.0),
+
+     task(0),
+     species(0),
+     breed(0),
+     energy_group(0),
+     domain(0),
+     cell(0),
+     facet(0),
+     normal_dot(0.0)
+{
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 //  Return a MC_Location given domain, cell, facet.
 //----------------------------------------------------------------------------------------------------------------------
 /*
