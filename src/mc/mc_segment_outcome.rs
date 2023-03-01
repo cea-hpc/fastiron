@@ -4,7 +4,6 @@ use std::fmt::Display;
 use num::{zero, Float, FromPrimitive};
 
 use crate::{
-    direction_cosine::DirectionCosine,
     macro_cross_section::weighted_macroscopic_cross_section,
     mc::{mc_nearest_facet::MCNearestFacet, mc_rng_state::rng_sample, mct::nearest_facet},
     montecarlo::MonteCarlo,
@@ -88,17 +87,13 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
     distance[MCSegmentOutcome::Census as usize] = particle_speed * mc_particle.mean_free_path;
     // nearest facet
     let distance_threshold: T = ten * huge_f;
-    let current_best_distance: T = huge_f; // useful?
+    let current_best_distance: T = huge_f;
 
-    let d_cosine: &DirectionCosine<T> = &mc_particle.direction_cosine;
     let new_segment: bool = (mc_particle.num_segments.abs() < tiny_f)
         || (mc_particle.last_event == MCTallyEvent::Collision);
 
     let nearest_facet: MCNearestFacet<T> = nearest_facet(
         mc_particle,
-        &mc_particle.get_location(),
-        &mc_particle.coordinate,
-        d_cosine,
         distance_threshold,
         current_best_distance,
         new_segment,

@@ -1,6 +1,8 @@
-use num::Float;
+use core::panic;
 
-use crate::{direction_cosine::DirectionCosine, montecarlo::MonteCarlo};
+use num::{Float, FromPrimitive, zero};
+
+use crate::{direction_cosine::{DirectionCosine}, montecarlo::MonteCarlo, physical_constants::HUGE_FLOAT};
 
 use super::{
     mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
@@ -8,19 +10,34 @@ use super::{
     mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_vector::MCVector,
 };
 
-/// Computes which facet is the nearest to a given particle.
+/// Computes which facet of the specified cell is nearest 
+/// to the specified coordinates.
 #[allow(clippy::too_many_arguments)]
-pub fn nearest_facet<T: Float>(
-    mc_particle: &MCParticle<T>,
-    location: &MCLocation,
-    coord: &MCVector<T>,
-    direction_cosine: &DirectionCosine<T>,
+pub fn nearest_facet<T: Float + FromPrimitive>(
+    mc_particle: &mut MCParticle<T>,
     distance_threshold: T,
     current_best_distance: T,
     new_segment: bool,
     mcco: &MonteCarlo<T>,
 ) -> MCNearestFacet<T> {
-    todo!()
+    // check if location is somewhat invalid
+    //if (location.cell < 0) | (location.cell < 0) {
+    //    panic!()
+    //}
+    let location = mc_particle.get_location();
+    let domain = &mcco.domain[location.domain];
+
+    let mut nearest_facet = mct_nf_3dg(mc_particle, domain);
+    
+    if nearest_facet.distance_to_facet < zero() {
+        nearest_facet.distance_to_facet = zero();
+    }
+
+    if nearest_facet.distance_to_facet > FromPrimitive::from_f64(HUGE_FLOAT).unwrap() {
+        panic!()
+    }
+
+    nearest_facet
 }
 
 /// Generates a random coordinate inside a polyhedral cell.
@@ -57,12 +74,13 @@ pub fn reflect_particle<T: Float>(mcco: &MonteCarlo<T>, mc_particle: &MCParticle
 //       Private functions
 // ==============================
 
-fn mct_nf_3dg<T: Float>(
+fn mct_nf_3dg<T: Float + FromPrimitive>(
     particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
-    coord: &mut MCVector<T>,
-    d_cos: &DirectionCosine<T>,
 ) -> MCNearestFacet<T> {
+    let location = particle.get_location();
+    let coords = particle.coordinate;
+    let direction_cosine = particle.direction_cosine.clone();
     todo!()
 }
 

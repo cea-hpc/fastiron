@@ -58,7 +58,7 @@ pub struct MCParticle<T: Float> {
     /// Current cell in the current domain (should be usize?)
     pub cell: usize,
     /// Facet to be crossed? (should be usize?)
-    pub facet: u32,
+    pub facet: usize,
     /// When crossing a facet, keep the surface normal dot product
     pub normal_dot: T,
 }
@@ -104,8 +104,8 @@ impl<T: Float + FromPrimitive> MCParticle<T> {
     /// Returns the location of the particle as a [MCLocation] object.
     pub fn get_location(&self) -> MCLocation {
         MCLocation {
-            domain: self.domain as u32,
-            cell: self.cell as u32,
+            domain: self.domain,
+            cell: self.cell,
             facet: self.facet,
         }
     }
