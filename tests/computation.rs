@@ -21,5 +21,5 @@ pub fn pseudo() {
     pseudo_des(&mut a, &mut b);
     println!("a: {a}");
     println!("b: {b}");
-    panic!()
+    //panic!()
 }

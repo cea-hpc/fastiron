@@ -45,9 +45,10 @@ pub fn pseudo_des(lword: &mut u32, irword: &mut u32) {
     for idx in 0..n_iter {
         let iswap: u32 = *irword;
         let mut ia = iswap ^ c1[idx];
+
         let itmpl: u32 = ia & 0xffff;
         let itmph: u32 = ia >> 16;
-        let ib: u32 = itmpl.overflowing_mul(itmpl.overflowing_add(!(itmph.overflowing_mul(itmph).0)).0).0;
+        let ib: u32 = (itmpl.overflowing_mul(itmpl).0).overflowing_add(!itmph.overflowing_mul(itmph).0).0;
 
         ia = (ib >> 16) | ((ib & 0xffff) << 16);
 
