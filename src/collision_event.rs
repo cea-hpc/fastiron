@@ -1,9 +1,22 @@
-use num::{Float, FromPrimitive, zero};
+use num::{zero, Float, FromPrimitive};
 
-use crate::{mc::{mc_particle::MCParticle, mc_rng_state::{rng_sample, spawn_rn_seed}}, montecarlo::MonteCarlo, physical_constants::{PI, LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY}, macro_cross_section::{macroscopic_cross_section}, nuclear_data::ReactionType};
+use crate::{
+    macro_cross_section::macroscopic_cross_section,
+    mc::{
+        mc_particle::MCParticle,
+        mc_rng_state::{rng_sample, spawn_rn_seed},
+    },
+    montecarlo::MonteCarlo,
+    nuclear_data::ReactionType,
+    physical_constants::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
+};
 
 /// Update the a particle's energy and trajectory after a collision.
-pub fn update_trajectory<T: Float + FromPrimitive>(energy: T, angle: T, particle: &mut MCParticle<T>) {
+pub fn update_trajectory<T: Float + FromPrimitive>(
+    energy: T,
+    angle: T,
+    particle: &mut MCParticle<T>,
+) {
     // constants
     let pi: T = FromPrimitive::from_f64(PI).unwrap();
     let c: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
@@ -13,16 +26,18 @@ pub fn update_trajectory<T: Float + FromPrimitive>(energy: T, angle: T, particle
 
     // value for update
     let cos_theta: T = angle;
-    let sin_theta: T = (one - cos_theta*cos_theta).sqrt();
+    let sin_theta: T = (one - cos_theta * cos_theta).sqrt();
     let mut rdm_number: T = rng_sample(&mut particle.random_number_seed);
     let phi = two * pi * rdm_number;
     let sin_phi: T = phi.sin();
     let cos_phi: T = phi.cos();
-    let speed: T = c * (one - nrm*nrm/((energy+nrm)*(energy+nrm))).sqrt();
+    let speed: T = c * (one - nrm * nrm / ((energy + nrm) * (energy + nrm))).sqrt();
 
     // update
     particle.kinetic_energy = energy;
-    particle.direction_cosine.rotate_3d_vector(sin_theta, cos_theta, sin_phi, cos_phi);
+    particle
+        .direction_cosine
+        .rotate_3d_vector(sin_theta, cos_theta, sin_phi, cos_phi);
     particle.velocity.x = speed * particle.direction_cosine.alpha;
     particle.velocity.y = speed * particle.direction_cosine.beta;
     particle.velocity.z = speed * particle.direction_cosine.gamma;
@@ -55,7 +70,15 @@ pub fn collision_event<T: Float + FromPrimitive>(
         let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
         let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
         for reaction_idx in 0..n_reactions {
-            current_xsection = current_xsection - macroscopic_cross_section(mcco, reaction_idx, mc_particle.domain, mc_particle.cell, iso_idx, mc_particle.energy_group);
+            current_xsection = current_xsection
+                - macroscopic_cross_section(
+                    mcco,
+                    reaction_idx,
+                    mc_particle.domain,
+                    mc_particle.cell,
+                    iso_idx,
+                    mc_particle.energy_group,
+                );
             if current_xsection < zero() {
                 selected_iso = iso_idx;
                 selected_unique_n = unique_n;
@@ -72,7 +95,13 @@ pub fn collision_event<T: Float + FromPrimitive>(
     // ================
     // Do the collision
     let mat_mass = mcco.material_database.mat[mat_gidx].mass;
-    let (energy_out, angle_out) = mcco.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react].sample_collision(mc_particle.kinetic_energy, mat_mass, &mut mc_particle.random_number_seed);
+    let (energy_out, angle_out) = mcco.nuclear_data.isotopes[selected_unique_n][0].reactions
+        [selected_react]
+        .sample_collision(
+            mc_particle.kinetic_energy,
+            mat_mass,
+            &mut mc_particle.random_number_seed,
+        );
 
     // ===================
     // Tally the collision
@@ -93,18 +122,27 @@ pub fn collision_event<T: Float + FromPrimitive>(
     if n_out > 1 {
         for secondary_idx in 1..energy_out.len() {
             let mut sec_particle = mc_particle.clone();
-            sec_particle.random_number_seed = spawn_rn_seed::<T>(&mut mc_particle.random_number_seed);
+            sec_particle.random_number_seed =
+                spawn_rn_seed::<T>(&mut mc_particle.random_number_seed);
             sec_particle.identifier = sec_particle.random_number_seed;
-            update_trajectory(energy_out[secondary_idx], angle_out[secondary_idx], &mut sec_particle);
-            mcco.particle_vault_container.add_extra_particle(sec_particle);
+            update_trajectory(
+                energy_out[secondary_idx],
+                angle_out[secondary_idx],
+                &mut sec_particle,
+            );
+            mcco.particle_vault_container
+                .add_extra_particle(sec_particle);
         }
     }
 
     update_trajectory(energy_out[0], angle_out[0], mc_particle);
-    mc_particle.energy_group = mcco.nuclear_data.get_energy_groups(mc_particle.kinetic_energy);
+    mc_particle.energy_group = mcco
+        .nuclear_data
+        .get_energy_groups(mc_particle.kinetic_energy);
 
     if n_out > 1 {
-        mcco.particle_vault_container.add_extra_particle(mc_particle.clone());
+        mcco.particle_vault_container
+            .add_extra_particle(mc_particle.clone());
     }
 
     n_out == 1

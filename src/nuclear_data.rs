@@ -85,8 +85,8 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
         self.cross_section[group]
     }
 
-    /// Uses RNG to get new energy and angle after a reaction. Since 
-    /// reaction type is specified when the method is called, we assume 
+    /// Uses RNG to get new energy and angle after a reaction. Since
+    /// reaction type is specified when the method is called, we assume
     /// that the result will be treated correctly by the calling code.
     pub fn sample_collision(
         &self,
