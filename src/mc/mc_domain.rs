@@ -8,7 +8,7 @@ use crate::{
 
 use super::{
     mc_cell_state::MCCellState,
-    mc_facet_adjacency::{MCFacetAdjacency, MCSubfacetAdjacencyEvent, MCFacetAdjacencyCell},
+    mc_facet_adjacency::{MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent},
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
     mc_vector::MCVector,
 };

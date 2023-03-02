@@ -1,17 +1,20 @@
 use core::panic;
 
-use num::{Float, FromPrimitive, zero};
+use num::{zero, Float, FromPrimitive};
 
-use crate::{direction_cosine::{DirectionCosine}, montecarlo::MonteCarlo, physical_constants::HUGE_FLOAT};
 use super::{
     mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
     mc_facet_adjacency::SubfacetAdjacency, mc_location::MCLocation,
-    mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_vector::MCVector, mc_rng_state::rng_sample,
+    mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_rng_state::rng_sample,
+    mc_vector::MCVector,
+};
+use crate::{
+    direction_cosine::DirectionCosine, montecarlo::MonteCarlo, physical_constants::HUGE_FLOAT,
 };
 
 const N_POINTS_PER_FACET: usize = 3;
 
-/// Computes which facet of the specified cell is nearest 
+/// Computes which facet of the specified cell is nearest
 /// to the specified coordinates.
 #[allow(clippy::too_many_arguments)]
 pub fn nearest_facet<T: Float + FromPrimitive>(
@@ -29,7 +32,7 @@ pub fn nearest_facet<T: Float + FromPrimitive>(
     let domain = &mcco.domain[location.domain];
 
     let mut nearest_facet = mct_nf_3dg(mc_particle, domain);
-    
+
     if nearest_facet.distance_to_facet < zero() {
         nearest_facet.distance_to_facet = zero();
     }
@@ -42,7 +45,7 @@ pub fn nearest_facet<T: Float + FromPrimitive>(
 }
 
 /// Generates a random coordinate inside a polyhedral cell.
-/// May be possible to remove the MonteCarlo argument by directly 
+/// May be possible to remove the MonteCarlo argument by directly
 /// passing a a reference to the domain since its read only.
 pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
     seed: &mut u64,
@@ -86,7 +89,7 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
         let subvolume = mct_cell_volume_3dg_vector_tetdet(&point0, &point1, &point2, &center);
         current_volume = current_volume + subvolume;
 
-        facet_idx += 1;        
+        facet_idx += 1;
     }
     // the facet we sample from is facet_idx-1; this is due to a change in the loop structure
     // no need to update facet_idx though, it is not used again
@@ -110,10 +113,9 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
     }
     let r4: T = one - r1 - r2 - r3;
 
-    coordinate.x = r4*center.x + r1*point0.x + r2*point1.x + r3*point2.x;
-    coordinate.y = r4*center.y + r1*point0.y + r2*point1.y + r3*point2.y;
-    coordinate.z = r4*center.z + r1*point0.z + r2*point1.z + r3*point2.z;
-
+    coordinate.x = r4 * center.x + r1 * point0.x + r2 * point1.x + r3 * point2.x;
+    coordinate.y = r4 * center.y + r1 * point0.y + r2 * point1.y + r3 * point2.y;
+    coordinate.z = r4 * center.z + r1 * point0.z + r2 * point1.z + r3 * point2.z;
 
     coordinate
 }
