@@ -1,3 +1,9 @@
+use num::Float;
+
+use crate::montecarlo::MonteCarlo;
+
+use super::mc_domain::MCDomain;
+
 /// Structure used to divide and manage physical space of the problem.
 #[derive(Debug, PartialEq)]
 pub struct MCLocation {

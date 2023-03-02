@@ -113,6 +113,7 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
     }
     let r4: T = one - r1 - r2 - r3;
 
+    // TODO: replace using the defined operators of MCVector
     coordinate.x = r4 * center.x + r1 * point0.x + r2 * point1.x + r3 * point2.x;
     coordinate.y = r4 * center.y + r1 * point0.y + r2 * point1.y + r3 * point2.y;
     coordinate.z = r4 * center.z + r1 * point0.z + r2 * point1.z + r3 * point2.z;
@@ -121,23 +122,61 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
 }
 
 /// Returns a coordinate that represents the "center" of the cell
-pub fn cell_position_3dg<T: Float>(domain: &MCDomain<T>, cell_idx: usize) -> MCVector<T> {
-    todo!()
+pub fn cell_position_3dg<T: Float + FromPrimitive>(domain: &MCDomain<T>, cell_idx: usize) -> MCVector<T> {
+    let mut coordinate: MCVector<T> = Default::default();
+
+    let n_points: usize = domain.mesh.cell_connectivity[cell_idx].point.len();
+
+    (0..n_points).into_iter().for_each(|point_idx| {
+        let point = domain.mesh.cell_connectivity[cell_idx].point[point_idx];
+        coordinate += domain.mesh.node[point];
+    });
+
+    coordinate /= FromPrimitive::from_usize(n_points).unwrap();
+
+    coordinate
 }
 
-/// Returns the adjacency of the given cell.
+/// ONLY USED FOR READABILITY
+/// TODO: REMOVE
 pub fn adjacent_facet<T: Float>(
     // ORIGINAL FUNCTION IS IN ITS OWN FILE
     location: &MCLocation,
     mc_particle: &MCParticle<T>,
     mcco: &MonteCarlo<T>,
 ) -> SubfacetAdjacency {
+    /* 
+    let domain = &mcco.domain[location.domain];
+    let adjacency = domain.mesh.cell_connectivity[location.cell].facet[location.facet].subfacet;
+    adjacency
+    */
     todo!()
 }
 
 /// Reflects a particle off a reflection-type boundary.
-pub fn reflect_particle<T: Float>(mcco: &MonteCarlo<T>, mc_particle: &MCParticle<T>) {
-    todo!()
+pub fn reflect_particle<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, particle: &mut MCParticle<T>) {
+    let mut new_d_cos = particle.direction_cosine.clone();
+    let location = particle.get_location();
+    // direct access replace get_domain method from MCLocation
+    let domain = &mcco.domain[location.domain]; 
+    let plane = &domain.mesh.cell_geometry[location.cell][location.facet];
+
+    let facet_normal: MCVector<T> = MCVector { x: plane.a, y: plane.b, z: plane.c };
+
+    let two: T = FromPrimitive::from_f64(2.0).unwrap();
+    let dot: T = two * (new_d_cos.alpha*facet_normal.x + new_d_cos.beta*facet_normal.y + new_d_cos.gamma*facet_normal.z);
+
+    if dot > zero() {
+        new_d_cos.alpha = new_d_cos.alpha - dot*facet_normal.x;
+        new_d_cos.beta = new_d_cos.beta - dot*facet_normal.y;
+        new_d_cos.gamma = new_d_cos.gamma - dot*facet_normal.z;
+        particle.direction_cosine = new_d_cos;
+    }
+    let particle_speed = particle.velocity.length();
+    particle.velocity.x = particle_speed * particle.direction_cosine.alpha;
+    particle.velocity.y = particle_speed * particle.direction_cosine.beta;
+    particle.velocity.z = particle_speed * particle.direction_cosine.gamma;
+
 }
 
 // ==============================
