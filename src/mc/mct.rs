@@ -122,7 +122,10 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
 }
 
 /// Returns a coordinate that represents the "center" of the cell
-pub fn cell_position_3dg<T: Float + FromPrimitive>(domain: &MCDomain<T>, cell_idx: usize) -> MCVector<T> {
+pub fn cell_position_3dg<T: Float + FromPrimitive>(
+    domain: &MCDomain<T>,
+    cell_idx: usize,
+) -> MCVector<T> {
     let mut coordinate: MCVector<T> = Default::default();
 
     let n_points: usize = domain.mesh.cell_connectivity[cell_idx].point.len();
@@ -145,7 +148,7 @@ pub fn adjacent_facet<T: Float>(
     mc_particle: &MCParticle<T>,
     mcco: &MonteCarlo<T>,
 ) -> SubfacetAdjacency {
-    /* 
+    /*
     let domain = &mcco.domain[location.domain];
     let adjacency = domain.mesh.cell_connectivity[location.cell].facet[location.facet].subfacet;
     adjacency
@@ -154,29 +157,38 @@ pub fn adjacent_facet<T: Float>(
 }
 
 /// Reflects a particle off a reflection-type boundary.
-pub fn reflect_particle<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, particle: &mut MCParticle<T>) {
+pub fn reflect_particle<T: Float + FromPrimitive>(
+    mcco: &MonteCarlo<T>,
+    particle: &mut MCParticle<T>,
+) {
     let mut new_d_cos = particle.direction_cosine.clone();
     let location = particle.get_location();
     // direct access replace get_domain method from MCLocation
-    let domain = &mcco.domain[location.domain]; 
+    let domain = &mcco.domain[location.domain];
     let plane = &domain.mesh.cell_geometry[location.cell][location.facet];
 
-    let facet_normal: MCVector<T> = MCVector { x: plane.a, y: plane.b, z: plane.c };
+    let facet_normal: MCVector<T> = MCVector {
+        x: plane.a,
+        y: plane.b,
+        z: plane.c,
+    };
 
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    let dot: T = two * (new_d_cos.alpha*facet_normal.x + new_d_cos.beta*facet_normal.y + new_d_cos.gamma*facet_normal.z);
+    let dot: T = two
+        * (new_d_cos.alpha * facet_normal.x
+            + new_d_cos.beta * facet_normal.y
+            + new_d_cos.gamma * facet_normal.z);
 
     if dot > zero() {
-        new_d_cos.alpha = new_d_cos.alpha - dot*facet_normal.x;
-        new_d_cos.beta = new_d_cos.beta - dot*facet_normal.y;
-        new_d_cos.gamma = new_d_cos.gamma - dot*facet_normal.z;
+        new_d_cos.alpha = new_d_cos.alpha - dot * facet_normal.x;
+        new_d_cos.beta = new_d_cos.beta - dot * facet_normal.y;
+        new_d_cos.gamma = new_d_cos.gamma - dot * facet_normal.z;
         particle.direction_cosine = new_d_cos;
     }
     let particle_speed = particle.velocity.length();
     particle.velocity.x = particle_speed * particle.direction_cosine.alpha;
     particle.velocity.y = particle_speed * particle.direction_cosine.beta;
     particle.velocity.z = particle_speed * particle.direction_cosine.gamma;
-
 }
 
 // ==============================
