@@ -4,12 +4,15 @@ use num::{zero, Float, FromPrimitive};
 
 use super::{
     mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
-    mc_facet_adjacency::SubfacetAdjacency, mc_location::MCLocation,
-    mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_rng_state::rng_sample,
-    mc_vector::MCVector,
+    mc_facet_adjacency::SubfacetAdjacency, mc_facet_geometry::MCGeneralPlane,
+    mc_location::MCLocation, mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle,
+    mc_rng_state::rng_sample, mc_vector::MCVector,
 };
 use crate::{
-    direction_cosine::DirectionCosine, montecarlo::MonteCarlo, physical_constants::HUGE_FLOAT,
+    direction_cosine::DirectionCosine,
+    mc::mc_base_particle::Species,
+    montecarlo::MonteCarlo,
+    physical_constants::{HUGE_FLOAT, SMALL_FLOAT},
 };
 
 const N_POINTS_PER_FACET: usize = 3;
@@ -199,50 +202,187 @@ fn mct_nf_3dg<T: Float + FromPrimitive>(
     particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
 ) -> MCNearestFacet<T> {
+    let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
+
     let location = particle.get_location();
     let coords = particle.coordinate;
     let direction_cosine = particle.direction_cosine.clone();
-    todo!()
+
+    let mut facet_coords: [MCVector<T>; N_POINTS_PER_FACET] = Default::default();
+    let mut iteration: usize = 0;
+    let mut move_factor: T = FromPrimitive::from_f64(0.5 * SMALL_FLOAT).unwrap();
+
+    let num_facets_per_cell: usize = domain.mesh.cell_connectivity[location.cell].facet.len();
+
+    loop {
+        let tmp: T = FromPrimitive::from_f64(1e-16).unwrap();
+        let plane_tolerance: T =
+            tmp * (coords.x * coords.x + coords.y * coords.y + coords.z * coords.z);
+
+        let mut distance_to_facet: [MCDistanceToFacet<T>; 24] = [MCDistanceToFacet::default(); 24]; // why 24? == numfacetpercell?
+
+        for facet_idx in 0..num_facets_per_cell {
+            distance_to_facet[facet_idx].distance = huge_f;
+
+            let plane = &domain.mesh.cell_geometry[location.cell][facet_idx];
+
+            let facet_normal_dot_dcos: T = plane.a * direction_cosine.alpha
+                + plane.b * direction_cosine.beta
+                + plane.c * direction_cosine.gamma;
+
+            if facet_normal_dot_dcos <= zero() {
+                continue;
+            }
+
+            // Mesh-dependent code
+            let points = domain.mesh.cell_connectivity[location.cell].facet[facet_idx].point;
+            facet_coords[0] = domain.mesh.node[points[0] as usize];
+            facet_coords[1] = domain.mesh.node[points[1] as usize];
+            facet_coords[2] = domain.mesh.node[points[2] as usize];
+
+            let t: T = mct_nf_3dg_dist_to_segment(
+                plane_tolerance,
+                facet_normal_dot_dcos,
+                *plane,
+                &facet_coords,
+                &coords,
+                &direction_cosine,
+                false,
+            );
+
+            distance_to_facet[facet_idx].distance = t;
+        }
+
+        let mut retry: bool = false;
+
+        let nearest_facet = mct_nf_find_nearest(
+            particle,
+            domain,
+            &location,
+            &mut iteration,
+            &mut move_factor,
+            num_facets_per_cell,
+            &distance_to_facet,
+            &mut retry,
+        );
+
+        if !retry {
+            return nearest_facet;
+        }
+    }
 }
 
-fn mct_cell_volume_3dg_vector_tetdet<T: Float>(
+/// Returns the volume defined by `v0-v3`, `v1-v3`, `v2-v3` using
+/// vectorial operations.
+fn mct_cell_volume_3dg_vector_tetdet<T: Float + FromPrimitive>(
     v0: &MCVector<T>,
     v1: &MCVector<T>,
     v2: &MCVector<T>,
     v3: &MCVector<T>,
 ) -> T {
-    todo!()
+    let tmp0 = *v0 - *v3;
+    let tmp1 = *v1 - *v3;
+    let tmp2 = *v2 - *v3;
+
+    tmp0.dot(&tmp1.cross(&tmp2)) // should be the same as original code
 }
 
-fn mct_nf_3dg_move_particle<T: Float>(
+fn mct_nf_3dg_move_particle<T: Float + FromPrimitive>(
     domain: &MCDomain<T>,
     location: &MCLocation,
     coord: &mut MCVector<T>,
     move_factor: T,
 ) {
-    todo!()
+    let move_to = cell_position_3dg(domain, location.cell);
+
+    coord.x = coord.x + move_factor * (move_to.x - coord.x);
+    coord.y = coord.y + move_factor * (move_to.y - coord.y);
+    coord.z = coord.z + move_factor * (move_to.z - coord.z);
 }
 
-fn mct_nf_compute_nearest<T: Float>(
+/// delete num_facets_per_cell ?
+fn mct_nf_compute_nearest<T: Float + FromPrimitive>(
     num_facets_per_cell: usize,
-    distance_to_facet: &mut MCDistanceToFacet<T>,
+    distance_to_facet: &[MCDistanceToFacet<T>],
 ) -> MCNearestFacet<T> {
-    todo!()
+    let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
+    let mut nearest_facet: MCNearestFacet<T> = Default::default();
+    let mut nearest_negative_facet: MCNearestFacet<T> = MCNearestFacet {
+        distance_to_facet: -huge_f,
+        ..Default::default()
+    };
+
+    // determine the nearest facet
+    (0..num_facets_per_cell).into_iter().for_each(|facet_idx| {
+        if distance_to_facet[facet_idx].distance > zero() {
+            if distance_to_facet[facet_idx].distance <= nearest_facet.distance_to_facet {
+                nearest_facet.distance_to_facet = distance_to_facet[facet_idx].distance;
+                nearest_facet.facet = facet_idx;
+            }
+        } else if distance_to_facet[facet_idx].distance > nearest_negative_facet.distance_to_facet {
+            nearest_negative_facet.distance_to_facet = distance_to_facet[facet_idx].distance;
+            nearest_negative_facet.facet = facet_idx;
+        }
+    });
+
+    if (nearest_facet.distance_to_facet == huge_f)
+        & (nearest_negative_facet.distance_to_facet != -huge_f)
+    {
+        nearest_facet.distance_to_facet = nearest_negative_facet.distance_to_facet;
+        nearest_facet.facet = nearest_negative_facet.facet;
+    }
+
+    nearest_facet
 }
 
+/// Needs heavy refactoring; called in mct_nf_3dg
 #[allow(clippy::too_many_arguments)]
-fn mct_nf_find_nearest<T: Float>(
-    mc_particle: &mut MCParticle<T>,
+fn mct_nf_find_nearest<T: Float + FromPrimitive>(
+    particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
     location: &MCLocation,
-    coord: &MCVector<T>,
     iteration: &mut usize,
     move_factor: &mut T,
     num_facets_per_cell: usize,
-    distance_to_facet: &mut MCDistanceToFacet<T>,
+    distance_to_facet: &[MCDistanceToFacet<T>],
     retry: &mut bool,
 ) -> MCNearestFacet<T> {
-    todo!()
+    let nearest_facet = mct_nf_compute_nearest(num_facets_per_cell, distance_to_facet);
+    let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
+    let two: T = FromPrimitive::from_f64(2.0).unwrap();
+    let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
+
+    let coord = &mut particle.coordinate;
+
+    const MAX_ALLOWED_SEGMENTS: usize = 10000000;
+    const MAX_ITERATION: usize = 1000;
+    let max: T = FromPrimitive::from_usize(MAX_ALLOWED_SEGMENTS).unwrap();
+
+    *retry = false;
+
+    if particle.species != Species::Unknown {
+        // take an option as arg and check if is_some ?
+        if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
+            | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
+        {
+            mct_nf_3dg_move_particle(domain, location, coord, *move_factor);
+            *iteration += 1;
+            *move_factor = *move_factor * two;
+
+            if *move_factor > threshold {
+                *move_factor = threshold;
+            }
+
+            if *iteration == MAX_ITERATION {
+                *retry = false;
+            } else {
+                *retry = true;
+            }
+            // need to replace the magic value
+            //location.facet = -1;
+        }
+    }
+    nearest_facet
 }
 
 fn mct_facet_points_3dg<T: Float>(
@@ -250,20 +390,20 @@ fn mct_facet_points_3dg<T: Float>(
     cell: usize,
     facet: usize,
 ) -> [usize; N_POINTS_PER_FACET] {
-    todo!()
+    let mut res: [usize; N_POINTS_PER_FACET] = [0; N_POINTS_PER_FACET];
+
+    (0..N_POINTS_PER_FACET).into_iter().for_each(|point_idx| {
+        res[point_idx] = domain.mesh.cell_connectivity[cell].facet[facet].point[point_idx] as usize;
+    });
+
+    res
 }
 
-#[allow(clippy::too_many_arguments)]
 fn mct_nf_3dg_dist_to_segment<T: Float>(
     plane_tolerance: T,
     facet_normal_dot_dcos: T,
-    aa: T,
-    bb: T,
-    cc: T,
-    dd: T,
-    facet_coords0: &MCVector<T>,
-    facet_coords1: &MCVector<T>,
-    facet_coords2: &MCVector<T>,
+    plane: MCGeneralPlane<T>,
+    facet_coords: &[MCVector<T>],
     coords: &MCVector<T>,
     d_cos: &DirectionCosine<T>,
     allow_enter: bool,

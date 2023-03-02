@@ -4,7 +4,7 @@ use super::mc_vector::MCVector;
 
 /// Structure representing a plane of equation `A*x + B*y + C*z + D = 0`
 /// (A,B,C) is normalized.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct MCGeneralPlane<T: Float> {
     pub a: T,
     pub b: T,
