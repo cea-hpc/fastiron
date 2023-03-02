@@ -221,6 +221,7 @@ fn mct_nf_3dg<T: Float + FromPrimitive>(
 
         let mut distance_to_facet: [MCDistanceToFacet<T>; 24] = [MCDistanceToFacet::default(); 24]; // why 24? == numfacetpercell?
 
+        // too lazy to replace by an iterator checking for facet_normal_dot_dcos > 0
         for facet_idx in 0..num_facets_per_cell {
             distance_to_facet[facet_idx].distance = huge_f;
 
@@ -378,7 +379,7 @@ fn mct_nf_find_nearest<T: Float + FromPrimitive>(
             } else {
                 *retry = true;
             }
-            // need to replace the magic value
+            // need to replace the magic value; enum/bool for validity?
             //location.facet = -1;
         }
     }
@@ -399,7 +400,7 @@ fn mct_facet_points_3dg<T: Float>(
     res
 }
 
-fn mct_nf_3dg_dist_to_segment<T: Float>(
+fn mct_nf_3dg_dist_to_segment<T: Float + FromPrimitive>(
     plane_tolerance: T,
     facet_normal_dot_dcos: T,
     plane: MCGeneralPlane<T>,
@@ -408,5 +409,144 @@ fn mct_nf_3dg_dist_to_segment<T: Float>(
     d_cos: &DirectionCosine<T>,
     allow_enter: bool,
 ) -> T {
-    todo!()
+    let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
+    let pfive: T = FromPrimitive::from_f64(0.5).unwrap();
+    let bounding_box_tolerance: T = FromPrimitive::from_f64(1e-9).unwrap();
+    let numerator: T = plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d;
+
+    if !allow_enter & (numerator < zero()) & (numerator * numerator > plane_tolerance) {
+        return huge_f;
+    }
+
+    let distance: T = numerator / facet_normal_dot_dcos;
+
+    let intersection_pt: MCVector<T> = MCVector {
+        x: coords.x + distance * d_cos.alpha,
+        y: coords.y + distance * d_cos.beta,
+        z: coords.z + distance * d_cos.gamma,
+    };
+
+    // if the point doesn't belong to the facet, returns huge_f
+    macro_rules! belongs_or_return {
+        ($axis: ident) => {
+            let below: bool = (facet_coords[0].$axis
+                > intersection_pt.$axis + bounding_box_tolerance)
+                & (facet_coords[1].$axis > intersection_pt.$axis + bounding_box_tolerance)
+                & (facet_coords[2].$axis > intersection_pt.$axis + bounding_box_tolerance);
+            let above: bool = (facet_coords[0].$axis
+                < intersection_pt.$axis - bounding_box_tolerance)
+                & (facet_coords[1].$axis < intersection_pt.$axis - bounding_box_tolerance)
+                & (facet_coords[2].$axis < intersection_pt.$axis - bounding_box_tolerance);
+            if below | above {
+                // doesn't belong
+                return huge_f;
+            }
+        };
+    }
+
+    // scalar value of the cross product between AB & AC
+    macro_rules! ab_cross_ac {
+        ($ax: expr, $ay: expr, $bx: expr, $by: expr, $cx: expr, $cy: expr) => {
+            ($bx - $ax) * ($cy - $ay) - ($by - $ay) * ($cx - $ax)
+        };
+    }
+
+    let mut cross0: T = zero();
+    let mut cross1: T = zero();
+    let mut cross2: T = zero();
+
+    if (plane.c < -pfive) | (plane.c > pfive) {
+        belongs_or_return!(x);
+        belongs_or_return!(y);
+        // update cross; TODO:  check if we can replace it by a cross product using MCVector
+        cross1 = ab_cross_ac!(
+            facet_coords[0].x,
+            facet_coords[0].y,
+            facet_coords[1].x,
+            facet_coords[1].y,
+            intersection_pt.x,
+            intersection_pt.y
+        );
+        cross2 = ab_cross_ac!(
+            facet_coords[1].x,
+            facet_coords[1].y,
+            facet_coords[2].x,
+            facet_coords[2].y,
+            intersection_pt.x,
+            intersection_pt.y
+        );
+        cross0 = ab_cross_ac!(
+            facet_coords[2].x,
+            facet_coords[2].y,
+            facet_coords[0].x,
+            facet_coords[0].y,
+            intersection_pt.x,
+            intersection_pt.y
+        );
+    } else if (plane.b < -pfive) | (plane.b > pfive) {
+        belongs_or_return!(x);
+        belongs_or_return!(z);
+        // update cross
+        cross1 = ab_cross_ac!(
+            facet_coords[0].z,
+            facet_coords[0].x,
+            facet_coords[1].z,
+            facet_coords[1].x,
+            intersection_pt.z,
+            intersection_pt.x
+        );
+        cross2 = ab_cross_ac!(
+            facet_coords[1].z,
+            facet_coords[1].x,
+            facet_coords[2].z,
+            facet_coords[2].x,
+            intersection_pt.z,
+            intersection_pt.x
+        );
+        cross0 = ab_cross_ac!(
+            facet_coords[2].z,
+            facet_coords[2].x,
+            facet_coords[0].z,
+            facet_coords[0].x,
+            intersection_pt.z,
+            intersection_pt.x
+        );
+    } else if (plane.a < -pfive) | (plane.a > pfive) {
+        belongs_or_return!(z);
+        belongs_or_return!(y);
+        // update cross
+        cross1 = ab_cross_ac!(
+            facet_coords[0].y,
+            facet_coords[0].z,
+            facet_coords[1].y,
+            facet_coords[1].z,
+            intersection_pt.y,
+            intersection_pt.z
+        );
+        cross2 = ab_cross_ac!(
+            facet_coords[1].y,
+            facet_coords[1].z,
+            facet_coords[2].y,
+            facet_coords[2].z,
+            intersection_pt.y,
+            intersection_pt.z
+        );
+        cross0 = ab_cross_ac!(
+            facet_coords[2].y,
+            facet_coords[2].z,
+            facet_coords[0].y,
+            facet_coords[0].z,
+            intersection_pt.y,
+            intersection_pt.z
+        );
+    }
+
+    let cross_tolerance: T = bounding_box_tolerance * (cross0 + cross1 + cross2).abs();
+
+    if ((cross0 > -cross_tolerance) & (cross1 > -cross_tolerance) & (cross2 > -cross_tolerance))
+        | ((cross0 < cross_tolerance) & (cross1 < cross_tolerance) & (cross2 < cross_tolerance))
+    {
+        return distance;
+    }
+    huge_f
 }
