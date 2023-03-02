@@ -8,7 +8,7 @@ use crate::{
 
 use super::{
     mc_cell_state::MCCellState,
-    mc_facet_adjacency::{MCFacetAdjacency, MCSubfacetAdjacencyEvent},
+    mc_facet_adjacency::{MCFacetAdjacency, MCSubfacetAdjacencyEvent, MCFacetAdjacencyCell},
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
     mc_vector::MCVector,
 };
@@ -25,7 +25,7 @@ pub struct MCMeshDomain<T: Float> {
     /// List of nodes
     pub node: Vec<MCVector<T>>,
     /// List of connectivity between cells
-    pub cell_connectivity: Vec<MCFacetAdjacency>,
+    pub cell_connectivity: Vec<MCFacetAdjacencyCell>,
     /// List of cells
     pub cell_geometry: Vec<MCFacetGeometryCell<T>>,
 

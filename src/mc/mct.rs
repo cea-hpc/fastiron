@@ -3,24 +3,25 @@ use core::panic;
 use num::{Float, FromPrimitive, zero};
 
 use crate::{direction_cosine::{DirectionCosine}, montecarlo::MonteCarlo, physical_constants::HUGE_FLOAT};
-
 use super::{
     mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
     mc_facet_adjacency::SubfacetAdjacency, mc_location::MCLocation,
-    mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_vector::MCVector,
+    mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_vector::MCVector, mc_rng_state::rng_sample,
 };
+
+const N_POINTS_PER_FACET: usize = 3;
 
 /// Computes which facet of the specified cell is nearest 
 /// to the specified coordinates.
 #[allow(clippy::too_many_arguments)]
 pub fn nearest_facet<T: Float + FromPrimitive>(
     mc_particle: &mut MCParticle<T>,
-    distance_threshold: T,
-    current_best_distance: T,
-    new_segment: bool,
+    //distance_threshold: T,
+    //current_best_distance: T,
+    //new_segment: bool,
     mcco: &MonteCarlo<T>,
 ) -> MCNearestFacet<T> {
-    // check if location is somewhat invalid
+    // check if location is somewhat invalid; need to find an alternative to their magic value
     //if (location.cell < 0) | (location.cell < 0) {
     //    panic!()
     //}
@@ -41,13 +42,80 @@ pub fn nearest_facet<T: Float + FromPrimitive>(
 }
 
 /// Generates a random coordinate inside a polyhedral cell.
-pub fn generate_coordinate_3dg<T: Float>(
-    seed: u64,
+/// May be possible to remove the MonteCarlo argument by directly 
+/// passing a a reference to the domain since its read only.
+pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
+    seed: &mut u64,
     domain_num: usize,
-    cell: usize,
+    cell_idx: usize,
     mcco: &MonteCarlo<T>,
 ) -> MCVector<T> {
-    todo!()
+    let mut coordinate: MCVector<T> = MCVector::default(); // result
+    let six: T = FromPrimitive::from_f64(6.0).unwrap();
+    let one: T = FromPrimitive::from_f64(1.0).unwrap();
+
+    let domain: &MCDomain<T> = &mcco.domain[domain_num];
+
+    let num_facets: usize = domain.mesh.cell_connectivity[cell_idx].facet.len();
+    if num_facets == 0 {
+        return coordinate;
+    }
+
+    let center: MCVector<T> = cell_position_3dg(domain, cell_idx);
+    let rdm_number: T = rng_sample(seed);
+    let which_volume = rdm_number * six * domain.cell_state[cell_idx].volume;
+
+    let mut current_volume: T = zero();
+    let mut facet_idx: usize = 0;
+
+    let mut point0: MCVector<T> = Default::default();
+    let mut point1: MCVector<T> = Default::default();
+    let mut point2: MCVector<T> = Default::default();
+
+    // find the facet to sample from
+    while current_volume < which_volume {
+        if facet_idx == num_facets {
+            break;
+        }
+        let facet_points = mct_facet_points_3dg(domain, cell_idx, facet_idx);
+
+        point0 = domain.mesh.node[facet_points[0]];
+        point1 = domain.mesh.node[facet_points[1]];
+        point2 = domain.mesh.node[facet_points[2]];
+
+        let subvolume = mct_cell_volume_3dg_vector_tetdet(&point0, &point1, &point2, &center);
+        current_volume = current_volume + subvolume;
+
+        facet_idx += 1;        
+    }
+    // the facet we sample from is facet_idx-1; this is due to a change in the loop structure
+    // no need to update facet_idx though, it is not used again
+
+    // sample and adjust
+    let mut r1: T = rng_sample(seed);
+    let mut r2: T = rng_sample(seed);
+    let mut r3: T = rng_sample(seed);
+    if r1 + r2 > one {
+        r1 = one - r1;
+        r2 = one - r2;
+    }
+    if r2 + r3 > one {
+        let tmp = r3;
+        r3 = one - r1 - r2;
+        r2 = one - tmp;
+    } else if r1 + r2 + r3 > one {
+        let tmp = r3;
+        r3 = r1 + r2 + r3 - one;
+        r1 = one - r2 - tmp;
+    }
+    let r4: T = one - r1 - r2 - r3;
+
+    coordinate.x = r4*center.x + r1*point0.x + r2*point1.x + r3*point2.x;
+    coordinate.y = r4*center.y + r1*point0.y + r2*point1.y + r3*point2.y;
+    coordinate.z = r4*center.z + r1*point0.z + r2*point1.z + r3*point2.z;
+
+
+    coordinate
 }
 
 /// Returns a coordinate that represents the "center" of the cell
@@ -128,8 +196,7 @@ fn mct_facet_points_3dg<T: Float>(
     domain: &MCDomain<T>,
     cell: usize,
     facet: usize,
-    num_points_per_facet: usize,
-) -> usize {
+) -> [usize; N_POINTS_PER_FACET] {
     todo!()
 }
 
