@@ -59,5 +59,5 @@ impl Default for MCFacetAdjacency {
 #[derive(Debug, Default)]
 pub struct MCFacetAdjacencyCell {
     pub facet: [MCFacetAdjacency; 24], // need to find the correct way we get 24 to rewrite it with const
-    pub point: [usize; 14], // same with 14
+    pub point: [usize; 14],            // same with 14
 }

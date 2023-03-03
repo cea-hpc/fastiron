@@ -1,4 +1,4 @@
-use num::Float;
+use num::{zero, Float, FromPrimitive};
 
 /// Structure used to represent the nearest facet to a point,
 /// holding relevant data for computation.
@@ -12,8 +12,12 @@ pub struct MCNearestFacet<T: Float> {
     pub dot_product: T,
 }
 
-impl<T: Float> Default for MCNearestFacet<T> {
+impl<T: Float + FromPrimitive> Default for MCNearestFacet<T> {
     fn default() -> Self {
-        todo!()
+        Self {
+            facet: 0,
+            distance_to_facet: FromPrimitive::from_f64(1e80).unwrap(),
+            dot_product: zero(),
+        }
     }
 }
