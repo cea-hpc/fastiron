@@ -32,7 +32,7 @@ impl Default for SubfacetAdjacency {
 #[derive(Debug)]
 pub struct MCFacetAdjacency {
     pub subfacet: SubfacetAdjacency,
-    pub num_points: u32,
+    pub num_points: usize,
     pub point: [u32; 3],
 }
 
@@ -46,7 +46,7 @@ impl Default for MCFacetAdjacency {
 #[derive(Debug)]
 pub struct MCFacetAdjacencyCell {
     pub facet: Vec<MCFacetAdjacency>,
-    pub point: Vec<u32>,
+    pub point: Vec<usize>,
 }
 
 impl Default for MCFacetAdjacencyCell {

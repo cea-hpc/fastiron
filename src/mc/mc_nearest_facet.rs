@@ -2,10 +2,10 @@ use num::Float;
 
 /// Structure used to represent the nearest facet to a point,
 /// holding relevant data for computation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct MCNearestFacet<T: Float> {
     /// Facet the particle is the closest to
-    pub facet: u32,
+    pub facet: usize,
     /// Distance between facet and particle
     pub distance_to_facet: T,
     /// Dot product between facet and speed/position vector?

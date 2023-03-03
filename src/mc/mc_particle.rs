@@ -11,7 +11,7 @@ use super::{
 };
 
 /// Structure used to represent a particle.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct MCParticle<T: Float> {
     /// Current position
     pub coordinate: MCVector<T>,
@@ -54,11 +54,11 @@ pub struct MCParticle<T: Float> {
     //// Current energy group the particle belong to (should be usize?)
     pub energy_group: usize,
     /// Current domain in the spatial grid (should be usize?)
-    pub domain: u32,
+    pub domain: usize,
     /// Current cell in the current domain (should be usize?)
-    pub cell: u32,
+    pub cell: usize,
     /// Facet to be crossed? (should be usize?)
-    pub facet: u32,
+    pub facet: usize,
     /// When crossing a facet, keep the surface normal dot product
     pub normal_dot: T,
 }
@@ -104,9 +104,9 @@ impl<T: Float + FromPrimitive> MCParticle<T> {
     /// Returns the location of the particle as a [MCLocation] object.
     pub fn get_location(&self) -> MCLocation {
         MCLocation {
-            domain: self.domain,
-            cell: self.cell,
-            facet: self.facet,
+            domain: Some(self.domain),
+            cell: Some(self.cell),
+            facet: Some(self.facet),
         }
     }
 

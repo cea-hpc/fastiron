@@ -53,9 +53,9 @@ pub struct MCBaseParticle<T: Float> {
     /// Species of the particle
     pub species: Species,
     /// Current domain in the spatial grid (should be usize?)
-    pub domain: u32,
+    pub domain: usize,
     /// Current cell in the current domain (should be usize?)
-    pub cell: u32,
+    pub cell: usize,
 }
 
 impl<T: Float> MCBaseParticle<T> {
@@ -95,9 +95,9 @@ impl<T: Float> MCBaseParticle<T> {
     /// Return the current particle's location.
     pub fn get_location(&self) -> MCLocation {
         MCLocation {
-            domain: self.domain,
-            cell: self.cell,
-            facet: 0,
+            domain: Some(self.domain),
+            cell: Some(self.cell),
+            facet: Some(0),
         }
     }
 
