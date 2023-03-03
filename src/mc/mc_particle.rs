@@ -104,9 +104,9 @@ impl<T: Float + FromPrimitive> MCParticle<T> {
     /// Returns the location of the particle as a [MCLocation] object.
     pub fn get_location(&self) -> MCLocation {
         MCLocation {
-            domain: self.domain,
-            cell: self.cell,
-            facet: self.facet,
+            domain: Some(self.domain),
+            cell: Some(self.cell),
+            facet: Some(self.facet),
         }
     }
 

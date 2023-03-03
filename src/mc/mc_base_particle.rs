@@ -95,9 +95,9 @@ impl<T: Float> MCBaseParticle<T> {
     /// Return the current particle's location.
     pub fn get_location(&self) -> MCLocation {
         MCLocation {
-            domain: self.domain,
-            cell: self.cell,
-            facet: 0,
+            domain: Some(self.domain),
+            cell: Some(self.cell),
+            facet: Some(0),
         }
     }
 
