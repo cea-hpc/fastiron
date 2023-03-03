@@ -43,7 +43,8 @@ pub fn event<T: Float + FromPrimitive>(
             mc_particle.facet = facet_adjacency.adjacent.facet.unwrap();
             mc_particle.last_event = MCTallyEvent::FacetCrossingCommunication;
 
-            reflect_particle(mcco, mc_particle); // added from cycle tracking
+            // added from cycle tracking; necessary since we dont pass around a pointer
+            reflect_particle(mcco, mc_particle);
 
             let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
                 .mesh
@@ -56,6 +57,5 @@ pub fn event<T: Float + FromPrimitive>(
         }
         MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
     }
-
     mc_particle.last_event
 }

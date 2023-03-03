@@ -18,7 +18,6 @@ const N_POINTS_PER_FACET: usize = 3;
 
 /// Computes which facet of the specified cell is nearest
 /// to the specified coordinates.
-#[allow(clippy::too_many_arguments)]
 pub fn nearest_facet<T: Float + FromPrimitive>(
     mc_particle: &mut MCParticle<T>,
     mcco: &MonteCarlo<T>,
@@ -112,7 +111,7 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
     }
     let r4: T = one - r1 - r2 - r3;
 
-    coordinate = center * r4 + point0 * r1 + point1 * r2 + point2 * r3;
+    coordinate = point0 * r1 + point1 * r2 + point2 * r3 + center * r4;
 
     coordinate
 }
@@ -233,9 +232,7 @@ fn mct_nf_3dg<T: Float + FromPrimitive>(
             distance_to_facet[facet_idx].distance = t;
         });
 
-        let mut retry: bool = false;
-
-        let nearest_facet = mct_nf_find_nearest(
+        let (nearest_facet, retry) = mct_nf_find_nearest(
             particle,
             domain,
             &mut location,
@@ -243,7 +240,6 @@ fn mct_nf_3dg<T: Float + FromPrimitive>(
             &mut move_factor,
             num_facets_per_cell,
             &distance_to_facet,
-            &mut retry,
         );
 
         if !retry {
@@ -274,11 +270,7 @@ fn mct_nf_3dg_move_particle<T: Float + FromPrimitive>(
     move_factor: T,
 ) {
     let move_to = cell_position_3dg(domain, location.cell.unwrap());
-    /*
-    coord.x = coord.x + move_factor * (move_to.x - coord.x);
-    coord.y = coord.y + move_factor * (move_to.y - coord.y);
-    coord.z = coord.z + move_factor * (move_to.z - coord.z);
-    */
+
     *coord += (move_to - *coord) * move_factor;
 }
 
@@ -317,7 +309,6 @@ fn mct_nf_compute_nearest<T: Float + FromPrimitive>(
     nearest_facet
 }
 
-#[allow(clippy::too_many_arguments)]
 fn mct_nf_find_nearest<T: Float + FromPrimitive>(
     particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
@@ -326,8 +317,7 @@ fn mct_nf_find_nearest<T: Float + FromPrimitive>(
     move_factor: &mut T,
     num_facets_per_cell: usize,
     distance_to_facet: &[MCDistanceToFacet<T>],
-    retry: &mut bool,
-) -> MCNearestFacet<T> {
+) -> (MCNearestFacet<T>, bool) {
     let nearest_facet = mct_nf_compute_nearest(num_facets_per_cell, distance_to_facet);
     let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
@@ -339,7 +329,7 @@ fn mct_nf_find_nearest<T: Float + FromPrimitive>(
     const MAX_ITERATION: usize = 1000;
     let max: T = FromPrimitive::from_usize(MAX_ALLOWED_SEGMENTS).unwrap();
 
-    *retry = false;
+    let mut retry = false;
 
     if particle.species != Species::Unknown {
         // take an option as arg and check if is_some ?
@@ -355,14 +345,14 @@ fn mct_nf_find_nearest<T: Float + FromPrimitive>(
             }
 
             if *iteration == MAX_ITERATION {
-                *retry = false;
+                retry = false;
             } else {
-                *retry = true;
+                retry = true;
             }
             location.facet = None;
         }
     }
-    nearest_facet
+    (nearest_facet, retry)
 }
 
 fn mct_facet_points_3dg<T: Float>(
@@ -438,6 +428,8 @@ fn mct_nf_3dg_dist_to_segment<T: Float + FromPrimitive>(
         belongs_or_return!(x);
         belongs_or_return!(y);
         // update cross; TODO:  check if we can replace it by a cross product using MCVector
+        // for example, those are the coeff along Z of fcoords0fcoords1 x fcoords0inter_pt, etc..
+        // + the cross0/1/2 are interchangeable so no naming issues will appear
         cross1 = ab_cross_ac!(
             facet_coords[0].x,
             facet_coords[0].y,
@@ -465,7 +457,7 @@ fn mct_nf_3dg_dist_to_segment<T: Float + FromPrimitive>(
     } else if (plane.b < -pfive) | (plane.b > pfive) {
         belongs_or_return!(x);
         belongs_or_return!(z);
-        // update cross
+        // update cross; y elements
         cross1 = ab_cross_ac!(
             facet_coords[0].z,
             facet_coords[0].x,
@@ -493,7 +485,7 @@ fn mct_nf_3dg_dist_to_segment<T: Float + FromPrimitive>(
     } else if (plane.a < -pfive) | (plane.a > pfive) {
         belongs_or_return!(z);
         belongs_or_return!(y);
-        // update cross
+        // update cross; x elements
         cross1 = ab_cross_ac!(
             facet_coords[0].y,
             facet_coords[0].z,

@@ -39,7 +39,6 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
     // initialize distances and constants
     const N_EVENTS: usize = 3;
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
-    //let ten: T = FromPrimitive::from_f64(10.0).unwrap();
     let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
     let small_f: T = FromPrimitive::from_f64(SMALL_FLOAT).unwrap();
     let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
@@ -85,22 +84,10 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
     }
     // census
     distance[MCSegmentOutcome::Census as usize] = particle_speed * mc_particle.mean_free_path;
+
     // nearest facet
-    //let distance_threshold: T = ten * huge_f;
-    //let current_best_distance: T = huge_f;
-
-    //let new_segment: bool = (mc_particle.num_segments.abs() < tiny_f)
-    //    || (mc_particle.last_event == MCTallyEvent::Collision);
-
-    let nearest_facet: MCNearestFacet<T> = nearest_facet(
-        mc_particle,
-        //distance_threshold,
-        //current_best_distance,
-        //new_segment,
-        mcco,
-    );
+    let nearest_facet: MCNearestFacet<T> = nearest_facet(mc_particle, mcco);
     mc_particle.normal_dot = nearest_facet.dot_product;
-
     distance[MCSegmentOutcome::FacetCrossing as usize] = nearest_facet.distance_to_facet;
 
     // exit if the tracker failed to bound the particle's volume
@@ -113,6 +100,8 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
         distance[MCSegmentOutcome::Census as usize] = huge_f;
         distance[MCSegmentOutcome::Collision as usize] = tiny_f;
     }
+
+    // pick the outcome and update the particle
 
     let segment_outcome = find_min(&distance);
 
