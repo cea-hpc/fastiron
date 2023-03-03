@@ -3,8 +3,8 @@ use core::panic;
 use num::{zero, Float, FromPrimitive};
 
 use super::{
-    mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
-    mc_facet_adjacency::SubfacetAdjacency, mc_facet_geometry::MCGeneralPlane,
+    mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain, 
+    mc_facet_geometry::MCGeneralPlane,
     mc_location::MCLocation, mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle,
     mc_rng_state::rng_sample, mc_vector::MCVector,
 };
@@ -60,7 +60,8 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
     let six: T = FromPrimitive::from_f64(6.0).unwrap();
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
 
-    let domain: &MCDomain<T> = &mcco.domain[domain_num];
+    // pass the domain directly as argument instead; will change when the function is called.
+    let domain: &MCDomain<T> = &mcco.domain[domain_num]; 
 
     let num_facets: usize = domain.mesh.cell_connectivity[cell_idx].facet.len();
     if num_facets == 0 {
@@ -116,10 +117,7 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
     }
     let r4: T = one - r1 - r2 - r3;
 
-    // TODO: replace using the defined operators of MCVector
-    coordinate.x = r4 * center.x + r1 * point0.x + r2 * point1.x + r3 * point2.x;
-    coordinate.y = r4 * center.y + r1 * point0.y + r2 * point1.y + r3 * point2.y;
-    coordinate.z = r4 * center.z + r1 * point0.z + r2 * point1.z + r3 * point2.z;
+    coordinate = center*r4 + point0*r1 + point1*r2 + point2*r3;
 
     coordinate
 }
@@ -143,22 +141,6 @@ pub fn cell_position_3dg<T: Float + FromPrimitive>(
     coordinate
 }
 
-/// ONLY USED FOR READABILITY
-/// TODO: REMOVE
-pub fn adjacent_facet<T: Float>(
-    // ORIGINAL FUNCTION IS IN ITS OWN FILE
-    location: &MCLocation,
-    mc_particle: &MCParticle<T>,
-    mcco: &MonteCarlo<T>,
-) -> SubfacetAdjacency {
-    /*
-    let domain = &mcco.domain[location.domain];
-    let adjacency = domain.mesh.cell_connectivity[location.cell].facet[location.facet].subfacet;
-    adjacency
-    */
-    todo!()
-}
-
 /// Reflects a particle off a reflection-type boundary.
 pub fn reflect_particle<T: Float + FromPrimitive>(
     mcco: &MonteCarlo<T>,
@@ -166,7 +148,7 @@ pub fn reflect_particle<T: Float + FromPrimitive>(
 ) {
     let mut new_d_cos = particle.direction_cosine.clone();
     let location = particle.get_location();
-    // direct access replace get_domain method from MCLocation
+    
     let domain = &mcco.domain[location.domain];
     let plane = &domain.mesh.cell_geometry[location.cell][location.facet];
 
@@ -295,10 +277,12 @@ fn mct_nf_3dg_move_particle<T: Float + FromPrimitive>(
     move_factor: T,
 ) {
     let move_to = cell_position_3dg(domain, location.cell);
-
+    /*
     coord.x = coord.x + move_factor * (move_to.x - coord.x);
     coord.y = coord.y + move_factor * (move_to.y - coord.y);
     coord.z = coord.z + move_factor * (move_to.z - coord.z);
+    */
+    *coord += (move_to - *coord)*move_factor; 
 }
 
 /// delete num_facets_per_cell ?
