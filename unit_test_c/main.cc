@@ -93,4 +93,31 @@ int main(int argc, char** argv) {
 
     double volume = MCT_Cell_Volume_3D_G_vector_tetDet(v0, v1, v2, v3);
     printf("volume: %17.16f\n", volume);
+
+    printf("\n");
+    printf("###########################\n");
+    printf("#       macros test       #\n");
+    printf("###########################\n");
+    MC_Vector facet_coords0 = v0;
+    MC_Vector facet_coords1 = v1;
+    MC_Vector facet_coords2 = v2;
+    MC_Vector intersection_pt = v3;
+    bool belong_x = BELONGS(intersection_pt, facet_coords0, facet_coords1, facet_coords2, x);
+    bool belong_y = BELONGS(intersection_pt, facet_coords0, facet_coords1, facet_coords2, y);
+    bool belong_z = BELONGS(intersection_pt, facet_coords0, facet_coords1, facet_coords2, z);
+    printf("belong_x: %u\n", belong_x);
+    printf("belong_y: %u\n", belong_y);
+    printf("belong_z: %u\n", belong_z);
+    double cross1 = AB_CROSS_AC(facet_coords0.x, facet_coords0.y,
+                            facet_coords1.x, facet_coords1.y,
+                            intersection_pt.x,  intersection_pt.y);
+    double cross2 = AB_CROSS_AC(facet_coords1.x, facet_coords1.y,
+                            facet_coords2.x, facet_coords2.y,
+                            intersection_pt.x,  intersection_pt.y);
+    double cross0 = AB_CROSS_AC(facet_coords2.x, facet_coords2.y,
+                            facet_coords0.x, facet_coords0.y,
+                            intersection_pt.x,  intersection_pt.y);
+    printf("cross0: %17.16f\n", cross0);
+    printf("cross1: %17.16f\n", cross1);
+    printf("cross2: %17.16f\n", cross2);
 }

@@ -142,5 +142,73 @@ pub fn compute_volume() {
 
 #[test]
 pub fn macros() {
+    // init
+    let v0: MCVector<f64> = MCVector {x: 1.923, y: -2.45, z: 5.013 };
+    let v1: MCVector<f64> = MCVector {x: 3.041, y: 1.368, z: 9.143 };
+    let v2: MCVector<f64> = MCVector {x: 6.235, y: 0.325, z: 2.502 };
+    let facet_coords = [v0, v1, v2];
+    let intersection_pt: MCVector<f64> = MCVector {x: 1.634, y: -1.34, z: 3.873 };
+    let bounding_box_tolerance: f64 = 1.0e-9;
 
+    // if the point doesn't belong to the facet, returns huge_f
+    macro_rules! belongs_or_return {
+        ($axis: ident, $res: ident) => {
+            let below: bool = (facet_coords[0].$axis
+                > intersection_pt.$axis + bounding_box_tolerance)
+                & (facet_coords[1].$axis > intersection_pt.$axis + bounding_box_tolerance)
+                & (facet_coords[2].$axis > intersection_pt.$axis + bounding_box_tolerance);
+            let above: bool = (facet_coords[0].$axis
+                < intersection_pt.$axis - bounding_box_tolerance)
+                & (facet_coords[1].$axis < intersection_pt.$axis - bounding_box_tolerance)
+                & (facet_coords[2].$axis < intersection_pt.$axis - bounding_box_tolerance);
+            let $res =  below | above; // changed this part for easier testing 
+        };
+    }
+
+    // scalar value of the cross product between AB & AC
+    macro_rules! ab_cross_ac {
+        ($ax: expr, $ay: expr, $bx: expr, $by: expr, $cx: expr, $cy: expr) => {
+            ($bx - $ax) * ($cy - $ay) - ($by - $ay) * ($cx - $ax)
+        };
+    }
+
+    belongs_or_return!(x, belong_x);
+    belongs_or_return!(y, belong_y);
+    belongs_or_return!(z, belong_z);
+
+    let cross1 = ab_cross_ac!(
+        facet_coords[0].x,
+        facet_coords[0].y,
+        facet_coords[1].x,
+        facet_coords[1].y,
+        intersection_pt.x,
+        intersection_pt.y
+    );
+    let cross2 = ab_cross_ac!(
+        facet_coords[1].x,
+        facet_coords[1].y,
+        facet_coords[2].x,
+        facet_coords[2].y,
+        intersection_pt.x,
+        intersection_pt.y
+    );
+    let cross0 = ab_cross_ac!(
+        facet_coords[2].x,
+        facet_coords[2].y,
+        facet_coords[0].x,
+        facet_coords[0].y,
+        intersection_pt.x,
+        intersection_pt.y
+    );
+
+    println!();
+    println!("###########################");
+    println!("#       macros test       #");
+    println!("###########################");
+    println!("belong_x: {belong_x}");
+    println!("belong_y: {belong_y}");
+    println!("belong_z: {belong_z}");
+    println!("cross0: {cross0}");
+    println!("cross1: {cross1}");
+    println!("cross2: {cross2}");
 }
