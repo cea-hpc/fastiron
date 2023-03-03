@@ -22,6 +22,6 @@ const double tolerance = 1.0e-9;
              facet_coords1.axis < intersection_pt.axis - tolerance && \
              facet_coords2.axis < intersection_pt.axis - tolerance
 
-#define BELONGS(intersection_pt, facet_coords0, facet_coords1, facet_coords2, axis) IF_POINT_ABOVE_CONTINUE(intersection_pt, facet_coords0, facet_coords1, facet_coords2, axis) | IF_POINT_BELOW_CONTINUE(intersection_pt, facet_coords0, facet_coords1, facet_coords2, axis)
+#define BELONGS(intersection_pt, facet_coords0, facet_coords1, facet_coords2, axis) IF_POINT_ABOVE_CONTINUE(intersection_pt, facet_coords0, facet_coords1, facet_coords2, axis) || IF_POINT_BELOW_CONTINUE(intersection_pt, facet_coords0, facet_coords1, facet_coords2, axis)
 
 #endif
