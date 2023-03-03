@@ -14,9 +14,10 @@ pub fn event<T: Float + FromPrimitive>(
     processing_vault: &mut ParticleVault<T>,
 ) -> MCTallyEvent {
     let location = mc_particle.get_location();
-    let facet_adjacency = &mcco.domain[location.domain.unwrap()].mesh.cell_connectivity[location.cell.unwrap()].facet
-        [location.facet.unwrap()]
-        .subfacet;
+    let facet_adjacency = &mcco.domain[location.domain.unwrap()].mesh.cell_connectivity
+        [location.cell.unwrap()]
+    .facet[location.facet.unwrap()]
+    .subfacet;
 
     match facet_adjacency.event {
         MCSubfacetAdjacencyEvent::TransitOnProcessor => {
@@ -44,8 +45,9 @@ pub fn event<T: Float + FromPrimitive>(
 
             reflect_particle(mcco, mc_particle); // added from cycle tracking
 
-            let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()].mesh.nbr_rank
-                [facet_adjacency.neighbor_index];
+            let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
+                .mesh
+                .nbr_rank[facet_adjacency.neighbor_index];
             processing_vault.put_particle(mc_particle.clone(), particle_idx);
 
             mcco.particle_vault_container

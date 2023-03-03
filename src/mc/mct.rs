@@ -3,10 +3,9 @@ use core::panic;
 use num::{zero, Float, FromPrimitive};
 
 use super::{
-    mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain, 
-    mc_facet_geometry::MCGeneralPlane,
-    mc_location::MCLocation, mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle,
-    mc_rng_state::rng_sample, mc_vector::MCVector,
+    mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
+    mc_facet_geometry::MCGeneralPlane, mc_location::MCLocation, mc_nearest_facet::MCNearestFacet,
+    mc_particle::MCParticle, mc_rng_state::rng_sample, mc_vector::MCVector,
 };
 use crate::{
     direction_cosine::DirectionCosine,
@@ -57,7 +56,7 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
 
     // pass the domain directly as argument instead; will change when the function is called.
-    let domain: &MCDomain<T> = &mcco.domain[domain_num]; 
+    let domain: &MCDomain<T> = &mcco.domain[domain_num];
 
     let num_facets: usize = domain.mesh.cell_connectivity[cell_idx].facet.len();
     if num_facets == 0 {
@@ -113,7 +112,7 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
     }
     let r4: T = one - r1 - r2 - r3;
 
-    coordinate = center*r4 + point0*r1 + point1*r2 + point2*r3;
+    coordinate = center * r4 + point0 * r1 + point1 * r2 + point2 * r3;
 
     coordinate
 }
@@ -144,7 +143,7 @@ pub fn reflect_particle<T: Float + FromPrimitive>(
 ) {
     let mut new_d_cos = particle.direction_cosine.clone();
     let location = particle.get_location();
-    
+
     let domain = &mcco.domain[location.domain.unwrap()];
     let plane = &domain.mesh.cell_geometry[location.cell.unwrap()][location.facet.unwrap()];
 
@@ -190,7 +189,9 @@ fn mct_nf_3dg<T: Float + FromPrimitive>(
     let mut iteration: usize = 0;
     let mut move_factor: T = FromPrimitive::from_f64(0.5 * SMALL_FLOAT).unwrap();
 
-    let num_facets_per_cell: usize = domain.mesh.cell_connectivity[location.cell.unwrap()].facet.len();
+    let num_facets_per_cell: usize = domain.mesh.cell_connectivity[location.cell.unwrap()]
+        .facet
+        .len();
 
     loop {
         let tmp: T = FromPrimitive::from_f64(1e-16).unwrap();
@@ -213,7 +214,8 @@ fn mct_nf_3dg<T: Float + FromPrimitive>(
             }
 
             // Mesh-dependent code
-            let points = domain.mesh.cell_connectivity[location.cell.unwrap()].facet[facet_idx].point;
+            let points =
+                domain.mesh.cell_connectivity[location.cell.unwrap()].facet[facet_idx].point;
             facet_coords[0] = domain.mesh.node[points[0] as usize];
             facet_coords[1] = domain.mesh.node[points[1] as usize];
             facet_coords[2] = domain.mesh.node[points[2] as usize];
@@ -277,7 +279,7 @@ fn mct_nf_3dg_move_particle<T: Float + FromPrimitive>(
     coord.y = coord.y + move_factor * (move_to.y - coord.y);
     coord.z = coord.z + move_factor * (move_to.z - coord.z);
     */
-    *coord += (move_to - *coord)*move_factor; 
+    *coord += (move_to - *coord) * move_factor;
 }
 
 /// delete num_facets_per_cell ?
