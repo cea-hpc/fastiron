@@ -1,7 +1,9 @@
+#include "Computation.hh"
 #include "DirectionCosine.hh"
 #include "MC_Particle.hh"
 #include "MC_RNG_State.hh"
 #include "MC_Vector.hh"
+#include "PhysicalConstants.hh"
 #include "UpdateTrajectory.hh"
 #include <math.h>
 #include <stdint.h>
@@ -66,4 +68,29 @@ int main(int argc, char** argv) {
     printf("angle: %17.16f\n", angle);
     pp.PrintParticle();
 
+    printf("\n");
+    printf("###########################\n");
+    printf("#    move particle test   #\n");
+    printf("###########################\n");
+    MC_Vector coordinate = MC_Vector(1.923, -2.45, 5.013);
+    MC_Vector move_to = MC_Vector(4.0, 0.241, 7.9020);
+    double move_factor = 0.5 * PhysicalConstants::_smallDouble;
+    coordinate.x += move_factor * ( move_to.x - coordinate.x );
+    coordinate.y += move_factor * ( move_to.y - coordinate.y );
+    coordinate.z += move_factor * ( move_to.z - coordinate.z );
+    printf("coordinate.x: %17.16f\n", coordinate.x);
+    printf("coordinate.y: %17.16f\n", coordinate.y);
+    printf("coordinate.z: %17.16f\n", coordinate.z);
+
+    printf("\n");
+    printf("###########################\n");
+    printf("#   compute volume test   #\n");
+    printf("###########################\n");
+    MC_Vector v0 = MC_Vector(1.923, -2.45, 5.013);
+    MC_Vector v1 = MC_Vector(3.041, 1.368, 9.143);
+    MC_Vector v2 = MC_Vector(6.235, 0.325, 2.502);
+    MC_Vector v3 = MC_Vector(1.634, -1.34, 3.873);
+
+    double volume = MCT_Cell_Volume_3D_G_vector_tetDet(v0, v1, v2, v3);
+    printf("volume: %17.16f\n", volume);
 }

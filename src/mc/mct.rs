@@ -252,7 +252,7 @@ fn mct_nf_3dg<T: Float + FromPrimitive>(
     }
 }
 
-/// Returns the volume defined by `v0-v3`, `v1-v3`, `v2-v3` using
+/// Returns the volume defined by `v3v0`, `v3v1`, `v3v2` using
 /// vectorial operations.
 fn mct_cell_volume_3dg_vector_tetdet<T: Float + FromPrimitive>(
     v0: &MCVector<T>,
