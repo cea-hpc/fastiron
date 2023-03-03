@@ -1,4 +1,4 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::collections::HashMap;
 
 use num::Float;
 
@@ -28,7 +28,7 @@ impl Default for CellInfo {
 /// Structure used to represent the mesh partition of the space.
 /// Holds the different cells' information.
 #[derive(Debug)]
-pub struct MeshPartition<T: Float> {
+pub struct MeshPartition {
     /// Domain global identifier.
     pub domain_gid: usize,
     /// Domain index?
@@ -39,16 +39,25 @@ pub struct MeshPartition<T: Float> {
     pub cell_info_map: MapType,
     /// ?
     pub nbr_domains: Vec<usize>,
-    float_type: PhantomData<T>,
 }
 
-impl<T: Float> MeshPartition<T> {
+impl MeshPartition {
     /// Constructor. The structure is NOT ready to be used directly.
     pub fn new(domain_gid: usize, domain_index: usize, foreman: usize) -> Self {
         todo!()
     }
     /// Builds the mesh partition.
-    pub fn build_mesh_partition(&mut self, grid: &GlobalFccGrid<T>, centers: Vec<MCVector<T>>) {
+    pub fn build_mesh_partition<T: Float>(
+        &mut self,
+        grid: &GlobalFccGrid<T>,
+        centers: Vec<MCVector<T>>,
+    ) {
         todo!()
     }
 }
+
+fn assign_cells_to_domain() {}
+
+fn build_cell_idx_map() {}
+
+fn add_nbrs_to_flood() {}
