@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use num::Float;
 
-use crate::{global_fcc_grid::{GlobalFccGrid, Tuple}, mc::mc_vector::MCVector};
+use crate::{global_fcc_grid::{GlobalFccGrid}, mc::mc_vector::MCVector, comm_object::CommObject};
 
 pub type MapType = HashMap<usize, CellInfo>;
 
@@ -52,15 +52,16 @@ impl MeshPartition {
         &mut self,
         grid: &GlobalFccGrid<T>,
         centers: &[MCVector<T>],
+        comm: &mut CommObject,
     ) {
         self.assign_cells_to_domain(centers, grid);
 
-        self.build_cell_idx_map(grid);
+        self.build_cell_idx_map(grid, comm);
     }
 
     fn assign_cells_to_domain<T: Float>(&mut self, domain_center: &[MCVector<T>], grid: &GlobalFccGrid<T>) {}
 
-    fn build_cell_idx_map<T: Float>(&mut self, grid: &GlobalFccGrid<T>) {
+    fn build_cell_idx_map<T: Float>(&mut self, grid: &GlobalFccGrid<T>, comm: &mut CommObject) {
         let mut n_local_cells: usize = 0;
         // init a map
         let mut remote_domain_map: HashMap<usize, usize> = Default::default();
@@ -68,33 +69,35 @@ impl MeshPartition {
             remote_domain_map.insert(self.nbr_domains[ii], ii);
         });
 
-        for cell_info in self.cell_info_map.values_mut() {
+        let read_map = self.cell_info_map.clone();
+
+        for (cell_gid, cell_info) in &mut self.cell_info_map {
             let domain_gid: usize = cell_info.domain_gid;
             if domain_gid == self.domain_gid { // local cell
                 cell_info.cell_index = n_local_cells;
                 n_local_cells += 1;
                 cell_info.domain_index = self.domain_index;
                 cell_info.foreman = self.foreman;
-            } 
-        }
+            } else {
+                let remote_n_idx = remote_domain_map.get(&domain_gid).unwrap();
+                let face_nbr = grid.get_face_nbr_gids(*cell_gid);
 
-        for (cell_gid, cell_info) in &self.cell_info_map {
-            let domain_gid: usize = cell_info.domain_gid;
-            let remote_n_idx = remote_domain_map.get(&domain_gid);
-            let tuple_idx: Tuple = grid.cell_idx_to_tuple(*cell_gid);
-            let face_nbr = grid.get_face_nbr_gids(*cell_gid);
-
-            for j_cell_gid in face_nbr {
-                if let Some(c_info) = self.cell_info_map.get(&j_cell_gid) {
-                    if c_info.domain_gid != self.domain_gid {
-                        continue
+                for j_cell_gid in face_nbr {
+                    if let Some(c_info) = read_map.get(&j_cell_gid) {
+                        if c_info.domain_gid != self.domain_gid {
+                            continue
+                        }
+                        // replace the update to sendSet
+                        comm.add_to_send((*remote_n_idx, j_cell_gid));
                     }
-                    // Comm object sendset insertion
                 }
-            }
+            } 
+
+            
         }
 
-        // Comm object exchange
+        // replace comm.exchange
+        comm.send(&mut self.cell_info_map, &self.nbr_domains)
     }
 
     fn add_nbrs_to_flood() {}
