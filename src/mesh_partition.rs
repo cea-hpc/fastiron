@@ -4,10 +4,10 @@ use num::Float;
 
 use crate::{global_fcc_grid::{GlobalFccGrid, Tuple}, mc::mc_vector::MCVector};
 
-type MapType = HashMap<usize, CellInfo>;
+pub type MapType = HashMap<usize, CellInfo>;
 
 /// Structure used to hold cell information.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct CellInfo {
     /// Domain global identifier.
     pub domain_gid: usize,
