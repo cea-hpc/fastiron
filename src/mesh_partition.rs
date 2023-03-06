@@ -1,28 +1,22 @@
 use std::collections::{HashMap, VecDeque};
 
-use num::Float;
+use num::{Float, FromPrimitive};
 
-use crate::{comm_object::CommObject, global_fcc_grid::{GlobalFccGrid, Tuple}, mc::mc_vector::MCVector};
+use crate::{comm_object::CommObject, global_fcc_grid::{GlobalFccGrid, Tuple}, mc::mc_vector::MCVector, grid_assignment_object::GridAssignmentObject};
 
 pub type MapType = HashMap<usize, CellInfo>;
 
 /// Structure used to hold cell information.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct CellInfo {
     /// Domain global identifier.
-    pub domain_gid: usize,
+    pub domain_gid: Option<usize>,
     /// ?
-    pub foreman: usize, // ?
+    pub foreman: Option<usize>, // ?
     /// Domain index?
-    pub domain_index: usize,
+    pub domain_index: Option<usize>,
     /// Cell index.
-    pub cell_index: usize,
-}
-
-impl Default for CellInfo {
-    fn default() -> Self {
-        todo!()
-    }
+    pub cell_index: Option<usize>,
 }
 
 /// Structure used to represent the mesh partition of the space.
@@ -54,7 +48,7 @@ impl MeshPartition {
         }
     }
     /// Builds the mesh partition.
-    pub fn build_mesh_partition<T: Float>(
+    pub fn build_mesh_partition<T: Float + FromPrimitive>(
         &mut self,
         grid: &GlobalFccGrid<T>,
         centers: &[MCVector<T>],
@@ -65,11 +59,38 @@ impl MeshPartition {
         self.build_cell_idx_map(grid, comm);
     }
 
-    fn assign_cells_to_domain<T: Float>(
+    fn assign_cells_to_domain<T: Float + FromPrimitive>(
         &mut self,
         domain_center: &[MCVector<T>],
         grid: &GlobalFccGrid<T>,
     ) {
+        let mut assigner = GridAssignmentObject::new(domain_center);
+        let mut flood_queue: VecDeque<usize> = VecDeque::new();
+        let mut wet_cells: Vec<usize> = Vec::new();
+        let mut remote_domain: Vec<usize> = Vec::new();
+
+        let root = grid.which_cell(&domain_center[self.domain_gid]);
+
+        flood_queue.push_back(root);
+        wet_cells.push(root);
+        Self::add_nbrs_to_flood(root, grid, &mut flood_queue, &mut wet_cells);
+
+        while !flood_queue.is_empty() {
+            let cell_idx = flood_queue.pop_front().unwrap();
+            let rr = grid.cell_center(cell_idx);
+            let domain = assigner.nearest_center(rr);
+
+            self.cell_info_map.insert(cell_idx, CellInfo { domain_gid: Some(domain), ..Default::default() });
+
+            if domain == self.domain_gid {
+                Self::add_nbrs_to_flood(cell_idx, grid, &mut flood_queue, &mut wet_cells);
+            } else {
+                remote_domain.push(domain);
+            }
+
+            self.nbr_domains.extend(remote_domain.iter());
+        }
+
     }
 
     fn build_cell_idx_map<T: Float>(&mut self, grid: &GlobalFccGrid<T>, comm: &mut CommObject) {
@@ -83,20 +104,20 @@ impl MeshPartition {
         let read_map = self.cell_info_map.clone();
 
         for (cell_gid, cell_info) in &mut self.cell_info_map {
-            let domain_gid: usize = cell_info.domain_gid;
+            let domain_gid: usize = cell_info.domain_gid.unwrap();
             if domain_gid == self.domain_gid {
                 // local cell
-                cell_info.cell_index = n_local_cells;
+                cell_info.cell_index = Some(n_local_cells);
                 n_local_cells += 1;
-                cell_info.domain_index = self.domain_index;
-                cell_info.foreman = self.foreman;
+                cell_info.domain_index = Some(self.domain_index);
+                cell_info.foreman = Some(self.foreman);
             } else {
                 let remote_n_idx = remote_domain_map.get(&domain_gid).unwrap();
                 let face_nbr = grid.get_face_nbr_gids(*cell_gid);
 
                 for j_cell_gid in face_nbr {
                     if let Some(c_info) = read_map.get(&j_cell_gid) {
-                        if c_info.domain_gid != self.domain_gid {
+                        if c_info.domain_gid != Some(self.domain_gid) {
                             continue;
                         }
                         // replace the update to sendSet
