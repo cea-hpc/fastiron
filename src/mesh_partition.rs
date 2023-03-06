@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use num::Float;
 
-use crate::{comm_object::CommObject, global_fcc_grid::GlobalFccGrid, mc::mc_vector::MCVector};
+use crate::{comm_object::CommObject, global_fcc_grid::{GlobalFccGrid, Tuple}, mc::mc_vector::MCVector};
 
 pub type MapType = HashMap<usize, CellInfo>;
 
@@ -110,5 +110,23 @@ impl MeshPartition {
         comm.send(&mut self.cell_info_map, &self.nbr_domains)
     }
 
-    fn add_nbrs_to_flood() {}
+    fn add_nbrs_to_flood<T: Float>(cell_idx: usize, grid: &GlobalFccGrid<T>, flood_queue: &mut VecDeque<usize>, wet_cells: &mut Vec<usize>) {
+        let tt: Tuple = grid.cell_idx_to_tuple(cell_idx);
+        (0..3).into_iter().for_each(|ii| {
+            (0..3).into_iter().for_each(|jj| {
+                (0..3).into_iter().for_each(|kk| {
+                    if (ii==0) & (jj==0) & (kk==0) {
+                        return;
+                    }
+                    let nbr_tuple = (tt.0 + ii, tt.1 + jj, tt.2 + kk);
+                    grid.snap_turtle(&nbr_tuple);
+                    let nbr_idx = grid.cell_tuple_to_idx(&nbr_tuple);
+                    if !wet_cells.contains(&nbr_idx) {
+                        flood_queue.push_back(nbr_idx);
+                        wet_cells.push(nbr_idx);
+                    }
+                });
+            });
+        });
+    }
 }
