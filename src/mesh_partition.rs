@@ -103,7 +103,11 @@ impl MeshPartition {
         }
     }
 
-    fn build_cell_idx_map<T: Float + FromPrimitive>(&mut self, grid: &GlobalFccGrid<T>, comm: &mut CommObject) {
+    fn build_cell_idx_map<T: Float + FromPrimitive>(
+        &mut self,
+        grid: &GlobalFccGrid<T>,
+        comm: &mut CommObject,
+    ) {
         let mut n_local_cells: usize = 0;
         // init a map
         let mut remote_domain_map: HashMap<usize, usize> = Default::default();
@@ -148,15 +152,16 @@ impl MeshPartition {
         wet_cells: &mut Vec<usize>,
     ) {
         let tt: Tuple = grid.cell_idx_to_tuple(cell_idx);
-        (0..3).into_iter().for_each(|ii| {
-            (0..3).into_iter().for_each(|jj| {
-                (0..3).into_iter().for_each(|kk| {
+        // THIS NEEDS TO BE CHECKED/CHANGED
+        (0..3).into_iter().for_each(|ii: i32| {
+            (0..3).into_iter().for_each(|jj: i32| {
+                (0..3).into_iter().for_each(|kk: i32| {
                     if (ii == 0) & (jj == 0) & (kk == 0) {
                         return;
                     }
-                    let nbr_tuple = (tt.0 + ii, tt.1 + jj, tt.2 + kk);
-                    grid.snap_turtle(&nbr_tuple);
-                    let nbr_idx = grid.cell_tuple_to_idx(&nbr_tuple);
+                    let nbr_tuple = (tt.0 as i32 + ii, tt.1 as i32 + jj, tt.2 as i32 + kk);
+                    let snaped_nbr_tuple = grid.snap_turtle(nbr_tuple);
+                    let nbr_idx = grid.cell_tuple_to_idx(&snaped_nbr_tuple);
                     if !wet_cells.contains(&nbr_idx) {
                         flood_queue.push_back(nbr_idx);
                         wet_cells.push(nbr_idx);
