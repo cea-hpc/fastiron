@@ -1,4 +1,4 @@
-use num::Float;
+use num::{Float, FromPrimitive};
 
 use crate::mc::mc_vector::MCVector;
 
@@ -35,24 +35,51 @@ pub struct GlobalFccGrid<T: Float> {
     /// Size of a mesh cell along the z axis (cm)
     pub dz: T,
 
-    /// Corner offset as tuples?
+    /// Corner offset as tuples? hardcode as field or in a function?
     pub offset: [Tuple4; 14],
 }
 
-impl<T: Float> GlobalFccGrid<T> {
+impl<T: Float + FromPrimitive> GlobalFccGrid<T> {
     /// Constructor.
     pub fn new(nx: usize, ny: usize, nz: usize, lx: T, ly: T, lz: T) -> Self {
-        todo!()
+        let tmpx: T = FromPrimitive::from_usize(nx).unwrap();
+        let tmpy: T = FromPrimitive::from_usize(ny).unwrap();
+        let tmpz: T = FromPrimitive::from_usize(nz).unwrap();
+
+        let offset: [Tuple4; 14] = [
+            (0, 0, 0, 0),
+            (1, 0, 0, 0),
+            (0, 1, 0, 0),
+            (1, 1, 0, 0),
+            (0, 0, 1, 0),
+            (1, 0, 1, 0),
+            (0, 1, 1, 0),
+            (1, 1, 1, 0),
+            (1, 0, 0, 1),
+            (0, 0, 0, 1),
+            (0, 1, 0, 2),
+            (0, 0, 0, 2),
+            (0, 0, 1, 3),
+            (0, 0, 0, 3),
+        ];
+        
+        Self { nx, ny, nz, lx, ly, lz, dx: lx/tmpx, dy: ly/tmpy, dz: lz/tmpz, offset }
     }
 
     /// Returns the index of the cell the coordinates belong to.
     pub fn which_cell(&self, r: &MCVector<T>) -> usize {
-        todo!()
+        let ix = r.x/self.dx;
+        let iy = r.y/self.dy;
+        let iz = r.z/self.dz;
+        self.cell_tuple_to_idx(&(ix.to_usize().unwrap(), iy.to_usize().unwrap(), iz.to_usize().unwrap()))
     }
 
     /// Returns the center of the given cell.
     pub fn cell_center(&self, idx_cell: usize) -> MCVector<T> {
-        todo!()
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+        let tt: Tuple = self.cell_idx_to_tuple(idx_cell);
+        let r: MCVector<T> = self.node_coord_from_tuple(&(tt.0, tt.1, tt.2, 0));
+        r + MCVector { x: self.dx/two, y: self.dy/two, z: self.dz/two }
     }
 
     /// Converts a cell index to a coordinate tuple.
@@ -71,7 +98,7 @@ impl<T: Float> GlobalFccGrid<T> {
     }
 
     /// Returns the global identifiers of ?
-    pub fn get_node_gids(&self, cell_gid: usize) -> Vec<u64> {
+    pub fn get_node_gids(&self, cell_gid: usize) -> [usize; 14] {
         // replace with array since sized should be fixed ?
         todo!()
     }

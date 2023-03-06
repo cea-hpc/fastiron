@@ -103,7 +103,7 @@ impl MeshPartition {
         }
     }
 
-    fn build_cell_idx_map<T: Float>(&mut self, grid: &GlobalFccGrid<T>, comm: &mut CommObject) {
+    fn build_cell_idx_map<T: Float + FromPrimitive>(&mut self, grid: &GlobalFccGrid<T>, comm: &mut CommObject) {
         let mut n_local_cells: usize = 0;
         // init a map
         let mut remote_domain_map: HashMap<usize, usize> = Default::default();
@@ -141,7 +141,7 @@ impl MeshPartition {
         comm.send(&mut self.cell_info_map, &self.nbr_domains)
     }
 
-    fn add_nbrs_to_flood<T: Float>(
+    fn add_nbrs_to_flood<T: Float + FromPrimitive>(
         cell_idx: usize,
         grid: &GlobalFccGrid<T>,
         flood_queue: &mut VecDeque<usize>,
