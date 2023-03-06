@@ -1,17 +1,57 @@
+use std::collections::HashMap;
+
 use num::Float;
 
 use crate::{
     bulk_storage::BulkStorage, decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid, material_database::MaterialDatabase,
-    mesh_partition::MeshPartition, parameters::Parameters,
+    mesh_partition::{MeshPartition, CellInfo}, parameters::{Parameters, GeometryParameters},
 };
 
 use super::{
     mc_cell_state::MCCellState,
     mc_facet_adjacency::{MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent},
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
-    mc_vector::MCVector,
+    mc_vector::MCVector, mc_location::MCLocation,
 };
+
+#[derive(Debug)]
+struct FaceInfo {
+    event: MCSubfacetAdjacencyEvent,
+    cell_info: CellInfo,
+    nbr_idx: usize,
+}
+
+const NODE_INDIRECT: [[usize; 3]; 24] = [
+    [1, 3, 8],
+    [3, 7, 8],
+    [7, 5, 8],
+    [5, 1, 8],
+    [0, 4, 9],
+    [4, 6, 9],
+    [6, 2, 9],
+    [2, 0, 9],
+    [3, 2, 10],
+    [2, 6, 10],
+    [6, 7, 10],
+    [7, 3, 10],
+    [0, 1, 11],
+    [1, 5, 11],
+    [5, 4, 11],
+    [4, 0, 11],
+    [4, 5, 12],
+    [5, 7, 12],
+    [7, 6, 12],
+    [6, 4, 12],
+    [0, 2, 13],
+    [2, 3, 13],
+    [3, 1, 13],
+    [1, 0, 13],
+];
+
+const OPPOSITE_FACET: [usize; 24] = [
+    7, 6, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 8, 11, 10, 9, 20, 23, 22, 21, 16, 19, 18, 17,
+];
 
 /// Structure that manages a data set on a mesh-like geometry
 #[derive(Debug)]
@@ -30,9 +70,9 @@ pub struct MCMeshDomain<T: Float> {
     pub cell_geometry: Vec<MCFacetGeometryCell<T>>,
 
     /// Needs replacement
-    pub connectivity_facet_storage: BulkStorage<MCFacetAdjacency>,
+    pub connectivity_facet_storage: BulkStorage<MCFacetAdjacency>, // set capacity totalcells*24
     /// Needs replacement
-    pub connectivity_point_storage: BulkStorage<i32>,
+    pub connectivity_point_storage: BulkStorage<i32>, // set capacity totalcells*14
     /// Needs replacement
     pub geom_facet_storage: BulkStorage<MCGeneralPlane<T>>,
 }
@@ -45,6 +85,12 @@ impl<T: Float> MCMeshDomain<T> {
         ddc: &DecompositionObject,
         boundary_condition: &[MCSubfacetAdjacencyEvent],
     ) -> Self {
+        todo!()
+    }
+
+    /// Computes the volume of the specified cell. Replaces 
+    /// an isolated function of the original code.
+    pub fn cell_volume(&self, cell_idx: usize) -> T {
         todo!()
     }
 }
@@ -77,5 +123,23 @@ impl<T: Float> MCDomain<T> {
     }
 
     /// Clears the cross section cache for future uses.
-    pub fn clear_cross_section_cache(num_energy_groups: u32) {}
+    pub fn clear_cross_section_cache(&mut self) {
+        self.cell_state.iter_mut().for_each(|cs| cs.total.clear())
+    }
+}
+
+fn bootstrap_node_map<T: Float>(partition: &MeshPartition, grid: &GlobalFccGrid<T>) -> HashMap<u64, usize> {
+    todo!()
+}
+
+fn build_cells<T: Float>(cell: &[MCFacetAdjacencyCell], node_idx_map: &HashMap<u64, usize>, nbr_domain: &[usize], partition: &MeshPartition, grid: &GlobalFccGrid<T>, boundary_cond: &[MCSubfacetAdjacencyEvent]) {
+    todo!()
+}
+
+fn make_facet(location: &MCLocation, node_idx:&[usize], face_info: &FaceInfo) -> MCFacetAdjacency {
+    todo!()
+}
+
+fn find_material<T: Float>(geometry_params: &GeometryParameters, rr: &MCVector<T>) {
+    todo!()
 }
