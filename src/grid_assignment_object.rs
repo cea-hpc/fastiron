@@ -1,12 +1,12 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque};
 
 use num::{zero, Float, FromPrimitive};
 
-use crate::{global_fcc_grid::Tuple, mc::mc_vector::MCVector};
+use crate::{global_fcc_grid::Tuple, mc::mc_vector::MCVector, physical_constants::TINY_FLOAT};
 
 /// Internal structure of [GridAssignmentObject].
 /// Represents a cell.
-#[derive(Debug)]
+#[derive(Debug, Default)] // default value of bool is false
 pub struct GridCell {
     pub burned: bool,
     pub my_centers: Vec<usize>,
@@ -97,8 +97,40 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
     }
 
     /// Returns the closest center to a given coordinate.
-    pub fn nearest_center(&self, rr: MCVector<T>) -> u32 {
-        todo!()
+    pub fn nearest_center(&mut self, rr: MCVector<T>) -> usize {
+        let mut r2_min: T = FromPrimitive::from_f64(1e300).unwrap();
+        let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
+        let mut center_min: Option<usize> = None;
+
+        self.add_tuple_to_queue(self.which_cell_tuple(rr));
+
+        while !self.flood_queue.is_empty() {
+            // next cell to check
+            let cell_idx: usize = self.flood_queue.pop_front().unwrap();
+            // if cell is too far away, dont even try
+            if self.min_dist2(rr, cell_idx) > r2_min {
+                continue;
+            }
+            for center_idx in &self.grid[cell_idx].my_centers {
+                let center_r = self.centers[*center_idx];
+                let r2: T = (rr-center_r).dot(&(rr-center_r));
+                if (r2-r2_min).abs() < tiny_f { // r2 == r2_min
+                    center_min.map(|m| m.min(*center_idx));
+                }
+                if r2 < r2_min { // replace another threshold test?
+                    r2_min = r2;
+                    center_min = Some(*center_idx);
+                }
+            }
+            self.add_nbrs_to_queue(cell_idx);
+        }
+
+        while !self.wet_list.is_empty() {
+            self.grid[self.wet_list.pop_front().unwrap()].burned = false;
+        }
+
+        assert!(center_min.is_some());
+        center_min.unwrap()
     }
 
     /// Returns the tuple of the cell the coordinate belongs to.
@@ -147,7 +179,14 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
     /// Finds a lower bound of the squared distance from the point
     /// r to the cell with index cell_idx.
     fn min_dist2(&self, r: MCVector<T>, cell_idx: usize) -> T {
-        todo!()
+        let r_idx: Tuple = self.which_cell_tuple(r);
+        let tuple_idx: Tuple = self.index_to_tuple(cell_idx);
+
+        let rx: T = (self.dx * (FromPrimitive::from_usize(tuple_idx.0.abs_diff(r_idx.0) - 1)).unwrap()).max(zero());
+        let ry: T = (self.dy * (FromPrimitive::from_usize(tuple_idx.1.abs_diff(r_idx.1) - 1)).unwrap()).max(zero());
+        let rz: T = (self.dz * (FromPrimitive::from_usize(tuple_idx.2.abs_diff(r_idx.2) - 1)).unwrap()).max(zero());
+
+        rx*rx + ry*ry + rz*rz
     }
 
     /// ?
