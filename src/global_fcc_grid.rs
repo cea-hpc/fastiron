@@ -77,7 +77,7 @@ impl<T: Float> GlobalFccGrid<T> {
     }
 
     /// Returns the global identifiers of ?
-    pub fn get_face_nbr_gids(&self, cell_gid: usize) -> Vec<u64> {
+    pub fn get_face_nbr_gids(&self, cell_gid: usize) -> [usize; 6] {
         // replace with array since sized should be fixed ?
         todo!()
     }
