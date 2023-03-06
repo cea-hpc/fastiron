@@ -1,4 +1,4 @@
-use std::{collections::VecDeque};
+use std::collections::VecDeque;
 
 use num::{zero, Float, FromPrimitive};
 
@@ -113,11 +113,13 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
             }
             for center_idx in &self.grid[cell_idx].my_centers {
                 let center_r = self.centers[*center_idx];
-                let r2: T = (rr-center_r).dot(&(rr-center_r));
-                if (r2-r2_min).abs() < tiny_f { // r2 == r2_min
+                let r2: T = (rr - center_r).dot(&(rr - center_r));
+                if (r2 - r2_min).abs() < tiny_f {
+                    // r2 == r2_min
                     center_min.map(|m| m.min(*center_idx));
                 }
-                if r2 < r2_min { // replace another threshold test?
+                if r2 < r2_min {
+                    // replace another threshold test?
                     r2_min = r2;
                     center_min = Some(*center_idx);
                 }
@@ -182,11 +184,17 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
         let r_idx: Tuple = self.which_cell_tuple(r);
         let tuple_idx: Tuple = self.index_to_tuple(cell_idx);
 
-        let rx: T = (self.dx * (FromPrimitive::from_usize(tuple_idx.0.abs_diff(r_idx.0) - 1)).unwrap()).max(zero());
-        let ry: T = (self.dy * (FromPrimitive::from_usize(tuple_idx.1.abs_diff(r_idx.1) - 1)).unwrap()).max(zero());
-        let rz: T = (self.dz * (FromPrimitive::from_usize(tuple_idx.2.abs_diff(r_idx.2) - 1)).unwrap()).max(zero());
+        let rx: T = (self.dx
+            * (FromPrimitive::from_usize(tuple_idx.0.abs_diff(r_idx.0) - 1)).unwrap())
+        .max(zero());
+        let ry: T = (self.dy
+            * (FromPrimitive::from_usize(tuple_idx.1.abs_diff(r_idx.1) - 1)).unwrap())
+        .max(zero());
+        let rz: T = (self.dz
+            * (FromPrimitive::from_usize(tuple_idx.2.abs_diff(r_idx.2) - 1)).unwrap())
+        .max(zero());
 
-        rx*rx + ry*ry + rz*rz
+        rx * rx + ry * ry + rz * rz
     }
 
     /// ?
