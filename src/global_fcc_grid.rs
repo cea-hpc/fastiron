@@ -1,4 +1,4 @@
-use num::{Float, FromPrimitive, zero};
+use num::{zero, Float, FromPrimitive};
 
 use crate::mc::mc_vector::MCVector;
 
@@ -195,22 +195,40 @@ impl<T: Float + FromPrimitive> GlobalFccGrid<T> {
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
         let basis_offset: [MCVector<T>; 4] = [
             MCVector::default(),
-            MCVector { x: zero(), y: self.dy/two, z: self.dz/two },
-            MCVector { x: self.dx/two, y: zero(), z: self.dz/two },
-            MCVector { x: self.dx/two, y: self.dy/two, z: zero() },
+            MCVector {
+                x: zero(),
+                y: self.dy / two,
+                z: self.dz / two,
+            },
+            MCVector {
+                x: self.dx / two,
+                y: zero(),
+                z: self.dz / two,
+            },
+            MCVector {
+                x: self.dx / two,
+                y: self.dy / two,
+                z: zero(),
+            },
         ];
         let tx: T = FromPrimitive::from_usize(tt.0).unwrap();
         let ty: T = FromPrimitive::from_usize(tt.1).unwrap();
         let tz: T = FromPrimitive::from_usize(tt.2).unwrap();
 
-        MCVector { x: tx*self.dx, y: ty*self.dy, z: tz*self.dz } + basis_offset[tt.3]
+        MCVector {
+            x: tx * self.dx,
+            y: ty * self.dy,
+            z: tz * self.dz,
+        } + basis_offset[tt.3]
     }
 
     /// Adjust the tuple value according to bounds.
     pub fn snap_turtle(&self, tt: (i32, i32, i32)) -> Tuple {
         // (0 <= tt.* < n*)
-        ((tt.0.max(0) as usize).min(self.nx-1), 
-         (tt.1.max(0) as usize).min(self.ny-1), 
-         (tt.2.max(0) as usize).min(self.nz-1))
+        (
+            (tt.0.max(0) as usize).min(self.nx - 1),
+            (tt.1.max(0) as usize).min(self.ny - 1),
+            (tt.2.max(0) as usize).min(self.nz - 1),
+        )
     }
 }
