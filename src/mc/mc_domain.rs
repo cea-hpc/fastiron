@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
-use num::Float;
+use num::{Float, FromPrimitive, zero, one};
 
 use crate::{
     bulk_storage::BulkStorage, decomposition_object::DecompositionObject,
-    global_fcc_grid::GlobalFccGrid, material_database::MaterialDatabase,
+    global_fcc_grid::GlobalFccGrid,
     mesh_partition::{MeshPartition, CellInfo}, parameters::{Parameters, GeometryParameters},
 };
 
@@ -17,9 +17,9 @@ use super::{
 
 #[derive(Debug)]
 struct FaceInfo {
-    event: MCSubfacetAdjacencyEvent,
-    cell_info: CellInfo,
-    nbr_idx: usize,
+    pub event: MCSubfacetAdjacencyEvent,
+    pub cell_info: CellInfo,
+    pub nbr_idx: usize,
 }
 
 const NODE_INDIRECT: [[usize; 3]; 24] = [
@@ -49,7 +49,7 @@ const NODE_INDIRECT: [[usize; 3]; 24] = [
     [1, 0, 13],
 ];
 
-const OPPOSITE_FACET: [usize; 24] = [
+const OPPOSING_FACET: [usize; 24] = [
     7, 6, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 8, 11, 10, 9, 20, 23, 22, 21, 16, 19, 18, 17,
 ];
 
@@ -83,14 +83,8 @@ impl<T: Float> MCMeshDomain<T> {
         mesh_partition: &MeshPartition,
         grid: &GlobalFccGrid<T>,
         ddc: &DecompositionObject,
-        boundary_condition: &[MCSubfacetAdjacencyEvent],
+        boundary_condition: &MCSubfacetAdjacencyEvent,
     ) -> Self {
-        todo!()
-    }
-
-    /// Computes the volume of the specified cell. Replaces 
-    /// an isolated function of the original code.
-    pub fn cell_volume(&self, cell_idx: usize) -> T {
         todo!()
     }
 }
@@ -104,27 +98,80 @@ pub struct MCDomain<T: Float> {
     /// List of cells and their state (See [MCCellState] for more)
     pub cell_state: Vec<MCCellState<T>>,
     /// Needs replacement
-    pub cached_cross_section_storage: BulkStorage<f64>,
+    //pub cached_cross_section_storage: BulkStorage<f64>,
     /// Mesh of the domain
     pub mesh: MCMeshDomain<T>,
 }
 
-impl<T: Float> MCDomain<T> {
+impl<T: Float + FromPrimitive> MCDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition,
         grid: &GlobalFccGrid<T>,
         ddc: &DecompositionObject,
         params: &Parameters,
-        material_database: &MaterialDatabase<T>,
-        num_energy_groups: u32, // maybe usize?
+        //material_database: &MaterialDatabase<T>,
+        num_energy_groups: usize,
     ) -> Self {
-        todo!()
+        let mesh = MCMeshDomain::new(mesh_partition, grid, ddc, &get_boundary_conditions(params));
+        let cell_state: Vec<MCCellState<T>> = Vec::with_capacity(mesh.cell_geometry.len());
+        let mut mcdomain = MCDomain {global_domain: mesh.domain_gid, cell_state, mesh};
+
+        (0..mcdomain.cell_state.len()).into_iter().for_each(|ii| {
+            mcdomain.cell_state[ii].volume = mcdomain.cell_volume(ii);
+
+            //let point: MCVector<T> = cell_position_3dg(&mcdomain, ii);
+            //let mat_name = find_material(&params.geometry_params, &point);
+
+            mcdomain.cell_state[ii].total = vec![zero(); num_energy_groups];
+
+            //let num_isos: usize = material_database.mat[mcdomain.cell_state[ii].material].iso.len();
+            mcdomain.cell_state[ii].cell_number_density = one();
+
+            let cell_center: MCVector<T> = mcdomain.cell_center(ii);
+            mcdomain.cell_state[ii].id = grid.which_cell(&cell_center) * 0x0100000000; // ?
+            mcdomain.cell_state[ii].source_tally = 0;
+        });
+        mcdomain
     }
 
     /// Clears the cross section cache for future uses.
     pub fn clear_cross_section_cache(&mut self) {
         self.cell_state.iter_mut().for_each(|cs| cs.total.clear())
+    }
+
+    /// Returns the coordinates of the center of 
+    /// the specified cell.
+    pub fn cell_center(&self, cell_idx: usize) -> MCVector<T> {
+        let cell = &self.mesh.cell_connectivity[cell_idx];
+        let node = &self.mesh.node;
+        let mut center: MCVector<T> = MCVector::default();
+
+        (0..cell.point.len()).into_iter().for_each(|ii| {
+            center += node[cell.point[ii]];
+        });
+        center /= FromPrimitive::from_usize(cell.point.len()).unwrap();
+        center
+    }
+
+    /// Computes the volume of the specified cell. Replaces 
+    /// an isolated function of the original code.
+    pub fn cell_volume(&self, cell_idx: usize) -> T {
+        let center = self.cell_center(cell_idx);
+        let cell = &self.mesh.cell_connectivity[cell_idx];
+        let node = &self.mesh.node;
+
+        let mut volume: T = zero();
+
+        (0..cell.facet.len()).into_iter().for_each(|facet_idx| {
+            let corners = &cell.facet[facet_idx].point;
+            let aa: MCVector<T> = node[corners[0].unwrap()] - center;
+            let bb: MCVector<T> = node[corners[1].unwrap()] - center;
+            let cc: MCVector<T> = node[corners[2].unwrap()] - center;
+            volume = volume + aa.dot(&bb.cross(&cc)).abs();
+        });
+        volume = volume / FromPrimitive::from_f64(6.0).unwrap();
+        volume
     }
 }
 
@@ -132,7 +179,7 @@ fn bootstrap_node_map<T: Float>(partition: &MeshPartition, grid: &GlobalFccGrid<
     todo!()
 }
 
-fn build_cells<T: Float>(cell: &[MCFacetAdjacencyCell], node_idx_map: &HashMap<u64, usize>, nbr_domain: &[usize], partition: &MeshPartition, grid: &GlobalFccGrid<T>, boundary_cond: &[MCSubfacetAdjacencyEvent]) {
+fn build_cells<T: Float>(cell: &[MCFacetAdjacencyCell], node_idx_map: &HashMap<u64, usize>, nbr_domain: &[usize], partition: &MeshPartition, grid: &GlobalFccGrid<T>, boundary_cond: &MCSubfacetAdjacencyEvent) {
     todo!()
 }
 
@@ -140,6 +187,10 @@ fn make_facet(location: &MCLocation, node_idx:&[usize], face_info: &FaceInfo) ->
     todo!()
 }
 
-fn find_material<T: Float>(geometry_params: &GeometryParameters, rr: &MCVector<T>) {
+fn find_material<T: Float>(geometry_params: &[GeometryParameters], rr: &MCVector<T>) -> String {
+    todo!()
+}
+
+fn get_boundary_conditions(params: &Parameters) -> MCSubfacetAdjacencyEvent {
     todo!()
 }
