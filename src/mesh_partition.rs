@@ -4,7 +4,7 @@ use num::{Float, FromPrimitive};
 
 use crate::{
     comm_object::CommObject,
-    global_fcc_grid::{GlobalFccGrid, Tuple},
+    global_fcc_grid::{GlobalFccGrid, Tuple3},
     grid_assignment_object::GridAssignmentObject,
     mc::mc_vector::MCVector,
 };
@@ -14,13 +14,13 @@ pub type MapType = HashMap<usize, CellInfo>;
 /// Structure used to hold cell information.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CellInfo {
-    /// Domain global identifier.
+    /// Domain global identifier
     pub domain_gid: Option<usize>,
-    /// ?
-    pub foreman: Option<usize>, // ?
-    /// Domain index?
+    /// Foreman identifier
+    pub foreman: Option<usize>,
+    /// Domain index
     pub domain_index: Option<usize>,
-    /// Cell index.
+    /// Cell index
     pub cell_index: Option<usize>,
 }
 
@@ -28,15 +28,15 @@ pub struct CellInfo {
 /// Holds the different cells' information.
 #[derive(Debug)]
 pub struct MeshPartition {
-    /// Domain global identifier.
+    /// Domain global identifier
     pub domain_gid: usize,
-    /// Domain index?
+    /// Domain index
     pub domain_index: usize,
-    /// ?
+    /// Foreman identifier
     pub foreman: usize,
     /// Map linking cell global identifier to thair [CellInfo] structure
     pub cell_info_map: MapType,
-    /// ?
+    /// List of domain identifiers.
     pub nbr_domains: Vec<usize>,
 }
 
@@ -64,6 +64,7 @@ impl MeshPartition {
         self.build_cell_idx_map(grid, comm);
     }
 
+    /// Internal function that associates cells to domains
     fn assign_cells_to_domain<T: Float + FromPrimitive>(
         &mut self,
         domain_center: &[MCVector<T>],
@@ -151,11 +152,11 @@ impl MeshPartition {
         flood_queue: &mut VecDeque<usize>,
         wet_cells: &mut Vec<usize>,
     ) {
-        let tt: Tuple = grid.cell_idx_to_tuple(cell_idx);
-        // THIS NEEDS TO BE CHECKED/CHANGED
-        (0..3).into_iter().for_each(|ii: i32| {
-            (0..3).into_iter().for_each(|jj: i32| {
-                (0..3).into_iter().for_each(|kk: i32| {
+        let tt: Tuple3 = grid.cell_idx_to_tuple(cell_idx);
+
+        (-1..2).into_iter().for_each(|ii: i32| {
+            (-1..2).into_iter().for_each(|jj: i32| {
+                (-1..2).into_iter().for_each(|kk: i32| {
                     if (ii == 0) & (jj == 0) & (kk == 0) {
                         return;
                     }

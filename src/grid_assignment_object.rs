@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use num::{zero, Float, FromPrimitive};
 
-use crate::{global_fcc_grid::Tuple, mc::mc_vector::MCVector, physical_constants::TINY_FLOAT};
+use crate::{global_fcc_grid::Tuple3, mc::mc_vector::MCVector, physical_constants::TINY_FLOAT};
 
 /// Internal structure of [GridAssignmentObject].
 /// Represents a cell.
@@ -35,9 +35,9 @@ pub struct GridAssignmentObject<T: Float> {
 
     /// List of cells.
     grid: Vec<GridCell>,
-    /// ?
+    /// Internal queue used when browsing through the cells
     flood_queue: VecDeque<usize>,
-    /// ?
+    /// Internal queue used when browsing through the cells
     wet_list: VecDeque<usize>,
 }
 
@@ -136,7 +136,7 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
     }
 
     /// Returns the tuple of the cell the coordinate belongs to.
-    fn which_cell_tuple(&self, r: MCVector<T>) -> Tuple {
+    fn which_cell_tuple(&self, r: MCVector<T>) -> Tuple3 {
         let mut ix: usize = ((r.x - self.corner.x) / self.dx)
             .floor()
             .max(zero())
@@ -165,12 +165,12 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
     }
 
     /// Converts a cell tuple to its index.
-    fn tuple_to_index(&self, t: &Tuple) -> usize {
+    fn tuple_to_index(&self, t: &Tuple3) -> usize {
         t.0 + self.nx * (t.1 + self.ny * t.2)
     }
 
     /// Converts a cell index to its tuple.
-    fn index_to_tuple(&self, idx: usize) -> Tuple {
+    fn index_to_tuple(&self, idx: usize) -> Tuple3 {
         let ix: usize = idx % self.nx;
         let tmp: usize = idx / self.nx;
         let iy: usize = tmp % self.ny;
@@ -181,8 +181,8 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
     /// Finds a lower bound of the squared distance from the point
     /// r to the cell with index cell_idx.
     fn min_dist2(&self, r: MCVector<T>, cell_idx: usize) -> T {
-        let r_idx: Tuple = self.which_cell_tuple(r);
-        let tuple_idx: Tuple = self.index_to_tuple(cell_idx);
+        let r_idx: Tuple3 = self.which_cell_tuple(r);
+        let tuple_idx: Tuple3 = self.index_to_tuple(cell_idx);
 
         let rx: T = (self.dx
             * (FromPrimitive::from_usize(tuple_idx.0.abs_diff(r_idx.0) - 1)).unwrap())
@@ -198,7 +198,7 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
     }
 
     /// ?
-    fn add_tuple_to_queue(&mut self, t: Tuple) {
+    fn add_tuple_to_queue(&mut self, t: Tuple3) {
         let idx: usize = self.tuple_to_index(&t);
         if self.grid[idx].burned {
             return;
@@ -210,37 +210,37 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
 
     /// Add valid tuple to internal queues.
     fn add_nbrs_to_queue(&mut self, cell_idx: usize) {
-        let tuple_idx: Tuple = self.index_to_tuple(cell_idx);
+        let tuple_idx: Tuple3 = self.index_to_tuple(cell_idx);
         // on x
         if tuple_idx.0 + 1 < self.nx {
-            let mut tmp: Tuple = tuple_idx;
+            let mut tmp: Tuple3 = tuple_idx;
             tmp.0 += 1;
             self.add_tuple_to_queue(tmp);
         }
         if tuple_idx.0 > 0 {
-            let mut tmp: Tuple = tuple_idx;
+            let mut tmp: Tuple3 = tuple_idx;
             tmp.0 -= 1;
             self.add_tuple_to_queue(tmp);
         }
         // on y
         if tuple_idx.1 + 1 < self.ny {
-            let mut tmp: Tuple = tuple_idx;
+            let mut tmp: Tuple3 = tuple_idx;
             tmp.1 += 1;
             self.add_tuple_to_queue(tmp);
         }
         if tuple_idx.1 > 0 {
-            let mut tmp: Tuple = tuple_idx;
+            let mut tmp: Tuple3 = tuple_idx;
             tmp.1 -= 1;
             self.add_tuple_to_queue(tmp);
         }
         // on z
         if tuple_idx.2 + 1 < self.nz {
-            let mut tmp: Tuple = tuple_idx;
+            let mut tmp: Tuple3 = tuple_idx;
             tmp.2 += 1;
             self.add_tuple_to_queue(tmp);
         }
         if tuple_idx.2 > 0 {
-            let mut tmp: Tuple = tuple_idx;
+            let mut tmp: Tuple3 = tuple_idx;
             tmp.2 -= 1;
             self.add_tuple_to_queue(tmp);
         }

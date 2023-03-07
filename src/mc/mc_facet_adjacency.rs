@@ -15,7 +15,7 @@ pub enum MCSubfacetAdjacencyEvent {
 }
 
 /// Sub-structure for adjacent facet representation.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SubfacetAdjacency {
     pub event: MCSubfacetAdjacencyEvent,
     pub current: MCLocation,
@@ -25,24 +25,11 @@ pub struct SubfacetAdjacency {
     pub neighbor_foreman: Option<usize>,
 }
 
-impl Default for SubfacetAdjacency {
-    fn default() -> Self {
-        Self {
-            event: MCSubfacetAdjacencyEvent::AdjacencyUndefined,
-            current: Default::default(),
-            adjacent: Default::default(),
-            neighbor_index: None,
-            neighbor_global_domain: None,
-            neighbor_foreman: None,
-        }
-    }
-}
-
 /// Structure for adjacent facet representation
 #[derive(Debug)]
 pub struct MCFacetAdjacency {
     pub subfacet: SubfacetAdjacency,
-    pub num_points: usize, // may be able to delete later ?
+    pub num_points: usize,
     pub point: [Option<usize>; N_POINTS_PER_FACET],
 }
 

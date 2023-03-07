@@ -8,7 +8,7 @@ pub struct MCNearestFacet<T: Float> {
     pub facet: usize,
     /// Distance between facet and particle
     pub distance_to_facet: T,
-    /// Dot product between facet and speed/position vector?
+    /// Dot product between facet and direction vector.
     pub dot_product: T,
 }
 

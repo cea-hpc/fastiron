@@ -1,3 +1,4 @@
+/// Object used to allocate domains to rank. Somewhat useless currently.
 #[derive(Debug)]
 pub struct DecompositionObject {
     pub assigned_gids: Vec<usize>,
@@ -6,6 +7,7 @@ pub struct DecompositionObject {
 }
 
 impl DecompositionObject {
+    /// Constructor
     pub fn new(my_rank: usize, n_ranks: usize, dom_per_rank: usize) -> Self {
         let n_domains = n_ranks * dom_per_rank;
         let mut rank: Vec<usize> = Vec::with_capacity(n_domains);
