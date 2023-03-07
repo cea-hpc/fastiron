@@ -4,8 +4,9 @@ use num::{zero, Float, FromPrimitive};
 
 use super::{
     mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
-    mc_facet_geometry::MCGeneralPlane, mc_location::MCLocation, mc_nearest_facet::MCNearestFacet,
-    mc_particle::MCParticle, mc_rng_state::rng_sample, mc_vector::MCVector,
+    mc_facet_adjacency::N_POINTS_PER_FACET, mc_facet_geometry::MCGeneralPlane,
+    mc_location::MCLocation, mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle,
+    mc_rng_state::rng_sample, mc_vector::MCVector,
 };
 use crate::{
     direction_cosine::DirectionCosine,
@@ -13,8 +14,6 @@ use crate::{
     montecarlo::MonteCarlo,
     physical_constants::{HUGE_FLOAT, SMALL_FLOAT},
 };
-
-const N_POINTS_PER_FACET: usize = 3;
 
 /// Computes which facet of the specified cell is nearest
 /// to the specified coordinates.
@@ -215,9 +214,9 @@ fn mct_nf_3dg<T: Float + FromPrimitive>(
             // Mesh-dependent code
             let points =
                 domain.mesh.cell_connectivity[location.cell.unwrap()].facet[facet_idx].point;
-            facet_coords[0] = domain.mesh.node[points[0] as usize];
-            facet_coords[1] = domain.mesh.node[points[1] as usize];
-            facet_coords[2] = domain.mesh.node[points[2] as usize];
+            facet_coords[0] = domain.mesh.node[points[0].unwrap()];
+            facet_coords[1] = domain.mesh.node[points[1].unwrap()];
+            facet_coords[2] = domain.mesh.node[points[2].unwrap()];
 
             let t: T = mct_nf_3dg_dist_to_segment(
                 plane_tolerance,
@@ -363,7 +362,7 @@ fn mct_facet_points_3dg<T: Float>(
     let mut res: [usize; N_POINTS_PER_FACET] = [0; N_POINTS_PER_FACET];
 
     (0..N_POINTS_PER_FACET).into_iter().for_each(|point_idx| {
-        res[point_idx] = domain.mesh.cell_connectivity[cell].facet[facet].point[point_idx] as usize;
+        res[point_idx] = domain.mesh.cell_connectivity[cell].facet[facet].point[point_idx].unwrap();
     });
 
     res

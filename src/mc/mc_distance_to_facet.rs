@@ -1,4 +1,4 @@
-use num::Float;
+use num::{zero, Float};
 
 /// Structure used to represent the distance to a given facet.
 #[derive(Debug, Clone, Copy)]
@@ -10,6 +10,10 @@ pub struct MCDistanceToFacet<T: Float> {
 
 impl<T: Float> Default for MCDistanceToFacet<T> {
     fn default() -> Self {
-        todo!()
+        Self {
+            distance: zero(),
+            facet: 0,
+            subfacet: 0,
+        }
     }
 }

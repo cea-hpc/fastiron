@@ -1,5 +1,6 @@
 pub mod bulk_storage;
 pub mod collision_event;
+pub mod comm_object;
 pub mod coral_benchmark_correctness;
 pub mod cycle_tracking;
 pub mod decomposition_object;

@@ -48,7 +48,7 @@ pub fn event<T: Float + FromPrimitive>(
 
             let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
                 .mesh
-                .nbr_rank[facet_adjacency.neighbor_index];
+                .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
             processing_vault.put_particle(mc_particle.clone(), particle_idx);
 
             mcco.particle_vault_container
