@@ -17,11 +17,11 @@ pub enum ReactionType {
 /// corresponding to `x^4`, `ee` to `x^0`.
 #[derive(Debug)]
 pub struct Polynomial<T: Float> {
-    aa: T,
-    bb: T,
-    cc: T,
-    dd: T,
-    ee: T,
+    pub aa: T,
+    pub bb: T,
+    pub cc: T,
+    pub dd: T,
+    pub ee: T,
 }
 
 impl<T: Float> Polynomial<T> {
@@ -203,7 +203,7 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
     #[allow(clippy::too_many_arguments)]
     pub fn add_isotope(
         &mut self,
-        n_reactions: u64,
+        n_reactions: usize,
         fission_function: &Polynomial<T>,
         scatter_function: &Polynomial<T>,
         absorption_function: &Polynomial<T>,
@@ -232,15 +232,15 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
             0 => (),
             _ => unreachable!(),
         }
-        let mut f: T = FromPrimitive::from_u64(n_fission).unwrap();
+        let mut f: T = FromPrimitive::from_usize(n_fission).unwrap();
         let fission_xsection: T = (total_cross_section * fission_weight) / (f * total_weight);
-        f = FromPrimitive::from_u64(n_scatter).unwrap();
+        f = FromPrimitive::from_usize(n_scatter).unwrap();
         let scatter_xsection: T = (total_cross_section * scatter_weight) / (f * total_weight);
-        f = FromPrimitive::from_u64(n_absorption).unwrap();
+        f = FromPrimitive::from_usize(n_absorption).unwrap();
         let absorption_xsection: T = (total_cross_section * absorption_weight) / (f * total_weight);
 
         let n = self.isotopes.len();
-        self.isotopes[n][0].reactions.reserve(n_reactions as usize);
+        self.isotopes[n][0].reactions.reserve(n_reactions);
 
         (0..n_reactions).into_iter().for_each(|ii| match ii % 3 {
             0 => self.isotopes[n][0].add_reaction(

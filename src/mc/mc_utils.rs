@@ -29,6 +29,6 @@ pub fn load_particle<T: Float + FromPrimitive>(
 }
 
 /// Simulates the sources according to the problem's parameters.
-pub fn source_now<T: Float>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
+pub fn source_now<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     todo!()
 }

@@ -4,6 +4,7 @@ use num::Float;
 /// Monte Carlo algorithm.
 #[derive(Debug)]
 pub struct MCTimeInfo<T: Float> {
+    // generic T or forced f64 for time management?
     pub cycle: u32,
     pub initial_time: T,
     pub final_time: T,

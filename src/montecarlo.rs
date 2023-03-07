@@ -1,4 +1,4 @@
-use num::Float;
+use num::{Float, FromPrimitive};
 
 use crate::material_database::MaterialDatabase;
 use crate::mc::mc_fast_timer::MCFastTimerContainer;
@@ -13,7 +13,7 @@ use crate::tallies::Tallies;
 
 /// Super-structure used to contain all the problem's objects and data.
 #[derive(Debug)]
-pub struct MonteCarlo<T: Float> {
+pub struct MonteCarlo<T: Float + FromPrimitive> {
     /// List of spatial domains
     pub domain: Vec<MCDomain<T>>,
     /// Parameters of the problem
@@ -38,7 +38,7 @@ pub struct MonteCarlo<T: Float> {
     pub source_particle_weight: f64,
 }
 
-impl<T: Float> MonteCarlo<T> {
+impl<T: Float + FromPrimitive> MonteCarlo<T> {
     /// Constructor
     pub fn new(params: &Parameters) -> Self {
         todo!()

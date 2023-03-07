@@ -57,13 +57,13 @@ impl<T: Float + FromPrimitive> Default for Material<T> {
 
 /// Top level structure used to store each material's information.
 /// change to an alias?
-#[derive(Debug)]
-pub struct MaterialDatabase<T: Float> {
+#[derive(Debug, Default)]
+pub struct MaterialDatabase<T: Float + FromPrimitive> {
     /// List of materials.
     pub mat: Vec<Material<T>>, // originally a qs_vector
 }
 
-impl<T: Float> MaterialDatabase<T> {
+impl<T: Float + FromPrimitive> MaterialDatabase<T> {
     /// Adds a [Material] to the internal list.
     pub fn add_material(&mut self, material: Material<T>) {
         self.mat.push(material);

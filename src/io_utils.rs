@@ -99,23 +99,23 @@ pub struct Cli {
         num_args(1),
         allow_negative_numbers(false)
     )]
-    pub n_steps: Option<u32>,
+    pub n_steps: Option<usize>,
 
     /// number of mesh elements along x
     #[arg(short = 'x', long = "nx", num_args(1), allow_negative_numbers(false))]
-    pub nx: Option<u32>,
+    pub nx: Option<usize>,
 
     /// number of mesh elements along y
     #[arg(short = 'y', long = "ny", num_args(1), allow_negative_numbers(false))]
-    pub ny: Option<u32>,
+    pub ny: Option<usize>,
 
     /// number of mesh elements along z
     #[arg(short = 'z', long = "nz", num_args(1), allow_negative_numbers(false))]
-    pub nz: Option<u32>,
+    pub nz: Option<usize>,
 
     /// random number seed
     #[arg(short = 's', long = "seed", num_args(1), allow_negative_numbers(false))]
-    pub seed: Option<u32>, //maybe allow negative values ? need to test QS behavior
+    pub seed: Option<u64>, //maybe allow negative values ? need to test QS behavior
 
     /*
     /// number of MPI ranks along x

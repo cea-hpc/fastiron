@@ -10,7 +10,7 @@ use super::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 /// "Useless" in single threaded mode, but will be useful if parallelizing
 /// on space division. Should probably be deleted asap.
 #[derive(Debug)]
-pub struct MCParticleBuffer<T: Float> {
+pub struct MCParticleBuffer<T: Float + FromPrimitive> {
     /// Reference to the MonteCarlo object for ease of access.
     pub mcco: Rc<RefCell<MonteCarlo<T>>>,
     /// One buffer per domain: buffers.len()==mcco.domain.len().
