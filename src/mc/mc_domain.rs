@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use num::{one, zero, Float, FromPrimitive};
 
 use crate::{
-    bulk_storage::BulkStorage,
     decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
     mesh_partition::{CellInfo, MeshPartition},
@@ -13,18 +12,18 @@ use crate::{
 use super::{
     mc_cell_state::MCCellState,
     mc_facet_adjacency::{
-        MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent, N_POINTS_PER_FACET,
+        MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent,
     },
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
     mc_location::MCLocation,
     mc_vector::MCVector,
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 struct FaceInfo {
     pub event: MCSubfacetAdjacencyEvent,
     pub cell_info: CellInfo,
-    pub nbr_idx: usize,
+    pub nbr_idx: Option<usize>,
 }
 
 const NODE_INDIRECT: [[usize; 3]; 24] = [
@@ -74,15 +73,15 @@ pub struct MCMeshDomain<T: Float> {
     /// List of cells
     pub cell_geometry: Vec<MCFacetGeometryCell<T>>,
 
-    /// Needs replacement
-    pub connectivity_facet_storage: BulkStorage<MCFacetAdjacency>, // set capacity totalcells*24
-    /// Needs replacement
-    pub connectivity_point_storage: BulkStorage<i32>, // set capacity totalcells*14
-    /// Needs replacement
-    pub geom_facet_storage: BulkStorage<MCGeneralPlane<T>>,
+    // Needs replacement
+    //pub connectivity_facet_storage: BulkStorage<MCFacetAdjacency>, // set capacity totalcells*24
+    // Needs replacement
+    //pub connectivity_point_storage: BulkStorage<i32>, // set capacity totalcells*14
+    // Needs replacement
+    //pub geom_facet_storage: BulkStorage<MCGeneralPlane<T>>,
 }
 
-impl<T: Float> MCMeshDomain<T> {
+impl<T: Float + FromPrimitive> MCMeshDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition,
@@ -90,7 +89,39 @@ impl<T: Float> MCMeshDomain<T> {
         ddc: &DecompositionObject,
         boundary_condition: &[MCSubfacetAdjacencyEvent],
     ) -> Self {
-        todo!()
+        // nbr_domain_gid
+        let nbr_domain_gid: Vec<usize> = mesh_partition.nbr_domains.clone();
+
+        // nbr_rank
+        let mut nbr_rank: Vec<usize> = Vec::with_capacity(nbr_domain_gid.len());
+        (0..nbr_domain_gid.len()).into_iter().for_each(|ii| {
+            nbr_rank.push(ddc.rank[nbr_domain_gid[ii]]);
+        });
+
+        // cell_connectivity
+        let node_idx_map = bootstrap_node_map(mesh_partition, grid);
+        let cell_connectivity = build_cells(&node_idx_map, &nbr_domain_gid, mesh_partition, grid, boundary_condition);
+
+        // node
+        let mut node: Vec<MCVector<T>> = Vec::with_capacity(node_idx_map.len());
+        node_idx_map.iter().for_each(|(node_gid, node_idx)| {
+            node[*node_idx] = grid.node_coord_from_idx(*node_gid);
+        });
+
+        // cell_geometry
+        let mut cell_geometry: Vec<MCFacetGeometryCell<T>> = Vec::with_capacity(cell_connectivity.len());
+        (0..cell_connectivity.len()).into_iter().for_each(|cell_idx| {
+            let n_facets = cell_connectivity[cell_idx].facet.len(); // TODO: remove and use const; same in array def
+            cell_geometry[cell_idx] = Vec::with_capacity(n_facets); // replace MCFacetGeometryCell vec by array?
+            (0..n_facets).into_iter().for_each(|facet_idx| {
+                let r0: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[0].unwrap()];
+                let r1: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[1].unwrap()];
+                let r2: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[2].unwrap()];
+                cell_geometry[cell_idx][facet_idx] = MCGeneralPlane::new(&r0, &r1, &r2);
+            });
+        });
+
+        Self { domain_gid: mesh_partition.domain_gid, nbr_domain_gid, nbr_rank, node, cell_connectivity, cell_geometry,}
     }
 }
 
@@ -102,7 +133,7 @@ pub struct MCDomain<T: Float> {
     pub global_domain: usize,
     /// List of cells and their state (See [MCCellState] for more)
     pub cell_state: Vec<MCCellState<T>>,
-    /// Needs replacement
+    // Needs replacement
     //pub cached_cross_section_storage: BulkStorage<f64>,
     /// Mesh of the domain
     pub mesh: MCMeshDomain<T>,
@@ -203,28 +234,75 @@ fn bootstrap_node_map<T: Float + FromPrimitive>(
     node_idx_max
 }
 
-fn build_cells<T: Float>(
-    cell: &[MCFacetAdjacencyCell],
-    node_idx_map: &HashMap<u64, usize>,
+fn build_cells<T: Float + FromPrimitive>(
+    node_idx_map: &HashMap<usize, usize>,
     nbr_domain: &[usize],
     partition: &MeshPartition,
     grid: &GlobalFccGrid<T>,
-    boundary_cond: &MCSubfacetAdjacencyEvent,
-) {
-    todo!()
+    boundary_cond: &[MCSubfacetAdjacencyEvent],
+) -> Vec<MCFacetAdjacencyCell> {
+    // nbr_domain_idx[domain_gid] = local_nbr_idx
+    let mut nbr_domain_idx: HashMap<usize, Option<usize>> = Default::default();
+    (0..nbr_domain.len()).into_iter().for_each(|ii| {
+        nbr_domain_idx.insert(nbr_domain[ii], Some(ii));
+    });
+    nbr_domain_idx.insert(partition.domain_gid, None);
+
+    // return value
+    let mut cell: Vec<MCFacetAdjacencyCell> = Vec::with_capacity(partition.cell_info_map.len());
+
+    partition.cell_info_map.iter().for_each(|(cell_gid, cell_info)| {
+        if cell_info.domain_gid != Some(partition.domain_gid) {
+            return;
+        }
+        let mut new_cell = MCFacetAdjacencyCell::default();
+
+        // nodes
+        let node_gid = grid.get_node_gids(*cell_gid);
+        (0..new_cell.point.len()).into_iter().for_each(|ii| {
+            new_cell.point[ii] = node_idx_map[&node_gid[ii]];
+        });
+
+        // faces
+        let face_nbr = grid.get_face_nbr_gids(*cell_gid);
+        let mut face_info = vec![FaceInfo::default(); 6];
+        (0..new_cell.facet.len()).into_iter().for_each(|ii| {
+            // faces
+            let face_cell_info = partition.cell_info_map[&face_nbr[ii]];
+            face_info[ii].cell_info = face_cell_info;
+            face_info[ii].nbr_idx = nbr_domain_idx[&face_cell_info.domain_gid.unwrap()];
+            if face_nbr[ii] == *cell_gid {
+                face_info[ii].event = boundary_cond[ii];
+            } else if face_cell_info.foreman == cell_info.foreman {
+                face_info[ii].event = MCSubfacetAdjacencyEvent::TransitOnProcessor;
+            } else {
+                face_info[ii].event = MCSubfacetAdjacencyEvent::TransitOffProcessor;
+            }
+        });
+
+        // facets
+        let mut location = MCLocation {domain: cell_info.domain_index, cell: cell_info.cell_index, facet: None};
+        (0..new_cell.facet.len()).into_iter().for_each(|ii| {
+            location.facet = Some(ii);
+            make_facet(&mut new_cell.facet[ii], &location, &new_cell.point, &face_info);
+        });
+    
+
+        cell.push(new_cell);
+    });
+
+    cell
 }
 
 fn make_facet(
+    facet: &mut MCFacetAdjacency,
     location: &MCLocation,
     node_idx: &[usize],
     face_info: &[FaceInfo],
-) -> MCFacetAdjacency {
+) {
     let facet_id = location.facet.unwrap();
     let face_id = facet_id / 4;
-    let mut facet = MCFacetAdjacency {
-        num_points: N_POINTS_PER_FACET,
-        ..Default::default()
-    };
+    
 
     facet.point[0] = Some(node_idx[NODE_INDIRECT[facet_id][0]]);
     facet.point[1] = Some(node_idx[NODE_INDIRECT[facet_id][1]]);
@@ -234,7 +312,7 @@ fn make_facet(
     facet.subfacet.adjacent.domain = face_info[face_id].cell_info.domain_index;
     facet.subfacet.adjacent.cell = face_info[face_id].cell_info.cell_index;
     facet.subfacet.adjacent.facet = Some(OPPOSING_FACET[facet_id]);
-    facet.subfacet.neighbor_index = Some(face_info[face_id].nbr_idx);
+    facet.subfacet.neighbor_index = Some(face_info[face_id].nbr_idx.unwrap());
     facet.subfacet.neighbor_global_domain = face_info[face_id].cell_info.domain_gid;
     facet.subfacet.neighbor_foreman = face_info[face_id].cell_info.foreman;
 
@@ -244,8 +322,6 @@ fn make_facet(
         }
         _ => (),
     }
-
-    facet
 }
 
 fn is_inside<T: Float + FromPrimitive>(geom: &GeometryParameters, rr: &MCVector<T>) -> bool {

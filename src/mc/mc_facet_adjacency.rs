@@ -4,8 +4,9 @@ pub const N_POINTS_PER_FACET: usize = 3;
 
 /// Enum used to categorize the event a particle
 /// undergo when reaching a given facet.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub enum MCSubfacetAdjacencyEvent {
+    #[default]
     AdjacencyUndefined = 0,
     BoundaryEscape,
     BoundaryReflection,
