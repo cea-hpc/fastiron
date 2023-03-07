@@ -7,18 +7,20 @@ use crate::{
     decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
     mesh_partition::{CellInfo, MeshPartition},
-    parameters::{GeometryParameters, Parameters},
+    parameters::{GeometryParameters, Parameters, Shape},
 };
 
 use super::{
     mc_cell_state::MCCellState,
-    mc_facet_adjacency::{MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent},
+    mc_facet_adjacency::{
+        MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent, N_POINTS_PER_FACET,
+    },
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
     mc_location::MCLocation,
     mc_vector::MCVector,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct FaceInfo {
     pub event: MCSubfacetAdjacencyEvent,
     pub cell_info: CellInfo,
@@ -86,7 +88,7 @@ impl<T: Float> MCMeshDomain<T> {
         mesh_partition: &MeshPartition,
         grid: &GlobalFccGrid<T>,
         ddc: &DecompositionObject,
-        boundary_condition: &MCSubfacetAdjacencyEvent,
+        boundary_condition: &[MCSubfacetAdjacencyEvent],
     ) -> Self {
         todo!()
     }
@@ -182,11 +184,23 @@ impl<T: Float + FromPrimitive> MCDomain<T> {
     }
 }
 
-fn bootstrap_node_map<T: Float>(
+fn bootstrap_node_map<T: Float + FromPrimitive>(
     partition: &MeshPartition,
     grid: &GlobalFccGrid<T>,
-) -> HashMap<u64, usize> {
-    todo!()
+) -> HashMap<usize, usize> {
+    let mut node_idx_max: HashMap<usize, usize> = Default::default();
+
+    for (k, v) in &partition.cell_info_map {
+        if v.domain_gid.unwrap() != partition.domain_gid {
+            continue;
+        }
+        let node_gids = grid.get_node_gids(*k);
+        (0..14).into_iter().for_each(|ii| {
+            node_idx_max.insert(node_gids[ii], node_idx_max.len());
+        });
+    }
+
+    node_idx_max
 }
 
 fn build_cells<T: Float>(
@@ -200,14 +214,91 @@ fn build_cells<T: Float>(
     todo!()
 }
 
-fn make_facet(location: &MCLocation, node_idx: &[usize], face_info: &FaceInfo) -> MCFacetAdjacency {
-    todo!()
+fn make_facet(
+    location: &MCLocation,
+    node_idx: &[usize],
+    face_info: &[FaceInfo],
+) -> MCFacetAdjacency {
+    let facet_id = location.facet.unwrap();
+    let face_id = facet_id / 4;
+    let mut facet = MCFacetAdjacency {
+        num_points: N_POINTS_PER_FACET,
+        ..Default::default()
+    };
+
+    facet.point[0] = Some(node_idx[NODE_INDIRECT[facet_id][0]]);
+    facet.point[1] = Some(node_idx[NODE_INDIRECT[facet_id][1]]);
+    facet.point[2] = Some(node_idx[NODE_INDIRECT[facet_id][2]]);
+    facet.subfacet.event = face_info[face_id].event;
+    facet.subfacet.current = *location;
+    facet.subfacet.adjacent.domain = face_info[face_id].cell_info.domain_index;
+    facet.subfacet.adjacent.cell = face_info[face_id].cell_info.cell_index;
+    facet.subfacet.adjacent.facet = Some(OPPOSING_FACET[facet_id]);
+    facet.subfacet.neighbor_index = Some(face_info[face_id].nbr_idx);
+    facet.subfacet.neighbor_global_domain = face_info[face_id].cell_info.domain_gid;
+    facet.subfacet.neighbor_foreman = face_info[face_id].cell_info.foreman;
+
+    match facet.subfacet.event {
+        MCSubfacetAdjacencyEvent::BoundaryReflection | MCSubfacetAdjacencyEvent::BoundaryEscape => {
+            facet.subfacet.adjacent.facet = facet.subfacet.current.facet;
+        }
+        _ => (),
+    }
+
+    facet
 }
 
-fn find_material<T: Float>(geometry_params: &[GeometryParameters], rr: &MCVector<T>) -> String {
-    todo!()
+fn is_inside<T: Float + FromPrimitive>(geom: &GeometryParameters, rr: &MCVector<T>) -> bool {
+    match geom.shape {
+        Shape::Brick => {
+            let in_x = (rr.x >= FromPrimitive::from_f64(geom.x_min).unwrap())
+                & (rr.x <= FromPrimitive::from_f64(geom.x_max).unwrap());
+            let in_y = (rr.y >= FromPrimitive::from_f64(geom.y_min).unwrap())
+                & (rr.y <= FromPrimitive::from_f64(geom.y_max).unwrap());
+            let in_z = (rr.z >= FromPrimitive::from_f64(geom.z_min).unwrap())
+                & (rr.z <= FromPrimitive::from_f64(geom.z_max).unwrap());
+            in_x & in_y & in_z
+        }
+        Shape::Sphere => {
+            let center: MCVector<T> = MCVector {
+                x: FromPrimitive::from_f64(geom.x_center).unwrap(),
+                y: FromPrimitive::from_f64(geom.y_center).unwrap(),
+                z: FromPrimitive::from_f64(geom.z_center).unwrap(),
+            };
+            (*rr - center).length() <= FromPrimitive::from_f64(geom.radius).unwrap()
+        }
+        Shape::Undefined => unreachable!(),
+    }
 }
 
-fn get_boundary_conditions(params: &Parameters) -> MCSubfacetAdjacencyEvent {
-    todo!()
+fn find_material<T: Float + FromPrimitive>(
+    geometry_params: &[GeometryParameters],
+    rr: &MCVector<T>,
+) -> String {
+    let mut mat_name = String::default();
+
+    geometry_params.iter().for_each(|geom| {
+        if is_inside(geom, rr) {
+            // cant return directly because of the behavior of original function
+            mat_name = geom.material_name.to_owned();
+        }
+    });
+
+    mat_name
+}
+
+fn get_boundary_conditions(params: &Parameters) -> [MCSubfacetAdjacencyEvent; 6] {
+    match params.simulation_params.boundary_condition.as_ref() {
+        "reflect" => [MCSubfacetAdjacencyEvent::BoundaryReflection; 6],
+        "escape" => [MCSubfacetAdjacencyEvent::BoundaryEscape; 6],
+        "octant" => [
+            MCSubfacetAdjacencyEvent::BoundaryEscape,
+            MCSubfacetAdjacencyEvent::BoundaryReflection,
+            MCSubfacetAdjacencyEvent::BoundaryEscape,
+            MCSubfacetAdjacencyEvent::BoundaryReflection,
+            MCSubfacetAdjacencyEvent::BoundaryEscape,
+            MCSubfacetAdjacencyEvent::BoundaryReflection,
+        ],
+        _ => unreachable!(),
+    }
 }
