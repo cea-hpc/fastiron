@@ -1,18 +1,21 @@
 use std::collections::HashMap;
 
-use num::{Float, FromPrimitive, zero, one};
+use num::{one, zero, Float, FromPrimitive};
 
 use crate::{
-    bulk_storage::BulkStorage, decomposition_object::DecompositionObject,
+    bulk_storage::BulkStorage,
+    decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
-    mesh_partition::{MeshPartition, CellInfo}, parameters::{Parameters, GeometryParameters},
+    mesh_partition::{CellInfo, MeshPartition},
+    parameters::{GeometryParameters, Parameters},
 };
 
 use super::{
     mc_cell_state::MCCellState,
     mc_facet_adjacency::{MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent},
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
-    mc_vector::MCVector, mc_location::MCLocation,
+    mc_location::MCLocation,
+    mc_vector::MCVector,
 };
 
 #[derive(Debug)]
@@ -115,7 +118,11 @@ impl<T: Float + FromPrimitive> MCDomain<T> {
     ) -> Self {
         let mesh = MCMeshDomain::new(mesh_partition, grid, ddc, &get_boundary_conditions(params));
         let cell_state: Vec<MCCellState<T>> = Vec::with_capacity(mesh.cell_geometry.len());
-        let mut mcdomain = MCDomain {global_domain: mesh.domain_gid, cell_state, mesh};
+        let mut mcdomain = MCDomain {
+            global_domain: mesh.domain_gid,
+            cell_state,
+            mesh,
+        };
 
         (0..mcdomain.cell_state.len()).into_iter().for_each(|ii| {
             mcdomain.cell_state[ii].volume = mcdomain.cell_volume(ii);
@@ -140,7 +147,7 @@ impl<T: Float + FromPrimitive> MCDomain<T> {
         self.cell_state.iter_mut().for_each(|cs| cs.total.clear())
     }
 
-    /// Returns the coordinates of the center of 
+    /// Returns the coordinates of the center of
     /// the specified cell.
     pub fn cell_center(&self, cell_idx: usize) -> MCVector<T> {
         let cell = &self.mesh.cell_connectivity[cell_idx];
@@ -154,7 +161,7 @@ impl<T: Float + FromPrimitive> MCDomain<T> {
         center
     }
 
-    /// Computes the volume of the specified cell. Replaces 
+    /// Computes the volume of the specified cell. Replaces
     /// an isolated function of the original code.
     pub fn cell_volume(&self, cell_idx: usize) -> T {
         let center = self.cell_center(cell_idx);
@@ -175,15 +182,25 @@ impl<T: Float + FromPrimitive> MCDomain<T> {
     }
 }
 
-fn bootstrap_node_map<T: Float>(partition: &MeshPartition, grid: &GlobalFccGrid<T>) -> HashMap<u64, usize> {
+fn bootstrap_node_map<T: Float>(
+    partition: &MeshPartition,
+    grid: &GlobalFccGrid<T>,
+) -> HashMap<u64, usize> {
     todo!()
 }
 
-fn build_cells<T: Float>(cell: &[MCFacetAdjacencyCell], node_idx_map: &HashMap<u64, usize>, nbr_domain: &[usize], partition: &MeshPartition, grid: &GlobalFccGrid<T>, boundary_cond: &MCSubfacetAdjacencyEvent) {
+fn build_cells<T: Float>(
+    cell: &[MCFacetAdjacencyCell],
+    node_idx_map: &HashMap<u64, usize>,
+    nbr_domain: &[usize],
+    partition: &MeshPartition,
+    grid: &GlobalFccGrid<T>,
+    boundary_cond: &MCSubfacetAdjacencyEvent,
+) {
     todo!()
 }
 
-fn make_facet(location: &MCLocation, node_idx:&[usize], face_info: &FaceInfo) -> MCFacetAdjacency {
+fn make_facet(location: &MCLocation, node_idx: &[usize], face_info: &FaceInfo) -> MCFacetAdjacency {
     todo!()
 }
 
