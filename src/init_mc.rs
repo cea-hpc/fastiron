@@ -8,7 +8,7 @@ use crate::{
     mc::{mc_domain::MCDomain, mc_rng_state::rng_sample, mc_vector::MCVector},
     mesh_partition::MeshPartition,
     montecarlo::MonteCarlo,
-    nuclear_data::{NuclearData, Polynomial},
+    nuclear_data::{NuclearData, Polynomial, ReactionType},
     parameters::Parameters,
 };
 use num::{one, Float, FromPrimitive};
@@ -242,6 +242,53 @@ fn init_tallies<T: Float + FromPrimitive + Display>(mcco: &mut MonteCarlo<T>, pa
     )
 }
 
+struct XSData<T: Float> {
+    abs: T,
+    fis: T,
+    sca: T,
+}
+
 pub fn check_cross_sections<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, params: &Parameters) {
-    todo!()
+    if params.simulation_params.cross_sections_out.is_empty() {
+        return;
+    }
+    // pass these directly as arguments?
+    let nucdb = &mcco.nuclear_data;
+    let matdb = &mcco.material_database;
+
+    let n_groups = params.simulation_params.n_groups;
+    // are we recomputing energies ?
+
+    // compute 
+    let mut xc_table: HashMap<String, Vec<XSData<T>>> = Default::default();
+    // for each material
+    matdb.mat.iter().for_each(|material| {
+        let mat_name = material.name.to_owned();
+        let mut xc_vec: Vec<XSData<T>> = Vec::with_capacity(n_groups);
+        let n_isotopes: T = FromPrimitive::from_usize(material.iso.len()).unwrap();
+        // for each isotope
+        material.iso.iter().for_each(|isotope| {
+            // for each reaction
+            nucdb.isotopes[isotope.gid][0].reactions.iter().for_each(|reaction| {
+                // for each energy group
+                (0..n_groups).into_iter().for_each(|group_idx| {
+                    match reaction.reaction_type {
+                        ReactionType::Scatter => {
+                            xc_vec[group_idx].sca = xc_vec[group_idx].sca + reaction.get_cross_section(group_idx)/n_isotopes;
+                        },
+                        ReactionType::Absorption => {  
+                            xc_vec[group_idx].abs = xc_vec[group_idx].abs + reaction.get_cross_section(group_idx)/n_isotopes;
+                        },
+                        ReactionType::Fission => {
+                            xc_vec[group_idx].fis = xc_vec[group_idx].fis + reaction.get_cross_section(group_idx)/n_isotopes;
+                        },
+                        ReactionType::Undefined => unreachable!(),
+                    }
+                });
+            });
+        });
+        xc_table.insert(mat_name, xc_vec);
+    });
+
+    // build an output file
 }
