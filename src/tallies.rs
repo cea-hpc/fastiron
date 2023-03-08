@@ -272,7 +272,8 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
     /// Prepare the tallies for use.
     pub fn initialize_tallies(
         &mut self,
-        mcco: &MonteCarlo<T>,
+        domain: &[MCDomain<T>],
+        num_energy_groups: usize,
         balance_replications: u32,
         flux_replications: u32,
         cell_replications: u32,
@@ -298,12 +299,12 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
         // Initialize the cell tallies
         if self.cell_tally_domain.is_empty() {
             if self.cell_tally_domain.capacity() == 0 {
-                self.cell_tally_domain.reserve(mcco.domain.len());
+                self.cell_tally_domain.reserve(domain.len());
             }
 
-            (0..mcco.domain.len()).into_iter().for_each(|domain_idx| {
+            (0..domain.len()).into_iter().for_each(|domain_idx| {
                 self.cell_tally_domain.push(CellTallyDomain::new(
-                    &mcco.domain[domain_idx],
+                    &domain[domain_idx],
                     self.num_cell_tally_replications as usize,
                 ));
             });
@@ -312,13 +313,13 @@ impl<T: Float + Display + FromPrimitive> Tallies<T> {
         // Initialize the scalar flux tallies
         if self.scalar_flux_domain.is_empty() {
             if self.scalar_flux_domain.capacity() == 0 {
-                self.scalar_flux_domain.reserve(mcco.domain.len());
+                self.scalar_flux_domain.reserve(domain.len());
             }
 
-            (0..mcco.domain.len()).into_iter().for_each(|domain_idx| {
+            (0..domain.len()).into_iter().for_each(|domain_idx| {
                 self.scalar_flux_domain.push(ScalarFluxDomain::new(
-                    &mcco.domain[domain_idx],
-                    mcco.nuclear_data.energies.len(),
+                    &domain[domain_idx],
+                    num_energy_groups,
                     self.num_flux_replications as usize,
                 ));
             });

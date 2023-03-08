@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use crate::{
     comm_object::CommObject,
@@ -14,7 +14,7 @@ use crate::{
 use num::{one, Float, FromPrimitive};
 
 /// Creates a [MonteCarlo] object using the specified parameters.
-pub fn init_mc<T: Float + FromPrimitive>(params: &Parameters) -> MonteCarlo<T> {
+pub fn init_mc<T: Float + FromPrimitive + Display>(params: &Parameters) -> MonteCarlo<T> {
     let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
 
     init_proc_info(&mut mcco);
@@ -232,8 +232,14 @@ fn init_mesh<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parame
     }
 }
 
-fn init_tallies<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parameters) {
-    todo!()
+fn init_tallies<T: Float + FromPrimitive + Display>(mcco: &mut MonteCarlo<T>, params: &Parameters) {
+    mcco.tallies.initialize_tallies(
+        &mcco.domain,
+        params.simulation_params.n_groups,
+        params.simulation_params.balance_tally_replications,
+        params.simulation_params.flux_tally_replications,
+        params.simulation_params.cell_tally_replications,
+    )
 }
 
 pub fn check_cross_sections<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, params: &Parameters) {
