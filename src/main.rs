@@ -26,7 +26,7 @@ fn main() {
 
     let n_steps = params.simulation_params.n_steps;
 
-    let mcco: Rc<RefCell<MonteCarlo<f64>>> = Rc::new(RefCell::new(init_mc(&params)));
+    let mcco: Rc<RefCell<MonteCarlo<f64>>> = Rc::new(RefCell::new(init_mc(params)));
 
     mc_fast_timer::start(mcco.clone(), Section::Main);
 
@@ -42,7 +42,7 @@ fn main() {
 
     game_over(mcco.clone());
 
-    coral_benchmark_correctness::coral_benchmark_correctness(mcco, &params);
+    coral_benchmark_correctness::coral_benchmark_correctness(mcco);
 }
 
 pub fn game_over<T: Float + Display + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
@@ -53,7 +53,10 @@ pub fn game_over<T: Float + Display + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo
         .print_spectrum(&mcco.borrow());
 }
 
-pub fn cycle_init<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>, load_balance: bool) {
+pub fn cycle_init<T: Float + FromPrimitive + Display>(
+    mcco: Rc<RefCell<MonteCarlo<T>>>,
+    load_balance: bool,
+) {
     mc_fast_timer::start(mcco.clone(), Section::CycleInit);
 
     mcco.borrow_mut().clear_cross_section_cache();
@@ -76,7 +79,7 @@ pub fn cycle_init<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>, lo
         .processing_vaults
         .len() as u64;
 
-    mcco.borrow_mut().particle_buffer.initialize();
+    mcco.borrow_mut().particle_buffer.initialize(mcco.clone());
 
     mc_utils::source_now(mcco.clone());
 
@@ -148,7 +151,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>
                 my_particle_vault.clean_extra_vaults();
                 mcco.borrow_mut()
                     .particle_buffer
-                    .read_buffers(&mut fill_vault);
+                    .read_buffers(&mut fill_vault, mcco.clone());
 
                 mc_fast_timer::stop(mcco.clone(), Section::CycleTrackingMPI);
             }
@@ -157,12 +160,12 @@ pub fn cycle_tracking<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>
 
             my_particle_vault.collapse_processing();
             my_particle_vault.collapse_processed();
-            done = mcco.borrow().particle_buffer.test_done_new();
+            done = mcco.borrow().particle_buffer.test_done_new(mcco.clone());
 
             mc_fast_timer::stop(mcco.clone(), Section::CycleTrackingMPI);
         }
 
-        done = mcco.borrow().particle_buffer.test_done_new();
+        done = mcco.borrow().particle_buffer.test_done_new(mcco.clone());
 
         if done {
             break;

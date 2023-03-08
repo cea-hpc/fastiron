@@ -57,7 +57,7 @@ impl<T: Float + FromPrimitive> Default for Material<T> {
 
 /// Top level structure used to store each material's information.
 /// change to an alias?
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct MaterialDatabase<T: Float + FromPrimitive> {
     /// List of materials.
     pub mat: Vec<Material<T>>, // originally a qs_vector
@@ -74,5 +74,11 @@ impl<T: Float + FromPrimitive> MaterialDatabase<T> {
     /// will be "visible".
     pub fn find_material(&self, name: &str) -> Option<usize> {
         self.mat.iter().position(|m| m.name == name)
+    }
+}
+
+impl<T: Float + FromPrimitive> Default for MaterialDatabase<T> {
+    fn default() -> Self {
+        Self { mat: Vec::new() }
     }
 }

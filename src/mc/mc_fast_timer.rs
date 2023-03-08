@@ -41,7 +41,7 @@ impl Default for MCFastTimer {
 
 /// Structure used as a container for the 7 timers used through
 /// the simulation for performance testing.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MCFastTimerContainer {
     pub timers: [MCFastTimer; 7],
 }

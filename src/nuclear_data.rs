@@ -326,3 +326,9 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
         self.isotopes[isotope_index][0].reactions[react_index].get_cross_section(group)
     }
 }
+
+impl<T: Float> Default for NuclearData<T> {
+    fn default() -> Self {
+        Self { num_energy_groups: 0, isotopes: Vec::new(), energies: Vec::new() }
+    }
+}

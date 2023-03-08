@@ -8,6 +8,14 @@ pub struct ParticleVault<T: Float> {
     pub particles: Vec<Option<MCBaseParticle<T>>>,
 }
 
+impl<T: Float> Default for ParticleVault<T> {
+    fn default() -> Self {
+        Self {
+            particles: Vec::new(),
+        }
+    }
+}
+
 impl<T: Float + FromPrimitive> ParticleVault<T> {
     /// Returns true if the vault is empty, false otherwise.
     pub fn empty(&self) -> bool {

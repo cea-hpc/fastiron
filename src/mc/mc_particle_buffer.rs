@@ -11,8 +11,6 @@ use super::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 /// on space division. Should probably be deleted asap.
 #[derive(Debug)]
 pub struct MCParticleBuffer<T: Float + FromPrimitive> {
-    /// Reference to the MonteCarlo object for ease of access.
-    pub mcco: Rc<RefCell<MonteCarlo<T>>>,
     /// One buffer per domain: buffers.len()==mcco.domain.len().
     /// The indexing is coherent (buffer of domain[N] == buffers[N])
     pub buffers: Vec<Vec<MCParticle<T>>>,
@@ -20,8 +18,8 @@ pub struct MCParticleBuffer<T: Float + FromPrimitive> {
 
 impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
     /// Prepare the buffers for use.
-    pub fn initialize(&mut self) {
-        self.buffers = Vec::with_capacity(self.mcco.borrow().domain.len());
+    pub fn initialize(&mut self, mcco: Rc<RefCell<MonteCarlo<T>>>) {
+        self.buffers = Vec::with_capacity(mcco.borrow().domain.len());
     }
 
     /// Returns true if all buffers are empty
@@ -36,17 +34,15 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
 
     /// Check if there are no more particle transfer. The exact conditions
     /// to look for might change.
-    pub fn test_done_new(&self) -> bool {
-        if (self
-            .mcco
+    pub fn test_done_new(&self, mcco: Rc<RefCell<MonteCarlo<T>>>) -> bool {
+        if (mcco
             .borrow()
             .particle_vault_container
             .send_queue
             .size()
             == 0)
             & self.is_empty()
-            & (self
-                .mcco
+            & (mcco
                 .borrow()
                 .particle_vault_container
                 .processing_size()
@@ -70,13 +66,13 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
     /// Read the buffers and unpack the particles in the given vault.
     /// Since we are not parallelizing over a spatial division, this
     /// function just unpacks everything.
-    pub fn read_buffers(&mut self, fill_vault: &mut usize) {
+    pub fn read_buffers(&mut self, fill_vault: &mut usize, mcco: Rc<RefCell<MonteCarlo<T>>>) {
         // If we were parallelizing, we would add a condition for
         // unpacking like (current thread nbr == buffer nbr)
         // instead of just iterating over all buffers.
         self.buffers.iter().for_each(|b| {
             b.iter().for_each(|particle| {
-                self.mcco
+                mcco
                     .borrow_mut()
                     .particle_vault_container
                     .add_processing_particle(MCBaseParticle::new(particle), fill_vault)
@@ -88,5 +84,11 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
     /// Clear the buffers
     pub fn clear(&mut self) {
         self.buffers.iter_mut().for_each(|b| b.clear());
+    }
+}
+
+impl<T: Float + FromPrimitive> Default for MCParticleBuffer<T> {
+    fn default() -> Self {
+        Self { buffers: Vec::new() }
     }
 }

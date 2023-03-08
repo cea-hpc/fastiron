@@ -12,7 +12,7 @@ pub struct ParticleVaultContainer<T: Float> {
     /// Size of the [ParticleVault]. Fixed at runtime for each run.
     pub vault_size: usize,
     /// Number of extra vaults needed. Fixed at runtime for each run.
-    pub num_extra_vaults: u64,
+    pub num_extra_vaults: usize,
     /// A running index for the number of particles in the extra
     /// particle vaults.
     pub extra_vault_index: usize,
@@ -28,6 +28,32 @@ pub struct ParticleVaultContainer<T: Float> {
 }
 
 impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
+    pub fn new(vault_size: usize, num_vaults: usize, num_extra_vaults: usize) -> Self {
+        let mut processing_vaults: Vec<ParticleVault<T>> =
+            vec![ParticleVault::default(); num_vaults];
+        let mut processed_vaults: Vec<ParticleVault<T>> =
+            vec![ParticleVault::default(); num_vaults];
+        (0..num_vaults).into_iter().for_each(|ii| {
+            processing_vaults[ii].reserve(vault_size);
+            processed_vaults[ii].reserve(vault_size);
+        });
+        let mut extra_vault: Vec<ParticleVault<T>> =
+            vec![ParticleVault::default(); num_extra_vaults];
+        extra_vault.iter_mut().for_each(|vv| vv.reserve(vault_size));
+        let send_queue = SendQueue {
+            data: Vec::with_capacity(vault_size),
+        };
+        Self {
+            vault_size,
+            num_extra_vaults,
+            extra_vault_index: 0,
+            send_queue,
+            processing_vaults,
+            processed_vaults,
+            extra_vault,
+        }
+    }
+
     /// Returns the number of processing vaults
     pub fn processing_size(&self) -> usize {
         self.processing_vaults.len()

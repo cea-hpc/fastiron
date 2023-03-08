@@ -14,27 +14,29 @@ use crate::{
 use num::{one, Float, FromPrimitive};
 
 /// Creates a [MonteCarlo] object using the specified parameters.
-pub fn init_mc<T: Float + FromPrimitive + Display>(params: &Parameters) -> MonteCarlo<T> {
+pub fn init_mc<T: Float + FromPrimitive + Display>(params: Parameters) -> MonteCarlo<T> {
     let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
 
     init_proc_info(&mut mcco);
-    init_time_info(&mut mcco, params);
-    init_nuclear_data(&mut mcco, params);
-    init_mesh(&mut mcco, params);
-    init_tallies(&mut mcco, params);
+    init_time_info(&mut mcco);
+    init_nuclear_data(&mut mcco);
+    init_mesh(&mut mcco);
+    init_tallies(&mut mcco);
 
-    check_cross_sections(&mcco, params);
+    check_cross_sections(&mcco);
 
     mcco
 }
 
 fn init_proc_info<T: Float + FromPrimitive>(_mcco: &mut MonteCarlo<T>) {}
 
-fn init_time_info<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parameters) {
+fn init_time_info<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>) {
+    let params = &mcco.params;
     mcco.time_info.time_step = FromPrimitive::from_f64(params.simulation_params.dt).unwrap();
 }
 
-fn init_nuclear_data<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parameters) {
+fn init_nuclear_data<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>) {
+    let params = &mcco.params;
     let energy_low: T = FromPrimitive::from_f64(params.simulation_params.e_min).unwrap();
     let energy_high: T = FromPrimitive::from_f64(params.simulation_params.e_max).unwrap();
     mcco.nuclear_data =
@@ -183,7 +185,8 @@ fn initialize_centers_grid<T: Float>(
 }
 */
 
-fn init_mesh<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parameters) {
+fn init_mesh<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>) {
+    let params = &mcco.params;
     let nx: usize = params.simulation_params.nx;
     let ny: usize = params.simulation_params.ny;
     let nz: usize = params.simulation_params.nz;
@@ -232,7 +235,8 @@ fn init_mesh<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parame
     }
 }
 
-fn init_tallies<T: Float + FromPrimitive + Display>(mcco: &mut MonteCarlo<T>, params: &Parameters) {
+fn init_tallies<T: Float + FromPrimitive + Display>(mcco: &mut MonteCarlo<T>) {
+    let params = &mcco.params;
     mcco.tallies.initialize_tallies(
         &mcco.domain,
         params.simulation_params.n_groups,
@@ -249,9 +253,9 @@ struct XSData<T: Float> {
 }
 
 fn check_cross_sections<T: Float + FromPrimitive + Display>(
-    mcco: &MonteCarlo<T>,
-    params: &Parameters,
+    mcco: &MonteCarlo<T>
 ) {
+    let params = &mcco.params;
     if params.simulation_params.cross_sections_out.is_empty() {
         return;
     }
