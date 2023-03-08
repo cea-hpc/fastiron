@@ -35,18 +35,9 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
     /// Check if there are no more particle transfer. The exact conditions
     /// to look for might change.
     pub fn test_done_new(&self, mcco: Rc<RefCell<MonteCarlo<T>>>) -> bool {
-        if (mcco
-            .borrow()
-            .particle_vault_container
-            .send_queue
-            .size()
-            == 0)
+        if (mcco.borrow().particle_vault_container.send_queue.size() == 0)
             & self.is_empty()
-            & (mcco
-                .borrow()
-                .particle_vault_container
-                .processing_size()
-                == 0)
+            & (mcco.borrow().particle_vault_container.processing_size() == 0)
         {
             // with these three conditions, there should be a bit of
             // leeway as to where we can call the function
@@ -72,8 +63,7 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
         // instead of just iterating over all buffers.
         self.buffers.iter().for_each(|b| {
             b.iter().for_each(|particle| {
-                mcco
-                    .borrow_mut()
+                mcco.borrow_mut()
                     .particle_vault_container
                     .add_processing_particle(MCBaseParticle::new(particle), fill_vault)
             })
@@ -89,6 +79,8 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
 
 impl<T: Float + FromPrimitive> Default for MCParticleBuffer<T> {
     fn default() -> Self {
-        Self { buffers: Vec::new() }
+        Self {
+            buffers: Vec::new(),
+        }
     }
 }

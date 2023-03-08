@@ -329,6 +329,10 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
 
 impl<T: Float> Default for NuclearData<T> {
     fn default() -> Self {
-        Self { num_energy_groups: 0, isotopes: Vec::new(), energies: Vec::new() }
+        Self {
+            num_energy_groups: 0,
+            isotopes: Vec::new(),
+            energies: Vec::new(),
+        }
     }
 }

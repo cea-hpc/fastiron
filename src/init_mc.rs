@@ -252,9 +252,7 @@ struct XSData<T: Float> {
     sca: T,
 }
 
-fn check_cross_sections<T: Float + FromPrimitive + Display>(
-    mcco: &MonteCarlo<T>
-) {
+fn check_cross_sections<T: Float + FromPrimitive + Display>(mcco: &MonteCarlo<T>) {
     let params = &mcco.params;
     if params.simulation_params.cross_sections_out.is_empty() {
         return;
