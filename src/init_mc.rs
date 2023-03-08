@@ -23,7 +23,7 @@ pub fn init_mc<T: Float + FromPrimitive + Display>(params: &Parameters) -> Monte
     init_mesh(&mut mcco, params);
     init_tallies(&mut mcco, params);
 
-    //check_cross_sections(&mcco, params);
+    check_cross_sections(&mcco, params);
 
     mcco
 }
@@ -248,7 +248,7 @@ struct XSData<T: Float> {
     sca: T,
 }
 
-pub fn check_cross_sections<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, params: &Parameters) {
+fn check_cross_sections<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, params: &Parameters) {
     if params.simulation_params.cross_sections_out.is_empty() {
         return;
     }
@@ -259,7 +259,7 @@ pub fn check_cross_sections<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, para
     let n_groups = params.simulation_params.n_groups;
     // are we recomputing energies ?
 
-    // compute 
+    // compute
     let mut xc_table: HashMap<String, Vec<XSData<T>>> = Default::default();
     // for each material
     matdb.mat.iter().for_each(|material| {
@@ -269,23 +269,29 @@ pub fn check_cross_sections<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, para
         // for each isotope
         material.iso.iter().for_each(|isotope| {
             // for each reaction
-            nucdb.isotopes[isotope.gid][0].reactions.iter().for_each(|reaction| {
-                // for each energy group
-                (0..n_groups).into_iter().for_each(|group_idx| {
-                    match reaction.reaction_type {
-                        ReactionType::Scatter => {
-                            xc_vec[group_idx].sca = xc_vec[group_idx].sca + reaction.get_cross_section(group_idx)/n_isotopes;
-                        },
-                        ReactionType::Absorption => {  
-                            xc_vec[group_idx].abs = xc_vec[group_idx].abs + reaction.get_cross_section(group_idx)/n_isotopes;
-                        },
-                        ReactionType::Fission => {
-                            xc_vec[group_idx].fis = xc_vec[group_idx].fis + reaction.get_cross_section(group_idx)/n_isotopes;
-                        },
-                        ReactionType::Undefined => unreachable!(),
-                    }
+            nucdb.isotopes[isotope.gid][0]
+                .reactions
+                .iter()
+                .for_each(|reaction| {
+                    // for each energy group
+                    (0..n_groups)
+                        .into_iter()
+                        .for_each(|group_idx| match reaction.reaction_type {
+                            ReactionType::Scatter => {
+                                xc_vec[group_idx].sca = xc_vec[group_idx].sca
+                                    + reaction.get_cross_section(group_idx) / n_isotopes;
+                            }
+                            ReactionType::Absorption => {
+                                xc_vec[group_idx].abs = xc_vec[group_idx].abs
+                                    + reaction.get_cross_section(group_idx) / n_isotopes;
+                            }
+                            ReactionType::Fission => {
+                                xc_vec[group_idx].fis = xc_vec[group_idx].fis
+                                    + reaction.get_cross_section(group_idx) / n_isotopes;
+                            }
+                            ReactionType::Undefined => unreachable!(),
+                        });
                 });
-            });
         });
         xc_table.insert(mat_name, xc_vec);
     });
