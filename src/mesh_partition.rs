@@ -26,7 +26,7 @@ pub struct CellInfo {
 
 /// Structure used to represent the mesh partition of the space.
 /// Holds the different cells' information.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MeshPartition {
     /// Domain global identifier
     pub domain_gid: usize,

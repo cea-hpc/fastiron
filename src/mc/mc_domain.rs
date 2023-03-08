@@ -153,7 +153,6 @@ impl<T: Float + FromPrimitive> MCDomain<T> {
         grid: &GlobalFccGrid<T>,
         ddc: &DecompositionObject,
         params: &Parameters,
-        num_energy_groups: usize,
     ) -> Self {
         let mesh = MCMeshDomain::new(mesh_partition, grid, ddc, &get_boundary_conditions(params));
         let cell_state: Vec<MCCellState<T>> = Vec::with_capacity(mesh.cell_geometry.len());
@@ -162,6 +161,8 @@ impl<T: Float + FromPrimitive> MCDomain<T> {
             cell_state,
             mesh,
         };
+
+        let num_energy_groups: usize = params.simulation_params.n_groups;
 
         (0..mcdomain.cell_state.len()).into_iter().for_each(|ii| {
             mcdomain.cell_state[ii].volume = mcdomain.cell_volume(ii);

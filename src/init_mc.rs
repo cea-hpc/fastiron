@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 
 use crate::{
+    comm_object::CommObject,
+    decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
     material_database::{Isotope, Material},
     mc::{mc_domain::MCDomain, mc_vector::MCVector},
+    mesh_partition::MeshPartition,
     montecarlo::MonteCarlo,
     nuclear_data::{NuclearData, Polynomial},
     parameters::Parameters,
@@ -115,7 +118,51 @@ fn initialize_centers_grid<T: Float>(
 }
 
 fn init_mesh<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parameters) {
-    todo!()
+    let nx: usize = params.simulation_params.nx;
+    let ny: usize = params.simulation_params.ny;
+    let nz: usize = params.simulation_params.nz;
+
+    let lx: T = FromPrimitive::from_f64(params.simulation_params.lx).unwrap();
+    let ly: T = FromPrimitive::from_f64(params.simulation_params.ly).unwrap();
+    let lz: T = FromPrimitive::from_f64(params.simulation_params.lz).unwrap();
+
+    // fixed value for now, this is mpi related so it should be deleted
+    // this may be somewhat equivalent to no MPI usage?
+    let x_dom: usize = 0;
+    let y_dom: usize = 0;
+    let z_dom: usize = 0;
+    let n_ranks: usize = 1;
+    let n_domains_per_rank = 4; // why 4 in original code?
+    let my_rank = 0;
+
+    let ddc = DecompositionObject::new(my_rank, n_ranks, n_domains_per_rank);
+    let my_domain_gids = ddc.assigned_gids.clone();
+    let global_grid: GlobalFccGrid<T> = GlobalFccGrid::new(nx, ny, nz, lx, ly, lz);
+
+    let n_centers: usize = n_domains_per_rank * n_ranks;
+    // we fixed *_dom = 0, so for now we always initialize centers randomly
+    let domain_centers = initialize_centers_rand(n_centers, &global_grid);
+
+    let mut partition: Vec<MeshPartition> = Vec::with_capacity(my_domain_gids.len());
+    (0..my_domain_gids.len()).into_iter().for_each(|ii| {
+        // my rank should be constant
+        partition.push(MeshPartition::new(my_domain_gids[ii], ii, my_rank));
+    });
+
+    let mut comm: CommObject = CommObject::new(&partition);
+    partition
+        .iter_mut()
+        .for_each(|mesh_p| mesh_p.build_mesh_partition(&global_grid, &domain_centers, &mut comm));
+
+    mcco.domain.reserve(my_domain_gids.len());
+    partition.iter().for_each(|mesh_p| {
+        mcco.domain
+            .push(MCDomain::new(mesh_p, &global_grid, &ddc, params))
+    });
+
+    if n_ranks == 1 {
+        consistency_check(my_rank, &mcco.domain);
+    }
 }
 
 fn init_tallies<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parameters) {
