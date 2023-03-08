@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, fs::File, io::Write};
 
 use crate::{
     comm_object::CommObject,
@@ -248,7 +248,10 @@ struct XSData<T: Float> {
     sca: T,
 }
 
-fn check_cross_sections<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, params: &Parameters) {
+fn check_cross_sections<T: Float + FromPrimitive + Display>(
+    mcco: &MonteCarlo<T>,
+    params: &Parameters,
+) {
     if params.simulation_params.cross_sections_out.is_empty() {
         return;
     }
@@ -258,6 +261,7 @@ fn check_cross_sections<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, params: 
 
     let n_groups = params.simulation_params.n_groups;
     // are we recomputing energies ?
+    let energies = nucdb.energies.clone();
 
     // compute
     let mut xc_table: HashMap<String, Vec<XSData<T>>> = Default::default();
@@ -296,5 +300,30 @@ fn check_cross_sections<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, params: 
         xc_table.insert(mat_name, xc_vec);
     });
 
-    // build an output file
+    // build an output file; could write a markdown table?
+    let file_name = params.simulation_params.cross_sections_out.to_owned() + "dat";
+    let mut file = File::create(file_name).unwrap();
+    // header
+    write!(file, "group    energy    ").unwrap();
+    xc_table.iter().for_each(|(mat_name, _)| {
+        write!(
+            file,
+            "{mat_name}_absorb    {mat_name}_fission    {mat_name}_scatter    "
+        )
+        .unwrap();
+    });
+    writeln!(file).unwrap();
+    // data
+    (0..n_groups).into_iter().for_each(|ii| {
+        write!(file, "{}    {}    ", ii, energies[ii]).unwrap();
+        xc_table.values().for_each(|xc_vec| {
+            write!(
+                file,
+                "{}    {}    {}    ",
+                xc_vec[ii].abs, xc_vec[ii].fis, xc_vec[ii].sca
+            )
+            .unwrap();
+        });
+        writeln!(file).unwrap()
+    });
 }
