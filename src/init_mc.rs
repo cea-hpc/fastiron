@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use crate::{
     comm_object::CommObject,
     decomposition_object::DecompositionObject,
-    global_fcc_grid::GlobalFccGrid,
+    global_fcc_grid::{GlobalFccGrid, Tuple3},
     material_database::{Isotope, Material},
-    mc::{mc_domain::MCDomain, mc_vector::MCVector},
+    mc::{mc_domain::MCDomain, mc_rng_state::rng_sample, mc_vector::MCVector},
     mesh_partition::MeshPartition,
     montecarlo::MonteCarlo,
     nuclear_data::{NuclearData, Polynomial},
@@ -96,16 +96,81 @@ fn init_nuclear_data<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params:
 }
 
 fn consistency_check<T: Float>(my_rank: usize, domain: &[MCDomain<T>]) {
-    todo!()
+    if my_rank == 0 {
+        println!("Starting consistency check");
+    }
+
+    domain.iter().enumerate().for_each(|(domain_idx, dd)| {
+        dd.mesh
+            .cell_connectivity
+            .iter()
+            .enumerate()
+            .for_each(|(cell_idx, cc)| {
+                cc.facet.iter().enumerate().for_each(|(facet_idx, ff)| {
+                    let current = ff.subfacet.current;
+                    println!(
+                        "current.cell == cell_idx: {}",
+                        current.cell.unwrap() == cell_idx
+                    );
+
+                    let adjacent = ff.subfacet.adjacent;
+                    let domain_idx_adj = adjacent.domain.unwrap();
+                    let cell_idx_adj = adjacent.cell.unwrap();
+                    let facet_idx_adj = adjacent.facet.unwrap();
+                    let backside = &domain[domain_idx_adj].mesh.cell_connectivity[cell_idx_adj]
+                        .facet[facet_idx_adj]
+                        .subfacet;
+
+                    println!(
+                        "backside.adjacent.domain == domain_idx: {}",
+                        backside.adjacent.domain.unwrap() == domain_idx
+                    );
+                    println!(
+                        "backside.adjacent.cell == cell_idx: {}",
+                        backside.adjacent.cell.unwrap() == cell_idx
+                    );
+                    println!(
+                        "backside.adjacent.facet == facet_idx: {}",
+                        backside.adjacent.facet.unwrap() == facet_idx
+                    );
+                });
+            });
+    });
+
+    if my_rank == 0 {
+        println!("Finished consistency check");
+    }
 }
 
-fn initialize_centers_rand<T: Float>(
+fn initialize_centers_rand<T: Float + FromPrimitive>(
     n_centers: usize,
     grid: &GlobalFccGrid<T>,
+    seed: &mut u64,
 ) -> Vec<MCVector<T>> {
-    todo!()
+    // original function uses drand48 which sample a double in [0;1)
+    // our rng_sample function does that
+    // TODO: handle limit case when the sampled float eq 1
+    let nx: T = FromPrimitive::from_usize(grid.nx).unwrap();
+    let ny: T = FromPrimitive::from_usize(grid.ny).unwrap();
+    let nz: T = FromPrimitive::from_usize(grid.nz).unwrap();
+    let mut centers: Vec<MCVector<T>> = Vec::new();
+    (0..n_centers).into_iter().for_each(|_| {
+        let f1: T = rng_sample(seed);
+        let f2: T = rng_sample(seed);
+        let f3: T = rng_sample(seed);
+        let tt: Tuple3 = (
+            (f1 * nx).floor().to_usize().unwrap(),
+            (f2 * ny).floor().to_usize().unwrap(),
+            (f3 * nz).floor().to_usize().unwrap(),
+        );
+        let cell_idx = grid.cell_tuple_to_idx(&tt);
+        centers.push(grid.cell_center(cell_idx));
+    });
+
+    centers
 }
 
+/*
 fn initialize_centers_grid<T: Float>(
     lx: T,
     ly: T,
@@ -116,6 +181,7 @@ fn initialize_centers_grid<T: Float>(
 ) -> Vec<MCVector<T>> {
     todo!()
 }
+*/
 
 fn init_mesh<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parameters) {
     let nx: usize = params.simulation_params.nx;
@@ -127,10 +193,10 @@ fn init_mesh<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parame
     let lz: T = FromPrimitive::from_f64(params.simulation_params.lz).unwrap();
 
     // fixed value for now, this is mpi related so it should be deleted
-    // this may be somewhat equivalent to no MPI usage?
-    let x_dom: usize = 0;
-    let y_dom: usize = 0;
-    let z_dom: usize = 0;
+    // these values may be somewhat equivalent to no MPI usage?
+    //let x_dom: usize = 0;
+    //let y_dom: usize = 0;
+    //let z_dom: usize = 0;
     let n_ranks: usize = 1;
     let n_domains_per_rank = 4; // why 4 in original code?
     let my_rank = 0;
@@ -141,7 +207,8 @@ fn init_mesh<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, params: &Parame
 
     let n_centers: usize = n_domains_per_rank * n_ranks;
     // we fixed *_dom = 0, so for now we always initialize centers randomly
-    let domain_centers = initialize_centers_rand(n_centers, &global_grid);
+    let mut s = params.simulation_params.seed + 1; // use a seed dependant on sim seed
+    let domain_centers = initialize_centers_rand(n_centers, &global_grid, &mut s);
 
     let mut partition: Vec<MeshPartition> = Vec::with_capacity(my_domain_gids.len());
     (0..my_domain_gids.len()).into_iter().for_each(|ii| {

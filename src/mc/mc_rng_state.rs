@@ -1,7 +1,7 @@
 use num::{Float, FromPrimitive};
 
 /// Returns the pseudo-random number produced by a call to a random
-/// number generator.
+/// number generator. The returned number is a decimal in segment [0;1]
 pub fn rng_sample<T: Float + FromPrimitive>(seed: &mut u64) -> T {
     // Reset the state from previous value
     *seed = 2862933555777941757u64
