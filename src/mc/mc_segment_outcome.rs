@@ -22,14 +22,6 @@ pub enum MCSegmentOutcome {
     Census = 2,
 }
 
-/// Enum representing the action to take after a particle collides.
-#[derive(Debug)]
-pub enum MCCollisionEventReturn {
-    StopTracking = 0,
-    ContinueTracking = 1,
-    ContinueCollision = 2,
-}
-
 /// Computes the outcome of the current segment for a given particle.
 pub fn outcome<T: Float + FromPrimitive + Display>(
     mcco: &mut MonteCarlo<T>,

@@ -7,7 +7,7 @@ use super::{
 };
 
 /// Computes and transform accordingly a [MCParticle] object crossing a facet.
-pub fn event<T: Float + FromPrimitive>(
+pub fn facet_crossing_event<T: Float + FromPrimitive>(
     mc_particle: &mut MCParticle<T>,
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
