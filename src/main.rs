@@ -183,7 +183,9 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
     mc_fast_timer::stop(mcco.clone(), Section::CycleTracking);
 }
 
-pub fn cycle_finalize<T: Float + Display + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
+pub fn cycle_finalize<T: Float + Display + FromPrimitive + Default>(
+    mcco: Rc<RefCell<MonteCarlo<T>>>,
+) {
     mc_fast_timer::start(mcco.clone(), Section::CycleFinalize);
 
     mcco.borrow_mut().tallies.balance_task[0].end = mcco

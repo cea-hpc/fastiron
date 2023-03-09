@@ -243,13 +243,13 @@ fn bootstrap_node_map<T: Float + FromPrimitive>(
         });
         // faces later
         (8..14).into_iter().for_each(|ii| {
-            if !face_centers.contains_key(&node_gids[ii]) {                
+            if !face_centers.contains_key(&node_gids[ii]) {
                 face_centers.insert(node_gids[ii], face_centers.len());
             }
         });
     }
-    // Debug 
-    // probably happens because of a specific behavior of 
+    // Debug
+    // probably happens because of a specific behavior of
     // maps with keys that are already present
     face_centers.values().for_each(|val| {
         if *val == face_centers.len() {

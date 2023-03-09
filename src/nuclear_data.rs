@@ -243,25 +243,25 @@ impl<T: Float + FromPrimitive + Default> NuclearData<T> {
         //if n == 0 {
         //    self.isotopes.push(vec![NuclearDataSpecies::default()])
         //} else {
-        self.isotopes[n-1][0].reactions.reserve(n_reactions);
+        self.isotopes[n - 1][0].reactions.reserve(n_reactions);
         //}
 
         (0..n_reactions).into_iter().for_each(|ii| match ii % 3 {
-            0 => self.isotopes[n-1][0].add_reaction(
+            0 => self.isotopes[n - 1][0].add_reaction(
                 ReactionType::Scatter,
                 nu_bar,
                 &self.energies,
                 scatter_function,
                 scatter_xsection,
             ),
-            1 => self.isotopes[n-1][0].add_reaction(
+            1 => self.isotopes[n - 1][0].add_reaction(
                 ReactionType::Fission,
                 nu_bar,
                 &self.energies,
                 fission_function,
                 fission_xsection,
             ),
-            2 => self.isotopes[n-1][0].add_reaction(
+            2 => self.isotopes[n - 1][0].add_reaction(
                 ReactionType::Absorption,
                 nu_bar,
                 &self.energies,

@@ -6,10 +6,10 @@ pub fn map_behavior() {
     let mut complementary_map: HashMap<usize, usize> = Default::default();
     (0..10).into_iter().for_each(|jj| {
         (0..5).into_iter().for_each(|ii| {
-            map.insert(jj*12 + ii, jj*12 + ii);
+            map.insert(jj * 12 + ii, jj * 12 + ii);
         });
         (5..12).into_iter().for_each(|ii| {
-            complementary_map.insert(jj*12 + ii, jj*12 + ii);
+            complementary_map.insert(jj * 12 + ii, jj * 12 + ii);
         });
         //assert_eq!(map.len(), 5);
         //assert_eq!(complementary_map.len(), 7);
@@ -17,7 +17,9 @@ pub fn map_behavior() {
 
     map.extend(complementary_map.iter());
     assert_eq!(map.len(), 120);
-    map.values().for_each(|vv| if *vv == map.len() {
-        panic!();
+    map.values().for_each(|vv| {
+        if *vv == map.len() {
+            panic!();
+        }
     });
 }
