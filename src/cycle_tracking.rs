@@ -23,7 +23,7 @@ use crate::{
 };
 
 /// Main steps of the CycleTracking sections
-pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssign>(
+pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssign + Default>(
     mcco: Rc<RefCell<MonteCarlo<T>>>,
     particle_idx: usize,
     processing_vault: &mut ParticleVault<T>,
@@ -44,7 +44,7 @@ pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssig
 }
 
 /// Computations of the CycleTracking sections
-pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddAssign>(
+pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddAssign + Default>(
     mcco: Rc<RefCell<MonteCarlo<T>>>,
     particle: &mut MCParticle<T>,
     particle_idx: usize,

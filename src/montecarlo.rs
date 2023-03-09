@@ -40,7 +40,7 @@ pub struct MonteCarlo<T: Float + FromPrimitive> {
     pub source_particle_weight: f64,
 }
 
-impl<T: Float + FromPrimitive + Display> MonteCarlo<T> {
+impl<T: Float + FromPrimitive + Display + Default> MonteCarlo<T> {
     /// Constructor
     pub fn new(params: Parameters) -> Self {
         let tallies: Tallies<T> = Tallies::new(

@@ -14,7 +14,7 @@ use crate::{
 use num::{one, Float, FromPrimitive};
 
 /// Creates a [MonteCarlo] object using the specified parameters.
-pub fn init_mc<T: Float + FromPrimitive + Display>(params: Parameters) -> MonteCarlo<T> {
+pub fn init_mc<T: Float + FromPrimitive + Display + Default>(params: Parameters) -> MonteCarlo<T> {
     let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
 
     init_proc_info(&mut mcco);
@@ -35,7 +35,7 @@ fn init_time_info<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>) {
     mcco.time_info.time_step = FromPrimitive::from_f64(params.simulation_params.dt).unwrap();
 }
 
-fn init_nuclear_data<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>) {
+fn init_nuclear_data<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
     let energy_low: T = FromPrimitive::from_f64(params.simulation_params.e_min).unwrap();
     let energy_high: T = FromPrimitive::from_f64(params.simulation_params.e_max).unwrap();
@@ -235,7 +235,7 @@ fn init_mesh<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>) {
     }
 }
 
-fn init_tallies<T: Float + FromPrimitive + Display>(mcco: &mut MonteCarlo<T>) {
+fn init_tallies<T: Float + FromPrimitive + Display + Default>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
     mcco.tallies.initialize_tallies(
         &mcco.domain,

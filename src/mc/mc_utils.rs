@@ -16,7 +16,7 @@ use super::{
 };
 
 /// Copies a single particle from the particle-vault data and returns it.
-pub fn load_particle<T: Float + FromPrimitive>(
+pub fn load_particle<T: Float + FromPrimitive + Default>(
     mcco: &MonteCarlo<T>,
     particle_vault: &ParticleVault<T>,
     particle_idx: usize,

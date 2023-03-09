@@ -46,7 +46,7 @@ fn main() {
     coral_benchmark_correctness::coral_benchmark_correctness(mcco);
 }
 
-pub fn game_over<T: Float + Display + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
+pub fn game_over<T: Float + Display + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     mcco.borrow().fast_timer.cumulative_report();
     mcco.borrow()
         .tallies
@@ -95,7 +95,7 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
     mc_fast_timer::stop(mcco, Section::CycleInit);
 }
 
-pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug>(
+pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + Default>(
     mcco: Rc<RefCell<MonteCarlo<T>>>,
 ) {
     mc_fast_timer::start(mcco.clone(), Section::CycleTracking);
@@ -183,7 +183,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug>(
     mc_fast_timer::stop(mcco.clone(), Section::CycleTracking);
 }
 
-pub fn cycle_finalize<T: Float + Display + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
+pub fn cycle_finalize<T: Float + Display + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     mc_fast_timer::start(mcco.clone(), Section::CycleFinalize);
 
     mcco.borrow_mut().tallies.balance_task[0].end = mcco

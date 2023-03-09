@@ -49,7 +49,7 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
         reaction_cross_section: T,
     ) -> Self {
         let n_groups = energies.len() - 1;
-        let mut xsection: Vec<T> = Vec::with_capacity(n_groups);
+        let mut xsection: Vec<T> = vec![zero(); n_groups];
 
         let mut normal_value: T = zero();
         let one: T = FromPrimitive::from_f32(1.0).unwrap();
@@ -132,13 +132,13 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
 }
 
 /// Structure used to hold a list of reactions.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct NuclearDataSpecies<T: Float> {
     /// List of reactions
     pub reactions: Vec<NuclearDataReaction<T>>,
 }
 
-impl<T: Float + FromPrimitive> NuclearDataSpecies<T> {
+impl<T: Float + FromPrimitive + Default> NuclearDataSpecies<T> {
     /// Adds a reaction to the internal list.
     pub fn add_reaction(
         &mut self,
@@ -174,7 +174,7 @@ pub struct NuclearData<T: Float> {
     pub energies: Vec<T>,
 }
 
-impl<T: Float + FromPrimitive> NuclearData<T> {
+impl<T: Float + FromPrimitive + Default> NuclearData<T> {
     /// Extra messy constructor.
     pub fn new(num_groups: usize, energy_low: T, energy_high: T) -> Self {
         let mut energies = vec![zero(); num_groups + 1];
@@ -213,7 +213,7 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
         scatter_weight: T,
         absorption_weight: T,
     ) -> usize {
-        self.isotopes.push(Vec::new());
+        self.isotopes.push(vec![NuclearDataSpecies::default()]);
         let total_weight = fission_weight + scatter_weight + absorption_weight;
 
         let mut n_fission = n_reactions / 3;
@@ -240,24 +240,28 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
         let absorption_xsection: T = (total_cross_section * absorption_weight) / (f * total_weight);
 
         let n = self.isotopes.len();
-        self.isotopes[n][0].reactions.reserve(n_reactions);
+        //if n == 0 {
+        //    self.isotopes.push(vec![NuclearDataSpecies::default()])
+        //} else {
+        self.isotopes[n-1][0].reactions.reserve(n_reactions);
+        //}
 
         (0..n_reactions).into_iter().for_each(|ii| match ii % 3 {
-            0 => self.isotopes[n][0].add_reaction(
+            0 => self.isotopes[n-1][0].add_reaction(
                 ReactionType::Scatter,
                 nu_bar,
                 &self.energies,
                 scatter_function,
                 scatter_xsection,
             ),
-            1 => self.isotopes[n][0].add_reaction(
+            1 => self.isotopes[n-1][0].add_reaction(
                 ReactionType::Fission,
                 nu_bar,
                 &self.energies,
                 fission_function,
                 fission_xsection,
             ),
-            2 => self.isotopes[n][0].add_reaction(
+            2 => self.isotopes[n-1][0].add_reaction(
                 ReactionType::Absorption,
                 nu_bar,
                 &self.energies,

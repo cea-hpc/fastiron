@@ -23,7 +23,7 @@ pub enum MCSegmentOutcome {
 }
 
 /// Computes the outcome of the current segment for a given particle.
-pub fn outcome<T: Float + FromPrimitive + Display>(
+pub fn outcome<T: Float + FromPrimitive + Display + Default>(
     mcco: &mut MonteCarlo<T>,
     mc_particle: &mut MCParticle<T>,
     flux_tally_idx: usize,

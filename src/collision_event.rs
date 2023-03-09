@@ -14,7 +14,7 @@ use crate::{
 };
 
 /// Update the a particle's energy and trajectory after a collision.
-pub fn update_trajectory<T: Float + FromPrimitive + Debug>(
+pub fn update_trajectory<T: Float + FromPrimitive + Debug + Default>(
     energy: T,
     angle: T,
     particle: &mut MCParticle<T>,
@@ -49,7 +49,7 @@ pub fn update_trajectory<T: Float + FromPrimitive + Debug>(
 
 /// Computes and transform accordingly a [MCParticle] object that
 /// undergo a collision. Returns true if the particle will continue
-pub fn collision_event<T: Float + FromPrimitive + Debug>(
+pub fn collision_event<T: Float + FromPrimitive + Debug + Default>(
     mcco: &mut MonteCarlo<T>,
     mc_particle: &mut MCParticle<T>,
     tally_idx: usize,

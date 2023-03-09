@@ -246,7 +246,7 @@ pub struct Tallies<T: Float> {
     pub num_cell_tally_replications: u32,
 }
 
-impl<T: Float + Display + FromPrimitive> Tallies<T> {
+impl<T: Float + Display + FromPrimitive + Default> Tallies<T> {
     /// Constructor.
     pub fn new(
         bal_rep: u32,
