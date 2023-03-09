@@ -11,7 +11,7 @@ pub struct CommObject {
 impl CommObject {
     /// Constructor.
     pub fn new(partition: &[MeshPartition]) -> Self {
-        let mut gid_to_idx: Vec<usize> = Vec::with_capacity(partition.len());
+        let mut gid_to_idx: Vec<usize> = vec![0; partition.len()];
 
         (0..partition.len()).for_each(|ii| {
             assert!(partition[ii].domain_gid < partition.len());
