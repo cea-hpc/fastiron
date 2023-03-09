@@ -46,7 +46,7 @@ pub struct MCParticle<T: Float> {
     /// Number of segments the particle travelled?
     pub num_segments: T,
     /// Task working on (should be usize?)
-    pub task: u32,
+    pub task: usize,
     /// Species of the particle
     pub species: Species,
     /// Breed of the particle, i.e. how it was produced (should be usize?)

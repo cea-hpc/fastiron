@@ -1,5 +1,3 @@
-use num::Float;
-
 /// Structure used to keep track of the progress of the
 /// Monte Carlo algorithm.
 #[derive(Debug)]

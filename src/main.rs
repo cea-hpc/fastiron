@@ -53,7 +53,7 @@ pub fn game_over<T: Float + Display + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo
         .print_spectrum(&mcco.borrow());
 }
 
-pub fn cycle_init<T: Float + FromPrimitive + Display>(
+pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
     mcco: Rc<RefCell<MonteCarlo<T>>>,
     load_balance: bool,
 ) {
