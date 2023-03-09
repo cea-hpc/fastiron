@@ -84,7 +84,12 @@ pub fn cycle_init<T: Float + FromPrimitive + Display>(
     mc_utils::source_now(mcco.clone());
 
     population_control::population_control(mcco.clone(), load_balance);
-    population_control::roulette_low_weight_particles(mcco.clone());
+    population_control::roulette_low_weight_particles(
+        mcco.borrow().params.simulation_params.low_weight_cutoff,
+        mcco.borrow().source_particle_weight,
+        &mut mcco.borrow_mut().particle_vault_container,
+        &mut mcco.borrow_mut().tallies.balance_task[0],
+    );
 
     mc_fast_timer::stop(mcco, Section::CycleInit);
 }

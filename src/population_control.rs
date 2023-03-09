@@ -58,6 +58,7 @@ fn population_control_guts<T: Float + FromPrimitive>(
     let vault_size = vault.vault_size;
     let mut fill_vault_idx = current_n_particles / vault_size;
 
+    // march backwards through particles; might be unecessary since we use vectors?
     (0..current_n_particles)
         .into_iter()
         .rev()
@@ -106,15 +107,50 @@ fn population_control_guts<T: Float + FromPrimitive>(
                     // because we use a mut borrow in the interator above
                     vault.get_task_processing_vault(vault_idx)[task_particle_idx] = Some(pp);
                 }
-            } else {
-                // erase particle?
-                //task_processing_vault.erase_swap_particles(task_particle_idx); //?
             }
         });
 }
 
 /// Play russian-roulette with low-weight particles relative
 /// to the source particle weight.
-pub fn roulette_low_weight_particles<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
-    todo!()
+pub fn roulette_low_weight_particles<T: Float + FromPrimitive>(
+    low_weight_cutoff: f64,
+    source_particle_weight: f64,
+    vault: &mut ParticleVaultContainer<T>,
+    task_balance: &mut Balance,
+) {
+    if low_weight_cutoff > 0.0 {
+        let current_n_particles = vault.particles_processing_size();
+        let vault_size = vault.vault_size;
+
+        let l_weight_cutoff: T = FromPrimitive::from_f64(low_weight_cutoff).unwrap();
+        let weight_cutoff: T =
+            FromPrimitive::from_f64(low_weight_cutoff * source_particle_weight).unwrap();
+
+        // march backwards through particles; might be unecessary since we use vectors?
+        (0..current_n_particles)
+            .into_iter()
+            .rev()
+            .for_each(|particle_idx| {
+                let vault_idx = particle_idx / vault_size;
+                let task_particle_idx = particle_idx % vault_idx;
+
+                let task_processing_vault = vault.get_task_processing_vault(vault_idx);
+                if let Some(mut pp) = task_processing_vault[task_particle_idx].clone() {
+                    if pp.weight < weight_cutoff {
+                        let rand_n: T = rng_sample(&mut pp.random_number_seed);
+                        if rand_n < l_weight_cutoff {
+                            // particle continues with an increased weight
+                            pp.weight = pp.weight / l_weight_cutoff;
+                            task_processing_vault[task_particle_idx] = Some(pp);
+                        } else {
+                            // particle is killed
+                            task_processing_vault.erase_swap_particles(task_particle_idx);
+                            task_balance.rr += 1;
+                        }
+                    }
+                }
+            });
+        vault.collapse_processing();
+    }
 }
