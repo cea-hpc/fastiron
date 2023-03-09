@@ -116,25 +116,29 @@ fn consistency_check<T: Float>(my_rank: usize, domain: &[MCDomain<T>]) {
                     );
 
                     let adjacent = ff.subfacet.adjacent;
-                    let domain_idx_adj = adjacent.domain.unwrap();
-                    let cell_idx_adj = adjacent.cell.unwrap();
-                    let facet_idx_adj = adjacent.facet.unwrap();
-                    let backside = &domain[domain_idx_adj].mesh.cell_connectivity[cell_idx_adj]
-                        .facet[facet_idx_adj]
-                        .subfacet;
+                    // These can be none e.g. if the current is on the border of the problem
+                    if adjacent.domain.is_some() & adjacent.cell.is_some() & adjacent.facet.is_some() {
+                        let domain_idx_adj = adjacent.domain.unwrap();
+                        let cell_idx_adj = adjacent.cell.unwrap();
+                        let facet_idx_adj = adjacent.facet.unwrap();
+                        let backside = &domain[domain_idx_adj].mesh.cell_connectivity[cell_idx_adj]
+                            .facet[facet_idx_adj]
+                            .subfacet;
 
-                    println!(
-                        "backside.adjacent.domain == domain_idx: {}",
-                        backside.adjacent.domain.unwrap() == domain_idx
-                    );
-                    println!(
-                        "backside.adjacent.cell == cell_idx: {}",
-                        backside.adjacent.cell.unwrap() == cell_idx
-                    );
-                    println!(
-                        "backside.adjacent.facet == facet_idx: {}",
-                        backside.adjacent.facet.unwrap() == facet_idx
-                    );
+                        println!(
+                            "backside.adjacent.domain == domain_idx: {}",
+                            backside.adjacent.domain.unwrap() == domain_idx
+                        );
+                        println!(
+                            "backside.adjacent.cell == cell_idx: {}",
+                            backside.adjacent.cell.unwrap() == cell_idx
+                        );
+                        println!(
+                            "backside.adjacent.facet == facet_idx: {}",
+                            backside.adjacent.facet.unwrap() == facet_idx
+                        );
+                        println!();
+                    }
                 });
             });
     });
@@ -185,7 +189,7 @@ fn initialize_centers_grid<T: Float>(
 }
 */
 
-fn init_mesh<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>) {
+fn init_mesh<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
     let nx: usize = params.simulation_params.nx;
     let ny: usize = params.simulation_params.ny;

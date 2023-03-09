@@ -72,7 +72,7 @@ pub struct MCMeshDomain<T: Float> {
     pub cell_geometry: Vec<MCFacetGeometryCell<T>>,
 }
 
-impl<T: Float + FromPrimitive> MCMeshDomain<T> {
+impl<T: Float + FromPrimitive + Default> MCMeshDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition,
@@ -107,12 +107,12 @@ impl<T: Float + FromPrimitive> MCMeshDomain<T> {
 
         // cell_geometry
         let mut cell_geometry: Vec<MCFacetGeometryCell<T>> =
-            Vec::with_capacity(cell_connectivity.len());
+            vec![MCFacetGeometryCell::default(); cell_connectivity.len()];
         (0..cell_connectivity.len())
             .into_iter()
             .for_each(|cell_idx| {
                 let n_facets = cell_connectivity[cell_idx].facet.len(); // TODO: remove and use const; same in array def
-                cell_geometry[cell_idx] = Vec::with_capacity(n_facets); // replace MCFacetGeometryCell vec by array?
+                cell_geometry[cell_idx] = vec![MCGeneralPlane::default(); n_facets]; // replace MCFacetGeometryCell vec by array?
                 (0..n_facets).into_iter().for_each(|facet_idx| {
                     let r0: MCVector<T> =
                         node[cell_connectivity[cell_idx].facet[facet_idx].point[0].unwrap()];
@@ -146,7 +146,7 @@ pub struct MCDomain<T: Float> {
     pub mesh: MCMeshDomain<T>,
 }
 
-impl<T: Float + FromPrimitive> MCDomain<T> {
+impl<T: Float + FromPrimitive + Default> MCDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition,
@@ -237,15 +237,13 @@ fn bootstrap_node_map<T: Float + FromPrimitive>(
         let node_gids = grid.get_node_gids(*k);
         // corners first
         (0..8).into_iter().for_each(|ii| {
-            if !node_idx_map.contains_key(&node_gids[ii]) {
-                node_idx_map.insert(node_gids[ii], node_idx_map.len());
-            }
+            let len = node_idx_map.len();
+            node_idx_map.entry(node_gids[ii]).or_insert_with(|| len);
         });
         // faces later
         (8..14).into_iter().for_each(|ii| {
-            if !face_centers.contains_key(&node_gids[ii]) {
-                face_centers.insert(node_gids[ii], face_centers.len());
-            }
+            let len = face_centers.len();
+            face_centers.entry(node_gids[ii]).or_insert_with(|| len);
         });
     }
     // Debug
