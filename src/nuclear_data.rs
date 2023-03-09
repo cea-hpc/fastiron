@@ -177,7 +177,7 @@ pub struct NuclearData<T: Float> {
 impl<T: Float + FromPrimitive> NuclearData<T> {
     /// Extra messy constructor.
     pub fn new(num_groups: usize, energy_low: T, energy_high: T) -> Self {
-        let mut energies = Vec::with_capacity(num_groups + 1);
+        let mut energies = vec![zero(); num_groups + 1];
         let length: T = FromPrimitive::from_usize(num_groups + 1).unwrap();
         // complete energy levels
         energies[0] = energy_low;
