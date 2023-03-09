@@ -117,7 +117,10 @@ fn consistency_check<T: Float>(my_rank: usize, domain: &[MCDomain<T>]) {
 
                     let adjacent = ff.subfacet.adjacent;
                     // These can be none e.g. if the current is on the border of the problem
-                    if adjacent.domain.is_some() & adjacent.cell.is_some() & adjacent.facet.is_some() {
+                    if adjacent.domain.is_some()
+                        & adjacent.cell.is_some()
+                        & adjacent.facet.is_some()
+                    {
                         let domain_idx_adj = adjacent.domain.unwrap();
                         let cell_idx_adj = adjacent.cell.unwrap();
                         let facet_idx_adj = adjacent.facet.unwrap();

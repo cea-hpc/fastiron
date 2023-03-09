@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use num::{one, Float, FromPrimitive};
 
 use crate::{
@@ -10,24 +8,17 @@ use crate::{
 };
 
 /// Routine used to monitor and regulate population level.
-pub fn population_control<T: Float + FromPrimitive>(
-    mcco: Rc<RefCell<MonteCarlo<T>>>,
-    load_balance: bool,
-) {
-    let mut target_n_particles: usize = mcco.borrow().params.simulation_params.n_particles as usize;
+pub fn population_control<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, load_balance: bool) {
+    let mut target_n_particles: usize = mcco.params.simulation_params.n_particles as usize;
     let mut global_n_particles: usize = 0;
-    let local_n_particles: usize = mcco
-        .borrow()
-        .particle_vault_container
-        .particles_processing_size();
+    let local_n_particles: usize = mcco.particle_vault_container.particles_processing_size();
 
     if load_balance {
-        target_n_particles /= mcco.borrow().processor_info.num_processors;
+        target_n_particles /= mcco.processor_info.num_processors;
     } else {
         global_n_particles = local_n_particles;
     }
 
-    let balance = &mut mcco.borrow_mut().tallies.balance_task[0];
     let mut split_rr_factor: T = one();
     if load_balance {
         if local_n_particles != 0 {
@@ -43,8 +34,8 @@ pub fn population_control<T: Float + FromPrimitive>(
         population_control_guts(
             split_rr_factor,
             local_n_particles,
-            &mut mcco.borrow_mut().particle_vault_container,
-            balance,
+            &mut mcco.particle_vault_container,
+            &mut mcco.tallies.balance_task[0],
         );
     }
 }

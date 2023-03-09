@@ -18,8 +18,8 @@ pub struct MCParticleBuffer<T: Float + FromPrimitive> {
 
 impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
     /// Prepare the buffers for use.
-    pub fn initialize(&mut self, mcco: Rc<RefCell<MonteCarlo<T>>>) {
-        self.buffers = Vec::with_capacity(mcco.borrow().domain.len());
+    pub fn initialize(&mut self, len: usize) {
+        self.buffers = Vec::with_capacity(len);
     }
 
     /// Returns true if all buffers are empty

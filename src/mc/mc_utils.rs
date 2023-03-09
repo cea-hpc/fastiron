@@ -42,7 +42,7 @@ pub fn load_particle<T: Float + FromPrimitive + Default>(
 pub fn source_now<T: Float + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     let time_step = FromPrimitive::from_f64(mcco.borrow().time_info.time_step).unwrap();
 
-    let mut source_rate: Vec<T> = Vec::with_capacity(mcco.borrow().material_database.mat.len());
+    let mut source_rate: Vec<T> = vec![zero(); mcco.borrow().material_database.mat.len()];
     (0..mcco.borrow().material_database.mat.len())
         .into_iter()
         .for_each(|mat_idx| {
