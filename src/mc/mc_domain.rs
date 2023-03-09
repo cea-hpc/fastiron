@@ -100,7 +100,7 @@ impl<T: Float + FromPrimitive> MCMeshDomain<T> {
         );
 
         // node
-        let mut node: Vec<MCVector<T>> = Vec::with_capacity(node_idx_map.len());
+        let mut node: Vec<MCVector<T>> = vec![MCVector::default(); node_idx_map.len()];
         node_idx_map.iter().for_each(|(node_gid, node_idx)| {
             node[*node_idx] = grid.node_coord_from_idx(*node_gid);
         });
@@ -274,7 +274,7 @@ fn build_cells<T: Float + FromPrimitive>(
             // faces
             let face_nbr = grid.get_face_nbr_gids(*cell_gid);
             let mut face_info = vec![FaceInfo::default(); 6];
-            (0..new_cell.facet.len()).into_iter().for_each(|ii| {
+            (0..face_nbr.len()).into_iter().for_each(|ii| {
                 // faces
                 let face_cell_info = partition.cell_info_map[&face_nbr[ii]];
                 face_info[ii].cell_info = face_cell_info;
@@ -328,7 +328,7 @@ fn make_facet(
     facet.subfacet.adjacent.domain = face_info[face_id].cell_info.domain_index;
     facet.subfacet.adjacent.cell = face_info[face_id].cell_info.cell_index;
     facet.subfacet.adjacent.facet = Some(OPPOSING_FACET[facet_id]);
-    facet.subfacet.neighbor_index = Some(face_info[face_id].nbr_idx.unwrap());
+    facet.subfacet.neighbor_index = face_info[face_id].nbr_idx;
     facet.subfacet.neighbor_global_domain = face_info[face_id].cell_info.domain_gid;
     facet.subfacet.neighbor_foreman = face_info[face_id].cell_info.foreman;
 

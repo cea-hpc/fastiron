@@ -6,7 +6,7 @@ use crate::{global_fcc_grid::Tuple3, mc::mc_vector::MCVector, physical_constants
 
 /// Internal structure of [GridAssignmentObject].
 /// Represents a cell.
-#[derive(Debug, Default)] // default value of bool is false
+#[derive(Debug, Clone, Default)] // default value of bool is false
 pub struct GridCell {
     pub burned: bool,
     pub my_centers: Vec<usize>,
@@ -72,7 +72,7 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
         let dz = lz / nz;
 
         let n_cells: usize = (nx * ny * nz).to_usize().unwrap();
-        let grid: Vec<GridCell> = Vec::with_capacity(n_cells);
+        let grid: Vec<GridCell> = vec![GridCell::default(); n_cells];
 
         let mut gao: GridAssignmentObject<T> = Self {
             nx: nx.to_usize().unwrap(),
@@ -184,16 +184,15 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
         let r_idx: Tuple3 = self.which_cell_tuple(r);
         let tuple_idx: Tuple3 = self.index_to_tuple(cell_idx);
 
-        let rx: T = (self.dx
-            * (FromPrimitive::from_usize(tuple_idx.0.abs_diff(r_idx.0) - 1)).unwrap())
-        .max(zero());
-        let ry: T = (self.dy
-            * (FromPrimitive::from_usize(tuple_idx.1.abs_diff(r_idx.1) - 1)).unwrap())
-        .max(zero());
-        let rz: T = (self.dz
-            * (FromPrimitive::from_usize(tuple_idx.2.abs_diff(r_idx.2) - 1)).unwrap())
-        .max(zero());
-
+        let rx: T = self.dx
+            * (FromPrimitive::from_usize(tuple_idx.0.abs_diff(r_idx.0).saturating_sub(1))).unwrap();
+        let ry: T = self.dy
+            * (FromPrimitive::from_usize(tuple_idx.1.abs_diff(r_idx.1).saturating_sub(1))).unwrap();
+        let rz: T = self.dz
+            * (FromPrimitive::from_usize(tuple_idx.2.abs_diff(r_idx.2).saturating_sub(1))).unwrap();
+        assert!(rx >= zero());
+        assert!(ry >= zero());
+        assert!(rz >= zero());
         rx * rx + ry * ry + rz * rz
     }
 

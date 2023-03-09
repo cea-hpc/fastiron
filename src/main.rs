@@ -18,10 +18,10 @@ use num::{Float, FromPrimitive};
 
 fn main() {
     let cli = Cli::parse();
-    println!("Printing CLI args:\n{cli:#?}");
+    //println!("Printing CLI args:\n{cli:#?}");
 
     let params = get_parameters(cli).unwrap();
-    println!("Printing Parameters:\n{params:#?}");
+    //println!("Printing Parameters:\n{params:#?}");
 
     let load_balance: bool = params.simulation_params.load_balance;
 
