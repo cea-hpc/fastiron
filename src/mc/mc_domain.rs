@@ -223,17 +223,30 @@ fn bootstrap_node_map<T: Float + FromPrimitive>(
     partition: &MeshPartition,
     grid: &GlobalFccGrid<T>,
 ) -> HashMap<usize, usize> {
+    // res
     let mut node_idx_map: HashMap<usize, usize> = Default::default();
+    // intermediate struct
+    let mut face_centers: HashMap<usize, usize> = Default::default();
 
     for (k, v) in &partition.cell_info_map {
+        // only process partition of our domain
         if v.domain_gid.unwrap() != partition.domain_gid {
             continue;
         }
+        // process
         let node_gids = grid.get_node_gids(*k);
-        (0..14).into_iter().for_each(|ii| {
+        // corners first
+        (0..8).into_iter().for_each(|ii| {
             node_idx_map.insert(node_gids[ii], node_idx_map.len());
         });
+        // faces later
+        (8..14).into_iter().for_each(|ii| {
+            face_centers.insert(node_gids[ii], face_centers.len());
+        });
     }
+    face_centers.values_mut().for_each(|val| *val += node_idx_map.len());
+
+    node_idx_map.extend(face_centers.iter());
 
     node_idx_map
 }

@@ -136,8 +136,8 @@ impl<T: Float + FromPrimitive> GlobalFccGrid<T> {
         let qx = idx / (self.nx + 1);
         let y = qx % (self.ny + 1);
         let qy = qx / (self.ny + 1);
-        let z = qy % self.nz;
-        let b = qy / self.nz;
+        let z = qy % (self.nz + 1);
+        let b = qy / (self.nz + 1);
         (x, y, z, b)
     }
 
