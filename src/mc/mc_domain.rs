@@ -237,14 +237,34 @@ fn bootstrap_node_map<T: Float + FromPrimitive>(
         let node_gids = grid.get_node_gids(*k);
         // corners first
         (0..8).into_iter().for_each(|ii| {
-            node_idx_map.insert(node_gids[ii], node_idx_map.len());
+            if !node_idx_map.contains_key(&node_gids[ii]) {
+                node_idx_map.insert(node_gids[ii], node_idx_map.len());
+            }
         });
         // faces later
         (8..14).into_iter().for_each(|ii| {
-            face_centers.insert(node_gids[ii], face_centers.len());
+            if !face_centers.contains_key(&node_gids[ii]) {                
+                face_centers.insert(node_gids[ii], face_centers.len());
+            }
         });
     }
-    face_centers.values_mut().for_each(|val| *val += node_idx_map.len());
+    // Debug 
+    // probably happens because of a specific behavior of 
+    // maps with keys that are already present
+    face_centers.values().for_each(|val| {
+        if *val == face_centers.len() {
+            println!("should not happen1");
+        }
+    });
+    node_idx_map.values().for_each(|val| {
+        if *val == node_idx_map.len() {
+            println!("should not happen2");
+        }
+    });
+
+    face_centers.values_mut().for_each(|val| {
+        *val += node_idx_map.len();
+    });
 
     node_idx_map.extend(face_centers.iter());
 
