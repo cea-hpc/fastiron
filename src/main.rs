@@ -74,11 +74,12 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
         .particle_vault_container
         .collapse_processing();
 
-    mcco.borrow_mut().tallies.balance_task[0].start = mcco
-        .borrow()
-        .particle_vault_container
-        .processing_vaults
-        .len() as u64;
+    let tmp = mcco
+    .borrow()
+    .particle_vault_container
+    .processing_vaults
+    .len() as u64;
+    mcco.borrow_mut().tallies.balance_task[0].start = tmp;
 
     mcco.borrow_mut().particle_buffer.initialize(mcco.clone());
 

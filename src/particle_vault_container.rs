@@ -124,7 +124,7 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
     /// of vaults needed to hold them. Removes excess vaults.
     pub fn collapse_processing(&mut self) {
         let mut fill_vault_index: usize = 0;
-        let mut from_vault_index: usize = self.processing_size();
+        let mut from_vault_index: usize = self.processing_size().saturating_sub(1);
 
         while fill_vault_index < from_vault_index {
             if self.processing_vaults[fill_vault_index].size() == self.vault_size {
@@ -145,7 +145,7 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
     /// of vaults needed to hold them. Removes excess vaults.
     pub fn collapse_processed(&mut self) {
         let mut fill_vault_index: usize = 0;
-        let mut from_vault_index: usize = self.processed_size();
+        let mut from_vault_index: usize = self.processed_size().saturating_sub(1);
 
         while fill_vault_index < from_vault_index {
             if self.processed_vaults[fill_vault_index].size() == self.vault_size {
