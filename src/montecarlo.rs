@@ -29,7 +29,7 @@ pub struct MonteCarlo<T: Float + FromPrimitive> {
     /// Object storing all tallies of the simulation
     pub tallies: Tallies<T>,
     /// Object storing data related to the advancement of the simulation
-    pub time_info: MCTimeInfo<T>,
+    pub time_info: MCTimeInfo,
     /// Container for the timers used for performance measurements
     pub fast_timer: MCFastTimerContainer,
     /// Object storing data related to the processor and execution mode
@@ -51,7 +51,7 @@ impl<T: Float + FromPrimitive + Display> MonteCarlo<T> {
             params.simulation_params.n_groups,
         );
         let processor_info = MCProcessorInfo::new();
-        let time_info: MCTimeInfo<T> = MCTimeInfo::default();
+        let time_info: MCTimeInfo = MCTimeInfo::default();
         let fast_timer: MCFastTimerContainer = MCFastTimerContainer::default();
 
         let num_proc = processor_info.num_processors;

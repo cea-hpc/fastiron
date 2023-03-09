@@ -12,11 +12,12 @@ pub fn load_particle<T: Float + FromPrimitive>(
     particle_vault: &ParticleVault<T>,
     particle_idx: usize,
 ) -> MCParticle<T> {
+    let time_step: T = FromPrimitive::from_f64(mcco.time_info.time_step).unwrap();
     let mut particle = particle_vault.get_particle(particle_idx).unwrap();
 
     // update time to census
     if particle.time_to_census <= zero() {
-        particle.time_to_census = particle.time_to_census + mcco.time_info.time_step;
+        particle.time_to_census = particle.time_to_census + time_step;
     }
     // set age
     if particle.age < zero() {
@@ -30,5 +31,4 @@ pub fn load_particle<T: Float + FromPrimitive>(
 
 /// Simulates the sources according to the problem's parameters.
 pub fn source_now<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
-    todo!()
 }
