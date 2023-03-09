@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, time::Instant};
+use std::time::Instant;
 
 use num::{Float, FromPrimitive};
 
@@ -65,25 +65,23 @@ impl MCFastTimerContainer {
     }
 }
 
-pub fn start<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>, section: Section) {
+pub fn start<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, section: Section) {
     let index = section as usize;
-    mcco.borrow_mut().fast_timer.timers[index].start_clock = Instant::now();
+    mcco.fast_timer.timers[index].start_clock = Instant::now();
 }
 
-pub fn stop<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>, section: Section) {
+pub fn stop<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, section: Section) {
     let index = section as usize;
-    mcco.borrow_mut().fast_timer.timers[index].end_clock = Instant::now();
-    mcco.borrow_mut().fast_timer.timers[index].last_cycle_clock += mcco.borrow().fast_timer.timers
-        [index]
+    mcco.fast_timer.timers[index].end_clock = Instant::now();
+    mcco.fast_timer.timers[index].last_cycle_clock += mcco.fast_timer.timers[index]
         .end_clock
-        .duration_since(mcco.borrow().fast_timer.timers[index].start_clock)
+        .duration_since(mcco.fast_timer.timers[index].start_clock)
         .as_micros();
-    mcco.borrow_mut().fast_timer.timers[index].cumulative_clock += mcco.borrow().fast_timer.timers
-        [index]
+    mcco.fast_timer.timers[index].cumulative_clock += mcco.fast_timer.timers[index]
         .end_clock
-        .duration_since(mcco.borrow().fast_timer.timers[index].start_clock)
+        .duration_since(mcco.fast_timer.timers[index].start_clock)
         .as_micros();
-    mcco.borrow_mut().fast_timer.timers[index].num_calls += 1;
+    mcco.fast_timer.timers[index].num_calls += 1;
 }
 
 pub fn get_last_cycle<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, section: Section) -> f64 {

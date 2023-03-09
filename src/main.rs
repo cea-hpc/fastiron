@@ -55,55 +55,47 @@ pub fn game_over<T: Float + Display + FromPrimitive + Default>(mcco: Rc<RefCell<
 }
 
 pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
-    mcco: Rc<RefCell<MonteCarlo<T>>>,
+    mcco: &mut MonteCarlo<T>,
     load_balance: bool,
 ) {
-    mc_fast_timer::start(mcco.clone(), Section::CycleInit);
+    mc_fast_timer::start(mcco, Section::CycleInit);
 
-    mcco.borrow_mut().clear_cross_section_cache();
+    mcco.clear_cross_section_cache();
 
     // mcco.tallies.cycle_initialize(mcco); // literally an empty function
 
-    mcco.borrow_mut()
-        .particle_vault_container
+    mcco.particle_vault_container
         .swap_processing_processed_vaults();
-    mcco.borrow_mut()
-        .particle_vault_container
-        .collapse_processed();
-    mcco.borrow_mut()
-        .particle_vault_container
-        .collapse_processing();
+    mcco.particle_vault_container.collapse_processed();
+    mcco.particle_vault_container.collapse_processing();
 
-    let tmp = mcco
-        .borrow()
-        .particle_vault_container
-        .processing_vaults
-        .len() as u64;
-    mcco.borrow_mut().tallies.balance_task[0].start = tmp;
+    let tmp = mcco.particle_vault_container.processing_vaults.len() as u64;
+    mcco.tallies.balance_task[0].start = tmp;
 
-    let tmp = mcco.borrow().domain.len();
-    mcco.borrow_mut().particle_buffer.initialize(tmp);
+    mcco.particle_buffer.initialize(mcco.domain.len());
 
-    mc_utils::source_now(mcco.clone());
+    mc_utils::source_now(mcco);
 
-    population_control::population_control(&mut mcco.borrow_mut(), load_balance);
+    population_control::population_control(&mut mcco, load_balance);
+    let lwc = mcco.params.simulation_params.low_weight_cutoff;
+    let spw = mcco.source_particle_weight;
     population_control::roulette_low_weight_particles(
-        mcco.borrow().params.simulation_params.low_weight_cutoff,
-        mcco.borrow().source_particle_weight,
-        &mut mcco.borrow_mut().particle_vault_container,
-        &mut mcco.borrow_mut().tallies.balance_task[0],
+        lwc,
+        spw,
+        &mut mcco.particle_vault_container,
+        &mut mcco.tallies.balance_task[0],
     );
 
     mc_fast_timer::stop(mcco, Section::CycleInit);
 }
 
 pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + Default>(
-    mcco: Rc<RefCell<MonteCarlo<T>>>,
+    mcco: &mut MonteCarlo<T>,
 ) {
-    mc_fast_timer::start(mcco.clone(), Section::CycleTracking);
+    mc_fast_timer::start(mcco, Section::CycleTracking);
     let mut done = false;
     // execution policy
-    let my_particle_vault = &mut mcco.borrow_mut().particle_vault_container;
+    let my_particle_vault = &mut mcco.particle_vault_container;
     //
     //
     //
@@ -115,7 +107,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
 
             for processing_vault_idx in 0..my_particle_vault.processing_vaults.len() {
                 // Computing block
-                mc_fast_timer::start(mcco.clone(), Section::CycleTrackingKernel);
+                mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 
                 let processed_vault_idx: usize =
                     my_particle_vault.get_first_empty_processed_vault().unwrap();
@@ -129,7 +121,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                 if num_particles != 0 {
                     for particle_index in 0..num_particles {
                         cycle_tracking_guts(
-                            mcco.clone(),
+                            mcco,
                             particle_index,
                             processing_vault,
                             processed_vault,
@@ -139,10 +131,10 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
 
                 //particle_count += num_particles as u64;
 
-                mc_fast_timer::stop(mcco.clone(), Section::CycleTrackingKernel);
+                mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
 
                 // Inter-domain communication block
-                mc_fast_timer::start(mcco.clone(), Section::CycleTrackingMPI);
+                mc_fast_timer::start(mcco, Section::CycleTrackingMPI);
 
                 let send_q = &mut my_particle_vault.send_queue;
 
@@ -150,8 +142,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                     let send_q_t = send_q.data[idx].clone();
                     let mcb_particle = processing_vault.get_base_particle(idx);
 
-                    mcco.borrow_mut()
-                        .particle_buffer
+                    mcco.particle_buffer
                         .buffer_particle(mcb_particle.unwrap(), send_q_t.neighbor);
                 }
 
@@ -159,45 +150,37 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                 send_q.clear();
 
                 my_particle_vault.clean_extra_vaults();
-                mcco.borrow_mut()
-                    .particle_buffer
-                    .read_buffers(&mut fill_vault, mcco.clone());
+                mcco.particle_buffer.read_buffers(&mut fill_vault, mcco);
 
-                mc_fast_timer::stop(mcco.clone(), Section::CycleTrackingMPI);
+                mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);
             }
 
-            mc_fast_timer::start(mcco.clone(), Section::CycleTrackingMPI);
+            mc_fast_timer::start(mcco, Section::CycleTrackingMPI);
 
             my_particle_vault.collapse_processing();
             my_particle_vault.collapse_processed();
-            done = mcco.borrow().particle_buffer.test_done_new(mcco.clone());
+            done = mcco.particle_buffer.test_done_new(mcco);
 
-            mc_fast_timer::stop(mcco.clone(), Section::CycleTrackingMPI);
+            mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);
         }
 
-        done = mcco.borrow().particle_buffer.test_done_new(mcco.clone());
+        done = mcco.particle_buffer.test_done_new(mcco);
 
         if done {
             break;
         }
     }
     //
-    mc_fast_timer::stop(mcco.clone(), Section::CycleTracking);
+    mc_fast_timer::stop(mcco, Section::CycleTracking);
 }
 
-pub fn cycle_finalize<T: Float + Display + FromPrimitive + Default>(
-    mcco: Rc<RefCell<MonteCarlo<T>>>,
-) {
-    mc_fast_timer::start(mcco.clone(), Section::CycleFinalize);
+pub fn cycle_finalize<T: Float + Display + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
+    mc_fast_timer::start(mcco, Section::CycleFinalize);
 
-    mcco.borrow_mut().tallies.balance_task[0].end = mcco
-        .borrow()
-        .particle_vault_container
-        .processed_vaults
-        .len() as u64;
+    mcco.tallies.balance_task[0].end = mcco.particle_vault_container.processed_vaults.len() as u64;
 
-    mcco.borrow_mut().tallies.cycle_finalize(mcco.clone());
-    mcco.borrow_mut().time_info.cycle += 1;
+    mcco.tallies.cycle_finalize(mcco);
+    mcco.time_info.cycle += 1;
 
     mc_fast_timer::stop(mcco, Section::CycleFinalize);
 }

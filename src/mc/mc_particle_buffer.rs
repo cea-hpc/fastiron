@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use num::{Float, FromPrimitive};
 
 use crate::montecarlo::MonteCarlo;
@@ -34,10 +32,10 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
 
     /// Check if there are no more particle transfer. The exact conditions
     /// to look for might change.
-    pub fn test_done_new(&self, mcco: Rc<RefCell<MonteCarlo<T>>>) -> bool {
-        if (mcco.borrow().particle_vault_container.send_queue.size() == 0)
+    pub fn test_done_new(&self, mcco: &MonteCarlo<T>) -> bool {
+        if (mcco.particle_vault_container.send_queue.size() == 0)
             & self.is_empty()
-            & (mcco.borrow().particle_vault_container.processing_size() == 0)
+            & (mcco.particle_vault_container.processing_size() == 0)
         {
             // with these three conditions, there should be a bit of
             // leeway as to where we can call the function
@@ -57,14 +55,13 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
     /// Read the buffers and unpack the particles in the given vault.
     /// Since we are not parallelizing over a spatial division, this
     /// function just unpacks everything.
-    pub fn read_buffers(&mut self, fill_vault: &mut usize, mcco: Rc<RefCell<MonteCarlo<T>>>) {
+    pub fn read_buffers(&mut self, fill_vault: &mut usize, mcco: &mut MonteCarlo<T>) {
         // If we were parallelizing, we would add a condition for
         // unpacking like (current thread nbr == buffer nbr)
         // instead of just iterating over all buffers.
         self.buffers.iter().for_each(|b| {
             b.iter().for_each(|particle| {
-                mcco.borrow_mut()
-                    .particle_vault_container
+                mcco.particle_vault_container
                     .add_processing_particle(MCBaseParticle::new(particle), fill_vault)
             })
         });

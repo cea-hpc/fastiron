@@ -1,4 +1,4 @@
-use std::{cell::RefCell, fmt::Display, rc::Rc};
+use std::fmt::Display;
 
 use num::{zero, Float, FromPrimitive};
 
@@ -339,10 +339,10 @@ impl<T: Float + Display + FromPrimitive + Default> Tallies<T> {
     }
 
     /// End-of-simulation routine that updates its own data and other structures'.
-    pub fn cycle_finalize(&mut self, mcco: Rc<RefCell<MonteCarlo<T>>>) {
+    pub fn cycle_finalize(&mut self, mcco: &mut MonteCarlo<T>) {
         self.sum_tasks();
 
-        self.print_summary(mcco.clone());
+        self.print_summary(mcco);
 
         self.balance_cumulative.add(&self.balance_task[0]);
 
@@ -376,34 +376,34 @@ impl<T: Float + Display + FromPrimitive + Default> Tallies<T> {
                         self.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
                     });
 
-                if mcco.borrow().params.simulation_params.coral_benchmark {
+                if mcco.params.simulation_params.coral_benchmark {
                     self.fluence
                         .compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
                 }
                 self.cell_tally_domain[domain_idx].task[0].reset();
                 self.scalar_flux_domain[domain_idx].task[0].reset();
             });
-        self.spectrum.update_spectrum(&mcco.borrow());
+        self.spectrum.update_spectrum(mcco);
     }
 
     /// Prints summarized data recorded by the tallies.
-    pub fn print_summary(&self, mcco: Rc<RefCell<MonteCarlo<T>>>) {
-        mc_fast_timer::stop(mcco.clone(), Section::CycleFinalize);
+    pub fn print_summary(&self, mcco: &mut MonteCarlo<T>) {
+        mc_fast_timer::stop(mcco, Section::CycleFinalize);
 
         println!("Balance: \n{:?}", self.balance_task[0]);
         let sum = self.scalar_flux_sum();
         println!("Scalar Flux Sum: {sum}");
         println!(
             "Cycle Initialize: {}",
-            mc_fast_timer::get_last_cycle(&mcco.borrow(), Section::CycleInit)
+            mc_fast_timer::get_last_cycle(mcco, Section::CycleInit)
         );
         println!(
             "Cycle Tracking: {}",
-            mc_fast_timer::get_last_cycle(&mcco.borrow(), Section::CycleTracking)
+            mc_fast_timer::get_last_cycle(mcco, Section::CycleTracking)
         );
         println!(
             "Cycle Finalize: {}",
-            mc_fast_timer::get_last_cycle(&mcco.borrow(), Section::CycleFinalize)
+            mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize)
         );
 
         mc_fast_timer::start(mcco, Section::CycleFinalize);
