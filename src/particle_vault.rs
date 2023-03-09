@@ -111,6 +111,9 @@ impl<T: Float + FromPrimitive> ParticleVault<T> {
     }
 
     /// Invalidate the particle at the specified index.
+    /// Is this really correct? The function is used at the end of each 
+    /// time iteration, meaning the particle may continue to travel
+    /// at next iter
     pub fn invalidate_particle(&mut self, index: usize) {
         self.particles[index] = None; // will panic if out of bounds
     }

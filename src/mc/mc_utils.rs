@@ -105,9 +105,8 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarl
 
                         particle.coordinate = generate_coordinate_3dg(
                             &mut particle.random_number_seed,
-                            domain_idx,
+                            &mcco.borrow().domain[domain_idx],
                             cell_idx,
-                            &mcco.borrow(),
                         );
 
                         particle

@@ -45,16 +45,12 @@ pub fn nearest_facet<T: Float + FromPrimitive>(
 /// passing a a reference to the domain since its read only.
 pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
     seed: &mut u64,
-    domain_num: usize,
+    domain: &MCDomain<T>,
     cell_idx: usize,
-    mcco: &MonteCarlo<T>,
 ) -> MCVector<T> {
     let mut coordinate: MCVector<T> = MCVector::default(); // result
     let six: T = FromPrimitive::from_f64(6.0).unwrap();
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
-
-    // pass the domain directly as argument instead; will change when the function is called.
-    let domain: &MCDomain<T> = &mcco.domain[domain_num];
 
     let num_facets: usize = domain.mesh.cell_connectivity[cell_idx].facet.len();
     if num_facets == 0 {

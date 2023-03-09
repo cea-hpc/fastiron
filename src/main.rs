@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::fmt::Display;
+use std::ops::AddAssign;
 use std::rc::Rc;
 
 use clap::Parser;
@@ -94,7 +95,7 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
     mc_fast_timer::stop(mcco, Section::CycleInit);
 }
 
-pub fn cycle_tracking<T: Float + FromPrimitive>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
+pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
     mc_fast_timer::start(mcco.clone(), Section::CycleTracking);
     let mut done = false;
     // execution policy
