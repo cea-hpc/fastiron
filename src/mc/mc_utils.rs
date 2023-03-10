@@ -17,7 +17,7 @@ use super::{
 pub fn load_particle<T: Float + FromPrimitive + Default>(
     particle_vault: &ParticleVault<T>,
     particle_idx: usize,
-    ts: f64
+    ts: f64,
 ) -> MCParticle<T> {
     let time_step: T = FromPrimitive::from_f64(ts).unwrap();
     let mut particle = particle_vault.get_particle(particle_idx).unwrap();

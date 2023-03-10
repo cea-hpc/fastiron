@@ -4,7 +4,7 @@ use num::{zero, Float, FromPrimitive, ToPrimitive};
 
 use crate::material_database::MaterialDatabase;
 use crate::mc::mc_base_particle::MCBaseParticle;
-use crate::mc::mc_fast_timer::{MCFastTimerContainer, self, Section};
+use crate::mc::mc_fast_timer::{self, MCFastTimerContainer, Section};
 use crate::mc::mc_utils::load_particle;
 use crate::mc::{
     mc_domain::MCDomain, mc_particle_buffer::MCParticleBuffer, mc_processor_info::MCProcessorInfo,
@@ -136,14 +136,14 @@ impl<T: Float + FromPrimitive + Display + Default> MonteCarlo<T> {
         // Check energy levels on processing particles
         // Iterate on processing vaults
         for vv in &self.particle_vault_container.processed_vaults {
-                // We need to iterate on the index in order to access all particles, even invalid ones
-                (0..vv.size()).into_iter().for_each(|particle_idx| {
-                    // load particle & update energy group
-                    let mut pp = load_particle(vv, particle_idx, self.time_info.time_step);
-                    pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
-                    self.tallies.spectrum.census_energy_spectrum[pp.energy_group] += 1;
-                });
-        };
+            // We need to iterate on the index in order to access all particles, even invalid ones
+            (0..vv.size()).into_iter().for_each(|particle_idx| {
+                // load particle & update energy group
+                let mut pp = load_particle(vv, particle_idx, self.time_info.time_step);
+                pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
+                self.tallies.spectrum.census_energy_spectrum[pp.energy_group] += 1;
+            });
+        }
         // Iterate on processed vaults
         self.particle_vault_container
             .processed_vaults
@@ -165,7 +165,9 @@ impl<T: Float + FromPrimitive + Display + Default> MonteCarlo<T> {
         self.tallies.print_summary(self);
         mc_fast_timer::start(self, Section::CycleFinalize);
 
-        self.tallies.balance_cumulative.add(&self.tallies.balance_task[0]);
+        self.tallies
+            .balance_cumulative
+            .add(&self.tallies.balance_task[0]);
 
         let new_start: u64 = self.tallies.balance_task[0].end;
         (0..self.tallies.balance_task.len())
@@ -182,7 +184,8 @@ impl<T: Float + FromPrimitive + Display + Default> MonteCarlo<T> {
                 (1..self.tallies.num_cell_tally_replications)
                     .into_iter()
                     .for_each(|rep_idx| {
-                        let val = self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                        let val = self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize]
+                            .clone(); // is there a cheaper way?
                         self.tallies.cell_tally_domain[domain_idx].task[0].add(&val);
                         self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
                     });
@@ -191,14 +194,16 @@ impl<T: Float + FromPrimitive + Display + Default> MonteCarlo<T> {
                 (1..self.tallies.num_flux_replications)
                     .into_iter()
                     .for_each(|rep_idx| {
-                        let val =
-                            self.tallies.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                        let val = self.tallies.scalar_flux_domain[domain_idx].task
+                            [rep_idx as usize]
+                            .clone(); // is there a cheaper way?
                         self.tallies.scalar_flux_domain[domain_idx].task[0].add(&val);
                         self.tallies.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
                     });
 
                 if self.params.simulation_params.coral_benchmark {
-                    self.tallies.fluence
+                    self.tallies
+                        .fluence
                         .compute(domain_idx, &self.tallies.scalar_flux_domain[domain_idx]);
                 }
                 self.tallies.cell_tally_domain[domain_idx].task[0].reset();

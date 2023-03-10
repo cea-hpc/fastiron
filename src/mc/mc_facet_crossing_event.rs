@@ -49,7 +49,8 @@ pub fn facet_crossing_event<T: Float + FromPrimitive>(
             let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
                 .mesh
                 .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
-            mcco.particle_vault_container.processing_vaults[processing_vault_idx].put_particle(mc_particle.clone(), particle_idx);
+            mcco.particle_vault_container.processing_vaults[processing_vault_idx]
+                .put_particle(mc_particle.clone(), particle_idx);
 
             mcco.particle_vault_container
                 .get_send_queue()

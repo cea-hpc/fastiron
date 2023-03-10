@@ -1,5 +1,6 @@
 use std::fmt::{Debug, Display};
 use std::ops::AddAssign;
+use std::primitive;
 
 use clap::Parser;
 use num::{Float, FromPrimitive};
@@ -30,9 +31,13 @@ fn main() {
 
     mc_fast_timer::start(mcco, Section::Main);
 
-    for _ in 0..n_steps {
+    for s in 0..n_steps {
+        println!("step: {s}");
+        println!("init...");
         cycle_init(mcco, load_balance);
+        println!("track...");
         cycle_tracking(mcco);
+        println!("finalize...");
         cycle_finalize(mcco);
 
         mcco.fast_timer.last_cycle_report();
@@ -104,10 +109,12 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                 // Computing block
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 
-                let processed_vault_idx: usize =
-                    mcco.particle_vault_container.get_first_empty_processed_vault().unwrap();
+                let processed_vault_idx: usize = mcco
+                    .particle_vault_container
+                    .get_first_empty_processed_vault()
+                    .unwrap();
 
-                let num_particles = 
+                let num_particles =
                     mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
                 // match ExecPolicy cpu
                 if num_particles != 0 {
@@ -132,7 +139,9 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
 
                 for idx in 0..send_q.size() {
                     let send_q_t = send_q.data[idx].clone();
-                    let mcb_particle = mcco.particle_vault_container.processing_vaults[processing_vault_idx].get_base_particle(idx);
+                    let mcb_particle = mcco.particle_vault_container.processing_vaults
+                        [processing_vault_idx]
+                        .get_base_particle(idx);
 
                     mcco.particle_buffer
                         .buffer_particle(mcb_particle.unwrap(), send_q_t.neighbor);
