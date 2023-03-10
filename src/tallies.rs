@@ -389,7 +389,8 @@ impl<T: Float + Display + FromPrimitive + Default> Tallies<T> {
 
     /// Prints summarized data recorded by the tallies.
     pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
-        println!("Balance: \n{:?}", self.balance_task[0]);
+        println!("---Tallies:: print_summary");
+        println!("{:?}", self.balance_task[0]);
         let sum = self.scalar_flux_sum();
         println!("Scalar Flux Sum: {sum}");
         println!(
@@ -404,6 +405,7 @@ impl<T: Float + Display + FromPrimitive + Default> Tallies<T> {
             "Cycle Finalize: {}",
             mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize)
         );
+        println!();
     }
 
     /// Atomic add?

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use num::{zero, Float, FromPrimitive};
 
 use crate::mc::mc_rng_state::rng_sample;
@@ -174,7 +176,7 @@ pub struct NuclearData<T: Float> {
     pub energies: Vec<T>,
 }
 
-impl<T: Float + FromPrimitive + Default> NuclearData<T> {
+impl<T: Float + FromPrimitive + Default + Display> NuclearData<T> {
     /// Extra messy constructor.
     pub fn new(num_groups: usize, energy_low: T, energy_high: T) -> Self {
         let mut energies = vec![zero(); num_groups + 1];
@@ -275,6 +277,7 @@ impl<T: Float + FromPrimitive + Default> NuclearData<T> {
 
     /// Returns the energy group a specific energy belongs to.
     pub fn get_energy_groups(&self, energy: T) -> usize {
+        println!("kin energy: {energy}");
         let num_energies = self.energies.len();
 
         // extreme low

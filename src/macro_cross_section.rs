@@ -1,10 +1,12 @@
+use std::fmt::Display;
+
 use num::{zero, Float, FromPrimitive};
 
 use crate::{montecarlo::MonteCarlo, physical_constants::TINY_FLOAT};
 
 /// Computes the reaction-specific number-density-weighted
 /// macroscopic cross section of a cell.
-pub fn macroscopic_cross_section<T: Float + FromPrimitive + Default>(
+pub fn macroscopic_cross_section<T: Float + FromPrimitive + Default + Display>(
     mcco: &MonteCarlo<T>,
     reaction_idx: usize,
     domain_idx: usize,
@@ -37,7 +39,7 @@ pub fn macroscopic_cross_section<T: Float + FromPrimitive + Default>(
 /// Computes the total number-density-weighted macroscopic
 /// cross section of a cell. This additional method replaces
 /// the use of a magic value (-1) for `reaction_idx`.
-pub fn macroscopic_total_cross_section<T: Float + FromPrimitive + Default>(
+pub fn macroscopic_total_cross_section<T: Float + FromPrimitive + Default + Display>(
     mcco: &MonteCarlo<T>,
     domain_idx: usize,
     cell_idx: usize,
@@ -68,7 +70,7 @@ pub fn macroscopic_total_cross_section<T: Float + FromPrimitive + Default>(
 
 /// Computes the number-density-weighted macroscopic cross section
 /// of the collection of isotopes in a cell.
-pub fn weighted_macroscopic_cross_section<T: Float + FromPrimitive + Default>(
+pub fn weighted_macroscopic_cross_section<T: Float + FromPrimitive + Default +Display>(
     mcco: &mut MonteCarlo<T>,
     domain_idx: usize,
     cell_idx: usize,

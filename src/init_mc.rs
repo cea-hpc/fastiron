@@ -43,7 +43,7 @@ fn init_time_info<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>) {
     mcco.time_info.time_step = FromPrimitive::from_f64(params.simulation_params.dt).unwrap();
 }
 
-fn init_nuclear_data<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
+fn init_nuclear_data<T: Float + FromPrimitive + Default + Display>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
     let energy_low: T = FromPrimitive::from_f64(params.simulation_params.e_min).unwrap();
     let energy_high: T = FromPrimitive::from_f64(params.simulation_params.e_max).unwrap();
@@ -118,11 +118,12 @@ fn consistency_check<T: Float>(my_rank: usize, domain: &[MCDomain<T>], params: &
             .for_each(|(cell_idx, cc)| {
                 cc.facet.iter().enumerate().for_each(|(facet_idx, ff)| {
                     let current = ff.subfacet.current;
-                    println!(
-                        "current.cell == cell_idx: {}",
-                        current.cell.unwrap() == cell_idx
-                    );
-
+                    if params.simulation_params.debug_threads {
+                        println!(
+                            "current.cell == cell_idx: {}",
+                            current.cell.unwrap() == cell_idx
+                        );
+                    }
                     let adjacent = ff.subfacet.adjacent;
                     // These can be none e.g. if the current is on the border of the problem
                     if adjacent.domain.is_some()

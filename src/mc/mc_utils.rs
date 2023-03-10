@@ -36,6 +36,7 @@ pub fn load_particle<T: Float + FromPrimitive + Default>(
 
 /// Simulates the sources according to the problem's parameters.
 pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
+    println!("---source_now");
     let time_step = FromPrimitive::from_f64(mcco.time_info.time_step).unwrap();
 
     let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];
@@ -144,6 +145,8 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) 
                 dom.cell_state[cell_idx].source_tally = cell_source_tally[cell_idx];
             });
         });
+    println!("{} processing particles", mcco.particle_vault_container.particles_processing_size());
+    println!("{} processed particles", mcco.particle_vault_container.particles_processed_size());
 }
 
 fn speed_from_energy<T: Float + FromPrimitive>(energy: T) -> T {

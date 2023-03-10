@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 use num::{zero, Float, FromPrimitive};
 
@@ -49,7 +49,7 @@ pub fn update_trajectory<T: Float + FromPrimitive + Debug + Default>(
 
 /// Computes and transform accordingly a [MCParticle] object that
 /// undergo a collision. Returns true if the particle will continue
-pub fn collision_event<T: Float + FromPrimitive + Debug + Default>(
+pub fn collision_event<T: Float + FromPrimitive + Debug + Default + Display>(
     mcco: &mut MonteCarlo<T>,
     mc_particle: &mut MCParticle<T>,
     tally_idx: usize,

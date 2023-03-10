@@ -197,6 +197,7 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
         particle: MCBaseParticle<T>,
         fill_vault_index: &mut usize,
     ) {
+        println!("particle_added");
         while !self.processing_vaults[*fill_vault_index].size() < self.vault_size {
             *fill_vault_index += 1;
 

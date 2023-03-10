@@ -31,12 +31,15 @@ fn main() {
     mc_fast_timer::start(mcco, Section::Main);
 
     for s in 0..n_steps {
+        println!();
+        println!();
+        println!();
         println!("step: {s}");
-        println!("init...");
+        println!("---cycle_init");
         cycle_init(mcco, load_balance);
-        println!("track...");
+        println!("---cycle_track");
         cycle_tracking(mcco);
-        println!("finalize...");
+        println!("---cycle_finalize");
         cycle_finalize(mcco);
 
         mcco.fast_timer.last_cycle_report();
