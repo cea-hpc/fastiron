@@ -15,11 +15,11 @@ use super::{
 
 /// Copies a single particle from the particle-vault data and returns it.
 pub fn load_particle<T: Float + FromPrimitive + Default>(
-    mcco: &MonteCarlo<T>,
     particle_vault: &ParticleVault<T>,
     particle_idx: usize,
+    ts: f64
 ) -> MCParticle<T> {
-    let time_step: T = FromPrimitive::from_f64(mcco.time_info.time_step).unwrap();
+    let time_step: T = FromPrimitive::from_f64(ts).unwrap();
     let mut particle = particle_vault.get_particle(particle_idx).unwrap();
 
     // update time to census
@@ -31,7 +31,7 @@ pub fn load_particle<T: Float + FromPrimitive + Default>(
         particle.age = zero();
     }
     // get energy group
-    particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
+    //particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
 
     particle
 }

@@ -28,7 +28,8 @@ pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssig
 ) {
     let processing_vault = &mcco.particle_vault_container.processing_vaults[processing_vault_idx];
 
-    let mut particle = load_particle(mcco, processing_vault, particle_idx);
+    let mut particle = load_particle(processing_vault, particle_idx, mcco.time_info.time_step);
+    particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
     particle.task = 0;
 
     cycle_tracking_function(

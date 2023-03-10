@@ -47,7 +47,7 @@ fn main() {
 
 pub fn game_over<T: Float + Display + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
     mcco.fast_timer.cumulative_report();
-    mcco.tallies.spectrum.print_spectrum(&mcco);
+    mcco.tallies.spectrum.print_spectrum(mcco);
 }
 
 pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
@@ -171,7 +171,7 @@ pub fn cycle_finalize<T: Float + Display + FromPrimitive + Default>(mcco: &mut M
 
     mcco.tallies.balance_task[0].end = mcco.particle_vault_container.processed_vaults.len() as u64;
 
-    mcco.tallies.cycle_finalize(mcco);
+    mcco.cycle_finalize();
     mcco.time_info.cycle += 1;
 
     mc_fast_timer::stop(mcco, Section::CycleFinalize);
