@@ -161,6 +161,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
             mcco.particle_vault_container.collapse_processing();
             mcco.particle_vault_container.collapse_processed();
             done = mcco.particle_buffer.test_done_new(mcco);
+            println!("done: {done}");
 
             mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);
         }

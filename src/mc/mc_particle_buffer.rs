@@ -33,15 +33,14 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
     /// Check if there are no more particle transfer. The exact conditions
     /// to look for might change.
     pub fn test_done_new(&self, mcco: &MonteCarlo<T>) -> bool {
-        if (mcco.particle_vault_container.send_queue.size() == 0)
-            & self.is_empty()
-            & (mcco.particle_vault_container.processing_size() == 0)
-        {
-            // with these three conditions, there should be a bit of
-            // leeway as to where we can call the function
-            return true;
-        }
-        false
+        let buffer_empty = self.is_empty();
+        let sendq_empty = mcco.particle_vault_container.send_queue.size() == 0;
+        let processing_empty = mcco.particle_vault_container.particles_processing_size() == 0;
+        //println!("is buffer empty: {buffer_empty}");
+        //println!("is sendq empty: {sendq_empty}");
+        //println!("is processing vault empty: {processing_empty}");
+    
+        buffer_empty & sendq_empty & processing_empty
     }
 
     /// Put the given MCParticle in the corresponding buffer. The buffer
@@ -66,7 +65,7 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
                     .add_processing_particle(MCBaseParticle::new(particle), fill_vault)
             })
         });
-        // maybe calling clear() directly here is best?
+        self.clear()
     }
 
     /// Clear the buffers

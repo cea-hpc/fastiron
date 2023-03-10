@@ -127,6 +127,7 @@ impl<T: Float + FromPrimitive + Display + Default> MonteCarlo<T> {
                     .add_processing_particle(MCBaseParticle::new(particle), fill_vault)
             })
         });
+        self.particle_buffer.clear()
     }
 
     pub fn update_spectrum(&mut self) {
