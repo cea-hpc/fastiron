@@ -77,7 +77,8 @@ pub fn weighted_macroscopic_cross_section<T: Float + FromPrimitive + Default + D
     energy_group: usize,
 ) -> T {
     // early return
-    println!("{:?}", mcco.domain[domain_idx].cell_state[cell_idx].total);
+    println!("{:?}", mcco.domain);
+    println!("{:?}", mcco.domain[domain_idx].cell_state[cell_idx].total); // why is this empty?
     let precomputed_cross_section =
         mcco.domain[domain_idx].cell_state[cell_idx].total[energy_group];
     if precomputed_cross_section > zero() {
