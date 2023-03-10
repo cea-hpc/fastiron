@@ -155,7 +155,7 @@ impl<T: Float + FromPrimitive + Default> MCDomain<T> {
         params: &Parameters,
     ) -> Self {
         let mesh = MCMeshDomain::new(mesh_partition, grid, ddc, &get_boundary_conditions(params));
-        let cell_state: Vec<MCCellState<T>> = Vec::with_capacity(mesh.cell_geometry.len());
+        let cell_state: Vec<MCCellState<T>> = vec![MCCellState::default(); mesh.cell_geometry.len()];
         let mut mcdomain = MCDomain {
             global_domain: mesh.domain_gid,
             cell_state,

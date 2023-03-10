@@ -66,6 +66,8 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) 
     let vault_size = mcco.particle_vault_container.vault_size;
     let mut processing_idx = mcco.particle_vault_container.particles_processing_size() / vault_size;
 
+    println!("n_domains: {}", mcco.domain.len());
+
     // on each domain
     mcco.domain
         .iter_mut()
@@ -74,6 +76,9 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) 
             // we'll update the tally separately and merge data after
             // this allows for a read-only iterator
             let mut cell_source_tally: Vec<usize> = vec![0; dom.cell_state.len()];
+
+            println!("{} cells in domain {}", dom.cell_state.len(), domain_idx);
+            
             // on each cell
             dom.cell_state
                 .iter()
@@ -87,6 +92,7 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) 
                         .unwrap();
                     cell_source_tally[cell_idx] = cell.source_tally;
                     // create cell_n_particles and add them to the vaults
+                    println!("creating {cell_n_particles} particles in cell {cell_idx}");
                     (0..cell_n_particles).into_iter().for_each(|_| {
                         let mut particle: MCParticle<T> = MCParticle::default();
                         // atomic in original code

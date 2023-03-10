@@ -2,7 +2,7 @@ use num::{zero, Float};
 
 /// Structure used to represent a cell's state, i.e.
 /// properties relevant to the simulation.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MCCellState<T: Float> {
     /// Global id of the material
     pub material: usize,

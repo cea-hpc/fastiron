@@ -19,7 +19,7 @@ fn main() {
     //println!("Printing CLI args:\n{cli:#?}");
 
     let params = get_parameters(cli).unwrap();
-    //println!("Printing Parameters:\n{params:#?}");
+    println!("Printing Parameters:\n{params:#?}");
 
     let load_balance: bool = params.simulation_params.load_balance;
 
@@ -35,11 +35,11 @@ fn main() {
         println!();
         println!();
         println!("step: {s}");
-        println!("---cycle_init");
+        println!("------cycle_init");
         cycle_init(mcco, load_balance);
-        println!("---cycle_track");
+        println!("------cycle_track");
         cycle_tracking(mcco);
-        println!("---cycle_finalize");
+        println!("------cycle_finalize");
         cycle_finalize(mcco);
 
         mcco.fast_timer.last_cycle_report();
