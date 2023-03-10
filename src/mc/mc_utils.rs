@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use num::{zero, Float, FromPrimitive};
 
 use crate::{
@@ -39,49 +37,47 @@ pub fn load_particle<T: Float + FromPrimitive + Default>(
 }
 
 /// Simulates the sources according to the problem's parameters.
-pub fn source_now<T: Float + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
-    let time_step = FromPrimitive::from_f64(mcco.borrow().time_info.time_step).unwrap();
+pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
+    let time_step = FromPrimitive::from_f64(mcco.time_info.time_step).unwrap();
 
-    let mut source_rate: Vec<T> = vec![zero(); mcco.borrow().material_database.mat.len()];
-    (0..mcco.borrow().material_database.mat.len())
+    let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];
+    (0..mcco.material_database.mat.len())
         .into_iter()
         .for_each(|mat_idx| {
-            let name = &mcco.borrow().material_database.mat[mat_idx].name;
-            let sr = mcco.borrow().params.material_params[name].source_rate;
+            let name = &mcco.material_database.mat[mat_idx].name;
+            let sr = mcco.params.material_params[name].source_rate;
             source_rate[mat_idx] = FromPrimitive::from_f64(sr).unwrap();
         });
 
     let mut total_weight_particles: T = zero();
-    mcco.borrow().domain.iter().for_each(|dom| {
+    mcco.domain.iter().for_each(|dom| {
         dom.cell_state.iter().for_each(|cell| {
             let cell_weight_particles: T = cell.volume * source_rate[cell.material] * time_step;
             total_weight_particles = total_weight_particles + cell_weight_particles;
         });
     });
 
-    let n_particles = mcco.borrow().params.simulation_params.n_particles as usize;
+    let n_particles = mcco.params.simulation_params.n_particles as usize;
     let source_fraction: T = FromPrimitive::from_f64(0.1).unwrap();
     let source_particle_weight: T = total_weight_particles
         / (source_fraction * FromPrimitive::from_usize(n_particles).unwrap());
 
-    mcco.borrow_mut().source_particle_weight = source_particle_weight.to_f64().unwrap();
+    mcco.source_particle_weight = source_particle_weight.to_f64().unwrap();
 
-    let vault_size = mcco.borrow().particle_vault_container.vault_size;
-    let mut processing_idx = mcco
-        .borrow()
-        .particle_vault_container
-        .particles_processing_size()
-        / vault_size;
+    let vault_size = mcco.particle_vault_container.vault_size;
+    let mut processing_idx = mcco.particle_vault_container.particles_processing_size() / vault_size;
 
     // on each domain
-    mcco.borrow_mut()
-        .domain
+    mcco.domain
         .iter_mut()
         .enumerate()
         .for_each(|(domain_idx, dom)| {
+            // we'll update the tally separately and merge data after
+            // this allows for a read-only iterator
+            let mut cell_source_tally: Vec<usize> = vec![0; dom.cell_state.len()];
             // on each cell
             dom.cell_state
-                .iter_mut()
+                .iter()
                 .enumerate()
                 .for_each(|(cell_idx, cell)| {
                     let cell_weight_particle: T =
@@ -90,13 +86,13 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarl
                     let cell_n_particles: usize = (cell_weight_particle / source_particle_weight)
                         .to_usize()
                         .unwrap();
-
+                    cell_source_tally[cell_idx] = cell.source_tally;
                     // create cell_n_particles and add them to the vaults
                     (0..cell_n_particles).into_iter().for_each(|_| {
                         let mut particle: MCParticle<T> = MCParticle::default();
                         // atomic in original code
-                        let mut rand_n_seed = cell.source_tally as u64;
-                        cell.source_tally += 1;
+                        let mut rand_n_seed = cell_source_tally[cell_idx] as u64;
+                        cell_source_tally[cell_idx] += 1;
 
                         rand_n_seed += cell.id as u64;
 
@@ -105,7 +101,7 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarl
 
                         particle.coordinate = generate_coordinate_3dg(
                             &mut particle.random_number_seed,
-                            &mcco.borrow().domain[domain_idx],
+                            dom,
                             cell_idx,
                         );
 
@@ -115,14 +111,13 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarl
 
                         // sample energy uniformly in [emin; emax] MeV
                         let range: T = FromPrimitive::from_f64(
-                            mcco.borrow().params.simulation_params.e_max
-                                - mcco.borrow().params.simulation_params.e_min,
+                            mcco.params.simulation_params.e_max
+                                - mcco.params.simulation_params.e_min,
                         )
                         .unwrap();
                         let sample: T = rng_sample(&mut particle.random_number_seed);
                         particle.kinetic_energy = sample * range
-                            + FromPrimitive::from_f64(mcco.borrow().params.simulation_params.e_min)
-                                .unwrap();
+                            + FromPrimitive::from_f64(mcco.params.simulation_params.e_min).unwrap();
 
                         let speed: T = speed_from_energy(particle.kinetic_energy);
                         particle.velocity.x = speed * particle.direction_cosine.alpha;
@@ -139,14 +134,18 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarl
 
                         let base_particle: MCBaseParticle<T> = MCBaseParticle::new(&particle);
 
-                        mcco.borrow_mut()
-                            .particle_vault_container
+                        mcco.particle_vault_container
                             .add_processing_particle(base_particle, &mut processing_idx);
 
                         // atomic in original code
-                        mcco.borrow_mut().tallies.balance_task[particle.task].source += 1;
+                        mcco.tallies.balance_task[particle.task].source += 1;
                     });
-                })
+                });
+            // update source_tally
+            (0..dom.cell_state.len()).into_iter().for_each(|cell_idx| {
+                dom.cell_state[cell_idx].source_tally = cell_source_tally[cell_idx];
+            });
+
         });
 }
 

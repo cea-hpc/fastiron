@@ -1,8 +1,7 @@
-use std::cell::RefCell;
 use std::fmt::{Debug, Display};
 use std::ops::AddAssign;
-use std::rc::Rc;
 
+use num::{Float, FromPrimitive};
 use clap::Parser;
 
 use fastiron::coral_benchmark_correctness;
@@ -14,7 +13,6 @@ use fastiron::mc::mc_utils;
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::get_parameters;
 use fastiron::population_control;
-use num::{Float, FromPrimitive};
 
 fn main() {
     let cli = Cli::parse();
@@ -27,31 +25,29 @@ fn main() {
 
     let n_steps = params.simulation_params.n_steps;
 
-    let mcco: Rc<RefCell<MonteCarlo<f64>>> = Rc::new(RefCell::new(init_mc(params)));
+    let mut mcco_obj: MonteCarlo<f64> = init_mc(params);
+    let mcco = &mut mcco_obj;
 
-    mc_fast_timer::start(mcco.clone(), Section::Main);
+    mc_fast_timer::start(mcco, Section::Main);
 
     for _ in 0..n_steps {
-        cycle_init(mcco.clone(), load_balance);
-        cycle_tracking(mcco.clone());
-        cycle_finalize(mcco.clone());
+        cycle_init(mcco, load_balance);
+        cycle_tracking(mcco);
+        cycle_finalize(mcco);
 
-        mcco.borrow().fast_timer.last_cycle_report();
+        mcco.fast_timer.last_cycle_report();
     }
 
-    mc_fast_timer::stop(mcco.clone(), Section::Main);
+    mc_fast_timer::stop(mcco, Section::Main);
 
-    game_over(mcco.clone());
+    game_over(mcco);
 
     coral_benchmark_correctness::coral_benchmark_correctness(mcco);
 }
 
-pub fn game_over<T: Float + Display + FromPrimitive + Default>(mcco: Rc<RefCell<MonteCarlo<T>>>) {
-    mcco.borrow().fast_timer.cumulative_report();
-    mcco.borrow()
-        .tallies
-        .spectrum
-        .print_spectrum(&mcco.borrow());
+pub fn game_over<T: Float + Display + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
+    mcco.fast_timer.cumulative_report();
+    mcco.tallies.spectrum.print_spectrum(&mcco);
 }
 
 pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
@@ -76,7 +72,7 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
 
     mc_utils::source_now(mcco);
 
-    population_control::population_control(&mut mcco, load_balance);
+    population_control::population_control(mcco, load_balance);
     let lwc = mcco.params.simulation_params.low_weight_cutoff;
     let spw = mcco.source_particle_weight;
     population_control::roulette_low_weight_particles(

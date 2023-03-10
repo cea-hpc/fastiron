@@ -1,8 +1,6 @@
 use std::{
-    cell::RefCell,
     fmt::{Debug, Display},
     ops::AddAssign,
-    rc::Rc,
 };
 
 use num::{one, Float, FromPrimitive};
@@ -24,12 +22,12 @@ use crate::{
 
 /// Main steps of the CycleTracking sections
 pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssign + Default>(
-    mcco: Rc<RefCell<MonteCarlo<T>>>,
+    mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
     processing_vault: &mut ParticleVault<T>,
     processed_vault: &mut ParticleVault<T>,
 ) {
-    let mut particle = load_particle(&mcco.borrow(), processing_vault, particle_idx);
+    let mut particle = load_particle(mcco, processing_vault, particle_idx);
     particle.task = 0;
 
     cycle_tracking_function(
@@ -45,33 +43,33 @@ pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssig
 
 /// Computations of the CycleTracking sections
 pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddAssign + Default>(
-    mcco: Rc<RefCell<MonteCarlo<T>>>,
+    mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
     particle_idx: usize,
     processing_vault: &mut ParticleVault<T>,
     processed_vault: &mut ParticleVault<T>,
 ) {
     let mut keep_tracking: bool;
-    let tally_idx: usize = particle_idx % mcco.borrow().tallies.num_balance_replications as usize;
-    let flux_tally_idx: usize = particle_idx % mcco.borrow().tallies.num_flux_replications as usize;
-    //let cell_tally_idx: usize = particle_idx % mcco.borrow().tallies.num_cell_tally_replications as usize;
+    let tally_idx: usize = particle_idx % mcco.tallies.num_balance_replications as usize;
+    let flux_tally_idx: usize = particle_idx % mcco.tallies.num_flux_replications as usize;
+    //let cell_tally_idx: usize = particle_idx % mcco.tallies.num_cell_tally_replications as usize;
 
     loop {
-        let segment_outcome = outcome(&mut mcco.borrow_mut(), particle, flux_tally_idx);
+        let segment_outcome = outcome(mcco, particle, flux_tally_idx);
 
         // atomic in original code
-        mcco.borrow_mut().tallies.balance_task[tally_idx].num_segments += 1;
+        mcco.tallies.balance_task[tally_idx].num_segments += 1;
 
         particle.num_segments += one();
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                keep_tracking = collision_event(&mut mcco.borrow_mut(), particle, tally_idx)
+                keep_tracking = collision_event(mcco, particle, tally_idx)
             }
             MCSegmentOutcome::FacetCrossing => {
                 let facet_crossing_type = facet_crossing_event(
                     particle,
-                    &mut mcco.borrow_mut(),
+                    mcco,
                     particle_idx,
                     processing_vault,
                 );
@@ -80,13 +78,13 @@ pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddA
                     MCTallyEvent::FacetCrossingTransitExit => true,
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
-                        mcco.borrow_mut().tallies.balance_task[tally_idx].escape += 1;
+                        mcco.tallies.balance_task[tally_idx].escape += 1;
                         particle.last_event = MCTallyEvent::FacetCrossingEscape;
                         particle.species = Species::Unknown;
                         false
                     }
                     MCTallyEvent::FacetCrossingReflection => {
-                        reflect_particle(&mcco.borrow(), particle);
+                        reflect_particle(mcco, particle);
                         true
                     }
                     _ => false,
@@ -96,7 +94,7 @@ pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddA
                 processed_vault.push_particle(particle.clone());
                 processing_vault.erase_swap_particles(particle_idx); //?
                                                                      // atomic in original code
-                mcco.borrow_mut().tallies.balance_task[tally_idx].census += 1;
+                mcco.tallies.balance_task[tally_idx].census += 1;
                 keep_tracking = false
             }
             MCSegmentOutcome::Initialize => unreachable!(),
