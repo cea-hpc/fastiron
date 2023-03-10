@@ -130,7 +130,7 @@ impl<T: Float> CellTallyTask<T> {
 
     /// Reset fields to their default value i.e. 0.
     pub fn reset(&mut self) {
-        self.cell.clear(); // no effect on allocated capacity
+        self.cell = vec![zero(); self.cell.len()]; // no effect on allocated capacity
     }
 
     /// Add another [CellTallyTask]'s value to its own. Replace by an overload?
@@ -156,14 +156,16 @@ impl<T: Float> ScalarFluxTask<T> {
         // originally uses BulkStorage object for contiguous memory
         (0..domain.cell_state.len())
             .into_iter()
-            .for_each(|_| cell.push(Vec::with_capacity(num_groups)));
+            .for_each(|_| cell.push(vec![zero(); num_groups]));
 
         Self { cell }
     }
 
     /// Reset fields to their default value i.e. 0.
     pub fn reset(&mut self) {
-        self.cell.clear();
+        self.cell.iter_mut().for_each(|sf_cell| {
+            sf_cell.fill(zero());
+        });
     }
 
     /// Add another [ScalarFluxTask]'s value to its own. Replace by an overload?

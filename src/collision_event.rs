@@ -68,28 +68,30 @@ pub fn collision_event<T: Float + FromPrimitive + Debug + Default + Display>(
 
     let n_iso: usize = mcco.material_database.mat[mat_gidx].iso.len();
 
-    for iso_idx in 0..n_iso {
-        let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
-        let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
-        for reaction_idx in 0..n_reactions {
-            current_xsection = current_xsection
-                - macroscopic_cross_section(
-                    mcco,
-                    reaction_idx,
-                    mc_particle.domain,
-                    mc_particle.cell,
-                    iso_idx,
-                    mc_particle.energy_group,
-                );
+    while current_xsection >= zero() {   
+        for iso_idx in 0..n_iso {
+            let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
+            let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
+            for reaction_idx in 0..n_reactions {
+                current_xsection = current_xsection
+                    - macroscopic_cross_section(
+                        mcco,
+                        reaction_idx,
+                        mc_particle.domain,
+                        mc_particle.cell,
+                        iso_idx,
+                        mc_particle.energy_group,
+                    );
+                if current_xsection < zero() {
+                    selected_iso = iso_idx;
+                    selected_unique_n = unique_n;
+                    selected_react = reaction_idx;
+                    break;
+                }
+            }
             if current_xsection < zero() {
-                selected_iso = iso_idx;
-                selected_unique_n = unique_n;
-                selected_react = reaction_idx;
                 break;
             }
-        }
-        if current_xsection < zero() {
-            break;
         }
     }
     assert_ne!(selected_iso, usize::MAX); // sort of a magic value
