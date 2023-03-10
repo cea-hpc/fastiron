@@ -1,6 +1,6 @@
 use num::{Float, FromPrimitive};
 
-use crate::{montecarlo::MonteCarlo, particle_vault::ParticleVault, tallies::MCTallyEvent};
+use crate::{montecarlo::MonteCarlo, tallies::MCTallyEvent};
 
 use super::{
     mc_facet_adjacency::MCSubfacetAdjacencyEvent, mc_particle::MCParticle, mct::reflect_particle,
@@ -11,7 +11,7 @@ pub fn facet_crossing_event<T: Float + FromPrimitive>(
     mc_particle: &mut MCParticle<T>,
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
-    processing_vault: &mut ParticleVault<T>,
+    processing_vault_idx: usize,
 ) -> MCTallyEvent {
     let location = mc_particle.get_location();
     let facet_adjacency = &mcco.domain[location.domain.unwrap()].mesh.cell_connectivity
@@ -49,7 +49,7 @@ pub fn facet_crossing_event<T: Float + FromPrimitive>(
             let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
                 .mesh
                 .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
-            processing_vault.put_particle(mc_particle.clone(), particle_idx);
+            mcco.particle_vault_container.processing_vaults[processing_vault_idx].put_particle(mc_particle.clone(), particle_idx);
 
             mcco.particle_vault_container
                 .get_send_queue()

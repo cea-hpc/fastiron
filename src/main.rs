@@ -91,7 +91,6 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
     mc_fast_timer::start(mcco, Section::CycleTracking);
     let mut done = false;
     // execution policy
-    let my_particle_vault = &mut mcco.particle_vault_container;
     //
     //
     //
@@ -101,18 +100,15 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
         while !done {
             let mut fill_vault: usize = 0;
 
-            for processing_vault_idx in 0..my_particle_vault.processing_vaults.len() {
+            for processing_vault_idx in 0..mcco.particle_vault_container.processing_vaults.len() {
                 // Computing block
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 
                 let processed_vault_idx: usize =
-                    my_particle_vault.get_first_empty_processed_vault().unwrap();
+                    mcco.particle_vault_container.get_first_empty_processed_vault().unwrap();
 
-                let processing_vault =
-                    &mut my_particle_vault.processing_vaults[processing_vault_idx];
-                let processed_vault = &mut my_particle_vault.processed_vaults[processed_vault_idx];
-
-                let num_particles = processing_vault.size();
+                let num_particles = 
+                    mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
                 // match ExecPolicy cpu
                 if num_particles != 0 {
                     for particle_index in 0..num_particles {

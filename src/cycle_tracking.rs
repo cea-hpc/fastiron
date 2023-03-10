@@ -16,7 +16,6 @@ use crate::{
         mct::reflect_particle,
     },
     montecarlo::MonteCarlo,
-    particle_vault::ParticleVault,
     tallies::MCTallyEvent,
 };
 
@@ -24,9 +23,11 @@ use crate::{
 pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssign + Default>(
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
-    processing_vault: &mut ParticleVault<T>,
-    processed_vault: &mut ParticleVault<T>,
+    processing_vault_idx: usize,
+    processed_vault_idx: usize,
 ) {
+    let processing_vault = &mcco.particle_vault_container.processing_vaults[processing_vault_idx];
+
     let mut particle = load_particle(mcco, processing_vault, particle_idx);
     particle.task = 0;
 
@@ -34,11 +35,11 @@ pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssig
         mcco,
         &mut particle,
         particle_idx,
-        processing_vault,
-        processed_vault,
+        processing_vault_idx,
+        processed_vault_idx,
     );
 
-    processing_vault.invalidate_particle(particle_idx);
+    mcco.particle_vault_container.processing_vaults[processing_vault_idx].invalidate_particle(particle_idx);
 }
 
 /// Computations of the CycleTracking sections
@@ -46,9 +47,12 @@ pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddA
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
     particle_idx: usize,
-    processing_vault: &mut ParticleVault<T>,
-    processed_vault: &mut ParticleVault<T>,
+    processing_vault_idx: usize,
+    processed_vault_idx: usize,
 ) {
+
+
+
     let mut keep_tracking: bool;
     let tally_idx: usize = particle_idx % mcco.tallies.num_balance_replications as usize;
     let flux_tally_idx: usize = particle_idx % mcco.tallies.num_flux_replications as usize;
@@ -68,7 +72,7 @@ pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddA
             }
             MCSegmentOutcome::FacetCrossing => {
                 let facet_crossing_type =
-                    facet_crossing_event(particle, mcco, particle_idx, processing_vault);
+                    facet_crossing_event(particle, mcco, particle_idx, processing_vault_idx);
 
                 keep_tracking = match facet_crossing_type {
                     MCTallyEvent::FacetCrossingTransitExit => true,
@@ -87,6 +91,8 @@ pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddA
                 }
             }
             MCSegmentOutcome::Census => {
+                let processing_vault = &mut mcco.particle_vault_container.processing_vaults[processing_vault_idx];
+                let processed_vault = &mut mcco.particle_vault_container.processed_vaults[processed_vault_idx];
                 processed_vault.push_particle(particle.clone());
                 processing_vault.erase_swap_particles(particle_idx); //?
                                                                      // atomic in original code
