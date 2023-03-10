@@ -54,6 +54,8 @@ fn population_control_guts<T: Float + FromPrimitive>(
         .into_iter()
         .rev()
         .for_each(|particle_idx| {
+            //println!("particle_idx: {particle_idx}");
+            //println!("vault_size: {vault_size}");
             let vault_idx = particle_idx / vault_size;
             //let task_processing_vault = vault.get_task_processing_vault(vault_idx);
             let task_particle_idx = particle_idx % vault_size;
@@ -124,7 +126,11 @@ pub fn roulette_low_weight_particles<T: Float + FromPrimitive>(
             .rev()
             .for_each(|particle_idx| {
                 let vault_idx = particle_idx / vault_size;
-                let task_particle_idx = particle_idx % vault_idx;
+                let task_particle_idx = if vault_idx == 0 {
+                    particle_idx
+                } else {
+                    particle_idx % vault_idx
+                };
 
                 let task_processing_vault = vault.get_task_processing_vault(vault_idx);
                 if let Some(mut pp) = task_processing_vault[task_particle_idx].clone() {

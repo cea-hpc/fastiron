@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Display, Debug};
 
 use num::{zero, Float, FromPrimitive};
 
@@ -70,13 +70,14 @@ pub fn macroscopic_total_cross_section<T: Float + FromPrimitive + Default + Disp
 
 /// Computes the number-density-weighted macroscopic cross section
 /// of the collection of isotopes in a cell.
-pub fn weighted_macroscopic_cross_section<T: Float + FromPrimitive + Default +Display>(
+pub fn weighted_macroscopic_cross_section<T: Float + FromPrimitive + Default + Debug + Display>(
     mcco: &mut MonteCarlo<T>,
     domain_idx: usize,
     cell_idx: usize,
     energy_group: usize,
 ) -> T {
     // early return
+    println!("{:?}", mcco.domain[domain_idx].cell_state[cell_idx].total);
     let precomputed_cross_section =
         mcco.domain[domain_idx].cell_state[cell_idx].total[energy_group];
     if precomputed_cross_section > zero() {

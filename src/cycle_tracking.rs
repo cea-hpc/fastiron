@@ -23,25 +23,28 @@ use crate::{
 pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssign + Default>(
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
+    processed_num: &mut usize,
     processing_vault_idx: usize,
     processed_vault_idx: usize,
 ) {
     let processing_vault = &mcco.particle_vault_container.processing_vaults[processing_vault_idx];
 
-    let mut particle = load_particle(processing_vault, particle_idx, mcco.time_info.time_step);
-    particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
-    particle.task = 0;
+    if let Some(mut particle) = load_particle(processing_vault, particle_idx, mcco.time_info.time_step) {
+        particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
+        particle.task = 0;
 
-    cycle_tracking_function(
-        mcco,
-        &mut particle,
-        particle_idx,
-        processing_vault_idx,
-        processed_vault_idx,
-    );
+        cycle_tracking_function(
+            mcco,
+            &mut particle,
+            particle_idx,
+            processing_vault_idx,
+            processed_vault_idx,
+        );
 
-    mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-        .invalidate_particle(particle_idx);
+        mcco.particle_vault_container.processing_vaults[processing_vault_idx]
+            .invalidate_particle(particle_idx);
+        *processed_num += 1;
+    }
 }
 
 /// Computations of the CycleTracking sections

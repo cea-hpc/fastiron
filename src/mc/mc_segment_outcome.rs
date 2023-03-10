@@ -1,5 +1,5 @@
 use core::panic;
-use std::fmt::Display;
+use std::fmt::{Display, Debug};
 
 use num::{zero, Float, FromPrimitive};
 
@@ -23,7 +23,7 @@ pub enum MCSegmentOutcome {
 }
 
 /// Computes the outcome of the current segment for a given particle.
-pub fn outcome<T: Float + FromPrimitive + Display + Default>(
+pub fn outcome<T: Float + FromPrimitive + Display + Default + Debug>(
     mcco: &mut MonteCarlo<T>,
     mc_particle: &mut MCParticle<T>,
     flux_tally_idx: usize,

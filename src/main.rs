@@ -37,7 +37,7 @@ fn main() {
         println!("step: {s}");
         println!("------cycle_init");
         cycle_init(mcco, load_balance);
-        println!("------cycle_track");
+        println!("------cycle_tracking");
         cycle_tracking(mcco);
         println!("------cycle_finalize");
         cycle_finalize(mcco);
@@ -110,24 +110,34 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
 
             for processing_vault_idx in 0..mcco.particle_vault_container.processing_vaults.len() {
                 // Computing block
+
+                println!("processing vault #{processing_vault_idx}");
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 
                 let processed_vault_idx: usize = mcco
                     .particle_vault_container
-                    .get_first_empty_processed_vault()
-                    .unwrap();
+                    .get_first_empty_processed_vault();
+
+                println!("current processed vault #{processed_vault_idx}");
 
                 let num_particles =
                     mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
                 // match ExecPolicy cpu
                 if num_particles != 0 {
-                    for particle_index in 0..num_particles {
+                    // iterate directly on particles??
+                    let mut particle_idx: usize = 0;
+                    let mut processed_particles: usize = 0;
+                    while processed_particles < num_particles {
+                        //println!("processing particle #{particle_idx}");
                         cycle_tracking_guts(
                             mcco,
-                            particle_index,
+                            particle_idx,
+                            &mut processed_particles,
                             processing_vault_idx,
                             processed_vault_idx,
                         );
+                        // incremented in cycle_tracking guts, only if the particle was not invalid
+                        particle_idx += 1;
                     }
                 }
 

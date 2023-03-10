@@ -26,12 +26,14 @@ impl<T: Float + FromPrimitive> ParticleVault<T> {
     pub fn reserve(&mut self, n: usize) {
         // The operation is needed as the reserve method on Vec takes an
         // additional size as argument, not total size.
-        self.particles.reserve(n - self.size());
+        // this works if reserve is only called at creation
+        self.particles = vec![None; n];
+        //self.particles.reserve(n - self.size());
     }
 
     /// Returns the size of the vault.
     pub fn size(&self) -> usize {
-        self.particles.len()
+        self.particles.iter().filter(|pp| pp.is_some()).count()
     }
 
     /// Add all particles of a second vault into this one.
@@ -94,15 +96,15 @@ impl<T: Float + FromPrimitive> ParticleVault<T> {
 
     /// Get the index-corresponding particle from the vault.
     pub fn get_particle(&self, index: usize) -> Option<MCParticle<T>> {
-        if let Some(pp) = self.particles.get(index) {
-            return Some(MCParticle::new(&pp.clone().unwrap()));
+        if let Some(pp) = &self.particles[index] {
+            return Some(MCParticle::new(pp));
         }
         None
     }
 
     /// Get the index-corresponding base particle from the vault.
     pub fn get_base_particle(&self, index: usize) -> Option<MCBaseParticle<T>> {
-        self.particles.get(index).unwrap().clone()
+        self.particles[index].clone()
     }
 
     /// Put a particle into the vault, at a specific index.

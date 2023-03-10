@@ -277,7 +277,7 @@ impl<T: Float + FromPrimitive + Default + Display> NuclearData<T> {
 
     /// Returns the energy group a specific energy belongs to.
     pub fn get_energy_groups(&self, energy: T) -> usize {
-        println!("kin energy: {energy}");
+        //println!("kin energy: {energy}");
         let num_energies = self.energies.len();
 
         // extreme low

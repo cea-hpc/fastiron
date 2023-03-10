@@ -18,20 +18,22 @@ pub fn load_particle<T: Float + FromPrimitive + Default>(
     particle_vault: &ParticleVault<T>,
     particle_idx: usize,
     ts: f64,
-) -> MCParticle<T> {
+) -> Option<MCParticle<T>> {
     let time_step: T = FromPrimitive::from_f64(ts).unwrap();
-    let mut particle = particle_vault.get_particle(particle_idx).unwrap();
+    // can probably use a map here
+    if let Some(mut particle) = particle_vault.get_particle(particle_idx) {
+        // update time to census
+        if particle.time_to_census <= zero() {
+            particle.time_to_census = particle.time_to_census + time_step;
+        }
+        // set age
+        if particle.age < zero() {
+            particle.age = zero();
+        }
 
-    // update time to census
-    if particle.time_to_census <= zero() {
-        particle.time_to_census = particle.time_to_census + time_step;
+        return Some(particle);
     }
-    // set age
-    if particle.age < zero() {
-        particle.age = zero();
-    }
-
-    particle
+    None
 }
 
 /// Simulates the sources according to the problem's parameters.
@@ -78,7 +80,7 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) 
             let mut cell_source_tally: Vec<usize> = vec![0; dom.cell_state.len()];
 
             println!("{} cells in domain {}", dom.cell_state.len(), domain_idx);
-            
+
             // on each cell
             dom.cell_state
                 .iter()
@@ -92,7 +94,7 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) 
                         .unwrap();
                     cell_source_tally[cell_idx] = cell.source_tally;
                     // create cell_n_particles and add them to the vaults
-                    println!("creating {cell_n_particles} particles in cell {cell_idx}");
+                    //println!("creating {cell_n_particles} particles in cell {cell_idx}");
                     (0..cell_n_particles).into_iter().for_each(|_| {
                         let mut particle: MCParticle<T> = MCParticle::default();
                         // atomic in original code

@@ -80,8 +80,18 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
 
     /// Returns the index of the first empty vault in among the processed vaults.
     /// Does the original function even work correctly?
-    pub fn get_first_empty_processed_vault(&self) -> Option<usize> {
-        (0..self.processed_vaults.len()).find(|&idx| self.processed_vaults[idx].empty())
+    pub fn get_first_empty_processed_vault(&mut self) -> usize {
+        // there has to be better way
+        if (0..self.processed_vaults.len()).any(|idx| self.processed_vaults[idx].empty()) {
+            (0..self.processed_vaults.len()).find(|&idx| self.processed_vaults[idx].empty()).unwrap()
+        } else {
+            let mut vault: ParticleVault<T> = ParticleVault {
+                particles: Vec::new(),
+            };
+            vault.reserve(self.vault_size);
+            self.processed_vaults.push(vault);
+            self.processed_size() - 1
+        }
     }
 
     /// Returns a reference to the internal [SendQueue] object.
@@ -197,11 +207,14 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
         particle: MCBaseParticle<T>,
         fill_vault_index: &mut usize,
     ) {
+        // find a vault with free space
         while !self.processing_vaults[*fill_vault_index].size() < self.vault_size {
-            *fill_vault_index += 1;
+            println!("1");
+            // if no space, move to next vault
+            *fill_vault_index += 1; 
 
-            // no more processing vaults?
-            if *fill_vault_index == self.processing_size() {
+            // no next vault? create one and add it to the container
+            if ! *fill_vault_index < self.processing_size() {
                 let mut vault: ParticleVault<T> = ParticleVault {
                     particles: Vec::new(),
                 };
