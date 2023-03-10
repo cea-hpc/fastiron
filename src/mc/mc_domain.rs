@@ -181,7 +181,7 @@ impl<T: Float + FromPrimitive + Default> MCDomain<T> {
 
     /// Clears the cross section cache for future uses.
     pub fn clear_cross_section_cache(&mut self) {
-        self.cell_state.iter_mut().for_each(|cs| cs.total.clear())
+        self.cell_state.iter_mut().for_each(|cs| cs.total = vec![zero(); cs.total.len()])
     }
 
     /// Returns the coordinates of the center of

@@ -23,7 +23,9 @@ use num::{one, zero, Float, FromPrimitive};
 pub fn init_mc<T: Float + FromPrimitive + Display + Default + LowerExp>(
     params: Parameters,
 ) -> MonteCarlo<T> {
+    println!("---init_mc");
     let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
+
 
     init_proc_info(&mut mcco);
     init_time_info(&mut mcco);
@@ -206,6 +208,7 @@ fn initialize_centers_grid<T: Float>(
 
 fn init_mesh<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
+    println!("n_energy_groups: {}", params.simulation_params.n_groups);
     let nx: usize = params.simulation_params.nx;
     let ny: usize = params.simulation_params.ny;
     let nz: usize = params.simulation_params.nz;
