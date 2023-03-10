@@ -30,8 +30,6 @@ pub fn load_particle<T: Float + FromPrimitive + Default>(
     if particle.age < zero() {
         particle.age = zero();
     }
-    // get energy group
-    //particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
 
     particle
 }

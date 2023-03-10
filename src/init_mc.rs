@@ -1,4 +1,9 @@
-use std::{collections::HashMap, fmt::Display, fs::File, io::Write};
+use std::{
+    collections::HashMap,
+    fmt::{Display, LowerExp},
+    fs::File,
+    io::Write,
+};
 
 use crate::{
     comm_object::CommObject,
@@ -10,11 +15,14 @@ use crate::{
     montecarlo::MonteCarlo,
     nuclear_data::{NuclearData, Polynomial, ReactionType},
     parameters::Parameters,
+    physical_constants::TINY_FLOAT,
 };
-use num::{one, Float, FromPrimitive};
+use num::{one, zero, Float, FromPrimitive};
 
 /// Creates a [MonteCarlo] object using the specified parameters.
-pub fn init_mc<T: Float + FromPrimitive + Display + Default>(params: Parameters) -> MonteCarlo<T> {
+pub fn init_mc<T: Float + FromPrimitive + Display + Default + LowerExp>(
+    params: Parameters,
+) -> MonteCarlo<T> {
     let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
 
     init_proc_info(&mut mcco);
@@ -97,7 +105,7 @@ fn init_nuclear_data<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T
     }
 }
 
-fn consistency_check<T: Float>(my_rank: usize, domain: &[MCDomain<T>]) {
+fn consistency_check<T: Float>(my_rank: usize, domain: &[MCDomain<T>], params: &Parameters) {
     if my_rank == 0 {
         println!("Starting consistency check");
     }
@@ -128,19 +136,22 @@ fn consistency_check<T: Float>(my_rank: usize, domain: &[MCDomain<T>]) {
                             .facet[facet_idx_adj]
                             .subfacet;
 
-                        println!(
-                            "backside.adjacent.domain == domain_idx: {}",
-                            backside.adjacent.domain.unwrap() == domain_idx
-                        );
-                        println!(
-                            "backside.adjacent.cell == cell_idx: {}",
-                            backside.adjacent.cell.unwrap() == cell_idx
-                        );
-                        println!(
-                            "backside.adjacent.facet == facet_idx: {}",
-                            backside.adjacent.facet.unwrap() == facet_idx
-                        );
-                        println!();
+                        if params.simulation_params.debug_threads {
+                            // we'll use this as a general debug for now
+                            println!(
+                                "backside.adjacent.domain == domain_idx: {}",
+                                backside.adjacent.domain.unwrap() == domain_idx
+                            );
+                            println!(
+                                "backside.adjacent.cell == cell_idx: {}",
+                                backside.adjacent.cell.unwrap() == cell_idx
+                            );
+                            println!(
+                                "backside.adjacent.facet == facet_idx: {}",
+                                backside.adjacent.facet.unwrap() == facet_idx
+                            );
+                            println!();
+                        }
                     }
                 });
             });
@@ -238,7 +249,7 @@ fn init_mesh<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
     });
 
     if n_ranks == 1 {
-        consistency_check(my_rank, &mcco.domain);
+        consistency_check(my_rank, &mcco.domain, &mcco.params);
     }
 }
 
@@ -253,13 +264,16 @@ fn init_tallies<T: Float + FromPrimitive + Display + Default>(mcco: &mut MonteCa
     )
 }
 
+#[derive(Debug, Clone, Default)]
 struct XSData<T: Float> {
     abs: T,
     fis: T,
     sca: T,
 }
 
-fn check_cross_sections<T: Float + FromPrimitive + Display>(mcco: &MonteCarlo<T>) {
+fn check_cross_sections<T: Float + FromPrimitive + Display + Default + LowerExp>(
+    mcco: &MonteCarlo<T>,
+) {
     let params = &mcco.params;
     if params.simulation_params.cross_sections_out.is_empty() {
         return;
@@ -277,7 +291,7 @@ fn check_cross_sections<T: Float + FromPrimitive + Display>(mcco: &MonteCarlo<T>
     // for each material
     matdb.mat.iter().for_each(|material| {
         let mat_name = material.name.to_owned();
-        let mut xc_vec: Vec<XSData<T>> = Vec::with_capacity(n_groups);
+        let mut xc_vec: Vec<XSData<T>> = vec![XSData::default(); n_groups];
         let n_isotopes: T = FromPrimitive::from_usize(material.iso.len()).unwrap();
         // for each isotope
         material.iso.iter().for_each(|isotope| {
@@ -310,7 +324,7 @@ fn check_cross_sections<T: Float + FromPrimitive + Display>(mcco: &MonteCarlo<T>
     });
 
     // build an output file; could write a markdown table?
-    let file_name = params.simulation_params.cross_sections_out.to_owned() + "dat";
+    let file_name = params.simulation_params.cross_sections_out.to_owned() + ".dat";
     let mut file = File::create(file_name).unwrap();
     // header
     write!(file, "group    energy    ").unwrap();
@@ -324,8 +338,17 @@ fn check_cross_sections<T: Float + FromPrimitive + Display>(mcco: &MonteCarlo<T>
     writeln!(file).unwrap();
     // data
     (0..n_groups).into_iter().for_each(|ii| {
-        write!(file, "{}    {}    ", ii, energies[ii]).unwrap();
-        xc_table.values().for_each(|xc_vec| {
+        write!(file, "{}    {:e}    ", ii, energies[ii]).unwrap();
+        xc_table.values_mut().for_each(|xc_vec| {
+            if xc_vec[ii].abs < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
+                xc_vec[ii].abs = zero();
+            }
+            if xc_vec[ii].fis < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
+                xc_vec[ii].fis = zero();
+            }
+            if xc_vec[ii].sca < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
+                xc_vec[ii].sca = zero();
+            }
             write!(
                 file,
                 "{}    {}    {}    ",

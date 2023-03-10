@@ -39,8 +39,6 @@ fn main() {
         println!("finalize...");
         cycle_finalize(mcco);
 
-        println!("energies: {:#?}", mcco.nuclear_data.energies);
-
         mcco.fast_timer.last_cycle_report();
     }
 
@@ -53,7 +51,6 @@ fn main() {
 
 pub fn game_over<T: Float + Display + FromPrimitive + Default + Debug>(mcco: &mut MonteCarlo<T>) {
     mcco.fast_timer.cumulative_report();
-    println!("energies: {:#?}", mcco.nuclear_data.energies);
 
     mcco.tallies.spectrum.print_spectrum(mcco);
 }

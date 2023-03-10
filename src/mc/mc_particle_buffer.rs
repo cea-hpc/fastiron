@@ -39,7 +39,7 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
         //println!("is buffer empty: {buffer_empty}");
         //println!("is sendq empty: {sendq_empty}");
         //println!("is processing vault empty: {processing_empty}");
-    
+
         buffer_empty & sendq_empty & processing_empty
     }
 

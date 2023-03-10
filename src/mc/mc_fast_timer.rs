@@ -1,4 +1,4 @@
-use std::{time::Instant, fmt::Display,};
+use std::{fmt::Display, time::Instant};
 
 use num::{Float, FromPrimitive};
 
@@ -20,13 +20,13 @@ pub enum Section {
 impl Display for Section {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Section::Main => write!(f, "Section::Main"),
-            Section::CycleInit => write!(f, "Section::CycleInit"),
-            Section::CycleTracking => write!(f, "Section::CycleTracking"),
-            Section::CycleTrackingKernel => write!(f, "Section::CycleTrackingKernel"),
-            Section::CycleTrackingMPI => write!(f, "Section::CycleTrackingMPI"),
+            Section::Main => write!(f, "Section::Main                 "),
+            Section::CycleInit => write!(f, "Section::CycleInit            "),
+            Section::CycleTracking => write!(f, "Section::CycleTracking        "),
+            Section::CycleTrackingKernel => write!(f, "Section::CycleTrackingKernel  "),
+            Section::CycleTrackingMPI => write!(f, "Section::CycleTrackingMPI     "),
             Section::CycleTrackingTestDone => write!(f, "Section::CycleTrackingTestDone"),
-            Section::CycleFinalize => write!(f, "Section::CycleFinalize"),
+            Section::CycleFinalize => write!(f, "Section::CycleFinalize        "),
         }
     }
 }
@@ -61,40 +61,54 @@ pub struct MCFastTimerContainer {
 }
 
 impl MCFastTimerContainer {
-    pub fn cumulative_report(&self) { // TODO: COMPLETE
-        // Print header 
-        println!("Timer Name    Last cycle number of calls   Last cycle min (ms)    Last cycle avg (ms)    Last cycle max (ms)    Last cycle stddev (ms)    Last cycle efficiency rating");
-        self.timers.iter().enumerate().for_each(|(timer_idx, timer)| {
-            let section = match timer_idx {
-                0 => Section::Main,
-                1 => Section::CycleInit,
-                2 => Section::CycleTracking,
-                3 => Section::CycleTrackingKernel,
-                4 => Section::CycleTrackingMPI,
-                5 => Section::CycleTrackingTestDone,
-                6 => Section::CycleFinalize,
-                _ => unreachable!(),
-            };
-            println!("{}    {}    {}    {}    {}    {}    {}", section, timer.num_calls, 0, 0, 0, 0, 0);
-        });
+    pub fn cumulative_report(&self) {
+        // TODO: COMPLETE
+        // Print header
+        println!("Timer Name                        Last cycle number of calls   Last cycle min (ms)    Last cycle avg (ms)    Last cycle max (ms)    Last cycle stddev (ms)    Last cycle efficiency rating");
+        self.timers
+            .iter()
+            .enumerate()
+            .for_each(|(timer_idx, timer)| {
+                let section = match timer_idx {
+                    0 => Section::Main,
+                    1 => Section::CycleInit,
+                    2 => Section::CycleTracking,
+                    3 => Section::CycleTrackingKernel,
+                    4 => Section::CycleTrackingMPI,
+                    5 => Section::CycleTrackingTestDone,
+                    6 => Section::CycleFinalize,
+                    _ => unreachable!(),
+                };
+                println!(
+                    "{}    {}    {}    {}    {}    {}    {}",
+                    section, timer.num_calls, 0, 0, 0, 0, 0
+                );
+            });
     }
 
-    pub fn last_cycle_report(&self) { // TODO: COMPLETE
-        // Print header 
-        println!("Timer Name    Last cycle number of calls   Last cycle min (ms)    Last cycle avg (ms)    Last cycle max (ms)    Last cycle stddev (ms)    Last cycle efficiency rating");
-        self.timers.iter().enumerate().for_each(|(timer_idx, timer)| {
-            let section = match timer_idx {
-                0 => Section::Main,
-                1 => Section::CycleInit,
-                2 => Section::CycleTracking,
-                3 => Section::CycleTrackingKernel,
-                4 => Section::CycleTrackingMPI,
-                5 => Section::CycleTrackingTestDone,
-                6 => Section::CycleFinalize,
-                _ => unreachable!(),
-            };
-            println!("{}    {}    {}    {}    {}    {}    {}", section, timer.num_calls, 0, 0, 0, 0, 0);
-        });
+    pub fn last_cycle_report(&self) {
+        // TODO: COMPLETE
+        // Print header
+        println!("Timer Name                        Last cycle number of calls   Last cycle min (ms)    Last cycle avg (ms)    Last cycle max (ms)    Last cycle stddev (ms)    Last cycle efficiency rating");
+        self.timers
+            .iter()
+            .enumerate()
+            .for_each(|(timer_idx, timer)| {
+                let section = match timer_idx {
+                    0 => Section::Main,
+                    1 => Section::CycleInit,
+                    2 => Section::CycleTracking,
+                    3 => Section::CycleTrackingKernel,
+                    4 => Section::CycleTrackingMPI,
+                    5 => Section::CycleTrackingTestDone,
+                    6 => Section::CycleFinalize,
+                    _ => unreachable!(),
+                };
+                println!(
+                    "{}    {}    {}    {}    {}    {}    {}",
+                    section, timer.num_calls, 0, 0, 0, 0, 0
+                );
+            });
     }
 
     pub fn clear_last_cycle_timers(&mut self) {

@@ -60,8 +60,10 @@ impl<T: Float + Display + FromPrimitive + Default> EnergySpectrum<T> {
 
     /// Print the spectrum.
     pub fn print_spectrum(&self, mcco: &MonteCarlo<T>) {
+        if self.file_name.is_empty() {
+            return;
+        }
         let levels = mcco.nuclear_data.energies.len();
-        println!("# levels: {levels}");
         let mut path = self.file_name.to_owned();
         path.push_str(".dat");
         let mut file = File::create(path).unwrap();
