@@ -339,6 +339,7 @@ impl<T: Float + Display + FromPrimitive + Default> Tallies<T> {
     }
 
     /// End-of-simulation routine that updates its own data and other structures'.
+    /// REPLACED BY EPONYMOUS FUNCTION OF MCCO
     pub fn cycle_finalize(&mut self, mcco: &mut MonteCarlo<T>) {
         self.sum_tasks();
 
@@ -387,9 +388,7 @@ impl<T: Float + Display + FromPrimitive + Default> Tallies<T> {
     }
 
     /// Prints summarized data recorded by the tallies.
-    pub fn print_summary(&self, mcco: &mut MonteCarlo<T>) {
-        mc_fast_timer::stop(mcco, Section::CycleFinalize);
-
+    pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
         println!("Balance: \n{:?}", self.balance_task[0]);
         let sum = self.scalar_flux_sum();
         println!("Scalar Flux Sum: {sum}");
@@ -405,8 +404,6 @@ impl<T: Float + Display + FromPrimitive + Default> Tallies<T> {
             "Cycle Finalize: {}",
             mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize)
         );
-
-        mc_fast_timer::start(mcco, Section::CycleFinalize);
     }
 
     /// Atomic add?

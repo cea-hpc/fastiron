@@ -55,6 +55,7 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
     /// Read the buffers and unpack the particles in the given vault.
     /// Since we are not parallelizing over a spatial division, this
     /// function just unpacks everything.
+    /// REPLACED BY EPONYMOUS FUNCTIONS OF MCCO
     pub fn read_buffers(&mut self, fill_vault: &mut usize, mcco: &mut MonteCarlo<T>) {
         // If we were parallelizing, we would add a condition for
         // unpacking like (current thread nbr == buffer nbr)

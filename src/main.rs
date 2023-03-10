@@ -115,8 +115,8 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                         cycle_tracking_guts(
                             mcco,
                             particle_index,
-                            processing_vault,
-                            processed_vault,
+                            processing_vault_idx,
+                            processed_vault_idx,
                         );
                     }
                 }
@@ -128,29 +128,29 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                 // Inter-domain communication block
                 mc_fast_timer::start(mcco, Section::CycleTrackingMPI);
 
-                let send_q = &mut my_particle_vault.send_queue;
+                let send_q = &mut mcco.particle_vault_container.send_queue;
 
                 for idx in 0..send_q.size() {
                     let send_q_t = send_q.data[idx].clone();
-                    let mcb_particle = processing_vault.get_base_particle(idx);
+                    let mcb_particle = mcco.particle_vault_container.processing_vaults[processing_vault_idx].get_base_particle(idx);
 
                     mcco.particle_buffer
                         .buffer_particle(mcb_particle.unwrap(), send_q_t.neighbor);
                 }
 
-                processing_vault.clear();
+                mcco.particle_vault_container.processing_vaults[processing_vault_idx].clear();
                 send_q.clear();
 
-                my_particle_vault.clean_extra_vaults();
-                mcco.particle_buffer.read_buffers(&mut fill_vault, mcco);
+                mcco.particle_vault_container.clean_extra_vaults();
+                mcco.read_buffers(&mut fill_vault);
 
                 mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);
             }
 
             mc_fast_timer::start(mcco, Section::CycleTrackingMPI);
 
-            my_particle_vault.collapse_processing();
-            my_particle_vault.collapse_processed();
+            mcco.particle_vault_container.collapse_processing();
+            mcco.particle_vault_container.collapse_processed();
             done = mcco.particle_buffer.test_done_new(mcco);
 
             mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);

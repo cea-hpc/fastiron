@@ -12,8 +12,8 @@ use crate::{mc::mc_utils::load_particle, montecarlo::MonteCarlo};
 #[derive(Debug)]
 pub struct EnergySpectrum<T: Float> {
     float_type: PhantomData<T>,
-    file_name: String,
-    census_energy_spectrum: Vec<u64>,
+    pub file_name: String,
+    pub census_energy_spectrum: Vec<u64>,
 }
 
 impl<T: Float + Display + FromPrimitive + Default> EnergySpectrum<T> {
@@ -26,6 +26,7 @@ impl<T: Float + Display + FromPrimitive + Default> EnergySpectrum<T> {
     }
 
     /// Update its fields using the [MonteCarlo] Object.
+    /// REPLACED BY EPONYMOUS FUNCTION OF MCCO
     pub fn update_spectrum(&mut self, mcco: &MonteCarlo<T>) {
         if self.file_name.is_empty() {
             return;
