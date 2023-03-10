@@ -91,6 +91,15 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
     );
 
     mc_fast_timer::stop(mcco, Section::CycleInit);
+
+    println!(
+        "{} processing particles",
+        mcco.particle_vault_container.particles_processing_size()
+    );
+    println!(
+        "{} processed particles",
+        mcco.particle_vault_container.particles_processed_size()
+    );
 }
 
 pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + Default>(
@@ -139,6 +148,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                         // incremented in cycle_tracking guts, only if the particle was not invalid
                         particle_idx += 1;
                     }
+                    println!("vault #{processing_vault_idx} finished processing");
                 }
 
                 //particle_count += num_particles as u64;

@@ -153,14 +153,6 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) 
                 dom.cell_state[cell_idx].source_tally = cell_source_tally[cell_idx];
             });
         });
-    println!(
-        "{} processing particles",
-        mcco.particle_vault_container.particles_processing_size()
-    );
-    println!(
-        "{} processed particles",
-        mcco.particle_vault_container.particles_processed_size()
-    );
 }
 
 fn speed_from_energy<T: Float + FromPrimitive>(energy: T) -> T {

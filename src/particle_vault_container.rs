@@ -82,9 +82,9 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
     /// Does the original function even work correctly?
     pub fn get_first_empty_processed_vault(&mut self) -> usize {
         // there has to be better way
-        if (0..self.processed_vaults.len()).any(|idx| self.processed_vaults[idx].empty()) {
+        if (0..self.processed_vaults.len()).any(|idx| self.processed_vaults[idx].size() == 0) {
             (0..self.processed_vaults.len())
-                .find(|&idx| self.processed_vaults[idx].empty())
+                .find(|&idx| self.processed_vaults[idx].size() == 0)
                 .unwrap()
         } else {
             let mut vault: ParticleVault<T> = ParticleVault {
