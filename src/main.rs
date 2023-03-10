@@ -1,8 +1,8 @@
 use std::fmt::{Debug, Display};
 use std::ops::AddAssign;
 
-use num::{Float, FromPrimitive};
 use clap::Parser;
+use num::{Float, FromPrimitive};
 
 use fastiron::coral_benchmark_correctness;
 use fastiron::cycle_tracking::cycle_tracking_guts;

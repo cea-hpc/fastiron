@@ -145,7 +145,6 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) 
             (0..dom.cell_state.len()).into_iter().for_each(|cell_idx| {
                 dom.cell_state[cell_idx].source_tally = cell_source_tally[cell_idx];
             });
-
         });
 }
 

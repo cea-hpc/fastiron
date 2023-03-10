@@ -67,12 +67,8 @@ pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddA
                 keep_tracking = collision_event(mcco, particle, tally_idx)
             }
             MCSegmentOutcome::FacetCrossing => {
-                let facet_crossing_type = facet_crossing_event(
-                    particle,
-                    mcco,
-                    particle_idx,
-                    processing_vault,
-                );
+                let facet_crossing_type =
+                    facet_crossing_event(particle, mcco, particle_idx, processing_vault);
 
                 keep_tracking = match facet_crossing_type {
                     MCTallyEvent::FacetCrossingTransitExit => true,
