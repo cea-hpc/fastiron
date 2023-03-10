@@ -68,7 +68,7 @@ pub fn collision_event<T: Float + FromPrimitive + Debug + Default + Display>(
 
     let n_iso: usize = mcco.material_database.mat[mat_gidx].iso.len();
 
-    while current_xsection >= zero() {   
+    while current_xsection >= zero() {
         for iso_idx in 0..n_iso {
             let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
             let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);

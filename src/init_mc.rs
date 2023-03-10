@@ -26,7 +26,6 @@ pub fn init_mc<T: Float + FromPrimitive + Display + Default + LowerExp>(
     println!("---init_mc");
     let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
 
-
     init_proc_info(&mut mcco);
     init_time_info(&mut mcco);
     init_nuclear_data(&mut mcco);

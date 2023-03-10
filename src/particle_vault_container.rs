@@ -83,7 +83,9 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
     pub fn get_first_empty_processed_vault(&mut self) -> usize {
         // there has to be better way
         if (0..self.processed_vaults.len()).any(|idx| self.processed_vaults[idx].empty()) {
-            (0..self.processed_vaults.len()).find(|&idx| self.processed_vaults[idx].empty()).unwrap()
+            (0..self.processed_vaults.len())
+                .find(|&idx| self.processed_vaults[idx].empty())
+                .unwrap()
         } else {
             let mut vault: ParticleVault<T> = ParticleVault {
                 particles: Vec::new(),
@@ -211,10 +213,10 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
         while !self.processing_vaults[*fill_vault_index].size() < self.vault_size {
             println!("1");
             // if no space, move to next vault
-            *fill_vault_index += 1; 
+            *fill_vault_index += 1;
 
             // no next vault? create one and add it to the container
-            if ! *fill_vault_index < self.processing_size() {
+            if !*fill_vault_index < self.processing_size() {
                 let mut vault: ParticleVault<T> = ParticleVault {
                     particles: Vec::new(),
                 };

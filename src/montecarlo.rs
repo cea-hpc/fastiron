@@ -132,8 +132,14 @@ impl<T: Float + FromPrimitive + Display + Default> MonteCarlo<T> {
 
     pub fn update_spectrum(&mut self) {
         println!("---update_spectrum");
-        println!("{} processing particles", self.particle_vault_container.particles_processing_size());
-        println!("{} processed particles", self.particle_vault_container.particles_processed_size());
+        println!(
+            "{} processing particles",
+            self.particle_vault_container.particles_processing_size()
+        );
+        println!(
+            "{} processed particles",
+            self.particle_vault_container.particles_processed_size()
+        );
 
         if self.tallies.spectrum.file_name.is_empty() {
             println!("No output name specified for energy");
