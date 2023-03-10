@@ -1,6 +1,5 @@
 use std::fmt::{Debug, Display};
 use std::ops::AddAssign;
-use std::primitive;
 
 use clap::Parser;
 use num::{Float, FromPrimitive};
@@ -40,6 +39,8 @@ fn main() {
         println!("finalize...");
         cycle_finalize(mcco);
 
+        println!("energies: {:#?}", mcco.nuclear_data.energies);
+
         mcco.fast_timer.last_cycle_report();
     }
 
@@ -50,8 +51,10 @@ fn main() {
     coral_benchmark_correctness::coral_benchmark_correctness(mcco);
 }
 
-pub fn game_over<T: Float + Display + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
+pub fn game_over<T: Float + Display + FromPrimitive + Default + Debug>(mcco: &mut MonteCarlo<T>) {
     mcco.fast_timer.cumulative_report();
+    println!("energies: {:#?}", mcco.nuclear_data.energies);
+
     mcco.tallies.spectrum.print_spectrum(mcco);
 }
 
@@ -161,7 +164,6 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
             mcco.particle_vault_container.collapse_processing();
             mcco.particle_vault_container.collapse_processed();
             done = mcco.particle_buffer.test_done_new(mcco);
-            println!("done: {done}");
 
             mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);
         }

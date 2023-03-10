@@ -21,7 +21,7 @@ impl<T: Float + Display + FromPrimitive + Default> EnergySpectrum<T> {
         Self {
             float_type: Default::default(),
             file_name: name,
-            census_energy_spectrum: Vec::with_capacity(size),
+            census_energy_spectrum: vec![0; size + 1],
         }
     }
 
@@ -61,6 +61,7 @@ impl<T: Float + Display + FromPrimitive + Default> EnergySpectrum<T> {
     /// Print the spectrum.
     pub fn print_spectrum(&self, mcco: &MonteCarlo<T>) {
         let levels = mcco.nuclear_data.energies.len();
+        println!("# levels: {levels}");
         let mut path = self.file_name.to_owned();
         path.push_str(".dat");
         let mut file = File::create(path).unwrap();
