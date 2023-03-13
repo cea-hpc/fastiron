@@ -10,7 +10,7 @@ use crate::{
     },
     montecarlo::MonteCarlo,
     nuclear_data::ReactionType,
-    physical_constants::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
+    physical_constants::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI, TINY_FLOAT},
 };
 
 /// Update the a particle's energy and trajectory after a collision.
@@ -54,13 +54,17 @@ pub fn collision_event<T: Float + FromPrimitive + Debug + Default + Display>(
     mc_particle: &mut MCParticle<T>,
     tally_idx: usize,
 ) -> bool {
+    let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
     let mat_gidx = mcco.domain[mc_particle.domain].cell_state[mc_particle.cell].material;
 
     // ==========================
     // Pick an isotope & reaction
     let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
     let total_xsection: T = mc_particle.total_cross_section;
+    println!("total xs: {total_xsection}");
+
     let mut current_xsection: T = total_xsection * rdm_number;
+    println!("starting xs: {current_xsection}");
 
     let mut selected_iso: usize = usize::MAX; // sort of a magic value
     let mut selected_unique_n: usize = usize::MAX;
@@ -68,7 +72,8 @@ pub fn collision_event<T: Float + FromPrimitive + Debug + Default + Display>(
 
     let n_iso: usize = mcco.material_database.mat[mat_gidx].iso.len();
 
-    while current_xsection >= zero() {
+    while current_xsection > tiny_f {
+        println!("infinite loop? current xs: {current_xsection}");
         for iso_idx in 0..n_iso {
             let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
             let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
@@ -82,14 +87,14 @@ pub fn collision_event<T: Float + FromPrimitive + Debug + Default + Display>(
                         iso_idx,
                         mc_particle.energy_group,
                     );
-                if current_xsection < zero() {
+                if current_xsection < tiny_f {
                     selected_iso = iso_idx;
                     selected_unique_n = unique_n;
                     selected_react = reaction_idx;
                     break;
                 }
             }
-            if current_xsection < zero() {
+            if current_xsection < tiny_f {
                 break;
             }
         }
