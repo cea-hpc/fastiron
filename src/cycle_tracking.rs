@@ -28,6 +28,7 @@ pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssig
     processed_vault_idx: usize,
 ) {
     let processing_vault = &mcco.particle_vault_container.processing_vaults[processing_vault_idx];
+    println!("processing particle #{particle_idx}");
 
     if let Some(mut particle) =
         load_particle(processing_vault, particle_idx, mcco.time_info.time_step)
@@ -46,6 +47,7 @@ pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssig
         //mcco.particle_vault_container.processing_vaults[processing_vault_idx]
         //    .invalidate_particle(particle_idx);
         mcco.particle_vault_container.set_as_processed(processing_vault_idx, particle_idx);
+        println!("invalidated particle #{particle_idx}");
         *processed_num += 1;
     }
 }
