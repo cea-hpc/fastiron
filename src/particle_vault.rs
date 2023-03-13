@@ -133,9 +133,6 @@ impl<T: Float + FromPrimitive + Debug> ParticleVault<T> {
 
     /// Get the index-corresponding base particle from the vault.
     pub fn get_base_particle(&self, index: usize) -> Option<MCBaseParticle<T>> {
-        if self.particles[index+1].is_some() {
-            println!("particle at idx {index} should be some");
-        }
         self.particles[index].clone()
     }
 

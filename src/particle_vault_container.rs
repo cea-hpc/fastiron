@@ -218,7 +218,7 @@ impl<T: Float + FromPrimitive + Debug> ParticleVaultContainer<T> {
             fill_vault_idx += 1;
 
             // no next vault? create one and add it to the container
-            if !fill_vault_idx < self.processing_size() {
+            if fill_vault_idx >= self.processing_size() {
                 let mut vault: ParticleVault<T> = ParticleVault {
                     particles: Vec::new(),
                 };
@@ -238,11 +238,8 @@ impl<T: Float + FromPrimitive + Debug> ParticleVaultContainer<T> {
         particle: MCBaseParticle<T>,
         fill_vault_index: &mut usize,
     ) {
-        //println!("ADDING NEW PARTICLE");
         // find a vault with free space
-        println!("Current vault size: {}", self.processing_vaults[*fill_vault_index].size());
-        println!("Current vault capacity: {}", self.processing_vaults[*fill_vault_index].particles.len());
-        while !self.processing_vaults[*fill_vault_index].size() < self.vault_size {
+        while self.processing_vaults[*fill_vault_index].size() >= self.vault_size {
             println!("No space in fill_vault; moving on next vault");
             // if no space, move to next vault
             *fill_vault_index += 1;
@@ -256,9 +253,8 @@ impl<T: Float + FromPrimitive + Debug> ParticleVaultContainer<T> {
                 self.processing_vaults.push(vault);
             }
         }
-        let insert_idx = self.processing_vaults[*fill_vault_index].particles.iter().position(|elem| elem.is_none());
-        self.processing_vaults[*fill_vault_index].particles[insert_idx.unwrap()] = Some(particle);
-        //println!("added a processing particle, new size: {}", self.particles_processing_size());
+        let insert_idx = self.processing_vaults[*fill_vault_index].particles.iter().position(|elem| elem.is_none()).unwrap();
+        self.processing_vaults[*fill_vault_index].particles[insert_idx] = Some(particle);
     }
 
     /// Add a particle to an extra vault.
