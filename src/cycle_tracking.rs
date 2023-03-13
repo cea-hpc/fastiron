@@ -43,7 +43,7 @@ pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssig
             processing_vault_idx,
             processed_vault_idx,
         );
-
+        
         //mcco.particle_vault_container.processing_vaults[processing_vault_idx]
         //    .invalidate_particle(particle_idx);
         mcco.particle_vault_container
@@ -68,7 +68,7 @@ pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddA
 
     loop {
         let segment_outcome = outcome(mcco, particle, flux_tally_idx);
-
+        println!("Seg outcome: {segment_outcome:?}");
         // atomic in original code
         mcco.tallies.balance_task[tally_idx].num_segments += 1;
 
