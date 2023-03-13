@@ -132,7 +132,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                 // number of VALID particles
                 let num_particles =
                     mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
-                
+
                 if num_particles != 0 {
                     // iterate directly on particles??
                     let mut particle_idx: usize = 0;
