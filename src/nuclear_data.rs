@@ -114,8 +114,8 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
                 // is quite unclear. There is an assert but it only prints
                 // a message, not stop the method
                 let num_particle_out = (self.nu_bar + rng_sample(seed)).to_usize().unwrap();
-                energy_out.reserve(num_particle_out);
-                angle_out.reserve(num_particle_out);
+                energy_out.extend(vec![zero(); num_particle_out].iter());
+                angle_out.extend(vec![zero(); num_particle_out].iter());
                 (0..num_particle_out).into_iter().for_each(|ii| {
                     let mut rand_n: T = rng_sample(seed);
                     rand_n = (rand_n + one) / two;

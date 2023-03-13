@@ -120,23 +120,24 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
             for processing_vault_idx in 0..mcco.particle_vault_container.processing_vaults.len() {
                 // Computing block
 
-                println!("processing vault #{processing_vault_idx}");
+                //println!("processing vault #{processing_vault_idx}");
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 
                 let processed_vault_idx: usize = mcco
                     .particle_vault_container
                     .get_first_empty_processed_vault();
 
-                println!("current processed vault #{processed_vault_idx}");
+                //println!("current processed vault #{processed_vault_idx}");
 
+                // number of VALID particles
                 let num_particles =
                     mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
-                // match ExecPolicy cpu
+                
                 if num_particles != 0 {
                     // iterate directly on particles??
                     let mut particle_idx: usize = 0;
                     let mut processed_particles: usize = 0;
-                    while processed_particles < num_particles {
+                    while particle_idx < mcco.particle_vault_container.vault_size {
                         //println!("processing particle #{particle_idx}");
                         cycle_tracking_guts(
                             mcco,
@@ -148,7 +149,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                         // incremented in cycle_tracking guts, only if the particle was not invalid
                         particle_idx += 1;
                     }
-                    println!("vault #{processing_vault_idx} finished processing");
+                    //println!("vault #{processing_vault_idx} finished processing");
                 }
 
                 //particle_count += num_particles as u64;

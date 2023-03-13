@@ -112,6 +112,7 @@ pub fn roulette_low_weight_particles<T: Float + FromPrimitive>(
     vault: &mut ParticleVaultContainer<T>,
     task_balance: &mut Balance,
 ) {
+    println!("---roulette");
     if low_weight_cutoff > 0.0 {
         let current_n_particles = vault.particles_processing_size();
         let vault_size = vault.vault_size;
@@ -119,6 +120,8 @@ pub fn roulette_low_weight_particles<T: Float + FromPrimitive>(
         let l_weight_cutoff: T = FromPrimitive::from_f64(low_weight_cutoff).unwrap();
         let weight_cutoff: T =
             FromPrimitive::from_f64(low_weight_cutoff * source_particle_weight).unwrap();
+        
+        println!("number of processing vaults: {}", vault.processing_size());
 
         // march backwards through particles; might be unecessary since we use vectors?
         (0..current_n_particles)

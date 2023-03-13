@@ -58,7 +58,7 @@ impl<T: Float + FromPrimitive> ParticleVault<T> {
 
     /// Clear all particles from the vault.
     pub fn clear(&mut self) {
-        self.particles.clear();
+        self.particles = vec![None; self.particles.len()];
     }
 
     /// Put a particle into the vault, casting it into a [MCBaseParticle].

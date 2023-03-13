@@ -36,9 +36,9 @@ impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
         let buffer_empty = self.is_empty();
         let sendq_empty = mcco.particle_vault_container.send_queue.size() == 0;
         let processing_empty = mcco.particle_vault_container.particles_processing_size() == 0;
-        println!("is buffer empty: {buffer_empty}");
-        println!("is sendq empty: {sendq_empty}");
-        println!("is processing vault empty: {processing_empty}");
+        //println!("is buffer empty: {buffer_empty}");
+        //println!("is sendq empty: {sendq_empty}");
+        //println!("is processing vault empty: {processing_empty}");
 
         buffer_empty & sendq_empty & processing_empty
     }
