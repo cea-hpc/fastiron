@@ -227,7 +227,8 @@ impl<T: Float + FromPrimitive + Debug> ParticleVaultContainer<T> {
             }
         }
 
-        self.processed_vaults[fill_vault_idx].push_base_particle(pp);
+        let insert_idx = self.processed_vaults[fill_vault_idx].particles.iter().position(|elem| elem.is_none()).unwrap();
+        self.processed_vaults[fill_vault_idx].particles[insert_idx] = Some(pp);
         self.processing_vaults[processing_vault_idx].particles[particle_idx] = None;
     }
 
@@ -239,6 +240,8 @@ impl<T: Float + FromPrimitive + Debug> ParticleVaultContainer<T> {
     ) {
         //println!("ADDING NEW PARTICLE");
         // find a vault with free space
+        println!("Current vault size: {}", self.processing_vaults[*fill_vault_index].size());
+        println!("Current vault capacity: {}", self.processing_vaults[*fill_vault_index].particles.len());
         while !self.processing_vaults[*fill_vault_index].size() < self.vault_size {
             println!("No space in fill_vault; moving on next vault");
             // if no space, move to next vault
@@ -253,7 +256,8 @@ impl<T: Float + FromPrimitive + Debug> ParticleVaultContainer<T> {
                 self.processing_vaults.push(vault);
             }
         }
-        self.processing_vaults[*fill_vault_index].push_base_particle(particle);
+        let insert_idx = self.processing_vaults[*fill_vault_index].particles.iter().position(|elem| elem.is_none());
+        self.processing_vaults[*fill_vault_index].particles[insert_idx.unwrap()] = Some(particle);
         //println!("added a processing particle, new size: {}", self.particles_processing_size());
     }
 
