@@ -204,14 +204,11 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
     }
 
     /// Set a particle as processed
-    pub fn set_as_processed(
-        &mut self,
-        processing_vault_idx: usize,
-        particle_idx: usize,
-    ) {
-        let pp = self.processing_vaults[processing_vault_idx].particles[particle_idx].clone().unwrap();
+    pub fn set_as_processed(&mut self, processing_vault_idx: usize, particle_idx: usize) {
+        let pp = self.processing_vaults[processing_vault_idx].particles[particle_idx]
+            .clone()
+            .unwrap();
         let mut fill_vault_idx: usize = 0;
-
 
         while !self.processed_vaults[fill_vault_idx].size() < self.vault_size {
             println!("No space in fill_vault; moving on next vault");

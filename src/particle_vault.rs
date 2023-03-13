@@ -48,15 +48,35 @@ impl<T: Float + FromPrimitive> ParticleVault<T> {
     pub fn collapse(&mut self, fill_size: usize, vault2: &mut ParticleVault<T>) {
         if self.size() + vault2.size() < fill_size {
             // build the new particle list starting with collapsed elements from self
-            let mut new: Vec<Option<MCBaseParticle<T>>> = self.particles.clone().into_iter().filter(|pp| pp.is_some()).collect();
-            let mut v2_particles: Vec<Option<MCBaseParticle<T>>> = vault2.particles.clone().into_iter().filter(|pp| pp.is_some()).collect();
+            let mut new: Vec<Option<MCBaseParticle<T>>> = self
+                .particles
+                .clone()
+                .into_iter()
+                .filter(|pp| pp.is_some())
+                .collect();
+            let mut v2_particles: Vec<Option<MCBaseParticle<T>>> = vault2
+                .particles
+                .clone()
+                .into_iter()
+                .filter(|pp| pp.is_some())
+                .collect();
             new.append(&mut v2_particles);
             vault2.clear();
             self.particles = new;
         } else {
             let old_len = self.size(); // next method call will change self.size since we fill the vault
-            let mut new: Vec<Option<MCBaseParticle<T>>> = self.particles.clone().into_iter().filter(|pp| pp.is_some()).collect();
-            let v2_particles: Vec<Option<MCBaseParticle<T>>> = vault2.particles.clone().into_iter().filter(|pp| pp.is_some()).collect();
+            let mut new: Vec<Option<MCBaseParticle<T>>> = self
+                .particles
+                .clone()
+                .into_iter()
+                .filter(|pp| pp.is_some())
+                .collect();
+            let v2_particles: Vec<Option<MCBaseParticle<T>>> = vault2
+                .particles
+                .clone()
+                .into_iter()
+                .filter(|pp| pp.is_some())
+                .collect();
             new.extend_from_slice(&v2_particles[..fill_size - self.size()]);
             self.particles = new;
             vault2.particles[fill_size - old_len] = v2_particles[fill_size - old_len].clone();

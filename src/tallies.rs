@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 use num::{zero, Float, FromPrimitive};
 
@@ -248,7 +248,7 @@ pub struct Tallies<T: Float> {
     pub num_cell_tally_replications: u32,
 }
 
-impl<T: Float + Display + FromPrimitive + Default> Tallies<T> {
+impl<T: Float + Display + FromPrimitive + Default + Debug> Tallies<T> {
     /// Constructor.
     pub fn new(
         bal_rep: u32,

@@ -46,7 +46,8 @@ pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssig
 
         //mcco.particle_vault_container.processing_vaults[processing_vault_idx]
         //    .invalidate_particle(particle_idx);
-        mcco.particle_vault_container.set_as_processed(processing_vault_idx, particle_idx);
+        mcco.particle_vault_container
+            .set_as_processed(processing_vault_idx, particle_idx);
         println!("invalidated particle #{particle_idx}");
         *processed_num += 1;
     }

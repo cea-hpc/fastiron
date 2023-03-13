@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use num::{zero, Float, FromPrimitive};
 
 use crate::{
@@ -14,15 +16,22 @@ use super::{
 };
 
 /// Copies a single particle from the particle-vault data and returns it.
-pub fn load_particle<T: Float + FromPrimitive + Default>(
+pub fn load_particle<T: Float + FromPrimitive + Default + Debug>(
     particle_vault: &ParticleVault<T>,
     particle_idx: usize,
     ts: f64,
 ) -> Option<MCParticle<T>> {
     let time_step: T = FromPrimitive::from_f64(ts).unwrap();
+    println!("{:#?}", particle_vault.particles);
+    let tmp = particle_vault.particles[particle_idx].clone();
+    if tmp.is_none() {
+        panic!();
+    }
+    println!("read particle: {tmp:#?}");
     // can probably use a map here
-    if let Some(mut particle) = particle_vault.particles[particle_idx].clone() {
+    if tmp.is_some() {
         // update time to census
+        let mut particle = tmp.unwrap();
         println!("loaded particle");
         if particle.time_to_census <= zero() {
             particle.time_to_census = particle.time_to_census + time_step;

@@ -16,7 +16,7 @@ pub struct EnergySpectrum<T: Float> {
     pub census_energy_spectrum: Vec<u64>,
 }
 
-impl<T: Float + Display + FromPrimitive + Default> EnergySpectrum<T> {
+impl<T: Float + Display + FromPrimitive + Default + Debug> EnergySpectrum<T> {
     pub fn new(name: String, size: usize) -> Self {
         Self {
             float_type: Default::default(),

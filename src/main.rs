@@ -58,7 +58,7 @@ pub fn game_over<T: Float + Display + FromPrimitive + Default + Debug>(mcco: &mu
     mcco.tallies.spectrum.print_spectrum(mcco);
 }
 
-pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
+pub fn cycle_init<T: Float + FromPrimitive + Display + Default + Debug>(
     mcco: &mut MonteCarlo<T>,
     load_balance: bool,
 ) {
@@ -67,13 +67,25 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
     mcco.clear_cross_section_cache();
 
     // mcco.tallies.cycle_initialize(mcco); // literally an empty function
-    println!("# processing particles: {}", mcco.particle_vault_container.particles_processing_size());
-    println!("# processed particles: {}", mcco.particle_vault_container.particles_processed_size());
+    println!(
+        "# processing particles: {}",
+        mcco.particle_vault_container.particles_processing_size()
+    );
+    println!(
+        "# processed particles: {}",
+        mcco.particle_vault_container.particles_processed_size()
+    );
     mcco.particle_vault_container
         .swap_processing_processed_vaults();
     println!("swapped vault");
-    println!("# processing particles: {}", mcco.particle_vault_container.particles_processing_size());
-    println!("# processed particles: {}", mcco.particle_vault_container.particles_processed_size());
+    println!(
+        "# processing particles: {}",
+        mcco.particle_vault_container.particles_processing_size()
+    );
+    println!(
+        "# processed particles: {}",
+        mcco.particle_vault_container.particles_processed_size()
+    );
     mcco.particle_vault_container.collapse_processed();
     mcco.particle_vault_container.collapse_processing();
 
@@ -133,12 +145,12 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                 let num_particles =
                     mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
 
+                //println!("{:#?}", mcco.particle_vault_container.processing_vaults[processing_vault_idx].particles);
+
                 if num_particles != 0 {
                     // iterate directly on particles??
                     let mut particle_idx: usize = 0;
                     let mut processed_particles: usize = 0;
-                    println!("processing size: {}", mcco.particle_vault_container.particles_processing_size());
-                    println!("current vault size: {}", mcco.particle_vault_container.processing_vaults[processing_vault_idx].size());
                     while particle_idx < mcco.particle_vault_container.vault_size {
                         //println!("processing particle #{particle_idx}");
                         cycle_tracking_guts(
@@ -201,7 +213,9 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
     mc_fast_timer::stop(mcco, Section::CycleTracking);
 }
 
-pub fn cycle_finalize<T: Float + Display + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
+pub fn cycle_finalize<T: Float + Display + FromPrimitive + Default + Debug>(
+    mcco: &mut MonteCarlo<T>,
+) {
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
     mcco.tallies.balance_task[0].end = mcco.particle_vault_container.processed_vaults.len() as u64;

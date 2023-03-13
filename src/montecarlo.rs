@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 use num::{zero, Float, FromPrimitive, ToPrimitive};
 
@@ -42,7 +42,7 @@ pub struct MonteCarlo<T: Float + FromPrimitive> {
     pub source_particle_weight: f64,
 }
 
-impl<T: Float + FromPrimitive + Display + Default> MonteCarlo<T> {
+impl<T: Float + FromPrimitive + Display + Default + Debug> MonteCarlo<T> {
     /// Constructor
     pub fn new(params: Parameters) -> Self {
         let tallies: Tallies<T> = Tallies::new(
