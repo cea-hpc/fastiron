@@ -83,7 +83,6 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
     mcco.particle_buffer.initialize(mcco.domain.len());
 
     mc_utils::source_now(mcco);
-    println!("# processing particles: {}", mcco.particle_vault_container.particles_processing_size());
 
     population_control::population_control(mcco, load_balance);
     let lwc = mcco.params.simulation_params.low_weight_cutoff;
@@ -138,6 +137,8 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
                     // iterate directly on particles??
                     let mut particle_idx: usize = 0;
                     let mut processed_particles: usize = 0;
+                    println!("processing size: {}", mcco.particle_vault_container.particles_processing_size());
+                    println!("current vault size: {}", mcco.particle_vault_container.processing_vaults[processing_vault_idx].size());
                     while particle_idx < mcco.particle_vault_container.vault_size {
                         //println!("processing particle #{particle_idx}");
                         cycle_tracking_guts(

@@ -21,8 +21,9 @@ pub fn load_particle<T: Float + FromPrimitive + Default>(
 ) -> Option<MCParticle<T>> {
     let time_step: T = FromPrimitive::from_f64(ts).unwrap();
     // can probably use a map here
-    if let Some(mut particle) = particle_vault.get_particle(particle_idx) {
+    if let Some(mut particle) = particle_vault.particles[particle_idx].clone() {
         // update time to census
+        println!("loaded particle");
         if particle.time_to_census <= zero() {
             particle.time_to_census = particle.time_to_census + time_step;
         }
@@ -31,7 +32,7 @@ pub fn load_particle<T: Float + FromPrimitive + Default>(
             particle.age = zero();
         }
 
-        return Some(particle);
+        return Some(MCParticle::new(&particle));
     }
     None
 }
