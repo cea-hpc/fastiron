@@ -22,12 +22,10 @@ pub fn load_particle<T: Float + FromPrimitive + Default + Debug>(
     ts: f64,
 ) -> Option<MCParticle<T>> {
     let time_step: T = FromPrimitive::from_f64(ts).unwrap();
-    println!("{:#?}", particle_vault.particles);
-    let tmp = particle_vault.particles[particle_idx].clone();
-    if tmp.is_none() {
-        panic!();
-    }
-    println!("read particle: {tmp:#?}");
+    //println!("{:#?}", particle_vault.particles);
+    println!("particle_idx: {particle_idx}");
+    let tmp = particle_vault.get_base_particle(particle_idx);
+    println!("length of vault: {}", particle_vault.particles.len());
     // can probably use a map here
     if tmp.is_some() {
         // update time to census
@@ -47,7 +45,7 @@ pub fn load_particle<T: Float + FromPrimitive + Default + Debug>(
 }
 
 /// Simulates the sources according to the problem's parameters.
-pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
+pub fn source_now<T: Float + FromPrimitive + Default + Debug>(mcco: &mut MonteCarlo<T>) {
     println!("---source_now");
     let time_step = FromPrimitive::from_f64(mcco.time_info.time_step).unwrap();
 

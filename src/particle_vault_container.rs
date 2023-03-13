@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use num::{Float, FromPrimitive};
 
 use crate::{
@@ -27,7 +29,7 @@ pub struct ParticleVaultContainer<T: Float> {
     pub extra_vault: Vec<ParticleVault<T>>,
 }
 
-impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
+impl<T: Float + FromPrimitive + Debug> ParticleVaultContainer<T> {
     pub fn new(vault_size: usize, num_vaults: usize, num_extra_vaults: usize) -> Self {
         let mut processing_vaults: Vec<ParticleVault<T>> =
             vec![ParticleVault::default(); num_vaults];

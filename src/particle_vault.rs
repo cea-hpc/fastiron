@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use num::{Float, FromPrimitive};
 
 use crate::mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
@@ -16,7 +18,7 @@ impl<T: Float> Default for ParticleVault<T> {
     }
 }
 
-impl<T: Float + FromPrimitive> ParticleVault<T> {
+impl<T: Float + FromPrimitive + Debug> ParticleVault<T> {
     /// Returns true if the vault is empty, false otherwise.
     pub fn empty(&self) -> bool {
         self.particles.is_empty()
@@ -131,6 +133,9 @@ impl<T: Float + FromPrimitive> ParticleVault<T> {
 
     /// Get the index-corresponding base particle from the vault.
     pub fn get_base_particle(&self, index: usize) -> Option<MCBaseParticle<T>> {
+        if self.particles[index+1].is_some() {
+            println!("particle at idx {index} should be some");
+        }
         self.particles[index].clone()
     }
 

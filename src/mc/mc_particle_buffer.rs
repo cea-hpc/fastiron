@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use num::{Float, FromPrimitive};
 
 use crate::montecarlo::MonteCarlo;
@@ -14,7 +16,7 @@ pub struct MCParticleBuffer<T: Float + FromPrimitive> {
     pub buffers: Vec<Vec<MCParticle<T>>>,
 }
 
-impl<T: Float + FromPrimitive> MCParticleBuffer<T> {
+impl<T: Float + FromPrimitive + Debug> MCParticleBuffer<T> {
     /// Prepare the buffers for use.
     pub fn initialize(&mut self, len: usize) {
         self.buffers = Vec::with_capacity(len);

@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use num::{one, Float, FromPrimitive};
 
 use crate::{
@@ -8,7 +10,7 @@ use crate::{
 };
 
 /// Routine used to monitor and regulate population level.
-pub fn population_control<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, load_balance: bool) {
+pub fn population_control<T: Float + FromPrimitive + Debug>(mcco: &mut MonteCarlo<T>, load_balance: bool) {
     let mut target_n_particles: usize = mcco.params.simulation_params.n_particles as usize;
     let mut global_n_particles: usize = 0;
     let local_n_particles: usize = mcco.particle_vault_container.particles_processing_size();
@@ -40,7 +42,7 @@ pub fn population_control<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, lo
     }
 }
 
-fn population_control_guts<T: Float + FromPrimitive>(
+fn population_control_guts<T: Float + FromPrimitive + Debug>(
     split_rr_factor: T,
     current_n_particles: usize,
     vault: &mut ParticleVaultContainer<T>,
@@ -106,7 +108,7 @@ fn population_control_guts<T: Float + FromPrimitive>(
 
 /// Play russian-roulette with low-weight particles relative
 /// to the source particle weight.
-pub fn roulette_low_weight_particles<T: Float + FromPrimitive>(
+pub fn roulette_low_weight_particles<T: Float + FromPrimitive + Debug>(
     low_weight_cutoff: f64,
     source_particle_weight: f64,
     vault: &mut ParticleVaultContainer<T>,
