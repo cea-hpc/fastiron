@@ -140,7 +140,6 @@ pub fn source_now<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) 
                         particle.time_to_census = time_step * rand_f;
 
                         let base_particle: MCBaseParticle<T> = MCBaseParticle::new(&particle);
-
                         mcco.particle_vault_container
                             .add_processing_particle(base_particle, &mut processing_idx);
 

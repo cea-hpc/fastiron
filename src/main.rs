@@ -71,6 +71,7 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
     println!("# processed particles: {}", mcco.particle_vault_container.particles_processed_size());
     mcco.particle_vault_container
         .swap_processing_processed_vaults();
+    println!("swapped vault");
     println!("# processing particles: {}", mcco.particle_vault_container.particles_processing_size());
     println!("# processed particles: {}", mcco.particle_vault_container.particles_processed_size());
     mcco.particle_vault_container.collapse_processed();
@@ -82,6 +83,7 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
     mcco.particle_buffer.initialize(mcco.domain.len());
 
     mc_utils::source_now(mcco);
+    println!("# processing particles: {}", mcco.particle_vault_container.particles_processing_size());
 
     population_control::population_control(mcco, load_balance);
     let lwc = mcco.params.simulation_params.low_weight_cutoff;
@@ -110,10 +112,6 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
 ) {
     mc_fast_timer::start(mcco, Section::CycleTracking);
     let mut done = false;
-    // execution policy
-    //
-    //
-    //
     loop {
         //let mut particle_count: u64 = 0;
 

@@ -23,3 +23,10 @@ pub fn map_behavior() {
         }
     });
 }
+
+#[test]
+pub fn filter_and_count() {
+    let list = [None, None, Some(123), Some(91), None];
+    let n_some = list.iter().filter(|elem| elem.is_some()).count();
+    assert_eq!(n_some, 2);
+}

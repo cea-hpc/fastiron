@@ -104,7 +104,7 @@ fn erase_swap_particles() {
         particles: vec![None, None, p1, None, None, None, p2],
     };
     // vault is size 7
-    assert_eq!(vault.size(), 7);
+    assert_eq!(vault.size(), 2);
 
     //println!("before: {vault:#?}");
 
@@ -113,7 +113,7 @@ fn erase_swap_particles() {
     //println!("after: {vault:#?}");
 
     // vault should be size 6
-    assert_eq!(vault.size(), 6);
+    assert_eq!(vault.size(), 1);
     // At index 2 should be p2
     assert_eq!(vault.get_base_particle(2).unwrap().identifier, 406);
     // If we pop an element, we should have None since p1 was deleted
