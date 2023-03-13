@@ -5,7 +5,7 @@ use num::{zero, Float, FromPrimitive};
 use crate::{
     montecarlo::MonteCarlo,
     particle_vault::ParticleVault,
-    physical_constants::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY},
+    physical_constants::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, TINY_FLOAT},
 };
 
 use super::{
@@ -21,13 +21,14 @@ pub fn load_particle<T: Float + FromPrimitive + Default + Debug>(
     particle_idx: usize,
     ts: f64,
 ) -> Option<MCParticle<T>> {
-    let time_step: T = FromPrimitive::from_f64(ts).unwrap();
     //println!("{:#?}", particle_vault.particles);
     // can probably use a map here
     if let Some(mut particle) = particle_vault.get_base_particle(particle_idx) {
         // update time to census
+        let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
+        let time_step: T = FromPrimitive::from_f64(ts).unwrap();
         println!("loaded particle #{particle_idx}");
-        if particle.time_to_census <= zero() {
+        if particle.time_to_census <= tiny_f {
             particle.time_to_census = particle.time_to_census + time_step;
         }
         // set age
