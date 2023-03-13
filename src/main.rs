@@ -182,9 +182,15 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
             }
 
             mc_fast_timer::start(mcco, Section::CycleTrackingMPI);
+            println!("before collapse");
+            println!("# processing particles: {}", mcco.particle_vault_container.particles_processing_size());
+            println!("# processed particles: {}", mcco.particle_vault_container.particles_processed_size());
 
             mcco.particle_vault_container.collapse_processing();
             mcco.particle_vault_container.collapse_processed();
+            println!("after collapse");
+            println!("# processing particles: {}", mcco.particle_vault_container.particles_processing_size());
+            println!("# processed particles: {}", mcco.particle_vault_container.particles_processed_size());
             done = mcco.particle_buffer.test_done_new(mcco);
 
             mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);

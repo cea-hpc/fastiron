@@ -238,7 +238,7 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
         particle: MCBaseParticle<T>,
         fill_vault_index: &mut usize,
     ) {
-        println!("ADDING NEW PARTICLE");
+        //println!("ADDING NEW PARTICLE");
         // find a vault with free space
         while !self.processing_vaults[*fill_vault_index].size() < self.vault_size {
             println!("No space in fill_vault; moving on next vault");
@@ -255,7 +255,7 @@ impl<T: Float + FromPrimitive> ParticleVaultContainer<T> {
             }
         }
         self.processing_vaults[*fill_vault_index].push_base_particle(particle);
-        println!("added a processing particle, new size: {}", self.particles_processing_size());
+        //println!("added a processing particle, new size: {}", self.particles_processing_size());
     }
 
     /// Add a particle to an extra vault.
