@@ -23,14 +23,10 @@ pub fn load_particle<T: Float + FromPrimitive + Default + Debug>(
 ) -> Option<MCParticle<T>> {
     let time_step: T = FromPrimitive::from_f64(ts).unwrap();
     //println!("{:#?}", particle_vault.particles);
-    println!("particle_idx: {particle_idx}");
-    let tmp = particle_vault.get_base_particle(particle_idx);
-    println!("length of vault: {}", particle_vault.particles.len());
     // can probably use a map here
-    if tmp.is_some() {
+    if let Some(mut particle) = particle_vault.get_base_particle(particle_idx) {
         // update time to census
-        let mut particle = tmp.unwrap();
-        println!("loaded particle");
+        println!("loaded particle #{particle_idx}");
         if particle.time_to_census <= zero() {
             particle.time_to_census = particle.time_to_census + time_step;
         }
