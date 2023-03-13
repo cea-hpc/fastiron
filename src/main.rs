@@ -67,9 +67,12 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default>(
     mcco.clear_cross_section_cache();
 
     // mcco.tallies.cycle_initialize(mcco); // literally an empty function
-
+    println!("# processing particles: {}", mcco.particle_vault_container.particles_processing_size());
+    println!("# processed particles: {}", mcco.particle_vault_container.particles_processed_size());
     mcco.particle_vault_container
         .swap_processing_processed_vaults();
+    println!("# processing particles: {}", mcco.particle_vault_container.particles_processing_size());
+    println!("# processed particles: {}", mcco.particle_vault_container.particles_processed_size());
     mcco.particle_vault_container.collapse_processed();
     mcco.particle_vault_container.collapse_processing();
 
