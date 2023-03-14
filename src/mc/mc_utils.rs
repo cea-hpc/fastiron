@@ -1,11 +1,9 @@
-use std::fmt::Debug;
-
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
 use crate::{
     montecarlo::MonteCarlo,
     particle_vault::ParticleVault,
-    constants::physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, TINY_FLOAT},
+    constants::{physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, TINY_FLOAT}, CustomFloat},
 };
 
 use super::{
@@ -16,7 +14,7 @@ use super::{
 };
 
 /// Copies a single particle from the particle-vault data and returns it.
-pub fn load_particle<T: Float + FromPrimitive + Default + Debug>(
+pub fn load_particle<T: CustomFloat>(
     particle_vault: &ParticleVault<T>,
     particle_idx: usize,
     ts: f64,
@@ -42,7 +40,7 @@ pub fn load_particle<T: Float + FromPrimitive + Default + Debug>(
 }
 
 /// Simulates the sources according to the problem's parameters.
-pub fn source_now<T: Float + FromPrimitive + Default + Debug>(mcco: &mut MonteCarlo<T>) {
+pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     println!("---source_now");
     let time_step = FromPrimitive::from_f64(mcco.time_info.time_step).unwrap();
 
@@ -162,7 +160,7 @@ pub fn source_now<T: Float + FromPrimitive + Default + Debug>(mcco: &mut MonteCa
         });
 }
 
-fn speed_from_energy<T: Float + FromPrimitive>(energy: T) -> T {
+fn speed_from_energy<T: CustomFloat>(energy: T) -> T {
     let rest_mass_energy: T = FromPrimitive::from_f64(NEUTRON_REST_MASS_ENERGY).unwrap();
     let speed_of_light: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
