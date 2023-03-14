@@ -1,9 +1,6 @@
-use std::fmt::{Debug, Display};
-use std::ops::AddAssign;
-
 use clap::Parser;
-use num::{Float, FromPrimitive};
 
+use fastiron::constants::CustomFloat;
 use fastiron::coral_benchmark_correctness;
 use fastiron::cycle_tracking::cycle_tracking_guts;
 use fastiron::init_mc::init_mc;
@@ -52,13 +49,13 @@ fn main() {
     coral_benchmark_correctness::coral_benchmark_correctness(mcco);
 }
 
-pub fn game_over<T: Float + Display + FromPrimitive + Default + Debug>(mcco: &mut MonteCarlo<T>) {
+pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.fast_timer.cumulative_report();
 
     mcco.tallies.spectrum.print_spectrum(mcco);
 }
 
-pub fn cycle_init<T: Float + FromPrimitive + Display + Default + Debug>(
+pub fn cycle_init<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     load_balance: bool,
 ) {
@@ -118,7 +115,7 @@ pub fn cycle_init<T: Float + FromPrimitive + Display + Default + Debug>(
     );
 }
 
-pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + Default>(
+pub fn cycle_tracking<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
 ) {
     mc_fast_timer::start(mcco, Section::CycleTracking);
@@ -213,7 +210,7 @@ pub fn cycle_tracking<T: Float + FromPrimitive + AddAssign + Display + Debug + D
     mc_fast_timer::stop(mcco, Section::CycleTracking);
 }
 
-pub fn cycle_finalize<T: Float + Display + FromPrimitive + Default + Debug>(
+pub fn cycle_finalize<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
 ) {
     mc_fast_timer::start(mcco, Section::CycleFinalize);

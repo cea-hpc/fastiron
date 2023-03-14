@@ -1,9 +1,11 @@
-use num::{zero, Float};
+use num::{zero};
+
+use crate::constants::CustomFloat;
 
 /// Structure used to represent a cell's state, i.e.
 /// properties relevant to the simulation.
 #[derive(Debug, Clone)]
-pub struct MCCellState<T: Float> {
+pub struct MCCellState<T: CustomFloat> {
     /// Global id of the material
     pub material: usize,
     /// Energy groups
@@ -18,7 +20,7 @@ pub struct MCCellState<T: Float> {
     pub source_tally: usize,
 }
 
-impl<T: Float> Default for MCCellState<T> {
+impl<T: CustomFloat> Default for MCCellState<T> {
     fn default() -> Self {
         Self {
             material: 0,

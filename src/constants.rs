@@ -1,3 +1,19 @@
+use std::{ops::{AddAssign, MulAssign, SubAssign, DivAssign}, fmt::{Debug, Display}};
+
+use num::{Float, FromPrimitive};
+
+pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
+pub trait UtilsFloat: Default + Debug + Display {}
+pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {}
+
+impl OpsFloat for f32 {}
+impl UtilsFloat for f32 {}
+impl CustomFloat for f32 {}
+
+impl OpsFloat for f64 {}
+impl UtilsFloat for f64 {}
+impl CustomFloat for f64 {}
+
 pub mod physical {
     // The values of all physical constants are taken from:
     // 2006 CODATA which is located on the web at

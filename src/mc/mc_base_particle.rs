@@ -1,8 +1,8 @@
 use std::fmt::Error;
 
-use num::{zero, Float};
+use num::{zero};
 
-use crate::tallies::MCTallyEvent;
+use crate::{tallies::MCTallyEvent, constants::CustomFloat};
 
 use super::{mc_location::MCLocation, mc_particle::MCParticle, mc_vector::MCVector};
 
@@ -21,7 +21,7 @@ impl Default for Species {
 /// Structure used to represent a base particle, i.e. a fresh
 /// particle with no direction.
 #[derive(Debug, Clone)]
-pub struct MCBaseParticle<T: Float> {
+pub struct MCBaseParticle<T: CustomFloat> {
     /// Current position
     pub coordinate: MCVector<T>,
     /// Current velocity
@@ -58,7 +58,7 @@ pub struct MCBaseParticle<T: Float> {
     pub cell: usize,
 }
 
-impl<T: Float> MCBaseParticle<T> {
+impl<T: CustomFloat> MCBaseParticle<T> {
     /// Constructor from a [MCParticle] object. To construct from a
     /// [MCBaseParticle] object, we derive the [Clone] trait.
     pub fn new(particle: &MCParticle<T>) -> Self {
@@ -107,7 +107,7 @@ impl<T: Float> MCBaseParticle<T> {
     }
 }
 
-impl<T: Float> Default for MCBaseParticle<T> {
+impl<T: CustomFloat> Default for MCBaseParticle<T> {
     fn default() -> Self {
         MCBaseParticle {
             coordinate: Default::default(),
