@@ -248,7 +248,7 @@ fn init_mesh<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
     mcco.domain.reserve(my_domain_gids.len());
     partition.iter().for_each(|mesh_p| {
         mcco.domain
-            .push(MCDomain::new(mesh_p, &global_grid, &ddc, params))
+            .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, &mcco.material_database))
     });
 
     if n_ranks == 1 {

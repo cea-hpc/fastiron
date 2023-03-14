@@ -6,7 +6,7 @@ use crate::{
     decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
     mesh_partition::{CellInfo, MeshPartition},
-    parameters::{GeometryParameters, Parameters, Shape},
+    parameters::{GeometryParameters, Parameters, Shape}, material_database::MaterialDatabase,
 };
 
 use super::{
@@ -14,7 +14,7 @@ use super::{
     mc_facet_adjacency::{MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent},
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
     mc_location::MCLocation,
-    mc_vector::MCVector,
+    mc_vector::MCVector, mct::cell_position_3dg,
 };
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -153,6 +153,7 @@ impl<T: Float + FromPrimitive + Default> MCDomain<T> {
         grid: &GlobalFccGrid<T>,
         ddc: &DecompositionObject,
         params: &Parameters,
+        mat_db: &MaterialDatabase<T>,
     ) -> Self {
         let mesh = MCMeshDomain::new(mesh_partition, grid, ddc, &get_boundary_conditions(params));
         let cell_state: Vec<MCCellState<T>> =
@@ -168,6 +169,9 @@ impl<T: Float + FromPrimitive + Default> MCDomain<T> {
         (0..mcdomain.cell_state.len()).into_iter().for_each(|ii| {
             mcdomain.cell_state[ii].volume = mcdomain.cell_volume(ii);
 
+            let rr = cell_position_3dg(&mcdomain, ii);
+            let mat_name = Self::find_material(&params.geometry_params, &rr);
+            mcdomain.cell_state[ii].material = mat_db.find_material(&mat_name).unwrap();
             mcdomain.cell_state[ii].total = vec![zero(); num_energy_groups];
 
             mcdomain.cell_state[ii].cell_number_density = one();
