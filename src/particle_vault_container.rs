@@ -183,18 +183,18 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
         // Particles are all in front of the list
         self.collapse_processed();
 
-        let mut processed_vault: usize = 0;
+        let mut processed_vault_idx: usize = 0;
 
-        // while there are processing vaults (not empty since we collapsed them before)
-        while processed_vault < self.processed_size() {
+        // while there are processed vaults (not empty since we collapsed them before)
+        while processed_vault_idx < self.processed_size() {
             core::mem::swap(
-                &mut self.processed_vaults[processed_vault],
-                &mut self.processing_vaults[processed_vault],
+                &mut self.processed_vaults[processed_vault_idx],
+                &mut self.processing_vaults[processed_vault_idx],
             );
-            processed_vault += 1;
+            processed_vault_idx += 1;
 
             // no more processing vaults?
-            if processed_vault == self.processing_size() {
+            if processed_vault_idx == self.processing_size() {
                 let mut vault: ParticleVault<T> = ParticleVault {
                     particles: Vec::new(),
                 };

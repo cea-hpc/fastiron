@@ -102,7 +102,7 @@ pub fn cycle_tracking_function<T: CustomFloat>(
                 
                 // set the particle as processed, i.e. transfer it from processing to processed vault
                 processed_vault.push_particle(particle.clone());
-                processing_vault.erase_swap_particles(particle_idx); //?
+                processing_vault.invalidate_particle(particle_idx);
 
                 // atomic in original code
                 mcco.tallies.balance_task[tally_idx].census += 1;
