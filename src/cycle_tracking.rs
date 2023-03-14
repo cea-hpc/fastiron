@@ -44,7 +44,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
         //    .invalidate_particle(particle_idx);
         mcco.particle_vault_container
             .set_as_processed(processing_vault_idx, particle_idx);
-        println!("invalidated particle #{particle_idx}");
+        //println!("invalidated particle #{particle_idx}");
         *processed_num += 1;
     }
 }
@@ -64,7 +64,7 @@ pub fn cycle_tracking_function<T: CustomFloat>(
 
     loop {
         let segment_outcome = outcome(mcco, particle, flux_tally_idx);
-        println!("Seg outcome: {segment_outcome:?}");
+        //println!("Seg outcome: {segment_outcome:?}");
         // atomic in original code
         mcco.tallies.balance_task[tally_idx].num_segments += 1;
 
@@ -99,10 +99,12 @@ pub fn cycle_tracking_function<T: CustomFloat>(
                     &mut mcco.particle_vault_container.processing_vaults[processing_vault_idx];
                 let processed_vault =
                     &mut mcco.particle_vault_container.processed_vaults[processed_vault_idx];
+                
+                // set the particle as processed, i.e. transfer it from processing to processed vault
                 processed_vault.push_particle(particle.clone());
-                //processing_vault.erase_swap_particles(particle_idx); //?
-                todo!(); // set as processed
-                                                                     // atomic in original code
+                processing_vault.erase_swap_particles(particle_idx); //?
+
+                // atomic in original code
                 mcco.tallies.balance_task[tally_idx].census += 1;
                 keep_tracking = false
             }

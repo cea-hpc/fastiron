@@ -28,7 +28,7 @@ pub fn load_particle<T: CustomFloat>(
         // update time to census
         let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
         let time_step: T = FromPrimitive::from_f64(ts).unwrap();
-        println!("loaded particle #{particle_idx}");
+        //println!("loaded particle #{particle_idx}");
         if particle.time_to_census <= tiny_f {
             particle.time_to_census += time_step;
         }
