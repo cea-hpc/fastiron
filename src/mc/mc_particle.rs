@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
-use num::{zero};
+use num::zero;
 
-use crate::{direction_cosine::DirectionCosine, tallies::MCTallyEvent, constants::CustomFloat};
+use crate::{constants::CustomFloat, direction_cosine::DirectionCosine, tallies::MCTallyEvent};
 
 use super::{
     mc_base_particle::{MCBaseParticle, Species},

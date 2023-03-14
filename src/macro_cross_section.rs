@@ -1,6 +1,9 @@
 use num::{zero, FromPrimitive};
 
-use crate::{montecarlo::MonteCarlo, constants::{physical::TINY_FLOAT, CustomFloat}};
+use crate::{
+    constants::{physical::TINY_FLOAT, CustomFloat},
+    montecarlo::MonteCarlo,
+};
 
 /// Computes the reaction-specific number-density-weighted
 /// macroscopic cross section of a cell.

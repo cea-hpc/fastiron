@@ -2,9 +2,10 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::{
     comm_object::CommObject,
+    constants::CustomFloat,
     global_fcc_grid::{GlobalFccGrid, Tuple3},
     grid_assignment_object::GridAssignmentObject,
-    mc::mc_vector::MCVector, constants::CustomFloat,
+    mc::mc_vector::MCVector,
 };
 
 pub type MapType = HashMap<usize, CellInfo>;

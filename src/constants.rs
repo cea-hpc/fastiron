@@ -1,4 +1,7 @@
-use std::{ops::{AddAssign, MulAssign, SubAssign, DivAssign}, fmt::{Debug, Display, LowerExp}};
+use std::{
+    fmt::{Debug, Display, LowerExp},
+    ops::{AddAssign, DivAssign, MulAssign, SubAssign},
+};
 
 use num::{Float, FromPrimitive};
 

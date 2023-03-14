@@ -9,10 +9,13 @@ use super::{
     mc_rng_state::rng_sample, mc_vector::MCVector,
 };
 use crate::{
+    constants::{
+        physical::{HUGE_FLOAT, SMALL_FLOAT},
+        CustomFloat,
+    },
     direction_cosine::DirectionCosine,
     mc::mc_base_particle::Species,
     montecarlo::MonteCarlo,
-    constants::{physical::{HUGE_FLOAT, SMALL_FLOAT}, CustomFloat},
 };
 
 /// Computes which facet of the specified cell is nearest
@@ -112,10 +115,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
 }
 
 /// Returns a coordinate that represents the "center" of the cell
-pub fn cell_position_3dg<T: CustomFloat>(
-    domain: &MCDomain<T>,
-    cell_idx: usize,
-) -> MCVector<T> {
+pub fn cell_position_3dg<T: CustomFloat>(domain: &MCDomain<T>, cell_idx: usize) -> MCVector<T> {
     let mut coordinate: MCVector<T> = Default::default();
 
     let n_points: usize = domain.mesh.cell_connectivity[cell_idx].point.len();
@@ -131,10 +131,7 @@ pub fn cell_position_3dg<T: CustomFloat>(
 }
 
 /// Reflects a particle off a reflection-type boundary.
-pub fn reflect_particle<T: CustomFloat>(
-    mcco: &MonteCarlo<T>,
-    particle: &mut MCParticle<T>,
-) {
+pub fn reflect_particle<T: CustomFloat>(mcco: &MonteCarlo<T>, particle: &mut MCParticle<T>) {
     let mut new_d_cos = particle.direction_cosine.clone();
     let location = particle.get_location();
 

@@ -1,13 +1,16 @@
 use core::panic;
-use std::fmt::{Debug};
+use std::fmt::Debug;
 
 use num::{zero, Float, FromPrimitive};
 
 use crate::{
+    constants::{
+        physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
+        CustomFloat,
+    },
     macro_cross_section::weighted_macroscopic_cross_section,
     mc::{mc_nearest_facet::MCNearestFacet, mc_rng_state::rng_sample, mct::nearest_facet},
     montecarlo::MonteCarlo,
-    constants::{physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT}, CustomFloat},
     tallies::MCTallyEvent,
 };
 

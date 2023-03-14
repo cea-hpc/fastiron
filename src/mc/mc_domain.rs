@@ -3,10 +3,12 @@ use std::collections::HashMap;
 use num::{one, zero, FromPrimitive};
 
 use crate::{
+    constants::CustomFloat,
     decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
+    material_database::MaterialDatabase,
     mesh_partition::{CellInfo, MeshPartition},
-    parameters::{GeometryParameters, Parameters, Shape}, material_database::MaterialDatabase, constants::CustomFloat,
+    parameters::{GeometryParameters, Parameters, Shape},
 };
 
 use super::{
@@ -14,7 +16,8 @@ use super::{
     mc_facet_adjacency::{MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent},
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
     mc_location::MCLocation,
-    mc_vector::MCVector, mct::cell_position_3dg,
+    mc_vector::MCVector,
+    mct::cell_position_3dg,
 };
 
 #[derive(Debug, Clone, Copy, Default)]

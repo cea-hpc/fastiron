@@ -1,6 +1,6 @@
 use num::{zero, Float, FromPrimitive};
 
-use crate::{mc::mc_rng_state::rng_sample, constants::CustomFloat};
+use crate::{constants::CustomFloat, mc::mc_rng_state::rng_sample};
 
 /// Enum representing a reaction type. Named `Enum` in
 /// the original code.
@@ -65,7 +65,7 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
                 normal_value = xsection[ii];
             }
         });
-        
+
         let scale = reaction_cross_section / normal_value;
         (0..n_groups).into_iter().for_each(|ii| {
             xsection[ii] = xsection[ii] * scale;

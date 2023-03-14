@@ -55,10 +55,7 @@ pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.tallies.spectrum.print_spectrum(mcco);
 }
 
-pub fn cycle_init<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
-    load_balance: bool,
-) {
+pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) {
     mc_fast_timer::start(mcco, Section::CycleInit);
 
     mcco.clear_cross_section_cache();
@@ -115,9 +112,7 @@ pub fn cycle_init<T: CustomFloat>(
     );
 }
 
-pub fn cycle_tracking<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
-) {
+pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mc_fast_timer::start(mcco, Section::CycleTracking);
     let mut done = false;
     loop {
@@ -210,9 +205,7 @@ pub fn cycle_tracking<T: CustomFloat>(
     mc_fast_timer::stop(mcco, Section::CycleTracking);
 }
 
-pub fn cycle_finalize<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
-) {
+pub fn cycle_finalize<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
     mcco.tallies.balance_task[0].end = mcco.particle_vault_container.processed_vaults.len() as u64;

@@ -1,6 +1,6 @@
 use std::{fmt::Display, time::Instant};
 
-use crate::{montecarlo::MonteCarlo, constants::CustomFloat};
+use crate::{constants::CustomFloat, montecarlo::MonteCarlo};
 
 /// Enum used to identify sections and their corresponding
 /// timers.

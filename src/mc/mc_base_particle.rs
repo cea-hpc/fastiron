@@ -1,8 +1,8 @@
 use std::fmt::Error;
 
-use num::{zero};
+use num::zero;
 
-use crate::{tallies::MCTallyEvent, constants::CustomFloat};
+use crate::{constants::CustomFloat, tallies::MCTallyEvent};
 
 use super::{mc_location::MCLocation, mc_particle::MCParticle, mc_vector::MCVector};
 

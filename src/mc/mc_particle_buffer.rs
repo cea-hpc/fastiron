@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::{montecarlo::MonteCarlo, constants::CustomFloat};
+use crate::{constants::CustomFloat, montecarlo::MonteCarlo};
 
 use super::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 

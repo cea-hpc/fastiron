@@ -3,12 +3,13 @@ use std::fmt::Debug;
 use num::zero;
 
 use crate::{
+    constants::CustomFloat,
     energy_spectrum::EnergySpectrum,
     mc::{
         mc_domain::MCDomain,
         mc_fast_timer::{self, Section},
     },
-    montecarlo::MonteCarlo, constants::CustomFloat,
+    montecarlo::MonteCarlo,
 };
 
 /// Enum representing a tally event.
@@ -446,7 +447,7 @@ impl<T: CustomFloat> Tallies<T> {
                             .len();
                         (0..n_groups).into_iter().for_each(|group_idx| {
                             sum += self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
-                                    [cell_idx][group_idx];
+                                [cell_idx][group_idx];
                         })
                     })
                 })

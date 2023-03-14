@@ -1,4 +1,4 @@
-use num::{FromPrimitive};
+use num::FromPrimitive;
 
 use crate::constants::{physical::TINY_FLOAT, CustomFloat};
 

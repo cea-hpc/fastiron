@@ -1,6 +1,6 @@
 use num::{zero, FromPrimitive};
 
-use crate::{mc::mc_vector::MCVector, constants::CustomFloat};
+use crate::{constants::CustomFloat, mc::mc_vector::MCVector};
 
 /// Custom alias for readability.
 pub type Tuple3 = (usize, usize, usize);

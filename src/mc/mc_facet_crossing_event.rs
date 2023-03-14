@@ -1,4 +1,4 @@
-use crate::{montecarlo::MonteCarlo, tallies::MCTallyEvent, constants::CustomFloat};
+use crate::{constants::CustomFloat, montecarlo::MonteCarlo, tallies::MCTallyEvent};
 
 use super::{
     mc_facet_adjacency::MCSubfacetAdjacencyEvent, mc_particle::MCParticle, mct::reflect_particle,

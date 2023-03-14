@@ -2,6 +2,7 @@ use num::one;
 
 use crate::{
     collision_event::collision_event,
+    constants::CustomFloat,
     mc::{
         mc_base_particle::Species,
         mc_facet_crossing_event::facet_crossing_event,
@@ -11,7 +12,7 @@ use crate::{
         mct::reflect_particle,
     },
     montecarlo::MonteCarlo,
-    tallies::MCTallyEvent, constants::CustomFloat,
+    tallies::MCTallyEvent,
 };
 
 /// Main steps of the CycleTracking sections

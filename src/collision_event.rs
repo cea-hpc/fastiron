@@ -1,7 +1,10 @@
-
-use num::{FromPrimitive};
+use num::FromPrimitive;
 
 use crate::{
+    constants::{
+        physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
+        CustomFloat,
+    },
     macro_cross_section::macroscopic_cross_section,
     mc::{
         mc_particle::MCParticle,
@@ -9,15 +12,10 @@ use crate::{
     },
     montecarlo::MonteCarlo,
     nuclear_data::ReactionType,
-    constants::{physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI}, CustomFloat},
 };
 
 /// Update the a particle's energy and trajectory after a collision.
-pub fn update_trajectory<T: CustomFloat>(
-    energy: T,
-    angle: T,
-    particle: &mut MCParticle<T>,
-) {
+pub fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParticle<T>) {
     // constants
     let pi: T = FromPrimitive::from_f64(PI).unwrap();
     let c: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();

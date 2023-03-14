@@ -6,13 +6,13 @@
 
 use fastiron::{
     collision_event::update_trajectory,
+    constants::physical::SMALL_FLOAT,
     direction_cosine::DirectionCosine,
     mc::{
         mc_particle::MCParticle,
         mc_rng_state::{pseudo_des, rng_sample, spawn_rn_seed},
         mc_vector::MCVector,
     },
-    constants::physical::SMALL_FLOAT,
 };
 use num::Float;
 

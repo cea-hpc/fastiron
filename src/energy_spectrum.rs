@@ -1,6 +1,6 @@
 use std::fmt::Debug;
-use std::io::Write;
 use std::fs::File;
+use std::io::Write;
 
 use crate::constants::CustomFloat;
 use crate::{mc::mc_utils::load_particle, montecarlo::MonteCarlo};

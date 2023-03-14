@@ -1,12 +1,8 @@
-use std::{
-    collections::HashMap,
-    fmt::Debug,
-    fs::File,
-    io::Write,
-};
+use std::{collections::HashMap, fmt::Debug, fs::File, io::Write};
 
 use crate::{
     comm_object::CommObject,
+    constants::{physical::TINY_FLOAT, CustomFloat},
     decomposition_object::DecompositionObject,
     global_fcc_grid::{GlobalFccGrid, Tuple3},
     material_database::{Isotope, Material},
@@ -15,14 +11,11 @@ use crate::{
     montecarlo::MonteCarlo,
     nuclear_data::{NuclearData, Polynomial, ReactionType},
     parameters::Parameters,
-    constants::{physical::TINY_FLOAT, CustomFloat},
 };
 use num::{one, zero, Float, FromPrimitive};
 
 /// Creates a [MonteCarlo] object using the specified parameters.
-pub fn init_mc<T: CustomFloat>(
-    params: Parameters,
-) -> MonteCarlo<T> {
+pub fn init_mc<T: CustomFloat>(params: Parameters) -> MonteCarlo<T> {
     println!("---init_mc");
     let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
 
@@ -247,8 +240,13 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
     mcco.domain.reserve(my_domain_gids.len());
     partition.iter().for_each(|mesh_p| {
-        mcco.domain
-            .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, &mcco.material_database))
+        mcco.domain.push(MCDomain::new(
+            mesh_p,
+            &global_grid,
+            &ddc,
+            params,
+            &mcco.material_database,
+        ))
     });
 
     if n_ranks == 1 {
@@ -274,9 +272,7 @@ struct XSData<T: Float> {
     sca: T,
 }
 
-fn check_cross_sections<T: CustomFloat>(
-    mcco: &MonteCarlo<T>,
-) {
+fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
     let params = &mcco.params;
     if params.simulation_params.cross_sections_out.is_empty() {
         return;

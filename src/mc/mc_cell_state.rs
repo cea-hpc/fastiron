@@ -1,4 +1,4 @@
-use num::{zero};
+use num::zero;
 
 use crate::constants::CustomFloat;
 

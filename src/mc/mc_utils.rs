@@ -1,9 +1,12 @@
 use num::{zero, FromPrimitive};
 
 use crate::{
+    constants::{
+        physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, TINY_FLOAT},
+        CustomFloat,
+    },
     montecarlo::MonteCarlo,
     particle_vault::ParticleVault,
-    constants::{physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, TINY_FLOAT}, CustomFloat},
 };
 
 use super::{
@@ -91,7 +94,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 .for_each(|(cell_idx, cell)| {
                     let cell_weight_particle: T =
                         cell.volume * source_rate[cell.material] * time_step;
-                    
+
                     // floor/ceil it before cast ?
                     let cell_n_particles: usize = (cell_weight_particle / source_particle_weight)
                         .floor()
