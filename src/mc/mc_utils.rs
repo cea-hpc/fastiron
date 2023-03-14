@@ -93,8 +93,8 @@ pub fn source_now<T: Float + FromPrimitive + Default + Debug>(mcco: &mut MonteCa
                 .for_each(|(cell_idx, cell)| {
                     let cell_weight_particle: T =
                         cell.volume * source_rate[cell.material] * time_step;
+                    
                     // floor/ceil it before cast ?
-
                     let cell_n_particles: usize = (cell_weight_particle / source_particle_weight)
                         .floor()
                         .to_usize()
@@ -102,7 +102,7 @@ pub fn source_now<T: Float + FromPrimitive + Default + Debug>(mcco: &mut MonteCa
                     cell_source_tally[cell_idx] = cell.source_tally;
                     // create cell_n_particles and add them to the vaults
                     //println!("creating {cell_n_particles} particles in cell {cell_idx}");
-                    (0..cell_n_particles).into_iter().for_each(|_| {
+                    (0..cell_n_particles).into_iter().for_each(|ii| {
                         let mut particle: MCParticle<T> = MCParticle::default();
                         // atomic in original code
                         let mut rand_n_seed = cell_source_tally[cell_idx] as u64;
@@ -149,6 +149,7 @@ pub fn source_now<T: Float + FromPrimitive + Default + Debug>(mcco: &mut MonteCa
                         let base_particle: MCBaseParticle<T> = MCBaseParticle::new(&particle);
                         mcco.particle_vault_container
                             .add_processing_particle(base_particle, &mut processing_idx);
+                        //println!("added particle; total # in cell: {ii}");
 
                         // atomic in original code
                         mcco.tallies.balance_task[particle.task].source += 1;

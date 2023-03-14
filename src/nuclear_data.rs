@@ -63,15 +63,14 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
             let base: T = FromPrimitive::from_f32(10.0).unwrap();
             xsection[ii] = base.powf(polynomial.val(energy.log10()));
 
-            if energies[ii + 1] >= one {
+            if (energies[ii + 1] >= one) & normal_value.is_zero() {
                 normal_value = xsection[ii];
             }
-
-            let scale = reaction_cross_section / normal_value;
-            // replace with map later?
-            (0..n_groups).into_iter().for_each(|ii| {
-                xsection[ii] = xsection[ii] * scale;
-            });
+        });
+        
+        let scale = reaction_cross_section / normal_value;
+        (0..n_groups).into_iter().for_each(|ii| {
+            xsection[ii] = xsection[ii] * scale;
         });
 
         Self {

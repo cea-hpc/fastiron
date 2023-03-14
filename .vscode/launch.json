@@ -38,7 +38,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["-i", "input_files/debug/correct_cell_material.inp","-e", "energy", "-S", "section", "-n", "10"],
+            "args": ["-i", "input_files/debug/homogeneous.inp","-e", "energy", "-S", "section", "-n", "10000"],
             "cwd": "${workspaceFolder}"
         },
         {
