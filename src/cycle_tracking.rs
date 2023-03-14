@@ -1,9 +1,4 @@
-use std::{
-    fmt::{Debug, Display},
-    ops::AddAssign,
-};
-
-use num::{one, Float, FromPrimitive};
+use num::one;
 
 use crate::{
     collision_event::collision_event,
@@ -16,11 +11,11 @@ use crate::{
         mct::reflect_particle,
     },
     montecarlo::MonteCarlo,
-    tallies::MCTallyEvent,
+    tallies::MCTallyEvent, constants::CustomFloat,
 };
 
 /// Main steps of the CycleTracking sections
-pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssign + Default>(
+pub fn cycle_tracking_guts<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
     processed_num: &mut usize,
@@ -54,7 +49,7 @@ pub fn cycle_tracking_guts<T: Float + FromPrimitive + Display + Debug + AddAssig
 }
 
 /// Computations of the CycleTracking sections
-pub fn cycle_tracking_function<T: Float + FromPrimitive + Display + Debug + AddAssign + Default>(
+pub fn cycle_tracking_function<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
     particle_idx: usize,

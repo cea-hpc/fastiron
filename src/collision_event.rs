@@ -1,6 +1,5 @@
-use std::fmt::{Debug, Display};
 
-use num::{Float, FromPrimitive};
+use num::{FromPrimitive};
 
 use crate::{
     macro_cross_section::macroscopic_cross_section,
@@ -10,11 +9,11 @@ use crate::{
     },
     montecarlo::MonteCarlo,
     nuclear_data::ReactionType,
-    constants::physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
+    constants::{physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI}, CustomFloat},
 };
 
 /// Update the a particle's energy and trajectory after a collision.
-pub fn update_trajectory<T: Float + FromPrimitive + Debug + Default>(
+pub fn update_trajectory<T: CustomFloat>(
     energy: T,
     angle: T,
     particle: &mut MCParticle<T>,
@@ -49,7 +48,7 @@ pub fn update_trajectory<T: Float + FromPrimitive + Debug + Default>(
 
 /// Computes and transform accordingly a [MCParticle] object that
 /// undergo a collision. Returns true if the particle will continue
-pub fn collision_event<T: Float + FromPrimitive + Debug + Default + Display>(
+pub fn collision_event<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     mc_particle: &mut MCParticle<T>,
     tally_idx: usize,

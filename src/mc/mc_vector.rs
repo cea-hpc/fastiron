@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use num::{Float, FromPrimitive, Zero};
+use num::{FromPrimitive, zero};
 
 use crate::constants::{physical::TINY_FLOAT, CustomFloat};
 
@@ -59,9 +59,9 @@ impl<T: CustomFloat> MCVector<T> {
 impl<T: CustomFloat> Default for MCVector<T> {
     fn default() -> Self {
         MCVector {
-            x: Zero::zero(),
-            y: Zero::zero(),
-            z: Zero::zero(),
+            x: zero(),
+            y: zero(),
+            z: zero(),
         }
     }
 }

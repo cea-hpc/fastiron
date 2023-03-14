@@ -1,15 +1,15 @@
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
-use crate::{mc::mc_rng_state::rng_sample, constants::physical::PI};
+use crate::{mc::mc_rng_state::rng_sample, constants::{physical::PI, CustomFloat}};
 
 #[derive(Debug, Clone, Default)]
-pub struct DirectionCosine<T: Float> {
+pub struct DirectionCosine<T: CustomFloat> {
     pub alpha: T,
     pub beta: T,
     pub gamma: T,
 }
 
-impl<T: Float + FromPrimitive> DirectionCosine<T> {
+impl<T: CustomFloat> DirectionCosine<T> {
     /// Generates a random angle.
     pub fn sample_isotropic(&mut self, seed: &mut u64) {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();

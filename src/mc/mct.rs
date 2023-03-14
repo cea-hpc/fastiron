@@ -1,6 +1,6 @@
 use core::panic;
 
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
 use super::{
     mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
@@ -12,12 +12,12 @@ use crate::{
     direction_cosine::DirectionCosine,
     mc::mc_base_particle::Species,
     montecarlo::MonteCarlo,
-    constants::physical::{HUGE_FLOAT, SMALL_FLOAT},
+    constants::{physical::{HUGE_FLOAT, SMALL_FLOAT}, CustomFloat},
 };
 
 /// Computes which facet of the specified cell is nearest
 /// to the specified coordinates.
-pub fn nearest_facet<T: Float + FromPrimitive>(
+pub fn nearest_facet<T: CustomFloat>(
     mc_particle: &mut MCParticle<T>,
     mcco: &MonteCarlo<T>,
 ) -> MCNearestFacet<T> {
@@ -43,7 +43,7 @@ pub fn nearest_facet<T: Float + FromPrimitive>(
 /// Generates a random coordinate inside a polyhedral cell.
 /// May be possible to remove the MonteCarlo argument by directly
 /// passing a a reference to the domain since its read only.
-pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
+pub fn generate_coordinate_3dg<T: CustomFloat>(
     seed: &mut u64,
     domain: &MCDomain<T>,
     cell_idx: usize,
@@ -112,7 +112,7 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
 }
 
 /// Returns a coordinate that represents the "center" of the cell
-pub fn cell_position_3dg<T: Float + FromPrimitive>(
+pub fn cell_position_3dg<T: CustomFloat>(
     domain: &MCDomain<T>,
     cell_idx: usize,
 ) -> MCVector<T> {
@@ -131,7 +131,7 @@ pub fn cell_position_3dg<T: Float + FromPrimitive>(
 }
 
 /// Reflects a particle off a reflection-type boundary.
-pub fn reflect_particle<T: Float + FromPrimitive>(
+pub fn reflect_particle<T: CustomFloat>(
     mcco: &MonteCarlo<T>,
     particle: &mut MCParticle<T>,
 ) {
@@ -169,7 +169,7 @@ pub fn reflect_particle<T: Float + FromPrimitive>(
 //       Private functions
 // ==============================
 
-fn mct_nf_3dg<T: Float + FromPrimitive>(
+fn mct_nf_3dg<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
 ) -> MCNearestFacet<T> {
@@ -245,7 +245,7 @@ fn mct_nf_3dg<T: Float + FromPrimitive>(
 
 /// Returns the volume defined by `v3v0`, `v3v1`, `v3v2` using
 /// vectorial operations.
-fn mct_cell_volume_3dg_vector_tetdet<T: Float + FromPrimitive>(
+fn mct_cell_volume_3dg_vector_tetdet<T: CustomFloat>(
     v0: &MCVector<T>,
     v1: &MCVector<T>,
     v2: &MCVector<T>,
@@ -258,7 +258,7 @@ fn mct_cell_volume_3dg_vector_tetdet<T: Float + FromPrimitive>(
     tmp0.dot(&tmp1.cross(&tmp2)) // should be the same as original code
 }
 
-fn mct_nf_3dg_move_particle<T: Float + FromPrimitive>(
+fn mct_nf_3dg_move_particle<T: CustomFloat>(
     domain: &MCDomain<T>,
     location: &MCLocation,
     coord: &mut MCVector<T>,
@@ -270,7 +270,7 @@ fn mct_nf_3dg_move_particle<T: Float + FromPrimitive>(
 }
 
 /// delete num_facets_per_cell ?
-fn mct_nf_compute_nearest<T: Float + FromPrimitive>(
+fn mct_nf_compute_nearest<T: CustomFloat>(
     num_facets_per_cell: usize,
     distance_to_facet: &[MCDistanceToFacet<T>],
 ) -> MCNearestFacet<T> {
@@ -304,7 +304,7 @@ fn mct_nf_compute_nearest<T: Float + FromPrimitive>(
     nearest_facet
 }
 
-fn mct_nf_find_nearest<T: Float + FromPrimitive>(
+fn mct_nf_find_nearest<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
     location: &mut MCLocation,
@@ -350,7 +350,7 @@ fn mct_nf_find_nearest<T: Float + FromPrimitive>(
     (nearest_facet, retry)
 }
 
-fn mct_facet_points_3dg<T: Float>(
+fn mct_facet_points_3dg<T: CustomFloat>(
     domain: &MCDomain<T>,
     cell: usize,
     facet: usize,
@@ -364,7 +364,7 @@ fn mct_facet_points_3dg<T: Float>(
     res
 }
 
-fn mct_nf_3dg_dist_to_segment<T: Float + FromPrimitive>(
+fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     plane_tolerance: T,
     facet_normal_dot_dcos: T,
     plane: MCGeneralPlane<T>,

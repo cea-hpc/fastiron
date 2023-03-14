@@ -1,25 +1,22 @@
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 use std::io::Write;
-use std::{fs::File, marker::PhantomData};
+use std::fs::File;
 
-use num::{Float, FromPrimitive};
-
+use crate::constants::CustomFloat;
 use crate::{mc::mc_utils::load_particle, montecarlo::MonteCarlo};
 
 /// Structure used to represent the energy spectrum
 /// of the problem, i.e. the distribution of particles
 /// among energy levels.
 #[derive(Debug)]
-pub struct EnergySpectrum<T: Float> {
-    float_type: PhantomData<T>,
+pub struct EnergySpectrum {
     pub file_name: String,
     pub census_energy_spectrum: Vec<u64>,
 }
 
-impl<T: Float + Display + FromPrimitive + Default + Debug> EnergySpectrum<T> {
+impl EnergySpectrum {
     pub fn new(name: String, size: usize) -> Self {
         Self {
-            float_type: Default::default(),
             file_name: name,
             census_energy_spectrum: vec![0; size + 1],
         }
@@ -27,7 +24,7 @@ impl<T: Float + Display + FromPrimitive + Default + Debug> EnergySpectrum<T> {
 
     /// Update its fields using the [MonteCarlo] Object.
     /// REPLACED BY EPONYMOUS FUNCTION OF MCCO
-    pub fn update_spectrum(&mut self, mcco: &MonteCarlo<T>) {
+    pub fn update_spectrum<T: CustomFloat>(&mut self, mcco: &MonteCarlo<T>) {
         if self.file_name.is_empty() {
             return;
         }
@@ -59,7 +56,7 @@ impl<T: Float + Display + FromPrimitive + Default + Debug> EnergySpectrum<T> {
     }
 
     /// Print the spectrum.
-    pub fn print_spectrum(&self, mcco: &MonteCarlo<T>) {
+    pub fn print_spectrum<T: CustomFloat>(&self, mcco: &MonteCarlo<T>) {
         if self.file_name.is_empty() {
             return;
         }
