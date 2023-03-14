@@ -90,8 +90,9 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
     mcco.particle_buffer.initialize(mcco.domain.len());
 
     mc_utils::source_now(mcco);
-
+    
     population_control::population_control(mcco, load_balance);
+
     let lwc = mcco.params.simulation_params.low_weight_cutoff;
     let spw = mcco.source_particle_weight;
     population_control::roulette_low_weight_particles(
