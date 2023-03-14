@@ -194,7 +194,7 @@ impl<T: Float + FromPrimitive + Default> MCDomain<T> {
     fn find_material(geometry_params: &[GeometryParameters], rr: &MCVector<T>) -> String {
         let mut mat_name = String::default();
 
-        geometry_params.iter().for_each(|geom| {
+        geometry_params.iter().rev().for_each(|geom| {
             if Self::is_inside(geom, rr) {
                 // cant return directly because of the behavior of original function
                 mat_name = geom.material_name.to_owned();
