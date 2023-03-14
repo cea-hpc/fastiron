@@ -67,7 +67,7 @@ pub fn source_now<T: Float + FromPrimitive + Default + Debug>(mcco: &mut MonteCa
     let source_fraction: T = FromPrimitive::from_f64(0.1).unwrap();
     let source_particle_weight: T = total_weight_particles
         / (source_fraction * FromPrimitive::from_usize(n_particles).unwrap());
-
+    assert_ne!(source_particle_weight, zero());
     mcco.source_particle_weight = source_particle_weight.to_f64().unwrap();
 
     let vault_size = mcco.particle_vault_container.vault_size;
@@ -94,7 +94,9 @@ pub fn source_now<T: Float + FromPrimitive + Default + Debug>(mcco: &mut MonteCa
                     let cell_weight_particle: T =
                         cell.volume * source_rate[cell.material] * time_step;
                     // floor/ceil it before cast ?
+                    
                     let cell_n_particles: usize = (cell_weight_particle / source_particle_weight)
+                        .floor()
                         .to_usize()
                         .unwrap();
                     cell_source_tally[cell_idx] = cell.source_tally;

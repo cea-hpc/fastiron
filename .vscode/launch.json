@@ -1,0 +1,197 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'fastiron'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=fastiron"
+                ],
+                "filter": {
+                    "name": "fastiron",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'fastiron'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=fastiron",
+                    "--package=fastiron"
+                ],
+                "filter": {
+                    "name": "fastiron",
+                    "kind": "bin"
+                }
+            },
+            "args": ["-i", "input_files/QS_originals/NoCollisions/no.collisions.inp","-e", "energy", "-S", "section", "-n", "10"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'fastiron'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=fastiron",
+                    "--package=fastiron"
+                ],
+                "filter": {
+                    "name": "fastiron",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'particles_and_vaults'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=particles_and_vaults",
+                    "--package=fastiron"
+                ],
+                "filter": {
+                    "name": "particles_and_vaults",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'mc_vector'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=mc_vector",
+                    "--package=fastiron"
+                ],
+                "filter": {
+                    "name": "mc_vector",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'io_and_parameters'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=io_and_parameters",
+                    "--package=fastiron"
+                ],
+                "filter": {
+                    "name": "io_and_parameters",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'send_queue'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=send_queue",
+                    "--package=fastiron"
+                ],
+                "filter": {
+                    "name": "send_queue",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'computation'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=computation",
+                    "--package=fastiron"
+                ],
+                "filter": {
+                    "name": "computation",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'misc'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=misc",
+                    "--package=fastiron"
+                ],
+                "filter": {
+                    "name": "misc",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'some_benchmark'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=some_benchmark",
+                    "--package=fastiron"
+                ],
+                "filter": {
+                    "name": "some_benchmark",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
