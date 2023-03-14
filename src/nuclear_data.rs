@@ -63,7 +63,7 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
             let base: T = FromPrimitive::from_f32(10.0).unwrap();
             xsection[ii] = base.powf(polynomial.val(energy.log10()));
 
-            if energies[ii+1] >= one {
+            if energies[ii + 1] >= one {
                 normal_value = xsection[ii];
             }
 

@@ -227,7 +227,11 @@ impl<T: Float + FromPrimitive + Debug> ParticleVaultContainer<T> {
             }
         }
 
-        let insert_idx = self.processed_vaults[fill_vault_idx].particles.iter().position(|elem| elem.is_none()).unwrap();
+        let insert_idx = self.processed_vaults[fill_vault_idx]
+            .particles
+            .iter()
+            .position(|elem| elem.is_none())
+            .unwrap();
         self.processed_vaults[fill_vault_idx].particles[insert_idx] = Some(pp);
         self.processing_vaults[processing_vault_idx].particles[particle_idx] = None;
     }
@@ -253,7 +257,11 @@ impl<T: Float + FromPrimitive + Debug> ParticleVaultContainer<T> {
                 self.processing_vaults.push(vault);
             }
         }
-        let insert_idx = self.processing_vaults[*fill_vault_index].particles.iter().position(|elem| elem.is_none()).unwrap();
+        let insert_idx = self.processing_vaults[*fill_vault_index]
+            .particles
+            .iter()
+            .position(|elem| elem.is_none())
+            .unwrap();
         self.processing_vaults[*fill_vault_index].particles[insert_idx] = Some(particle);
     }
 

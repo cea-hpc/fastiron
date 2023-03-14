@@ -10,7 +10,10 @@ use crate::{
 };
 
 /// Routine used to monitor and regulate population level.
-pub fn population_control<T: Float + FromPrimitive + Debug>(mcco: &mut MonteCarlo<T>, load_balance: bool) {
+pub fn population_control<T: Float + FromPrimitive + Debug>(
+    mcco: &mut MonteCarlo<T>,
+    load_balance: bool,
+) {
     let mut target_n_particles: usize = mcco.params.simulation_params.n_particles as usize;
     let mut global_n_particles: usize = 0;
     let local_n_particles: usize = mcco.particle_vault_container.particles_processing_size();

@@ -94,7 +94,7 @@ pub fn source_now<T: Float + FromPrimitive + Default + Debug>(mcco: &mut MonteCa
                     let cell_weight_particle: T =
                         cell.volume * source_rate[cell.material] * time_step;
                     // floor/ceil it before cast ?
-                    
+
                     let cell_n_particles: usize = (cell_weight_particle / source_particle_weight)
                         .floor()
                         .to_usize()

@@ -51,7 +51,7 @@ pub fn macroscopic_total_cross_section<T: Float + FromPrimitive + Default + Disp
     let atom_fraction: T =
         mcco.material_database.mat[global_mat_idx].iso[isotope_idx].atom_fraction;
     let cell_number_density: T = mcco.domain[domain_idx].cell_state[cell_idx].cell_number_density;
-    
+
     let threshold: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
     // comparison to 0 might be possible since it means it's not initialized & it's not a result of a computation?
     if (atom_fraction < threshold) | (cell_number_density < threshold) {

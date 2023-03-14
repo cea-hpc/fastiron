@@ -6,7 +6,7 @@ use crate::{
     decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
     mesh_partition::{CellInfo, MeshPartition},
-    parameters::Parameters,
+    parameters::{GeometryParameters, Parameters, Shape},
 };
 
 use super::{
@@ -185,6 +185,42 @@ impl<T: Float + FromPrimitive + Default> MCDomain<T> {
         self.cell_state
             .iter_mut()
             .for_each(|cs| cs.total = vec![zero(); cs.total.len()])
+    }
+
+    fn find_material(geometry_params: &[GeometryParameters], rr: &MCVector<T>) -> String {
+        let mut mat_name = String::default();
+
+        geometry_params.iter().for_each(|geom| {
+            if Self::is_inside(geom, rr) {
+                // cant return directly because of the behavior of original function
+                mat_name = geom.material_name.to_owned();
+            }
+        });
+
+        mat_name
+    }
+
+    fn is_inside(geom: &GeometryParameters, rr: &MCVector<T>) -> bool {
+        match geom.shape {
+            Shape::Brick => {
+                let in_x = (rr.x >= FromPrimitive::from_f64(geom.x_min).unwrap())
+                    & (rr.x <= FromPrimitive::from_f64(geom.x_max).unwrap());
+                let in_y = (rr.y >= FromPrimitive::from_f64(geom.y_min).unwrap())
+                    & (rr.y <= FromPrimitive::from_f64(geom.y_max).unwrap());
+                let in_z = (rr.z >= FromPrimitive::from_f64(geom.z_min).unwrap())
+                    & (rr.z <= FromPrimitive::from_f64(geom.z_max).unwrap());
+                in_x & in_y & in_z
+            }
+            Shape::Sphere => {
+                let center: MCVector<T> = MCVector {
+                    x: FromPrimitive::from_f64(geom.x_center).unwrap(),
+                    y: FromPrimitive::from_f64(geom.y_center).unwrap(),
+                    z: FromPrimitive::from_f64(geom.z_center).unwrap(),
+                };
+                (*rr - center).length() <= FromPrimitive::from_f64(geom.radius).unwrap()
+            }
+            Shape::Undefined => unreachable!(),
+        }
     }
 
     /// Returns the coordinates of the center of
