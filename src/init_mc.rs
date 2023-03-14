@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    fmt::{Debug, Display, LowerExp},
+    fmt::Debug,
     fs::File,
     io::Write,
 };
@@ -15,12 +15,12 @@ use crate::{
     montecarlo::MonteCarlo,
     nuclear_data::{NuclearData, Polynomial, ReactionType},
     parameters::Parameters,
-    constants::physical::TINY_FLOAT,
+    constants::{physical::TINY_FLOAT, CustomFloat},
 };
 use num::{one, zero, Float, FromPrimitive};
 
 /// Creates a [MonteCarlo] object using the specified parameters.
-pub fn init_mc<T: Float + FromPrimitive + Display + Default + LowerExp + Debug>(
+pub fn init_mc<T: CustomFloat>(
     params: Parameters,
 ) -> MonteCarlo<T> {
     println!("---init_mc");
@@ -37,14 +37,14 @@ pub fn init_mc<T: Float + FromPrimitive + Display + Default + LowerExp + Debug>(
     mcco
 }
 
-fn init_proc_info<T: Float + FromPrimitive>(_mcco: &mut MonteCarlo<T>) {}
+fn init_proc_info<T: CustomFloat>(_mcco: &mut MonteCarlo<T>) {}
 
-fn init_time_info<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>) {
+fn init_time_info<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
     mcco.time_info.time_step = FromPrimitive::from_f64(params.simulation_params.dt).unwrap();
 }
 
-fn init_nuclear_data<T: Float + FromPrimitive + Default + Display>(mcco: &mut MonteCarlo<T>) {
+fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
     let energy_low: T = FromPrimitive::from_f64(params.simulation_params.e_min).unwrap();
     let energy_high: T = FromPrimitive::from_f64(params.simulation_params.e_max).unwrap();
@@ -106,7 +106,7 @@ fn init_nuclear_data<T: Float + FromPrimitive + Default + Display>(mcco: &mut Mo
     }
 }
 
-fn consistency_check<T: Float>(my_rank: usize, domain: &[MCDomain<T>], params: &Parameters) {
+fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>], params: &Parameters) {
     if my_rank == 0 {
         println!("Starting consistency check");
     }
@@ -164,7 +164,7 @@ fn consistency_check<T: Float>(my_rank: usize, domain: &[MCDomain<T>], params: &
     }
 }
 
-fn initialize_centers_rand<T: Float + FromPrimitive>(
+fn initialize_centers_rand<T: CustomFloat>(
     n_centers: usize,
     grid: &GlobalFccGrid<T>,
     seed: &mut u64,
@@ -205,7 +205,7 @@ fn initialize_centers_grid<T: Float>(
 }
 */
 
-fn init_mesh<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
+fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
     println!("n_energy_groups: {}", params.simulation_params.n_groups);
     let nx: usize = params.simulation_params.nx;
@@ -256,7 +256,7 @@ fn init_mesh<T: Float + FromPrimitive + Default>(mcco: &mut MonteCarlo<T>) {
     }
 }
 
-fn init_tallies<T: Float + FromPrimitive + Display + Default + Debug>(mcco: &mut MonteCarlo<T>) {
+fn init_tallies<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
     mcco.tallies.initialize_tallies(
         &mcco.domain,
@@ -274,7 +274,7 @@ struct XSData<T: Float> {
     sca: T,
 }
 
-fn check_cross_sections<T: Float + FromPrimitive + Display + Default + LowerExp>(
+fn check_cross_sections<T: CustomFloat>(
     mcco: &MonteCarlo<T>,
 ) {
     let params = &mcco.params;

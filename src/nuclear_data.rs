@@ -1,8 +1,6 @@
-use std::fmt::Display;
-
 use num::{zero, Float, FromPrimitive};
 
-use crate::mc::mc_rng_state::rng_sample;
+use crate::{mc::mc_rng_state::rng_sample, constants::CustomFloat};
 
 /// Enum representing a reaction type. Named `Enum` in
 /// the original code.
@@ -18,7 +16,7 @@ pub enum ReactionType {
 /// Private fields represent the coefficients, `aa`
 /// corresponding to `x^4`, `ee` to `x^0`.
 #[derive(Debug)]
-pub struct Polynomial<T: Float> {
+pub struct Polynomial<T: CustomFloat> {
     pub aa: T,
     pub bb: T,
     pub cc: T,
@@ -26,7 +24,7 @@ pub struct Polynomial<T: Float> {
     pub ee: T,
 }
 
-impl<T: Float> Polynomial<T> {
+impl<T: CustomFloat> Polynomial<T> {
     /// Returns the value of the polynomial function in xx.
     pub fn val(&self, xx: T) -> T {
         self.ee + xx * (self.dd + xx * (self.cc + xx * (self.bb + xx * self.aa)))
@@ -35,13 +33,13 @@ impl<T: Float> Polynomial<T> {
 
 /// Lowest-level structure to represent a reaction.
 #[derive(Debug)]
-pub struct NuclearDataReaction<T: Float> {
+pub struct NuclearDataReaction<T: CustomFloat> {
     pub cross_section: Vec<T>,
     pub reaction_type: ReactionType,
     pub nu_bar: T,
 }
 
-impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
+impl<T: CustomFloat> NuclearDataReaction<T> {
     /// Constructor.
     pub fn new(
         rtype: ReactionType,
@@ -134,12 +132,12 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
 
 /// Structure used to hold a list of reactions.
 #[derive(Debug, Default)]
-pub struct NuclearDataSpecies<T: Float> {
+pub struct NuclearDataSpecies<T: CustomFloat> {
     /// List of reactions
     pub reactions: Vec<NuclearDataReaction<T>>,
 }
 
-impl<T: Float + FromPrimitive + Default> NuclearDataSpecies<T> {
+impl<T: CustomFloat> NuclearDataSpecies<T> {
     /// Adds a reaction to the internal list.
     pub fn add_reaction(
         &mut self,
@@ -165,7 +163,7 @@ pub type NuclearDataIsotope<T> = Vec<NuclearDataSpecies<T>>;
 /// Top level structure used to handle all things related to
 /// nuclear data.
 #[derive(Debug)]
-pub struct NuclearData<T: Float> {
+pub struct NuclearData<T: CustomFloat> {
     /// Total number of energy groups?
     pub num_energy_groups: usize,
     /// Reactions and cross sections are stored by isotopes,
@@ -175,7 +173,7 @@ pub struct NuclearData<T: Float> {
     pub energies: Vec<T>,
 }
 
-impl<T: Float + FromPrimitive + Default + Display> NuclearData<T> {
+impl<T: CustomFloat> NuclearData<T> {
     /// Extra messy constructor.
     pub fn new(num_groups: usize, energy_low: T, energy_high: T) -> Self {
         let mut energies = vec![zero(); num_groups + 1];
@@ -333,7 +331,7 @@ impl<T: Float + FromPrimitive + Default + Display> NuclearData<T> {
     }
 }
 
-impl<T: Float> Default for NuclearData<T> {
+impl<T: CustomFloat> Default for NuclearData<T> {
     fn default() -> Self {
         Self {
             num_energy_groups: 0,

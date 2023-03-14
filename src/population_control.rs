@@ -1,16 +1,14 @@
-use std::fmt::Debug;
-
-use num::{one, Float, FromPrimitive};
+use num::{one, FromPrimitive};
 
 use crate::{
     mc::mc_rng_state::{rng_sample, spawn_rn_seed},
     montecarlo::MonteCarlo,
     particle_vault_container::ParticleVaultContainer,
-    tallies::Balance,
+    tallies::Balance, constants::CustomFloat,
 };
 
 /// Routine used to monitor and regulate population level.
-pub fn population_control<T: Float + FromPrimitive + Debug>(
+pub fn population_control<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     load_balance: bool,
 ) {
@@ -45,7 +43,7 @@ pub fn population_control<T: Float + FromPrimitive + Debug>(
     }
 }
 
-fn population_control_guts<T: Float + FromPrimitive + Debug>(
+fn population_control_guts<T: CustomFloat>(
     split_rr_factor: T,
     current_n_particles: usize,
     vault: &mut ParticleVaultContainer<T>,
@@ -111,7 +109,7 @@ fn population_control_guts<T: Float + FromPrimitive + Debug>(
 
 /// Play russian-roulette with low-weight particles relative
 /// to the source particle weight.
-pub fn roulette_low_weight_particles<T: Float + FromPrimitive + Debug>(
+pub fn roulette_low_weight_particles<T: CustomFloat>(
     low_weight_cutoff: f64,
     source_particle_weight: f64,
     vault: &mut ParticleVaultContainer<T>,

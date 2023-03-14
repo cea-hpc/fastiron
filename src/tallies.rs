@@ -1,6 +1,6 @@
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
-use num::{zero, Float, FromPrimitive};
+use num::zero;
 
 use crate::{
     energy_spectrum::EnergySpectrum,
@@ -8,7 +8,7 @@ use crate::{
         mc_domain::MCDomain,
         mc_fast_timer::{self, Section},
     },
-    montecarlo::MonteCarlo,
+    montecarlo::MonteCarlo, constants::CustomFloat,
 };
 
 /// Enum representing a tally event.
@@ -31,11 +31,11 @@ impl Default for MCTallyEvent {
 
 /// May need to change it to a full-fledged structure later.
 #[derive(Debug, Default)]
-pub struct Fluence<T: Float> {
+pub struct Fluence<T: CustomFloat> {
     pub domain: Vec<FluenceDomain<T>>,
 }
 
-impl<T: Float> Fluence<T> {
+impl<T: CustomFloat> Fluence<T> {
     pub fn compute(&mut self, domain_idx: usize, scalar_flux_domain: &ScalarFluxDomain<T>) {
         let n_cells = scalar_flux_domain.task[0].cell.len();
         while self.domain.len() <= domain_idx {
@@ -116,11 +116,11 @@ type ScalarFluxCell<T> = Vec<T>;
 
 /// ?
 #[derive(Debug, Default, Clone)]
-pub struct CellTallyTask<T: Float> {
+pub struct CellTallyTask<T: CustomFloat> {
     pub cell: Vec<T>,
 }
 
-impl<T: Float> CellTallyTask<T> {
+impl<T: CustomFloat> CellTallyTask<T> {
     /// Constructor
     pub fn new(domain: &MCDomain<T>) -> Self {
         Self {
@@ -138,17 +138,17 @@ impl<T: Float> CellTallyTask<T> {
         //assert_eq!(self.cell.len(), cell_tally_task.cell.len());
         (0..self.cell.len())
             .into_iter()
-            .for_each(|ii| self.cell[ii] = self.cell[ii] + cell_tally_task.cell[ii]);
+            .for_each(|ii| self.cell[ii] += cell_tally_task.cell[ii]);
     }
 }
 
 /// ?
 #[derive(Debug, Clone)]
-pub struct ScalarFluxTask<T: Float> {
+pub struct ScalarFluxTask<T: CustomFloat> {
     pub cell: Vec<ScalarFluxCell<T>>,
 }
 
-impl<T: Float> ScalarFluxTask<T> {
+impl<T: CustomFloat> ScalarFluxTask<T> {
     /// Constructor
     pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
         let mut cell = Vec::with_capacity(domain.cell_state.len());
@@ -173,8 +173,7 @@ impl<T: Float> ScalarFluxTask<T> {
         let n_groups = self.cell[0].len();
         (0..self.cell.len()).into_iter().for_each(|cell_idx| {
             (0..n_groups).into_iter().for_each(|group_idx| {
-                self.cell[cell_idx][group_idx] =
-                    self.cell[cell_idx][group_idx] + scalar_flux_task.cell[cell_idx][group_idx];
+                self.cell[cell_idx][group_idx] += scalar_flux_task.cell[cell_idx][group_idx];
             })
         });
     }
@@ -182,11 +181,11 @@ impl<T: Float> ScalarFluxTask<T> {
 
 /// ?
 #[derive(Debug)]
-pub struct CellTallyDomain<T: Float> {
+pub struct CellTallyDomain<T: CustomFloat> {
     pub task: Vec<CellTallyTask<T>>,
 }
 
-impl<T: Float> CellTallyDomain<T> {
+impl<T: CustomFloat> CellTallyDomain<T> {
     /// Constructor
     pub fn new(domain: &MCDomain<T>, cell_tally_replications: usize) -> Self {
         let mut task = Vec::with_capacity(cell_tally_replications);
@@ -199,11 +198,11 @@ impl<T: Float> CellTallyDomain<T> {
 
 /// ?
 #[derive(Debug)]
-pub struct ScalarFluxDomain<T: Float> {
+pub struct ScalarFluxDomain<T: CustomFloat> {
     pub task: Vec<ScalarFluxTask<T>>,
 }
 
-impl<T: Float> ScalarFluxDomain<T> {
+impl<T: CustomFloat> ScalarFluxDomain<T> {
     // Constructor
     pub fn new(domain: &MCDomain<T>, num_groups: usize, flux_replications: usize) -> Self {
         let mut task = Vec::with_capacity(flux_replications);
@@ -216,13 +215,13 @@ impl<T: Float> ScalarFluxDomain<T> {
 
 /// ?
 #[derive(Debug, Default)]
-pub struct FluenceDomain<T: Float> {
+pub struct FluenceDomain<T: CustomFloat> {
     pub cell: Vec<T>,
 }
 
-impl<T: Float> FluenceDomain<T> {
+impl<T: CustomFloat> FluenceDomain<T> {
     pub fn add_cell(&mut self, index: usize, val: T) {
-        self.cell[index] = self.cell[index] + val;
+        self.cell[index] += val;
     }
 
     pub fn get_cell(&self, index: usize) -> T {
@@ -236,19 +235,19 @@ impl<T: Float> FluenceDomain<T> {
 
 /// Structure used as tallies.
 #[derive(Debug)]
-pub struct Tallies<T: Float> {
+pub struct Tallies<T: CustomFloat> {
     pub balance_cumulative: Balance,
     pub balance_task: Vec<Balance>,
     pub scalar_flux_domain: Vec<ScalarFluxDomain<T>>,
     pub cell_tally_domain: Vec<CellTallyDomain<T>>,
     pub fluence: Fluence<T>,
-    pub spectrum: EnergySpectrum<T>,
+    pub spectrum: EnergySpectrum,
     pub num_balance_replications: u32,
     pub num_flux_replications: u32,
     pub num_cell_tally_replications: u32,
 }
 
-impl<T: Float + Display + FromPrimitive + Default + Debug> Tallies<T> {
+impl<T: CustomFloat> Tallies<T> {
     /// Constructor.
     pub fn new(
         bal_rep: u32,
@@ -419,14 +418,12 @@ impl<T: Float + Display + FromPrimitive + Default + Debug> Tallies<T> {
         cell: usize,
         group: usize,
     ) {
-        self.scalar_flux_domain[domain].task[task].cell[cell][group] =
-            self.scalar_flux_domain[domain].task[task].cell[cell][group] + value;
+        self.scalar_flux_domain[domain].task[task].cell[cell][group] += value;
     }
 
     /// Atomic add?
     pub fn tally_cell_value(&mut self, value: T, domain: usize, task: usize, cell: usize) {
-        self.cell_tally_domain[domain].task[task].cell[cell] =
-            self.cell_tally_domain[domain].task[task].cell[cell] + value;
+        self.cell_tally_domain[domain].task[task].cell[cell] += value;
     }
 
     /// Sums above all ?
@@ -448,8 +445,7 @@ impl<T: Float + Display + FromPrimitive + Default + Debug> Tallies<T> {
                             .cell[cell_idx]
                             .len();
                         (0..n_groups).into_iter().for_each(|group_idx| {
-                            sum = sum
-                                + self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
+                            sum += self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
                                     [cell_idx][group_idx];
                         })
                     })

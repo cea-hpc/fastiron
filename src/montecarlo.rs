@@ -1,7 +1,8 @@
-use std::fmt::{Debug, Display};
+use std::fmt::{Debug};
 
-use num::{zero, Float, FromPrimitive, ToPrimitive};
+use num::{zero, ToPrimitive};
 
+use crate::constants::CustomFloat;
 use crate::material_database::MaterialDatabase;
 use crate::mc::mc_base_particle::MCBaseParticle;
 use crate::mc::mc_fast_timer::{self, MCFastTimerContainer, Section};
@@ -17,7 +18,7 @@ use crate::tallies::Tallies;
 
 /// Super-structure used to contain all the problem's objects and data.
 #[derive(Debug)]
-pub struct MonteCarlo<T: Float + FromPrimitive> {
+pub struct MonteCarlo<T: CustomFloat> {
     /// List of spatial domains
     pub domain: Vec<MCDomain<T>>,
     /// Parameters of the problem
@@ -42,7 +43,7 @@ pub struct MonteCarlo<T: Float + FromPrimitive> {
     pub source_particle_weight: f64,
 }
 
-impl<T: Float + FromPrimitive + Display + Default + Debug> MonteCarlo<T> {
+impl<T: CustomFloat> MonteCarlo<T> {
     /// Constructor
     pub fn new(params: Parameters) -> Self {
         let tallies: Tallies<T> = Tallies::new(

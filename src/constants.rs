@@ -1,9 +1,9 @@
-use std::{ops::{AddAssign, MulAssign, SubAssign, DivAssign}, fmt::{Debug, Display}};
+use std::{ops::{AddAssign, MulAssign, SubAssign, DivAssign}, fmt::{Debug, Display, LowerExp}};
 
 use num::{Float, FromPrimitive};
 
 pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
-pub trait UtilsFloat: Default + Debug + Display {}
+pub trait UtilsFloat: Default + Debug + Display + LowerExp {}
 pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {}
 
 impl OpsFloat for f32 {}

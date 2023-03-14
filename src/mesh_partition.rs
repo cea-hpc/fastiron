@@ -1,12 +1,10 @@
 use std::collections::{HashMap, VecDeque};
 
-use num::{Float, FromPrimitive};
-
 use crate::{
     comm_object::CommObject,
     global_fcc_grid::{GlobalFccGrid, Tuple3},
     grid_assignment_object::GridAssignmentObject,
-    mc::mc_vector::MCVector,
+    mc::mc_vector::MCVector, constants::CustomFloat,
 };
 
 pub type MapType = HashMap<usize, CellInfo>;
@@ -53,7 +51,7 @@ impl MeshPartition {
         }
     }
     /// Builds the mesh partition.
-    pub fn build_mesh_partition<T: Float + FromPrimitive>(
+    pub fn build_mesh_partition<T: CustomFloat>(
         &mut self,
         grid: &GlobalFccGrid<T>,
         centers: &[MCVector<T>],
@@ -65,7 +63,7 @@ impl MeshPartition {
     }
 
     /// Internal function that associates cells to domains
-    fn assign_cells_to_domain<T: Float + FromPrimitive>(
+    fn assign_cells_to_domain<T: CustomFloat>(
         &mut self,
         domain_center: &[MCVector<T>],
         grid: &GlobalFccGrid<T>,
@@ -104,7 +102,7 @@ impl MeshPartition {
         }
     }
 
-    fn build_cell_idx_map<T: Float + FromPrimitive>(
+    fn build_cell_idx_map<T: CustomFloat>(
         &mut self,
         grid: &GlobalFccGrid<T>,
         comm: &mut CommObject,
@@ -146,7 +144,7 @@ impl MeshPartition {
         comm.send(&mut self.cell_info_map, &self.nbr_domains)
     }
 
-    fn add_nbrs_to_flood<T: Float + FromPrimitive>(
+    fn add_nbrs_to_flood<T: CustomFloat>(
         cell_idx: usize,
         grid: &GlobalFccGrid<T>,
         flood_queue: &mut VecDeque<usize>,

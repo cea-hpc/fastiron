@@ -1,15 +1,17 @@
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
+
+use crate::constants::CustomFloat;
 
 /// Structure used to represent an isotope.
 #[derive(Debug)]
-pub struct Isotope<T: Float> {
+pub struct Isotope<T: CustomFloat> {
     /// Global identifier of the isotope in NuclearData.
     pub gid: usize,
     /// Atomic fraction.
     pub atom_fraction: T,
 }
 
-impl<T: Float> Default for Isotope<T> {
+impl<T: CustomFloat> Default for Isotope<T> {
     fn default() -> Self {
         Self {
             gid: 0,
@@ -20,7 +22,7 @@ impl<T: Float> Default for Isotope<T> {
 
 /// Structure used to store a material's information
 #[derive(Debug)]
-pub struct Material<T: Float> {
+pub struct Material<T: CustomFloat> {
     /// Name of the material
     pub name: String,
     /// Mass of the material (kg).
@@ -29,7 +31,7 @@ pub struct Material<T: Float> {
     pub iso: Vec<Isotope<T>>, // originally a qs_vector
 }
 
-impl<T: Float + FromPrimitive> Material<T> {
+impl<T: CustomFloat> Material<T> {
     /// Constructor.
     pub fn new(name: &str) -> Self {
         Material {
@@ -44,7 +46,7 @@ impl<T: Float + FromPrimitive> Material<T> {
     }
 }
 
-impl<T: Float + FromPrimitive> Default for Material<T> {
+impl<T: CustomFloat> Default for Material<T> {
     fn default() -> Self {
         let m: T = FromPrimitive::from_f32(1000.0).unwrap();
         Self {
@@ -58,12 +60,12 @@ impl<T: Float + FromPrimitive> Default for Material<T> {
 /// Top level structure used to store each material's information.
 /// change to an alias?
 #[derive(Debug)]
-pub struct MaterialDatabase<T: Float + FromPrimitive> {
+pub struct MaterialDatabase<T: CustomFloat> {
     /// List of materials.
     pub mat: Vec<Material<T>>, // originally a qs_vector
 }
 
-impl<T: Float + FromPrimitive> MaterialDatabase<T> {
+impl<T: CustomFloat> MaterialDatabase<T> {
     /// Adds a [Material] to the internal list.
     pub fn add_material(&mut self, material: Material<T>) {
         self.mat.push(material);
@@ -77,7 +79,7 @@ impl<T: Float + FromPrimitive> MaterialDatabase<T> {
     }
 }
 
-impl<T: Float + FromPrimitive> Default for MaterialDatabase<T> {
+impl<T: CustomFloat> Default for MaterialDatabase<T> {
     fn default() -> Self {
         Self { mat: Vec::new() }
     }

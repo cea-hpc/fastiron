@@ -1,16 +1,14 @@
 use std::fmt::Debug;
 
-use num::{Float, FromPrimitive};
-
 use crate::{
     mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
     particle_vault::ParticleVault,
-    send_queue::SendQueue,
+    send_queue::SendQueue, constants::CustomFloat,
 };
 
 /// Container for ParticleVaults.
 #[derive(Debug)]
-pub struct ParticleVaultContainer<T: Float> {
+pub struct ParticleVaultContainer<T: CustomFloat> {
     /// Size of the [ParticleVault]. Fixed at runtime for each run.
     pub vault_size: usize,
     /// Number of extra vaults needed. Fixed at runtime for each run.
@@ -29,7 +27,7 @@ pub struct ParticleVaultContainer<T: Float> {
     pub extra_vault: Vec<ParticleVault<T>>,
 }
 
-impl<T: Float + FromPrimitive + Debug> ParticleVaultContainer<T> {
+impl<T: CustomFloat> ParticleVaultContainer<T> {
     pub fn new(vault_size: usize, num_vaults: usize, num_extra_vaults: usize) -> Self {
         let mut processing_vaults: Vec<ParticleVault<T>> =
             vec![ParticleVault::default(); num_vaults];

@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
-use crate::{global_fcc_grid::Tuple3, mc::mc_vector::MCVector, constants::physical::TINY_FLOAT};
+use crate::{global_fcc_grid::Tuple3, mc::mc_vector::MCVector, constants::{physical::TINY_FLOAT, CustomFloat}};
 
 /// Internal structure of [GridAssignmentObject].
 /// Represents a cell.
@@ -14,7 +14,7 @@ pub struct GridCell {
 
 /// Structure used to "locate" vectors in the grid.
 #[derive(Debug)]
-pub struct GridAssignmentObject<T: Float> {
+pub struct GridAssignmentObject<T: CustomFloat> {
     /// Number of cells along the x axis
     pub nx: usize,
     /// Number of cells along the y axis
@@ -41,7 +41,7 @@ pub struct GridAssignmentObject<T: Float> {
     wet_list: VecDeque<usize>,
 }
 
-impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
+impl<T: CustomFloat> GridAssignmentObject<T> {
     /// Constructor.
     pub fn new(centers: &[MCVector<T>]) -> Self {
         // sets the length scale of the grid cells

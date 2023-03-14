@@ -1,16 +1,14 @@
 use std::fmt::Debug;
 
-use num::{Float, FromPrimitive};
-
-use crate::mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
+use crate::{mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle}, constants::CustomFloat};
 
 /// Struture used to group particle in batches.
 #[derive(Debug, Clone)]
-pub struct ParticleVault<T: Float> {
+pub struct ParticleVault<T: CustomFloat> {
     pub particles: Vec<Option<MCBaseParticle<T>>>,
 }
 
-impl<T: Float> Default for ParticleVault<T> {
+impl<T: CustomFloat> Default for ParticleVault<T> {
     fn default() -> Self {
         Self {
             particles: Vec::new(),
@@ -18,7 +16,7 @@ impl<T: Float> Default for ParticleVault<T> {
     }
 }
 
-impl<T: Float + FromPrimitive + Debug> ParticleVault<T> {
+impl<T: CustomFloat> ParticleVault<T> {
     /// Returns true if the vault is empty, false otherwise.
     pub fn empty(&self) -> bool {
         self.particles.is_empty()
@@ -163,7 +161,7 @@ impl<T: Float + FromPrimitive + Debug> ParticleVault<T> {
 
 // may be convenient to access particles directly. Either this or get_base_particle
 // might be deleted later
-impl<T: Float> core::ops::Index<usize> for ParticleVault<T> {
+impl<T: CustomFloat> core::ops::Index<usize> for ParticleVault<T> {
     type Output = Option<MCBaseParticle<T>>;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -173,7 +171,7 @@ impl<T: Float> core::ops::Index<usize> for ParticleVault<T> {
 
 // may be convenient to access particles directly. Either this or get_base_particle
 // might be deleted later
-impl<T: Float> core::ops::IndexMut<usize> for ParticleVault<T> {
+impl<T: CustomFloat> core::ops::IndexMut<usize> for ParticleVault<T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.particles[index]
     }
