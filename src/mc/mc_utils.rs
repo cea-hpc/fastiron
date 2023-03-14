@@ -5,7 +5,7 @@ use num::{zero, Float, FromPrimitive};
 use crate::{
     montecarlo::MonteCarlo,
     particle_vault::ParticleVault,
-    physical_constants::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, TINY_FLOAT},
+    constants::physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, TINY_FLOAT},
 };
 
 use super::{

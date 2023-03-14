@@ -12,7 +12,7 @@ use crate::{
     direction_cosine::DirectionCosine,
     mc::mc_base_particle::Species,
     montecarlo::MonteCarlo,
-    physical_constants::{HUGE_FLOAT, SMALL_FLOAT},
+    constants::physical::{HUGE_FLOAT, SMALL_FLOAT},
 };
 
 /// Computes which facet of the specified cell is nearest

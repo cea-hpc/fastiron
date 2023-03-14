@@ -12,7 +12,7 @@ use fastiron::{
         mc_rng_state::{pseudo_des, rng_sample, spawn_rn_seed},
         mc_vector::MCVector,
     },
-    physical_constants::SMALL_FLOAT,
+    constants::physical::SMALL_FLOAT,
 };
 use num::Float;
 

@@ -7,7 +7,7 @@ use crate::{
     macro_cross_section::weighted_macroscopic_cross_section,
     mc::{mc_nearest_facet::MCNearestFacet, mc_rng_state::rng_sample, mct::nearest_facet},
     montecarlo::MonteCarlo,
-    physical_constants::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
+    constants::physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
     tallies::MCTallyEvent,
 };
 

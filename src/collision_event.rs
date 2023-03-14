@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use num::{zero, Float, FromPrimitive};
+use num::{Float, FromPrimitive};
 
 use crate::{
     macro_cross_section::macroscopic_cross_section,
@@ -10,7 +10,7 @@ use crate::{
     },
     montecarlo::MonteCarlo,
     nuclear_data::ReactionType,
-    physical_constants::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI, TINY_FLOAT},
+    constants::physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
 };
 
 /// Update the a particle's energy and trajectory after a collision.
@@ -54,7 +54,6 @@ pub fn collision_event<T: Float + FromPrimitive + Debug + Default + Display>(
     mc_particle: &mut MCParticle<T>,
     tally_idx: usize,
 ) -> bool {
-    let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
     let mat_gidx = mcco.domain[mc_particle.domain].cell_state[mc_particle.cell].material;
 
     // ==========================
@@ -87,18 +86,18 @@ pub fn collision_event<T: Float + FromPrimitive + Debug + Default + Display>(
                         iso_idx,
                         mc_particle.energy_group,
                     );
-                if current_xsection < tiny_f {
+                if current_xsection.is_sign_negative() {
                     selected_iso = iso_idx;
                     selected_unique_n = unique_n;
                     selected_react = reaction_idx;
                     break;
                 }
             }
-            if current_xsection < tiny_f {
+            if current_xsection.is_sign_negative() {
                 break;
             }
         }
-        if current_xsection < tiny_f {
+        if current_xsection.is_sign_negative() {
             break;
         }
     }

@@ -20,7 +20,7 @@ pub mod nuclear_data;
 pub mod parameters;
 pub mod particle_vault;
 pub mod particle_vault_container;
-pub mod physical_constants;
+pub mod constants;
 pub mod population_control;
 pub mod send_queue;
 pub mod tallies;

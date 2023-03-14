@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 
 use num::{zero, Float, FromPrimitive};
 
-use crate::{montecarlo::MonteCarlo, physical_constants::TINY_FLOAT};
+use crate::{montecarlo::MonteCarlo, constants::physical::TINY_FLOAT};
 
 /// Computes the reaction-specific number-density-weighted
 /// macroscopic cross section of a cell.

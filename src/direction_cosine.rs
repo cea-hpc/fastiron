@@ -1,6 +1,6 @@
 use num::{zero, Float, FromPrimitive};
 
-use crate::{mc::mc_rng_state::rng_sample, physical_constants::PI};
+use crate::{mc::mc_rng_state::rng_sample, constants::physical::PI};
 
 #[derive(Debug, Clone, Default)]
 pub struct DirectionCosine<T: Float> {

@@ -15,7 +15,7 @@ use crate::{
     montecarlo::MonteCarlo,
     nuclear_data::{NuclearData, Polynomial, ReactionType},
     parameters::Parameters,
-    physical_constants::TINY_FLOAT,
+    constants::physical::TINY_FLOAT,
 };
 use num::{one, zero, Float, FromPrimitive};
 

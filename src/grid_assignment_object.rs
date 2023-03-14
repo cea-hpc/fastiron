@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use num::{zero, Float, FromPrimitive};
 
-use crate::{global_fcc_grid::Tuple3, mc::mc_vector::MCVector, physical_constants::TINY_FLOAT};
+use crate::{global_fcc_grid::Tuple3, mc::mc_vector::MCVector, constants::physical::TINY_FLOAT};
 
 /// Internal structure of [GridAssignmentObject].
 /// Represents a cell.

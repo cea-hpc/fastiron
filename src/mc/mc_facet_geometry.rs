@@ -1,6 +1,6 @@
 use num::{Float, FromPrimitive};
 
-use crate::physical_constants::TINY_FLOAT;
+use crate::constants::physical::TINY_FLOAT;
 
 use super::mc_vector::MCVector;
 

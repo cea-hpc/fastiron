@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use num::{Float, FromPrimitive, Zero};
 
-use crate::physical_constants::TINY_FLOAT;
+use crate::constants::physical::TINY_FLOAT;
 
 /// Custom type for vector representation.
 #[derive(Debug, Clone, Copy, PartialEq)]
