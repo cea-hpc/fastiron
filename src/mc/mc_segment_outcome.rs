@@ -1,5 +1,5 @@
 use core::panic;
-use std::fmt::{Debug, Display};
+use std::fmt::{Debug};
 
 use num::{zero, Float, FromPrimitive};
 
@@ -7,7 +7,7 @@ use crate::{
     macro_cross_section::weighted_macroscopic_cross_section,
     mc::{mc_nearest_facet::MCNearestFacet, mc_rng_state::rng_sample, mct::nearest_facet},
     montecarlo::MonteCarlo,
-    constants::physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
+    constants::{physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT}, CustomFloat},
     tallies::MCTallyEvent,
 };
 
@@ -23,7 +23,7 @@ pub enum MCSegmentOutcome {
 }
 
 /// Computes the outcome of the current segment for a given particle.
-pub fn outcome<T: Float + FromPrimitive + Display + Default + Debug>(
+pub fn outcome<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     mc_particle: &mut MCParticle<T>,
     flux_tally_idx: usize,
@@ -155,7 +155,7 @@ pub fn outcome<T: Float + FromPrimitive + Display + Default + Debug>(
     segment_outcome
 }
 
-fn find_min<T: Float + FromPrimitive>(distance: &[T]) -> MCSegmentOutcome {
+fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
     let mut min_val: T = distance[0];
     let mut min_idx: usize = 0;
     (0..distance.len()).into_iter().for_each(|idx| {

@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use num::{one, zero, Float, FromPrimitive};
+use num::{one, zero, FromPrimitive};
 
 use crate::{
     decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
     mesh_partition::{CellInfo, MeshPartition},
-    parameters::{GeometryParameters, Parameters, Shape}, material_database::MaterialDatabase,
+    parameters::{GeometryParameters, Parameters, Shape}, material_database::MaterialDatabase, constants::CustomFloat,
 };
 
 use super::{
@@ -57,7 +57,7 @@ const OPPOSING_FACET: [usize; 24] = [
 
 /// Structure that manages a data set on a mesh-like geometry
 #[derive(Debug)]
-pub struct MCMeshDomain<T: Float> {
+pub struct MCMeshDomain<T: CustomFloat> {
     /// Global identifier of the domain
     pub domain_gid: usize,
     /// List of domain global identifiers
@@ -72,7 +72,7 @@ pub struct MCMeshDomain<T: Float> {
     pub cell_geometry: Vec<MCFacetGeometryCell<T>>,
 }
 
-impl<T: Float + FromPrimitive + Default> MCMeshDomain<T> {
+impl<T: CustomFloat> MCMeshDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition,
@@ -137,7 +137,7 @@ impl<T: Float + FromPrimitive + Default> MCMeshDomain<T> {
 
 /// Structure used to manage a domain, i.e. a spatial region of the problem
 #[derive(Debug)]
-pub struct MCDomain<T: Float> {
+pub struct MCDomain<T: CustomFloat> {
     /// Global domain number
     pub global_domain: usize,
     /// List of cells and their state (See [MCCellState] for more)
@@ -146,7 +146,7 @@ pub struct MCDomain<T: Float> {
     pub mesh: MCMeshDomain<T>,
 }
 
-impl<T: Float + FromPrimitive + Default> MCDomain<T> {
+impl<T: CustomFloat> MCDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition,
@@ -262,7 +262,7 @@ impl<T: Float + FromPrimitive + Default> MCDomain<T> {
 }
 
 /// Need to compare to original code
-fn bootstrap_node_map<T: Float + FromPrimitive>(
+fn bootstrap_node_map<T: CustomFloat>(
     partition: &MeshPartition,
     grid: &GlobalFccGrid<T>,
 ) -> HashMap<usize, usize> {
@@ -313,7 +313,7 @@ fn bootstrap_node_map<T: Float + FromPrimitive>(
 }
 
 /// Build the cells object of the mesh.
-fn build_cells<T: Float + FromPrimitive>(
+fn build_cells<T: CustomFloat>(
     node_idx_map: &HashMap<usize, usize>,
     nbr_domain: &[usize],
     partition: &MeshPartition,

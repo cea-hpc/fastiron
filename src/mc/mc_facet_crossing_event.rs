@@ -1,15 +1,11 @@
-use std::fmt::Debug;
-
-use num::{Float, FromPrimitive};
-
-use crate::{montecarlo::MonteCarlo, tallies::MCTallyEvent};
+use crate::{montecarlo::MonteCarlo, tallies::MCTallyEvent, constants::CustomFloat};
 
 use super::{
     mc_facet_adjacency::MCSubfacetAdjacencyEvent, mc_particle::MCParticle, mct::reflect_particle,
 };
 
 /// Computes and transform accordingly a [MCParticle] object crossing a facet.
-pub fn facet_crossing_event<T: Float + FromPrimitive + Debug>(
+pub fn facet_crossing_event<T: CustomFloat>(
     mc_particle: &mut MCParticle<T>,
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,

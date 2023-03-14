@@ -1,8 +1,6 @@
 use std::fmt::Debug;
 
-use num::{Float, FromPrimitive};
-
-use crate::montecarlo::MonteCarlo;
+use crate::{montecarlo::MonteCarlo, constants::CustomFloat};
 
 use super::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 
@@ -10,13 +8,13 @@ use super::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 /// "Useless" in single threaded mode, but will be useful if parallelizing
 /// on space division. Should probably be deleted asap.
 #[derive(Debug)]
-pub struct MCParticleBuffer<T: Float + FromPrimitive> {
+pub struct MCParticleBuffer<T: CustomFloat> {
     /// One buffer per domain: buffers.len()==mcco.domain.len().
     /// The indexing is coherent (buffer of domain[N] == buffers[N])
     pub buffers: Vec<Vec<MCParticle<T>>>,
 }
 
-impl<T: Float + FromPrimitive + Debug> MCParticleBuffer<T> {
+impl<T: CustomFloat> MCParticleBuffer<T> {
     /// Prepare the buffers for use.
     pub fn initialize(&mut self, len: usize) {
         self.buffers = Vec::with_capacity(len);
@@ -76,7 +74,7 @@ impl<T: Float + FromPrimitive + Debug> MCParticleBuffer<T> {
     }
 }
 
-impl<T: Float + FromPrimitive> Default for MCParticleBuffer<T> {
+impl<T: CustomFloat> Default for MCParticleBuffer<T> {
     fn default() -> Self {
         Self {
             buffers: Vec::new(),

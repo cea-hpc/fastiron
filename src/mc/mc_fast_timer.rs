@@ -1,8 +1,6 @@
 use std::{fmt::Display, time::Instant};
 
-use num::{Float, FromPrimitive};
-
-use crate::montecarlo::MonteCarlo;
+use crate::{montecarlo::MonteCarlo, constants::CustomFloat};
 
 /// Enum used to identify sections and their corresponding
 /// timers.
@@ -118,12 +116,12 @@ impl MCFastTimerContainer {
     }
 }
 
-pub fn start<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, section: Section) {
+pub fn start<T: CustomFloat>(mcco: &mut MonteCarlo<T>, section: Section) {
     let index = section as usize;
     mcco.fast_timer.timers[index].start_clock = Instant::now();
 }
 
-pub fn stop<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, section: Section) {
+pub fn stop<T: CustomFloat>(mcco: &mut MonteCarlo<T>, section: Section) {
     let index = section as usize;
     mcco.fast_timer.timers[index].end_clock = Instant::now();
     mcco.fast_timer.timers[index].last_cycle_clock += mcco.fast_timer.timers[index]
@@ -137,7 +135,7 @@ pub fn stop<T: Float + FromPrimitive>(mcco: &mut MonteCarlo<T>, section: Section
     mcco.fast_timer.timers[index].num_calls += 1;
 }
 
-pub fn get_last_cycle<T: Float + FromPrimitive>(mcco: &MonteCarlo<T>, section: Section) -> f64 {
+pub fn get_last_cycle<T: CustomFloat>(mcco: &MonteCarlo<T>, section: Section) -> f64 {
     let index = section as usize;
     mcco.fast_timer.timers[index].last_cycle_clock as f64 / 1000000.0
 }
