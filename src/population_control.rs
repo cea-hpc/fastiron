@@ -74,15 +74,15 @@ fn population_control_guts<T: CustomFloat>(
                         task_balance.rr += 1;
                     } else {
                         // update particle & overwrite old version
-                        pp.weight = pp.weight / split_rr_factor;
+                        pp.weight /= split_rr_factor;
                         task_processing_vault[task_particle_idx] = Some(pp);
                     }
                 } else if split_rr_factor > one() {
                     let mut split_factor = split_rr_factor.floor();
                     if rand_n > split_rr_factor - split_factor {
-                        split_factor = split_factor - one();
+                        split_factor -= one();
                     }
-                    pp.weight = pp.weight / split_rr_factor;
+                    pp.weight /= split_rr_factor;
 
                     // create child particle & add them to vault
                     let n_split: usize = split_factor.to_usize().unwrap();
@@ -139,7 +139,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
                         let rand_n: T = rng_sample(&mut pp.random_number_seed);
                         if rand_n < l_weight_cutoff {
                             // particle continues with an increased weight
-                            pp.weight = pp.weight / l_weight_cutoff;
+                            pp.weight /= l_weight_cutoff;
                             task_processing_vault[task_particle_idx] = Some(pp);
                         } else {
                             // particle is killed

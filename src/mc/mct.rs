@@ -83,7 +83,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
         point2 = domain.mesh.node[facet_points[2]];
 
         let subvolume = mct_cell_volume_3dg_vector_tetdet(&point0, &point1, &point2, &center);
-        current_volume = current_volume + subvolume;
+        current_volume += subvolume;
 
         facet_idx += 1;
     }
@@ -151,9 +151,9 @@ pub fn reflect_particle<T: CustomFloat>(mcco: &MonteCarlo<T>, particle: &mut MCP
             + new_d_cos.gamma * facet_normal.z);
 
     if dot > zero() {
-        new_d_cos.alpha = new_d_cos.alpha - dot * facet_normal.x;
-        new_d_cos.beta = new_d_cos.beta - dot * facet_normal.y;
-        new_d_cos.gamma = new_d_cos.gamma - dot * facet_normal.z;
+        new_d_cos.alpha -= dot * facet_normal.x;
+        new_d_cos.beta -= dot * facet_normal.y;
+        new_d_cos.gamma -= dot * facet_normal.z;
         particle.direction_cosine = new_d_cos;
     }
     let particle_speed = particle.velocity.length();
@@ -330,7 +330,7 @@ fn mct_nf_find_nearest<T: CustomFloat>(
         {
             mct_nf_3dg_move_particle(domain, location, coord, *move_factor);
             *iteration += 1;
-            *move_factor = *move_factor * two;
+            *move_factor *= two;
 
             if *move_factor > threshold {
                 *move_factor = threshold;

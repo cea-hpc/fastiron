@@ -1,7 +1,7 @@
 use core::panic;
 use std::fmt::Debug;
 
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
 use crate::{
     constants::{
@@ -104,8 +104,7 @@ pub fn outcome<T: CustomFloat>(
         panic!()
     }
     mc_particle.segment_path_length = distance[segment_outcome as usize];
-    mc_particle.num_mean_free_paths = mc_particle.num_mean_free_paths
-        - mc_particle.segment_path_length / mc_particle.mean_free_path;
+    mc_particle.num_mean_free_paths -= mc_particle.segment_path_length / mc_particle.mean_free_path;
 
     // update the last event
     mc_particle.last_event = match segment_outcome {
@@ -140,8 +139,8 @@ pub fn outcome<T: CustomFloat>(
 
     // decrement time to census & increment age
     let segment_path_time = mc_particle.segment_path_length / particle_speed;
-    mc_particle.time_to_census = mc_particle.time_to_census - segment_path_time;
-    mc_particle.age = mc_particle.age + segment_path_time;
+    mc_particle.time_to_census -= segment_path_time;
+    mc_particle.age += segment_path_time;
     if mc_particle.time_to_census < zero() {
         mc_particle.time_to_census = zero();
     }

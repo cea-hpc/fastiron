@@ -257,9 +257,9 @@ impl<T: CustomFloat> MCDomain<T> {
             let aa: MCVector<T> = node[corners[0].unwrap()] - center;
             let bb: MCVector<T> = node[corners[1].unwrap()] - center;
             let cc: MCVector<T> = node[corners[2].unwrap()] - center;
-            volume = volume + aa.dot(&bb.cross(&cc)).abs();
+            volume += aa.dot(&bb.cross(&cc)).abs();
         });
-        volume = volume / FromPrimitive::from_f64(6.0).unwrap();
+        volume /= FromPrimitive::from_f64(6.0).unwrap();
         volume
     }
 }

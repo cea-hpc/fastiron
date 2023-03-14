@@ -1,4 +1,4 @@
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
 use crate::{constants::CustomFloat, mc::mc_rng_state::rng_sample};
 
@@ -68,7 +68,7 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
 
         let scale = reaction_cross_section / normal_value;
         (0..n_groups).into_iter().for_each(|ii| {
-            xsection[ii] = xsection[ii] * scale;
+            xsection[ii] *= scale;
         });
 
         Self {
@@ -313,8 +313,8 @@ impl<T: CustomFloat> NuclearData<T> {
         let mut total_xsection: T = zero();
 
         (0..num_reactions).into_iter().for_each(|r_idx| {
-            total_xsection = total_xsection
-                + self.isotopes[isotope_index][0].reactions[r_idx].get_cross_section(group);
+            total_xsection +=
+                self.isotopes[isotope_index][0].reactions[r_idx].get_cross_section(group);
         });
 
         total_xsection

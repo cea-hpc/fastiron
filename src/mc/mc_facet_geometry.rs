@@ -32,10 +32,10 @@ impl<T: CustomFloat> MCGeneralPlane<T> {
             magnitude = one;
         }
         // normalize
-        a = a / magnitude;
-        b = b / magnitude;
-        c = c / magnitude;
-        d = d / magnitude;
+        a /= magnitude;
+        b /= magnitude;
+        c /= magnitude;
+        d /= magnitude;
 
         Self { a, b, c, d }
     }

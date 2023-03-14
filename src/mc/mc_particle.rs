@@ -113,9 +113,9 @@ impl<T: CustomFloat> MCParticle<T> {
     /// Update the particle's field to model its movement along the specified
     /// direction and distance
     pub fn move_particle(&mut self, direction_cosine: &DirectionCosine<T>, distance: T) {
-        self.coordinate.x = self.coordinate.x + direction_cosine.alpha * distance;
-        self.coordinate.y = self.coordinate.y + direction_cosine.beta * distance;
-        self.coordinate.z = self.coordinate.z + direction_cosine.gamma * distance;
+        self.coordinate.x += direction_cosine.alpha * distance;
+        self.coordinate.y += direction_cosine.beta * distance;
+        self.coordinate.z += direction_cosine.gamma * distance;
     }
 }
 

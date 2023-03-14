@@ -30,7 +30,7 @@ pub fn load_particle<T: CustomFloat>(
         let time_step: T = FromPrimitive::from_f64(ts).unwrap();
         println!("loaded particle #{particle_idx}");
         if particle.time_to_census <= tiny_f {
-            particle.time_to_census = particle.time_to_census + time_step;
+            particle.time_to_census += time_step;
         }
         // set age
         if particle.age < zero() {
@@ -60,7 +60,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.domain.iter().for_each(|dom| {
         dom.cell_state.iter().for_each(|cell| {
             let cell_weight_particles: T = cell.volume * source_rate[cell.material] * time_step;
-            total_weight_particles = total_weight_particles + cell_weight_particles;
+            total_weight_particles += cell_weight_particles;
         });
     });
 
@@ -103,7 +103,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                     cell_source_tally[cell_idx] = cell.source_tally;
                     // create cell_n_particles and add them to the vaults
                     //println!("creating {cell_n_particles} particles in cell {cell_idx}");
-                    (0..cell_n_particles).into_iter().for_each(|ii| {
+                    (0..cell_n_particles).into_iter().for_each(|_ii| {
                         let mut particle: MCParticle<T> = MCParticle::default();
                         // atomic in original code
                         let mut rand_n_seed = cell_source_tally[cell_idx] as u64;

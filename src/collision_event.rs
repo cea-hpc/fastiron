@@ -74,15 +74,14 @@ pub fn collision_event<T: CustomFloat>(
             let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
             let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
             for reaction_idx in 0..n_reactions {
-                current_xsection = current_xsection
-                    - macroscopic_cross_section(
-                        mcco,
-                        reaction_idx,
-                        mc_particle.domain,
-                        mc_particle.cell,
-                        iso_idx,
-                        mc_particle.energy_group,
-                    );
+                current_xsection -= macroscopic_cross_section(
+                    mcco,
+                    reaction_idx,
+                    mc_particle.domain,
+                    mc_particle.cell,
+                    iso_idx,
+                    mc_particle.energy_group,
+                );
                 if current_xsection.is_sign_negative() {
                     selected_iso = iso_idx;
                     selected_unique_n = unique_n;

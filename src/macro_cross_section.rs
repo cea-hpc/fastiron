@@ -89,8 +89,8 @@ pub fn weighted_macroscopic_cross_section<T: CustomFloat>(
     let n_isotopes: usize = mcco.material_database.mat[global_material_idx].iso.len();
 
     (0..n_isotopes).into_iter().for_each(|isotope_idx| {
-        sum = sum
-            + macroscopic_total_cross_section(mcco, domain_idx, cell_idx, isotope_idx, energy_group)
+        sum +=
+            macroscopic_total_cross_section(mcco, domain_idx, cell_idx, isotope_idx, energy_group)
     });
 
     // atomic in original code
