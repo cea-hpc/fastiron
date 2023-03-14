@@ -100,7 +100,8 @@ pub fn cycle_tracking_function<T: CustomFloat>(
                 let processed_vault =
                     &mut mcco.particle_vault_container.processed_vaults[processed_vault_idx];
                 processed_vault.push_particle(particle.clone());
-                processing_vault.erase_swap_particles(particle_idx); //?
+                //processing_vault.erase_swap_particles(particle_idx); //?
+                todo!(); // set as processed
                                                                      // atomic in original code
                 mcco.tallies.balance_task[tally_idx].census += 1;
                 keep_tracking = false

@@ -49,7 +49,7 @@ impl<T: CustomFloat> ParticleVault<T> {
     /// Second vault is left empty. `fill_size` refers to the maximum
     /// possible size for the vault.
     pub fn collapse(&mut self, fill_size: usize, vault2: &mut ParticleVault<T>) {
-        if self.size() + vault2.size() < fill_size {
+        if vault2.size() < fill_size {
             // build the new particle list starting with collapsed elements from self
             let mut new: Vec<Option<MCBaseParticle<T>>> = self
                 .particles
@@ -80,13 +80,13 @@ impl<T: CustomFloat> ParticleVault<T> {
                 .into_iter()
                 .filter(|pp| pp.is_some())
                 .collect();
-            new.extend_from_slice(&v2_particles[..fill_size - self.size()]);
+            new.extend_from_slice(&v2_particles[..fill_size]);
             self.particles = new;
             vault2.clear();
-            (0..v2_particles.len() - (fill_size - old_len))
+            (0..v2_particles.len() - fill_size)
                 .into_iter()
                 .for_each(|ii| {
-                    vault2.particles[ii] = v2_particles[fill_size - old_len + ii].clone();
+                    vault2.particles[ii] = v2_particles[fill_size + ii].clone();
                 });
         }
     }
@@ -157,8 +157,11 @@ impl<T: CustomFloat> ParticleVault<T> {
 
     /// Swaps the particle at the specified index with the last one,
     /// delete the last one.
+    /// Instead of poping the discarded value, we overwrite it with None
+    /// TMP: is the swap really necessary since we don't use pointer to index?
     pub fn erase_swap_particles(&mut self, index: usize) {
-        self.particles[index] = self.particles.pop().unwrap() // does this work?
+        //self.particles[index] = self.particles.pop().unwrap() // does this work?
+        self.particles[index] = None;
     }
 }
 

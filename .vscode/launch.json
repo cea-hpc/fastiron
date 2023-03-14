@@ -38,7 +38,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["-i", "input_files/debug/homogeneous.inp","-e", "energy", "-S", "section", "-n", "10000"],
+            "args": ["-i", "input_files/QS_originals/AllEscape/allEscape.inp","-e", "energy", "-S", "section", "-n", "10000"],
             "cwd": "${workspaceFolder}"
         },
         {
