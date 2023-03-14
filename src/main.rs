@@ -80,6 +80,7 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
         "# processed particles: {}",
         mcco.particle_vault_container.particles_processed_size()
     );
+    
     mcco.particle_vault_container.collapse_processed();
     mcco.particle_vault_container.collapse_processing();
 
@@ -124,7 +125,9 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
             for processing_vault_idx in 0..mcco.particle_vault_container.processing_vaults.len() {
                 // Computing block
 
-                //println!("processing vault #{processing_vault_idx}");
+                println!("processing vault #{processing_vault_idx}");
+                println!("processing vault capacity: {}", mcco.particle_vault_container.processing_vaults[processing_vault_idx].particles.len());
+                println!("processing vault size:     {}", mcco.particle_vault_container.processing_vaults[processing_vault_idx].size());
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 
                 let processed_vault_idx: usize = mcco
