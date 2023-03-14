@@ -1,7 +1,7 @@
 use crate::{constants::CustomFloat, montecarlo::MonteCarlo, tallies::MCTallyEvent};
 
 use super::{
-    mc_facet_adjacency::MCSubfacetAdjacencyEvent, mc_particle::MCParticle, mct::reflect_particle,
+    mc_facet_adjacency::MCSubfacetAdjacencyEvent, mc_particle::MCParticle,
 };
 
 /// Computes and transform accordingly a [MCParticle] object crossing a facet.
@@ -36,13 +36,14 @@ pub fn facet_crossing_event<T: CustomFloat>(
         MCSubfacetAdjacencyEvent::TransitOffProcessor => {
             // particle enters an adjacent cell that belongs to
             // a domain managed by another processor.
+            println!("facet_adjacency.adjacent.domain: {:?}", facet_adjacency.adjacent.domain);
+            println!("facet_adjacency.adjacent.cell: {:?}", facet_adjacency.adjacent.cell);
+            println!("facet_adjacency.adjacent.facet: {:?}", facet_adjacency.adjacent.facet);
             mc_particle.domain = facet_adjacency.adjacent.domain.unwrap();
             mc_particle.cell = facet_adjacency.adjacent.cell.unwrap();
             mc_particle.facet = facet_adjacency.adjacent.facet.unwrap();
             mc_particle.last_event = MCTallyEvent::FacetCrossingCommunication;
 
-            // added from cycle tracking; necessary since we dont pass around a pointer
-            reflect_particle(mcco, mc_particle);
 
             let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
                 .mesh

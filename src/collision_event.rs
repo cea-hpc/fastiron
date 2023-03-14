@@ -57,10 +57,10 @@ pub fn collision_event<T: CustomFloat>(
     // Pick an isotope & reaction
     let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
     let total_xsection: T = mc_particle.total_cross_section;
-    println!("total xs: {total_xsection}");
+    //println!("total xs: {total_xsection}");
 
     let mut current_xsection: T = total_xsection * rdm_number;
-    println!("starting xs: {current_xsection}");
+    //println!("starting xs: {current_xsection}");
 
     let mut selected_iso: usize = usize::MAX; // sort of a magic value
     let mut selected_unique_n: usize = usize::MAX;
