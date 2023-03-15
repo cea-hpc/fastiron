@@ -95,10 +95,10 @@ pub fn cycle_tracking_function<T: CustomFloat>(
                 }
             }
             MCSegmentOutcome::Census => {
-                let processing_vault =
-                    &mut mcco.particle_vault_container.processing_vaults[processing_vault_idx];
-                let processed_vault =
-                    &mut mcco.particle_vault_container.processed_vaults[processed_vault_idx];
+                //let processing_vault =
+                //    &mut mcco.particle_vault_container.processing_vaults[processing_vault_idx];
+                //let processed_vault =
+                //    &mut mcco.particle_vault_container.processed_vaults[processed_vault_idx];
 
                 // PARTICLE ARE INVALIDATED IN CYCLE TRACKING GUTS
                 // set the particle as processed, i.e. transfer it from processing to processed vault

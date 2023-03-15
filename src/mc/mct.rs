@@ -1,6 +1,6 @@
 use core::panic;
 
-use num::{zero, FromPrimitive};
+use num::{zero, FromPrimitive, one};
 
 use super::{
     mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
@@ -373,7 +373,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
     let pfive: T = FromPrimitive::from_f64(0.5).unwrap();
     let bounding_box_tolerance: T = FromPrimitive::from_f64(1e-9).unwrap();
-    let numerator: T = plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d;
+    let numerator: T = -one::<T>() * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
 
     if !allow_enter & (numerator < zero()) & (numerator * numerator > plane_tolerance) {
         return huge_f;
