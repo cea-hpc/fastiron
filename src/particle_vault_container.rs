@@ -243,7 +243,7 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
     ) {
         // find a vault with free space
         while self.processing_vaults[*fill_vault_index].size() >= self.vault_size {
-            println!("No space in fill_vault; moving on next vault");
+            //println!("No space in fill_vault; moving on next vault");
             // if no space, move to next vault
             *fill_vault_index += 1;
 

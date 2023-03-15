@@ -44,7 +44,7 @@ pub fn load_particle<T: CustomFloat>(
 
 /// Simulates the sources according to the problem's parameters.
 pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
-    println!("---source_now");
+    //println!("---source_now");
     let time_step = FromPrimitive::from_f64(mcco.time_info.time_step).unwrap();
 
     let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];
@@ -74,7 +74,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let vault_size = mcco.particle_vault_container.vault_size;
     let mut processing_idx = mcco.particle_vault_container.particles_processing_size() / vault_size;
 
-    println!("n_domains: {}", mcco.domain.len());
+    //println!("n_domains: {}", mcco.domain.len());
 
     // on each domain
     mcco.domain
@@ -85,7 +85,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
             // this allows for a read-only iterator
             let mut cell_source_tally: Vec<usize> = vec![0; dom.cell_state.len()];
 
-            println!("{} cells in domain {}", dom.cell_state.len(), domain_idx);
+            //println!("{} cells in domain {}", dom.cell_state.len(), domain_idx);
 
             // on each cell
             dom.cell_state

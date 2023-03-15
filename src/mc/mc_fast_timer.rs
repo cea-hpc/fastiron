@@ -1,4 +1,4 @@
-use std::{fmt::Display, time::Instant};
+use std::{fmt::Display, time::{Instant, Duration}};
 
 use crate::{constants::CustomFloat, montecarlo::MonteCarlo};
 
@@ -56,6 +56,9 @@ impl Default for MCFastTimer {
 #[derive(Debug, Default)]
 pub struct MCFastTimerContainer {
     pub timers: [MCFastTimer; 7],
+    pub mins: [Duration; 7],
+    pub avgs: [Duration; 7],
+    pub maxs: [Duration; 7],
 }
 
 impl MCFastTimerContainer {
