@@ -22,7 +22,8 @@ impl<T: CustomFloat> Default for ParticleVault<T> {
 impl<T: CustomFloat> ParticleVault<T> {
     /// Returns true if the vault is empty, false otherwise.
     pub fn empty(&self) -> bool {
-        self.particles.is_empty()
+        todo!(); // this is incorrect; empty means full of None
+        //self.particles.is_empty()
     }
 
     /// Reserve the size for the container of particles.
@@ -64,6 +65,9 @@ impl<T: CustomFloat> ParticleVault<T> {
                 .filter(|pp| pp.is_some())
                 .collect();
             new.append(&mut v2_particles);
+            while new.len() < self.particles.len() {
+                new.push(None);
+            }
             vault2.clear();
             self.particles = new;
         } else {
