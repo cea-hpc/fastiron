@@ -58,7 +58,7 @@ impl MeshPartition {
         centers: &[MCVector<T>],
         comm: &mut CommObject,
     ) {
-        self.assign_cells_to_domain(centers, grid);
+        self.assign_cells_to_domain(centers, grid, comm);
 
         self.build_cell_idx_map(grid, comm);
     }
@@ -68,6 +68,7 @@ impl MeshPartition {
         &mut self,
         domain_center: &[MCVector<T>],
         grid: &GlobalFccGrid<T>,
+        comm: &CommObject,
     ) {
         let mut assigner = GridAssignmentObject::new(domain_center);
         let mut flood_queue: VecDeque<usize> = VecDeque::new();
@@ -89,6 +90,8 @@ impl MeshPartition {
                 cell_idx,
                 CellInfo {
                     domain_gid: Some(domain),
+                    foreman: Some(self.foreman),
+                    domain_index: Some(comm.gid_to_idx[domain]),
                     ..Default::default()
                 },
             );
