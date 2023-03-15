@@ -147,6 +147,9 @@ fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>], par
                             );
                             println!();
                         }
+                        if ! ((backside.adjacent.domain.unwrap() == domain_idx) | (backside.adjacent.cell.unwrap() == cell_idx) | (backside.adjacent.facet.unwrap() == facet_idx)) {
+                            panic!()
+                        }
                     }
                 });
             });
