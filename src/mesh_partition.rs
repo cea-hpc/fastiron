@@ -95,11 +95,12 @@ impl MeshPartition {
 
             if domain == self.domain_gid {
                 Self::add_nbrs_to_flood(cell_idx, grid, &mut flood_queue, &mut wet_cells);
-            } else {
-                remote_domain.push(domain);
+            } else if !self.nbr_domains.contains(&domain) {
+                self.nbr_domains.push(domain);
+                //remote_domain.push(domain);
             }
 
-            self.nbr_domains.extend(remote_domain.iter());
+            //self.nbr_domains.extend(remote_domain.iter());
         }
     }
 

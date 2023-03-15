@@ -37,6 +37,8 @@ impl CommObject {
             let target_domain_gid = nbr_domain[*remote_domain_idx];
             let target_partition = &mut self.partition[self.gid_to_idx[target_domain_gid]];
             let cell_to_send = cell_info_map.get(cell_gid).unwrap();
+            assert!(cell_to_send.domain_index.is_some());
+            assert!(cell_to_send.cell_index.is_some());
             target_partition
                 .cell_info_map
                 .insert(*cell_gid, *cell_to_send);
