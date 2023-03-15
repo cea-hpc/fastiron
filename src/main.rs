@@ -51,6 +51,8 @@ fn main() {
 }
 
 pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
+    mcco.fast_timer.update_main_stats();
+    
     mcco.fast_timer.cumulative_report();
 
     mcco.tallies.spectrum.print_spectrum(mcco);
@@ -230,4 +232,6 @@ pub fn cycle_finalize<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.time_info.cycle += 1;
 
     mc_fast_timer::stop(mcco, Section::CycleFinalize);
+
+    mcco.fast_timer.clear_last_cycle_timers();
 }
