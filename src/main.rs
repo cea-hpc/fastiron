@@ -52,7 +52,7 @@ fn main() {
 
 pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.fast_timer.update_main_stats();
-    
+
     mcco.fast_timer.cumulative_report();
 
     mcco.tallies.spectrum.print_spectrum(mcco);
@@ -100,7 +100,7 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
     mcco.particle_buffer.initialize(mcco.domain.len());
 
     mc_utils::source_now(mcco);
-    
+
     population_control::population_control(mcco, load_balance);
 
     let lwc = mcco.params.simulation_params.low_weight_cutoff;
@@ -140,8 +140,17 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
                 if mcco.params.simulation_params.debug_threads {
                     println!("processing vault #{processing_vault_idx}");
-                    println!("processing vault capacity: {}", mcco.particle_vault_container.processing_vaults[processing_vault_idx].particles.len());
-                    println!("processing vault size:     {}", mcco.particle_vault_container.processing_vaults[processing_vault_idx].size());
+                    println!(
+                        "processing vault capacity: {}",
+                        mcco.particle_vault_container.processing_vaults[processing_vault_idx]
+                            .particles
+                            .len()
+                    );
+                    println!(
+                        "processing vault size:     {}",
+                        mcco.particle_vault_container.processing_vaults[processing_vault_idx]
+                            .size()
+                    );
                 }
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 

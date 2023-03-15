@@ -1,4 +1,7 @@
-use std::{fmt::Display, time::{Instant, Duration}};
+use std::{
+    fmt::Display,
+    time::{Duration, Instant},
+};
 
 use crate::{constants::CustomFloat, montecarlo::MonteCarlo};
 
@@ -115,27 +118,35 @@ impl MCFastTimerContainer {
 
     pub fn clear_last_cycle_timers(&mut self) {
         self.n_avg += 1;
-        self.timers.iter_mut().enumerate().for_each(|(timer_idx, timer)| {
-            if timer_idx == Section::Main as usize {
-                return;
-            }
-            // update cumulative value for report
-            if self.mins[timer_idx] > timer.end_clock.duration_since(timer.start_clock) {
-                self.mins[timer_idx] = timer.end_clock.duration_since(timer.start_clock);
-            } else if self.maxs[timer_idx] < timer.end_clock.duration_since(timer.start_clock) { // cant be a max and a min
-                self.maxs[timer_idx] = timer.end_clock.duration_since(timer.start_clock);
-            }
-            // new_avg = old_avg * N-1/N + new_val/N
-            self.avgs[timer_idx] = (self.avgs[timer_idx]*(self.n_avg-1) + timer.end_clock.duration_since(timer.start_clock)) / self.n_avg;
+        self.timers
+            .iter_mut()
+            .enumerate()
+            .for_each(|(timer_idx, timer)| {
+                if timer_idx == Section::Main as usize {
+                    return;
+                }
+                // update cumulative value for report
+                if self.mins[timer_idx] > timer.end_clock.duration_since(timer.start_clock) {
+                    self.mins[timer_idx] = timer.end_clock.duration_since(timer.start_clock);
+                } else if self.maxs[timer_idx] < timer.end_clock.duration_since(timer.start_clock) {
+                    // cant be a max and a min
+                    self.maxs[timer_idx] = timer.end_clock.duration_since(timer.start_clock);
+                }
+                // new_avg = old_avg * N-1/N + new_val/N
+                self.avgs[timer_idx] = (self.avgs[timer_idx] * (self.n_avg - 1)
+                    + timer.end_clock.duration_since(timer.start_clock))
+                    / self.n_avg;
 
-            // clear timers
-            timer.last_cycle_clock = 0;
-        });
+                // clear timers
+                timer.last_cycle_clock = 0;
+            });
     }
 
     pub fn update_main_stats(&mut self) {
         let idx = Section::Main as usize;
-        let duration = self.timers[idx].end_clock.duration_since(self.timers[idx].start_clock);
+        let duration = self.timers[idx]
+            .end_clock
+            .duration_since(self.timers[idx].start_clock);
         self.avgs[idx] = duration;
         self.mins[idx] = duration;
         self.maxs[idx] = duration;
@@ -144,7 +155,13 @@ impl MCFastTimerContainer {
 
 impl Default for MCFastTimerContainer {
     fn default() -> Self {
-        Self { timers: Default::default(), avgs: [Duration::ZERO; 7], n_avg: 0, maxs: [Duration::ZERO; 7], mins: [Duration::MAX; 7] }
+        Self {
+            timers: Default::default(),
+            avgs: [Duration::ZERO; 7],
+            n_avg: 0,
+            maxs: [Duration::ZERO; 7],
+            mins: [Duration::MAX; 7],
+        }
     }
 }
 

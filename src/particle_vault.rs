@@ -23,7 +23,7 @@ impl<T: CustomFloat> ParticleVault<T> {
     /// Returns true if the vault is empty, false otherwise.
     pub fn empty(&self) -> bool {
         todo!(); // this is incorrect; empty means full of None
-        //self.particles.is_empty()
+                 //self.particles.is_empty()
     }
 
     /// Reserve the size for the container of particles.
@@ -102,14 +102,22 @@ impl<T: CustomFloat> ParticleVault<T> {
     /// Put a particle into the vault, casting it into a [MCBaseParticle].
     /// Has an atomic increment in the original code.
     pub fn push_particle(&mut self, particle: MCParticle<T>) {
-        let insert_idx = self.particles.iter().position(|elem| elem.is_none()).unwrap();
+        let insert_idx = self
+            .particles
+            .iter()
+            .position(|elem| elem.is_none())
+            .unwrap();
 
         self.particles[insert_idx] = Some(MCBaseParticle::new(&particle));
     }
 
     /// Put a base particle into the vault.
     pub fn push_base_particle(&mut self, particle: MCBaseParticle<T>) {
-        let insert_idx = self.particles.iter().position(|elem| elem.is_none()).unwrap();
+        let insert_idx = self
+            .particles
+            .iter()
+            .position(|elem| elem.is_none())
+            .unwrap();
         self.particles[insert_idx] = Some(particle);
     }
 
@@ -120,7 +128,12 @@ impl<T: CustomFloat> ParticleVault<T> {
     /// be used to detect if the vault is empty.
     pub fn pop_particle(&mut self) -> Option<MCParticle<T>> {
         // find the last valid particle
-        if let Some(pp) = self.particles.iter_mut().filter(|elem| elem.is_some()).last() {
+        if let Some(pp) = self
+            .particles
+            .iter_mut()
+            .filter(|elem| elem.is_some())
+            .last()
+        {
             // copy it, set it to none and return the copy
             pp.as_ref()?;
             let res = pp.clone();
@@ -138,7 +151,12 @@ impl<T: CustomFloat> ParticleVault<T> {
     /// be used to detect if the vault is empty.
     pub fn pop_base_particle(&mut self) -> Option<MCBaseParticle<T>> {
         // find the last valid particle
-        if let Some(pp) = self.particles.iter_mut().filter(|elem| elem.is_some()).last() {
+        if let Some(pp) = self
+            .particles
+            .iter_mut()
+            .filter(|elem| elem.is_some())
+            .last()
+        {
             // copy it, set it to none and return the copy
             pp.as_ref()?;
             let res = pp.clone();
@@ -183,8 +201,8 @@ impl<T: CustomFloat> ParticleVault<T> {
         let n = self.particles.len();
         //self.particles[index] = self.particles.pop().unwrap() // does this work?
         if let Some(last_pp_idx) = self.particles.iter().rev().position(|elem| elem.is_some()) {
-            self.particles[index] = self.particles[n-1 - last_pp_idx].clone();
-            self.particles[n-1 - last_pp_idx] = None;
+            self.particles[index] = self.particles[n - 1 - last_pp_idx].clone();
+            self.particles[n - 1 - last_pp_idx] = None;
         } else {
             println!("No valid particle to swap with; invalidating the particle");
             self.particles[index] = None;

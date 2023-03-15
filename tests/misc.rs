@@ -32,7 +32,7 @@ pub fn filter_and_count() {
 }
 
 #[test]
-pub fn position(){
+pub fn position() {
     let arr: [Option<usize>; 6] = [None, None, Some(0), None, Some(1), None];
     let idx = arr.iter().rev().position(|elem| elem.is_some()).unwrap();
     assert_eq!(4, 6 - 1 - idx); // reverse the index

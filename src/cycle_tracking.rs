@@ -99,7 +99,7 @@ pub fn cycle_tracking_function<T: CustomFloat>(
                     &mut mcco.particle_vault_container.processing_vaults[processing_vault_idx];
                 let processed_vault =
                     &mut mcco.particle_vault_container.processed_vaults[processed_vault_idx];
-                
+
                 // set the particle as processed, i.e. transfer it from processing to processed vault
                 processed_vault.push_particle(particle.clone());
                 processing_vault.invalidate_particle(particle_idx);
