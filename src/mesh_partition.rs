@@ -84,6 +84,7 @@ impl MeshPartition {
             let rr = grid.cell_center(cell_idx);
             let domain = assigner.nearest_center(rr);
 
+            // NEED TO INIT FOREMAN?
             self.cell_info_map.insert(
                 cell_idx,
                 CellInfo {
