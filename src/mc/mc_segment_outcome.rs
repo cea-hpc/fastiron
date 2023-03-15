@@ -42,7 +42,7 @@ pub fn outcome<T: CustomFloat>(
     let particle_speed = mc_particle.velocity.length();
 
     let mut force_collision = false;
-    if mc_particle.num_mean_free_paths < zero() {
+    if mc_particle.num_mean_free_paths.is_sign_negative() {
         force_collision = true;
         mc_particle.num_mean_free_paths = small_f;
     }
@@ -78,7 +78,7 @@ pub fn outcome<T: CustomFloat>(
             mc_particle.num_mean_free_paths * mc_particle.mean_free_path;
     }
     // census
-    distance[MCSegmentOutcome::Census as usize] = particle_speed * mc_particle.mean_free_path;
+    distance[MCSegmentOutcome::Census as usize] = particle_speed * mc_particle.time_to_census;
 
     // nearest facet
     let nearest_facet: MCNearestFacet<T> = nearest_facet(mc_particle, mcco);
@@ -100,7 +100,7 @@ pub fn outcome<T: CustomFloat>(
 
     let segment_outcome = find_min(&distance);
 
-    if distance[segment_outcome as usize] < zero() {
+    if distance[segment_outcome as usize].is_sign_negative() {
         panic!()
     }
     mc_particle.segment_path_length = distance[segment_outcome as usize];
