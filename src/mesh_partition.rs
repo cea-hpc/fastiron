@@ -72,7 +72,6 @@ impl MeshPartition {
         let mut assigner = GridAssignmentObject::new(domain_center);
         let mut flood_queue: VecDeque<usize> = VecDeque::new();
         let mut wet_cells: Vec<usize> = Vec::new();
-        let mut remote_domain: Vec<usize> = Vec::new();
 
         let root = grid.which_cell(&domain_center[self.domain_gid]);
 
@@ -95,12 +94,9 @@ impl MeshPartition {
 
             if domain == self.domain_gid {
                 Self::add_nbrs_to_flood(cell_idx, grid, &mut flood_queue, &mut wet_cells);
-            } else if !self.nbr_domains.contains(&domain) {
+            } else if !self.nbr_domains.contains(&domain) { // identify remote domains
                 self.nbr_domains.push(domain);
-                //remote_domain.push(domain);
             }
-
-            //self.nbr_domains.extend(remote_domain.iter());
         }
     }
 
@@ -116,9 +112,7 @@ impl MeshPartition {
             remote_domain_map.insert(self.nbr_domains[ii], ii);
         });
 
-        let read_map = self.cell_info_map.clone();
-
-        for (cell_gid, cell_info) in &mut self.cell_info_map {
+        for cell_info in self.cell_info_map.values_mut() {
             let domain_gid: usize = cell_info.domain_gid.unwrap();
             if domain_gid == self.domain_gid {
                 // local cell
@@ -126,7 +120,14 @@ impl MeshPartition {
                 n_local_cells += 1;
                 cell_info.domain_index = Some(self.domain_index);
                 cell_info.foreman = Some(self.foreman);
-            } else {
+            }
+        }
+
+        let read_map = self.cell_info_map.clone();
+
+        for (cell_gid, cell_info) in &self.cell_info_map {
+            let domain_gid: usize = cell_info.domain_gid.unwrap();
+            if domain_gid != self.domain_gid {
                 let remote_n_idx = remote_domain_map.get(&domain_gid).unwrap();
                 let face_nbr = grid.get_face_nbr_gids(*cell_gid);
 
