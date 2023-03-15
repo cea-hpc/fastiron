@@ -143,7 +143,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
                             task_processing_vault[task_particle_idx] = Some(pp);
                         } else {
                             // particle is killed
-                            task_processing_vault.erase_swap_particles(task_particle_idx);
+                            task_processing_vault.invalidate_particle(task_particle_idx);
                             task_balance.rr += 1;
                         }
                     }

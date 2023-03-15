@@ -176,8 +176,15 @@ impl<T: CustomFloat> ParticleVault<T> {
     /// Instead of poping the discarded value, we overwrite it with None
     /// TMP: is the swap really necessary since we don't use pointer to index?
     pub fn erase_swap_particles(&mut self, index: usize) {
+        let n = self.particles.len();
         //self.particles[index] = self.particles.pop().unwrap() // does this work?
-        self.particles[index] = None;
+        if let Some(last_pp_idx) = self.particles.iter().rev().position(|elem| elem.is_some()) {
+            self.particles[index] = self.particles[n-1 - last_pp_idx].clone();
+            self.particles[n-1 - last_pp_idx] = None;
+        } else {
+            println!("No valid particle to swap with; invalidating the particle");
+            self.particles[index] = None;
+        }
     }
 }
 
