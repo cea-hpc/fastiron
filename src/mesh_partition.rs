@@ -90,8 +90,8 @@ impl MeshPartition {
                 cell_idx,
                 CellInfo {
                     domain_gid: Some(domain),
-                    foreman: Some(self.foreman),
-                    domain_index: Some(comm.gid_to_idx[domain]),
+                    //foreman: Some(self.foreman),
+                    //domain_index: Some(comm.gid_to_idx[domain]),
                     ..Default::default()
                 },
             );
