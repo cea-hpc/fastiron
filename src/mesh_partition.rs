@@ -1,7 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
 use crate::{
-    comm_object::CommObject,
     constants::CustomFloat,
     global_fcc_grid::{GlobalFccGrid, Tuple3},
     grid_assignment_object::GridAssignmentObject,
@@ -56,11 +55,11 @@ impl MeshPartition {
         &mut self,
         grid: &GlobalFccGrid<T>,
         centers: &[MCVector<T>],
-        comm: &mut CommObject,
-    ) {
-        self.assign_cells_to_domain(centers, grid, comm);
+        //comm: &mut CommObject,
+    ) -> Vec<(usize, usize)> {
+        self.assign_cells_to_domain(centers, grid);
 
-        self.build_cell_idx_map(grid, comm);
+        self.build_cell_idx_map(grid)
     }
 
     /// Internal function that associates cells to domains
@@ -68,7 +67,7 @@ impl MeshPartition {
         &mut self,
         domain_center: &[MCVector<T>],
         grid: &GlobalFccGrid<T>,
-        comm: &CommObject,
+        //comm: &CommObject,
     ) {
         let mut assigner = GridAssignmentObject::new(domain_center);
         let mut flood_queue: VecDeque<usize> = VecDeque::new();
@@ -107,8 +106,10 @@ impl MeshPartition {
     fn build_cell_idx_map<T: CustomFloat>(
         &mut self,
         grid: &GlobalFccGrid<T>,
-        comm: &mut CommObject,
-    ) {
+        //comm: &mut CommObject,
+    ) -> Vec<(usize, usize)>{
+        let mut remote_cells: Vec<(usize, usize)> = Vec::new();
+
         let mut n_local_cells: usize = 0;
         // init a map
         let mut remote_domain_map: HashMap<usize, usize> = Default::default();
@@ -141,14 +142,16 @@ impl MeshPartition {
                             continue;
                         }
                         // replace the update to sendSet
-                        comm.add_to_send((*remote_n_idx, j_cell_gid));
+                        //comm.add_to_send((*remote_n_idx, j_cell_gid));
+                        remote_cells.push((*remote_n_idx, j_cell_gid));
                     }
                 }
             }
         }
 
         // replace comm.exchange
-        comm.send(&mut self.cell_info_map, &self.nbr_domains)
+        //comm.send(&mut self.cell_info_map, &self.nbr_domains)
+        remote_cells
     }
 
     fn add_nbrs_to_flood<T: CustomFloat>(

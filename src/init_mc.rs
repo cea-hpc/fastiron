@@ -237,9 +237,22 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     });
 
     let mut comm: CommObject = CommObject::new(&partition);
-    partition
+    comm.partition
         .iter_mut()
-        .for_each(|mesh_p| mesh_p.build_mesh_partition(&global_grid, &domain_centers, &mut comm));
+        .for_each(|mesh_p| {
+            let remote_cells = mesh_p.build_mesh_partition(&global_grid, &domain_centers);
+            // replace the send call originally in build_cell_idx_map
+            for (remote_domain_idx, cell_gid) in &remote_cells {
+                let target_domain_gid = mesh_p.nbr_domains[*remote_domain_idx];
+                let target_partition = &mut comm.partition[comm.gid_to_idx[target_domain_gid]];
+                let cell_to_send = mesh_p.cell_info_map.get(cell_gid).unwrap();
+                assert!(cell_to_send.domain_index.is_some());
+                assert!(cell_to_send.cell_index.is_some());
+                target_partition
+                    .cell_info_map
+                    .insert(*cell_gid, *cell_to_send);
+            }
+        });
 
     mcco.domain.reserve(my_domain_gids.len());
     partition.iter().for_each(|mesh_p| {
