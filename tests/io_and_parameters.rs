@@ -1,9 +1,6 @@
 use fastiron::{
     io_utils::{parse_input_file, Cli, InputError},
-    parameters::{
-        check_parameters_integrity, supply_defaults, GeometryParameters, ParameterError,
-        Parameters, Shape, SimulationParameters,
-    },
+    parameters::{GeometryParameters, ParameterError, Parameters, Shape, SimulationParameters},
 };
 
 #[test]
@@ -58,7 +55,7 @@ fn missing_cross_section() {
     )
     .unwrap();
     // check if the missing reference was noticed by the function
-    if let Err(v) = check_parameters_integrity(&params) {
+    if let Err(v) = params.check_parameters_integrity() {
         assert!(v.contains(&ParameterError::MissingCrossSection(
             "sourceMaterial:flat".to_string()
         )));
@@ -76,7 +73,7 @@ fn missing_material() {
     )
     .unwrap();
     // check if the missing reference was noticed by the function
-    if let Err(v) = check_parameters_integrity(&params) {
+    if let Err(v) = params.check_parameters_integrity() {
         assert!(v.contains(&ParameterError::MissingMaterial(
             "sourceMaterial".to_string()
         )));
@@ -95,14 +92,14 @@ fn no_geometry_supplied() {
     )
     .unwrap();
     // check if a NoGeometry error was noticed by the function
-    if let Err(v) = check_parameters_integrity(&params) {
+    if let Err(v) = params.check_parameters_integrity() {
         assert!(v.contains(&ParameterError::NoGeometry));
     } else {
         unreachable!()
     }
     // call supply_defaults and check that a default geometry was indeed supplied
-    supply_defaults(&mut params);
-    check_parameters_integrity(&params).unwrap();
+    params.supply_defaults();
+    params.check_parameters_integrity().unwrap();
 }
 
 #[test]
@@ -110,7 +107,7 @@ fn verify_file_parsing() {
     let mut params = Parameters::default();
     parse_input_file("input_files/debug/parsing.inp".to_string(), &mut params).unwrap();
     // check for obvious issues
-    check_parameters_integrity(&params).unwrap();
+    params.check_parameters_integrity().unwrap();
     // lots of assert!
     // sim block
     assert_eq!(params.simulation_params.dt, 1e-06);

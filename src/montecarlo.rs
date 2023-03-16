@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use num::{zero, ToPrimitive};
+use num::zero;
 
 use crate::constants::CustomFloat;
 use crate::material_database::MaterialDatabase;

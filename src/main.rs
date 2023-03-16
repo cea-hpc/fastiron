@@ -8,14 +8,14 @@ use fastiron::io_utils::Cli;
 use fastiron::mc::mc_fast_timer::{self, Section};
 use fastiron::mc::mc_utils;
 use fastiron::montecarlo::MonteCarlo;
-use fastiron::parameters::get_parameters;
+use fastiron::parameters::Parameters;
 use fastiron::population_control;
 
 fn main() {
     let cli = Cli::parse();
     //println!("Printing CLI args:\n{cli:#?}");
 
-    let params = get_parameters(cli).unwrap();
+    let params = Parameters::get_parameters(cli).unwrap();
     println!("Printing Parameters:\n{params:#?}");
 
     let load_balance: bool = params.simulation_params.load_balance;
