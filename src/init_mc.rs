@@ -240,6 +240,7 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     partition
         .iter_mut()
         .for_each(|mesh_p| mesh_p.build_mesh_partition(&global_grid, &domain_centers, &mut comm));
+    assert!(comm.s_list.is_empty());
 
     mcco.domain.reserve(my_domain_gids.len());
     partition.iter().for_each(|mesh_p| {
