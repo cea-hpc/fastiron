@@ -256,7 +256,7 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         });
 
     mcco.domain.reserve(my_domain_gids.len());
-    partition.iter().for_each(|mesh_p| {
+    comm.partition.iter().for_each(|mesh_p| {
         mcco.domain.push(MCDomain::new(
             mesh_p,
             &global_grid,
