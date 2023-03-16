@@ -13,6 +13,7 @@ use crate::mc::{
 };
 use crate::nuclear_data::NuclearData;
 use crate::parameters::Parameters;
+use crate::particle_vault::ParticleVault;
 use crate::particle_vault_container::ParticleVaultContainer;
 use crate::tallies::Tallies;
 
@@ -136,28 +137,28 @@ impl<T: CustomFloat> MonteCarlo<T> {
             println!("No output name specified for energy");
             return;
         }
+
+        let update_function = |vault: &ParticleVault<T>, spectrum: &mut [u64]| {
+            // We need to iterate on the index in order to access all particles, even invalid ones
+            (0..vault.size()).into_iter().for_each(|particle_idx| {
+                // load particle & update energy group
+                let mut pp = load_particle(vault, particle_idx, self.time_info.time_step).unwrap();
+                pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
+                spectrum[pp.energy_group] += 1;
+            });
+        };
+
         // Check energy levels on processing particles
         // Iterate on processing vaults
         for vv in &self.particle_vault_container.processed_vaults {
-            // We need to iterate on the index in order to access all particles, even invalid ones
-            (0..vv.size()).into_iter().for_each(|particle_idx| {
-                // load particle & update energy group
-                let mut pp = load_particle(vv, particle_idx, self.time_info.time_step).unwrap();
-                pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
-                self.tallies.spectrum.census_energy_spectrum[pp.energy_group] += 1;
-            });
+            update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
         }
         // Iterate on processed vaults
         self.particle_vault_container
             .processed_vaults
             .iter()
             .for_each(|vv| {
-                // We need to iterate on the index in order to access all particles, even invalid ones
-                (0..vv.size()).into_iter().for_each(|particle_idx| {
-                    let mut pp = load_particle(vv, particle_idx, self.time_info.time_step).unwrap();
-                    pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
-                    self.tallies.spectrum.census_energy_spectrum[pp.energy_group] += 1;
-                });
+                update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
             });
     }
 
