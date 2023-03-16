@@ -194,7 +194,7 @@ impl<T: CustomFloat> MCDomain<T> {
             .for_each(|cs| cs.total = vec![zero(); cs.total.len()])
     }
 
-    fn find_material(geometry_params: &[GeometryParameters], rr: &MCVector<T>) -> String {
+    pub fn find_material(geometry_params: &[GeometryParameters], rr: &MCVector<T>) -> String {
         let mut mat_name = String::default();
 
         geometry_params.iter().rev().for_each(|geom| {
@@ -207,7 +207,7 @@ impl<T: CustomFloat> MCDomain<T> {
         mat_name
     }
 
-    fn is_inside(geom: &GeometryParameters, rr: &MCVector<T>) -> bool {
+    pub fn is_inside(geom: &GeometryParameters, rr: &MCVector<T>) -> bool {
         match geom.shape {
             Shape::Brick => {
                 let in_x = (rr.x >= FromPrimitive::from_f64(geom.x_min).unwrap())
