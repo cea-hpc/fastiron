@@ -1,4 +1,4 @@
-use fastiron::{parameters::{GeometryParameters, Shape}, mc::{mc_vector::MCVector, mc_domain::MCDomain}, constants::CustomFloat};
+use fastiron::{parameters::{GeometryParameters, Shape}, mc::{mc_vector::MCVector, mc_domain::MCDomain}, global_fcc_grid::GlobalFccGrid, mesh_partition::MeshPartition};
 
 #[test]
 pub fn inside_material() {
@@ -75,3 +75,38 @@ pub fn inside_material() {
 
 }
 
+#[test]
+pub fn domain_construction() {
+    // simple grid 2*2*2 grid, each cell dim is 1
+    let grid = GlobalFccGrid::new(2, 2, 2, 1.0, 1.0, 1.0);
+    // 2 symetrical centers 
+    let c1 = MCVector {
+        x: 1.0,
+        y: 0.5,
+        z: 1.0,
+    };
+    let c2 = MCVector {
+        x: 1.0,
+        y: 1.5,
+        z: 1.0,
+    };
+    let centers = vec![c1, c2];
+    let domain_gids: Vec<usize> = vec![0,1];
+    let mut partition: Vec<MeshPartition> = Vec::with_capacity(centers.len());
+    domain_gids.iter().for_each(|ii| {
+        partition.push(MeshPartition::new(*ii, *ii, 0));
+    });
+    partition.iter_mut().for_each(|part| {
+        let remote_cells = part.build_mesh_partition(&grid, &centers);
+        // only 2 domains, we can manually process those
+    });
+    println!("{partition:#?}");
+    partition.iter().for_each(|part| {
+        part.cell_info_map.values().for_each(|cell_info| {
+            assert!((cell_info.domain_gid.is_some()));
+            assert!((cell_info.cell_index.is_some()));
+            assert!((cell_info.domain_index.is_some()));
+            assert!((cell_info.foreman.is_some()));
+        });
+    });
+}
