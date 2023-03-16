@@ -108,18 +108,17 @@ fn population_control_guts<T: CustomFloat>(
 /// Play russian-roulette with low-weight particles relative
 /// to the source particle weight.
 pub fn roulette_low_weight_particles<T: CustomFloat>(
-    low_weight_cutoff: f64,
-    source_particle_weight: f64,
+    low_weight_cutoff: T,
+    source_particle_weight: T,
     vault: &mut ParticleVaultContainer<T>,
     task_balance: &mut Balance,
 ) {
-    if low_weight_cutoff > 0.0 {
+    if low_weight_cutoff > 0.0.into() {
         let current_n_particles = vault.particles_processing_size();
         let vault_size = vault.vault_size;
 
-        let l_weight_cutoff: T = FromPrimitive::from_f64(low_weight_cutoff).unwrap();
-        let weight_cutoff: T =
-            FromPrimitive::from_f64(low_weight_cutoff * source_particle_weight).unwrap();
+        let l_weight_cutoff = low_weight_cutoff;
+        let weight_cutoff = low_weight_cutoff * source_particle_weight;
 
         // march backwards through particles; might be unecessary since we use vectors?
         (0..current_n_particles)

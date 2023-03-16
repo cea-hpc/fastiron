@@ -1,5 +1,6 @@
 use std::{fs::File, io::Read};
 
+use crate::constants::CustomFloat;
 use clap::Parser;
 
 use crate::parameters::{
@@ -35,11 +36,11 @@ pub struct Cli {
 
     /// time step in seconds
     #[arg(short = 'D', long = "dt", num_args(1), allow_negative_numbers(false))]
-    pub dt: Option<f64>,
+    pub dt: Option<f32>,
 
     /// max random mesh node displacement
     #[arg(short = 'f', long = "f-max", num_args(1))]
-    pub f_max: Option<f64>,
+    pub f_max: Option<f32>,
 
     /// enable load balancing if present
     #[arg(short = 'l', long = "load-balance", num_args(0))]
@@ -55,15 +56,15 @@ pub struct Cli {
 
     /// x-size of simulation in cm
     #[arg(short = 'X', long = "lx", num_args(1), allow_negative_numbers(false))]
-    pub lx: Option<f64>,
+    pub lx: Option<f32>,
 
     /// y-size of simulation in cm
     #[arg(short = 'Y', long = "ly", num_args(1), allow_negative_numbers(false))]
-    pub ly: Option<f64>,
+    pub ly: Option<f32>,
 
     /// z-size of simulation in cm
     #[arg(short = 'Z', long = "lz", num_args(1), allow_negative_numbers(false))]
-    pub lz: Option<f64>,
+    pub lz: Option<f32>,
 
     /// total number of particules
     #[arg(
@@ -162,7 +163,10 @@ pub struct Cli {
 /// provided input file. The file is first separated into blocks
 /// with the rsplit call. The blocks are then used to complete the
 /// parameter structure passed as argument.
-pub fn parse_input_file(filename: String, params: &mut Parameters) -> Result<(), Vec<InputError>> {
+pub fn parse_input_file<T: CustomFloat>(
+    filename: String,
+    params: &mut Parameters<T>,
+) -> Result<(), Vec<InputError>> {
     let mut content = String::new();
 
     let mut file = match File::open(filename) {

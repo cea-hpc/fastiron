@@ -20,17 +20,16 @@ use super::{
 pub fn load_particle<T: CustomFloat>(
     particle_vault: &ParticleVault<T>,
     particle_idx: usize,
-    ts: f64,
+    ts: T,
 ) -> Option<MCParticle<T>> {
     //println!("{:#?}", particle_vault.particles);
     // can probably use a map here
     if let Some(mut particle) = particle_vault.get_base_particle(particle_idx) {
         // update time to census
         let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
-        let time_step: T = FromPrimitive::from_f64(ts).unwrap();
         //println!("loaded particle #{particle_idx}");
         if particle.time_to_census <= tiny_f {
-            particle.time_to_census += time_step;
+            particle.time_to_census += ts;
         }
         // set age
         if particle.age < zero() {
@@ -45,7 +44,7 @@ pub fn load_particle<T: CustomFloat>(
 /// Simulates the sources according to the problem's parameters.
 pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     //println!("---source_now");
-    let time_step = FromPrimitive::from_f64(mcco.time_info.time_step).unwrap();
+    let time_step = mcco.time_info.time_step;
 
     let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];
     (0..mcco.material_database.mat.len())
@@ -53,7 +52,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         .for_each(|mat_idx| {
             let name = &mcco.material_database.mat[mat_idx].name;
             let sr = mcco.params.material_params[name].source_rate;
-            source_rate[mat_idx] = FromPrimitive::from_f64(sr).unwrap();
+            source_rate[mat_idx] = sr;
         });
 
     let mut total_weight_particles: T = zero();
@@ -69,7 +68,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let source_particle_weight: T = total_weight_particles
         / (source_fraction * FromPrimitive::from_usize(n_particles).unwrap());
     assert_ne!(source_particle_weight, zero());
-    mcco.source_particle_weight = source_particle_weight.to_f64().unwrap();
+    mcco.source_particle_weight = source_particle_weight;
 
     let vault_size = mcco.particle_vault_container.vault_size;
     let mut processing_idx = mcco.particle_vault_container.particles_processing_size() / vault_size;
@@ -125,14 +124,11 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                             .sample_isotropic(&mut particle.random_number_seed);
 
                         // sample energy uniformly in [emin; emax] MeV
-                        let range: T = FromPrimitive::from_f64(
-                            mcco.params.simulation_params.e_max
-                                - mcco.params.simulation_params.e_min,
-                        )
-                        .unwrap();
+                        let range = mcco.params.simulation_params.e_max
+                            - mcco.params.simulation_params.e_min;
                         let sample: T = rng_sample(&mut particle.random_number_seed);
-                        particle.kinetic_energy = sample * range
-                            + FromPrimitive::from_f64(mcco.params.simulation_params.e_min).unwrap();
+                        particle.kinetic_energy =
+                            sample * range + mcco.params.simulation_params.e_min;
 
                         let speed: T = speed_from_energy(particle.kinetic_energy);
                         particle.velocity.x = speed * particle.direction_cosine.alpha;

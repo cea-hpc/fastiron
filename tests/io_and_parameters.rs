@@ -17,7 +17,7 @@ fn verify_cli_parsing() {
     use clap::Parser;
     let cmd_line = "./fastiron -i somefile.inp -c -l -e out1 -S out2.dat -X 10 -Y 10 -Z 10.0 -s 123456 -n 1000 -b 10";
     let cli = Cli::parse_from(cmd_line.split(' '));
-    let simulation_params = SimulationParameters::from_cli(&cli);
+    let simulation_params = SimulationParameters::<f64>::from_cli(&cli);
     assert_eq!(simulation_params.input_file, "somefile.inp");
     assert!(simulation_params.cycle_timers);
     assert!(simulation_params.load_balance);
@@ -34,14 +34,14 @@ fn verify_cli_parsing() {
 
 #[test]
 fn verify_input_file_compatibility() {
-    let mut params = Parameters::default();
+    let mut params = Parameters::<f64>::default();
     // we just verify that the file could be parsed, not if it was parsed correctly
     parse_input_file("input_files/debug/homogeneous.inp".to_string(), &mut params).unwrap();
 }
 
 #[test]
 fn missing_input_file() {
-    let mut params = Parameters::default();
+    let mut params = Parameters::<f64>::default();
     if let Err(v) = parse_input_file("input_files/do_not_exist.inp".to_string(), &mut params) {
         assert!(v.contains(&InputError::BadInputFile));
     } else {
@@ -51,7 +51,7 @@ fn missing_input_file() {
 
 #[test]
 fn missing_cross_section() {
-    let mut params = Parameters::default();
+    let mut params = Parameters::<f64>::default();
     parse_input_file(
         "input_files/debug/missing_cross_section.inp".to_string(),
         &mut params,
@@ -69,7 +69,7 @@ fn missing_cross_section() {
 
 #[test]
 fn missing_material() {
-    let mut params = Parameters::default();
+    let mut params = Parameters::<f64>::default();
     parse_input_file(
         "input_files/debug/missing_material.inp".to_string(),
         &mut params,
@@ -87,7 +87,7 @@ fn missing_material() {
 
 #[test]
 fn no_geometry_supplied() {
-    let mut params = Parameters::default();
+    let mut params = Parameters::<f64>::default();
     // parse a file with no geometry block
     parse_input_file(
         "input_files/debug/sim_block_only.inp".to_string(),
@@ -128,7 +128,7 @@ fn verify_file_parsing() {
     assert_eq!(params.simulation_params.low_weight_cutoff, 0.001);
 
     // geometry blocks
-    fn match_a_block(g: &GeometryParameters) -> bool {
+    fn match_a_block(g: &GeometryParameters<f64>) -> bool {
         let match_b1: bool = (g.material_name == "sourceMaterial")
             & matches!(g.shape, Shape::Brick)
             & (g.x_max == 1000.0)

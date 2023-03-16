@@ -22,7 +22,7 @@ pub struct MonteCarlo<T: CustomFloat> {
     /// List of spatial domains
     pub domain: Vec<MCDomain<T>>,
     /// Parameters of the problem
-    pub params: Parameters,
+    pub params: Parameters<T>,
     /// Object storing all data related to particles
     pub nuclear_data: NuclearData<T>,
     /// Container for all the particle vaults used during simulation
@@ -32,7 +32,7 @@ pub struct MonteCarlo<T: CustomFloat> {
     /// Object storing all tallies of the simulation
     pub tallies: Tallies<T>,
     /// Object storing data related to the advancement of the simulation
-    pub time_info: MCTimeInfo,
+    pub time_info: MCTimeInfo<T>,
     /// Container for the timers used for performance measurements
     pub fast_timer: MCFastTimerContainer,
     /// Object storing data related to the processor and execution mode
@@ -40,12 +40,12 @@ pub struct MonteCarlo<T: CustomFloat> {
     /// Buffer used for potential spatial multithreading
     pub particle_buffer: MCParticleBuffer<T>,
     /// Weight of the particles at creation in a source zone
-    pub source_particle_weight: f64,
+    pub source_particle_weight: T,
 }
 
 impl<T: CustomFloat> MonteCarlo<T> {
     /// Constructor
-    pub fn new(params: Parameters) -> Self {
+    pub fn new(params: Parameters<T>) -> Self {
         let tallies: Tallies<T> = Tallies::new(
             params.simulation_params.balance_tally_replications,
             params.simulation_params.flux_tally_replications,
@@ -54,7 +54,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
             params.simulation_params.n_groups,
         );
         let processor_info = MCProcessorInfo::new();
-        let time_info: MCTimeInfo = MCTimeInfo::default();
+        let time_info = MCTimeInfo::<T>::default();
         let fast_timer: MCFastTimerContainer = MCFastTimerContainer::default();
 
         let num_proc = processor_info.num_processors;

@@ -155,7 +155,7 @@ impl<T: CustomFloat> MCDomain<T> {
         mesh_partition: &MeshPartition,
         grid: &GlobalFccGrid<T>,
         ddc: &DecompositionObject,
-        params: &Parameters,
+        params: &Parameters<T>,
         mat_db: &MaterialDatabase<T>,
     ) -> Self {
         let mesh = MCMeshDomain::new(mesh_partition, grid, ddc, &get_boundary_conditions(params));
@@ -194,7 +194,7 @@ impl<T: CustomFloat> MCDomain<T> {
             .for_each(|cs| cs.total = vec![zero(); cs.total.len()])
     }
 
-    pub fn find_material(geometry_params: &[GeometryParameters], rr: &MCVector<T>) -> String {
+    fn find_material(geometry_params: &[GeometryParameters<T>], rr: &MCVector<T>) -> String {
         let mut mat_name = String::default();
 
         geometry_params.iter().rev().for_each(|geom| {
@@ -207,24 +207,21 @@ impl<T: CustomFloat> MCDomain<T> {
         mat_name
     }
 
-    pub fn is_inside(geom: &GeometryParameters, rr: &MCVector<T>) -> bool {
+    fn is_inside(geom: &GeometryParameters<T>, rr: &MCVector<T>) -> bool {
         match geom.shape {
             Shape::Brick => {
-                let in_x = (rr.x >= FromPrimitive::from_f64(geom.x_min).unwrap())
-                    & (rr.x <= FromPrimitive::from_f64(geom.x_max).unwrap());
-                let in_y = (rr.y >= FromPrimitive::from_f64(geom.y_min).unwrap())
-                    & (rr.y <= FromPrimitive::from_f64(geom.y_max).unwrap());
-                let in_z = (rr.z >= FromPrimitive::from_f64(geom.z_min).unwrap())
-                    & (rr.z <= FromPrimitive::from_f64(geom.z_max).unwrap());
+                let in_x = (rr.x >= geom.x_min) & (rr.x <= geom.x_max);
+                let in_y = (rr.y >= geom.y_min) & (rr.y <= geom.y_max);
+                let in_z = (rr.z >= geom.z_min) & (rr.z <= geom.z_max);
                 in_x & in_y & in_z
             }
             Shape::Sphere => {
                 let center: MCVector<T> = MCVector {
-                    x: FromPrimitive::from_f64(geom.x_center).unwrap(),
-                    y: FromPrimitive::from_f64(geom.y_center).unwrap(),
-                    z: FromPrimitive::from_f64(geom.z_center).unwrap(),
+                    x: geom.x_center,
+                    y: geom.y_center,
+                    z: geom.z_center,
                 };
-                (*rr - center).length() <= FromPrimitive::from_f64(geom.radius).unwrap()
+                (*rr - center).length() <= geom.radius
             }
             Shape::Undefined => unreachable!(),
         }
@@ -418,7 +415,9 @@ fn make_facet(
 }
 
 /// Match the boundary conditions of Parameters to its Enum representation.
-fn get_boundary_conditions(params: &Parameters) -> [MCSubfacetAdjacencyEvent; 6] {
+fn get_boundary_conditions<T: CustomFloat>(
+    params: &Parameters<T>,
+) -> [MCSubfacetAdjacencyEvent; 6] {
     match params.simulation_params.boundary_condition.as_ref() {
         "reflect" => [MCSubfacetAdjacencyEvent::BoundaryReflection; 6],
         "escape" => [MCSubfacetAdjacencyEvent::BoundaryEscape; 6],
