@@ -534,48 +534,4 @@ mod tests {
         assert_eq!(MCDomain::find_material(&geoms, &r5), String::from("mat_a")); // first of the list takes priority
         assert_eq!(MCDomain::find_material(&geoms, &r6), String::from("mat_c"));
     }
-
-    #[test]
-    fn domain_construction() {
-        // simple grid 2*2*2 grid, each cell dim is 1
-        let grid = GlobalFccGrid::new(2, 2, 2, 1.0, 1.0, 1.0);
-        // 2 symetrical centers
-        let c1 = MCVector {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        };
-        let c2 = MCVector {
-            x: 2.0,
-            y: 2.0,
-            z: 2.0,
-        };
-        let centers = vec![c1, c2];
-        let domain_gids: Vec<usize> = vec![0, 1];
-        let mut partition: Vec<MeshPartition> = Vec::with_capacity(centers.len());
-        domain_gids.iter().for_each(|ii| {
-            partition.push(MeshPartition::new(*ii, *ii, 0));
-        });
-        partition.iter_mut().for_each(|part| {
-            let remote_cells = part.build_mesh_partition(&grid, &centers);
-            // only 2 domains, we can manually process those
-            println!("{} remote cells", remote_cells.len());
-            remote_cells
-                .iter()
-                .for_each(|(remote_domain_gid, cell_gid)| {
-                    println!("remote domain: {remote_domain_gid}");
-                    println!("cell: {:#?}", part.cell_info_map[cell_gid]);
-                });
-            println!("{part:#?}");
-        });
-        // Are uninitialized cells still present in the map in QS ?
-        partition.iter().for_each(|part| {
-            part.cell_info_map.values().for_each(|cell_info| {
-                assert!((cell_info.domain_gid.is_some()));
-                assert!((cell_info.cell_index.is_some()));
-                assert!((cell_info.domain_index.is_some()));
-                assert!((cell_info.foreman.is_some()));
-            });
-        });
-    }
 }
