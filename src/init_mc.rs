@@ -79,7 +79,7 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
         material.iso.reserve(mp.n_isotopes);
 
-        (0..mp.n_isotopes).into_iter().for_each(|_| {
+        (0..mp.n_isotopes).for_each(|_| {
             let isotope_gid = mcco.nuclear_data.add_isotope(
                 mp.n_reactions,
                 &cross_section[&mp.fission_cross_section],
@@ -181,7 +181,7 @@ fn initialize_centers_rand<T: CustomFloat>(
     let ny: T = FromPrimitive::from_usize(grid.ny).unwrap();
     let nz: T = FromPrimitive::from_usize(grid.nz).unwrap();
     let mut centers: Vec<MCVector<T>> = Vec::new();
-    (0..n_centers).into_iter().for_each(|_| {
+    (0..n_centers).for_each(|_| {
         let f1: T = rng_sample(seed);
         let f2: T = rng_sample(seed);
         let f3: T = rng_sample(seed);
@@ -240,34 +240,32 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let domain_centers = initialize_centers_rand(n_centers, &global_grid, &mut s);
 
     let mut partition: Vec<MeshPartition> = Vec::with_capacity(my_domain_gids.len());
-    (0..my_domain_gids.len()).into_iter().for_each(|ii| {
+    (0..my_domain_gids.len()).for_each(|ii| {
         // my rank should be constant
         partition.push(MeshPartition::new(my_domain_gids[ii], ii, my_rank));
     });
 
     let mut comm: CommObject = CommObject::new(&partition);
     // indexing should be coherent since we cloned partition in comm's construction
-    (0..comm.partition.len())
-        .into_iter()
-        .for_each(|mesh_p_idx| {
-            let remote_cells =
-                comm.partition[mesh_p_idx].build_mesh_partition(&global_grid, &domain_centers);
+    (0..comm.partition.len()).for_each(|mesh_p_idx| {
+        let remote_cells =
+            comm.partition[mesh_p_idx].build_mesh_partition(&global_grid, &domain_centers);
 
-            // replace the send call originally in build_cell_idx_map
-            for (remote_domain_gid, cell_gid) in &remote_cells {
-                //let target_domain_gid = comm.partition[mesh_p_idx].nbr_domains[*remote_domain_idx];
-                let cell_to_send = *comm.partition[mesh_p_idx]
-                    .cell_info_map
-                    .get(cell_gid)
-                    .unwrap();
-                let target_partition = &mut comm.partition[comm.gid_to_idx[*remote_domain_gid]];
-                assert!(cell_to_send.domain_index.is_some());
-                assert!(cell_to_send.cell_index.is_some());
-                target_partition
-                    .cell_info_map
-                    .insert(*cell_gid, cell_to_send);
-            }
-        });
+        // replace the send call originally in build_cell_idx_map
+        for (remote_domain_gid, cell_gid) in &remote_cells {
+            //let target_domain_gid = comm.partition[mesh_p_idx].nbr_domains[*remote_domain_idx];
+            let cell_to_send = *comm.partition[mesh_p_idx]
+                .cell_info_map
+                .get(cell_gid)
+                .unwrap();
+            let target_partition = &mut comm.partition[comm.gid_to_idx[*remote_domain_gid]];
+            assert!(cell_to_send.domain_index.is_some());
+            assert!(cell_to_send.cell_index.is_some());
+            target_partition
+                .cell_info_map
+                .insert(*cell_gid, cell_to_send);
+        }
+    });
 
     mcco.domain.reserve(my_domain_gids.len());
     comm.partition.iter().for_each(|mesh_p| {
@@ -331,23 +329,21 @@ fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
                 .iter()
                 .for_each(|reaction| {
                     // for each energy group
-                    (0..n_groups)
-                        .into_iter()
-                        .for_each(|group_idx| match reaction.reaction_type {
-                            ReactionType::Scatter => {
-                                xc_vec[group_idx].sca +=
-                                    reaction.get_cross_section(group_idx) / n_isotopes;
-                            }
-                            ReactionType::Absorption => {
-                                xc_vec[group_idx].abs +=
-                                    reaction.get_cross_section(group_idx) / n_isotopes;
-                            }
-                            ReactionType::Fission => {
-                                xc_vec[group_idx].fis +=
-                                    reaction.get_cross_section(group_idx) / n_isotopes;
-                            }
-                            ReactionType::Undefined => unreachable!(),
-                        });
+                    (0..n_groups).for_each(|group_idx| match reaction.reaction_type {
+                        ReactionType::Scatter => {
+                            xc_vec[group_idx].sca +=
+                                reaction.get_cross_section(group_idx) / n_isotopes;
+                        }
+                        ReactionType::Absorption => {
+                            xc_vec[group_idx].abs +=
+                                reaction.get_cross_section(group_idx) / n_isotopes;
+                        }
+                        ReactionType::Fission => {
+                            xc_vec[group_idx].fis +=
+                                reaction.get_cross_section(group_idx) / n_isotopes;
+                        }
+                        ReactionType::Undefined => unreachable!(),
+                    });
                 });
         });
         xc_table.insert(mat_name, xc_vec);
@@ -367,7 +363,7 @@ fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
     });
     writeln!(file).unwrap();
     // data
-    (0..n_groups).into_iter().for_each(|ii| {
+    (0..n_groups).for_each(|ii| {
         write!(file, "{}    {:e}    ", ii, energies[ii]).unwrap();
         xc_table.values_mut().for_each(|xc_vec| {
             if xc_vec[ii].abs < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
