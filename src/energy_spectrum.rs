@@ -35,7 +35,7 @@ impl EnergySpectrum {
             .iter()
             .for_each(|vv| {
                 // We need to iterate on the index in order to access all particles, even invalid ones
-                (0..vv.size()).into_iter().for_each(|particle_idx| {
+                (0..vv.size()).for_each(|particle_idx| {
                     let mut pp = load_particle(vv, particle_idx, mcco.time_info.time_step).unwrap();
                     pp.energy_group = mcco.nuclear_data.get_energy_groups(pp.kinetic_energy);
                     self.census_energy_spectrum[pp.energy_group] += 1;
@@ -47,7 +47,7 @@ impl EnergySpectrum {
             .iter()
             .for_each(|vv| {
                 // We need to iterate on the index in order to access all particles, even invalid ones
-                (0..vv.size()).into_iter().for_each(|particle_idx| {
+                (0..vv.size()).for_each(|particle_idx| {
                     let mut pp = load_particle(vv, particle_idx, mcco.time_info.time_step).unwrap();
                     pp.energy_group = mcco.nuclear_data.get_energy_groups(pp.kinetic_energy);
                     self.census_energy_spectrum[pp.energy_group] += 1;
@@ -67,7 +67,7 @@ impl EnergySpectrum {
 
         writeln!(file, "energy level index | energy level | count").unwrap();
 
-        (0..levels).into_iter().for_each(|ii| {
+        (0..levels).for_each(|ii| {
             writeln!(
                 file,
                 "{}     {}     {}",
