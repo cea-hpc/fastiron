@@ -116,7 +116,9 @@ impl MeshPartition {
             remote_domain_map.insert(self.nbr_domains[ii], ii);
         });
 
-        for cell_info in self.cell_info_map.values_mut() {
+        let read_map = self.cell_info_map.clone();
+
+        for (cell_gid, cell_info) in &mut self.cell_info_map {
             let domain_gid: usize = cell_info.domain_gid.unwrap();
             if domain_gid == self.domain_gid {
                 // local cell
@@ -124,14 +126,7 @@ impl MeshPartition {
                 n_local_cells += 1;
                 cell_info.domain_index = Some(self.domain_index);
                 cell_info.foreman = Some(self.foreman);
-            }
-        }
-
-        let read_map = self.cell_info_map.clone();
-
-        for (cell_gid, cell_info) in &self.cell_info_map {
-            let domain_gid: usize = cell_info.domain_gid.unwrap();
-            if domain_gid != self.domain_gid {
+            } else {
                 let remote_n_idx = remote_domain_map.get(&domain_gid).unwrap();
                 let face_nbr = grid.get_face_nbr_gids(*cell_gid);
 
