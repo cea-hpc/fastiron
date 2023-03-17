@@ -1,6 +1,6 @@
 use core::panic;
 
-use num::{zero, Float, FromPrimitive};
+use num::{one, zero, FromPrimitive};
 
 use super::{
     mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
@@ -9,15 +9,18 @@ use super::{
     mc_rng_state::rng_sample, mc_vector::MCVector,
 };
 use crate::{
+    constants::{
+        physical::{HUGE_FLOAT, SMALL_FLOAT},
+        CustomFloat,
+    },
     direction_cosine::DirectionCosine,
     mc::mc_base_particle::Species,
     montecarlo::MonteCarlo,
-    physical_constants::{HUGE_FLOAT, SMALL_FLOAT},
 };
 
 /// Computes which facet of the specified cell is nearest
 /// to the specified coordinates.
-pub fn nearest_facet<T: Float + FromPrimitive>(
+pub fn nearest_facet<T: CustomFloat>(
     mc_particle: &mut MCParticle<T>,
     mcco: &MonteCarlo<T>,
 ) -> MCNearestFacet<T> {
@@ -43,18 +46,14 @@ pub fn nearest_facet<T: Float + FromPrimitive>(
 /// Generates a random coordinate inside a polyhedral cell.
 /// May be possible to remove the MonteCarlo argument by directly
 /// passing a a reference to the domain since its read only.
-pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
+pub fn generate_coordinate_3dg<T: CustomFloat>(
     seed: &mut u64,
-    domain_num: usize,
+    domain: &MCDomain<T>,
     cell_idx: usize,
-    mcco: &MonteCarlo<T>,
 ) -> MCVector<T> {
     let mut coordinate: MCVector<T> = MCVector::default(); // result
     let six: T = FromPrimitive::from_f64(6.0).unwrap();
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
-
-    // pass the domain directly as argument instead; will change when the function is called.
-    let domain: &MCDomain<T> = &mcco.domain[domain_num];
 
     let num_facets: usize = domain.mesh.cell_connectivity[cell_idx].facet.len();
     if num_facets == 0 {
@@ -84,7 +83,7 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
         point2 = domain.mesh.node[facet_points[2]];
 
         let subvolume = mct_cell_volume_3dg_vector_tetdet(&point0, &point1, &point2, &center);
-        current_volume = current_volume + subvolume;
+        current_volume += subvolume;
 
         facet_idx += 1;
     }
@@ -116,10 +115,7 @@ pub fn generate_coordinate_3dg<T: Float + FromPrimitive>(
 }
 
 /// Returns a coordinate that represents the "center" of the cell
-pub fn cell_position_3dg<T: Float + FromPrimitive>(
-    domain: &MCDomain<T>,
-    cell_idx: usize,
-) -> MCVector<T> {
+pub fn cell_position_3dg<T: CustomFloat>(domain: &MCDomain<T>, cell_idx: usize) -> MCVector<T> {
     let mut coordinate: MCVector<T> = Default::default();
 
     let n_points: usize = domain.mesh.cell_connectivity[cell_idx].point.len();
@@ -135,10 +131,7 @@ pub fn cell_position_3dg<T: Float + FromPrimitive>(
 }
 
 /// Reflects a particle off a reflection-type boundary.
-pub fn reflect_particle<T: Float + FromPrimitive>(
-    mcco: &MonteCarlo<T>,
-    particle: &mut MCParticle<T>,
-) {
+pub fn reflect_particle<T: CustomFloat>(mcco: &MonteCarlo<T>, particle: &mut MCParticle<T>) {
     let mut new_d_cos = particle.direction_cosine.clone();
     let location = particle.get_location();
 
@@ -158,9 +151,9 @@ pub fn reflect_particle<T: Float + FromPrimitive>(
             + new_d_cos.gamma * facet_normal.z);
 
     if dot > zero() {
-        new_d_cos.alpha = new_d_cos.alpha - dot * facet_normal.x;
-        new_d_cos.beta = new_d_cos.beta - dot * facet_normal.y;
-        new_d_cos.gamma = new_d_cos.gamma - dot * facet_normal.z;
+        new_d_cos.alpha -= dot * facet_normal.x;
+        new_d_cos.beta -= dot * facet_normal.y;
+        new_d_cos.gamma -= dot * facet_normal.z;
         particle.direction_cosine = new_d_cos;
     }
     let particle_speed = particle.velocity.length();
@@ -173,7 +166,7 @@ pub fn reflect_particle<T: Float + FromPrimitive>(
 //       Private functions
 // ==============================
 
-fn mct_nf_3dg<T: Float + FromPrimitive>(
+fn mct_nf_3dg<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
 ) -> MCNearestFacet<T> {
@@ -249,7 +242,7 @@ fn mct_nf_3dg<T: Float + FromPrimitive>(
 
 /// Returns the volume defined by `v3v0`, `v3v1`, `v3v2` using
 /// vectorial operations.
-fn mct_cell_volume_3dg_vector_tetdet<T: Float + FromPrimitive>(
+fn mct_cell_volume_3dg_vector_tetdet<T: CustomFloat>(
     v0: &MCVector<T>,
     v1: &MCVector<T>,
     v2: &MCVector<T>,
@@ -262,7 +255,7 @@ fn mct_cell_volume_3dg_vector_tetdet<T: Float + FromPrimitive>(
     tmp0.dot(&tmp1.cross(&tmp2)) // should be the same as original code
 }
 
-fn mct_nf_3dg_move_particle<T: Float + FromPrimitive>(
+fn mct_nf_3dg_move_particle<T: CustomFloat>(
     domain: &MCDomain<T>,
     location: &MCLocation,
     coord: &mut MCVector<T>,
@@ -274,7 +267,7 @@ fn mct_nf_3dg_move_particle<T: Float + FromPrimitive>(
 }
 
 /// delete num_facets_per_cell ?
-fn mct_nf_compute_nearest<T: Float + FromPrimitive>(
+fn mct_nf_compute_nearest<T: CustomFloat>(
     num_facets_per_cell: usize,
     distance_to_facet: &[MCDistanceToFacet<T>],
 ) -> MCNearestFacet<T> {
@@ -308,7 +301,7 @@ fn mct_nf_compute_nearest<T: Float + FromPrimitive>(
     nearest_facet
 }
 
-fn mct_nf_find_nearest<T: Float + FromPrimitive>(
+fn mct_nf_find_nearest<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
     location: &mut MCLocation,
@@ -337,7 +330,7 @@ fn mct_nf_find_nearest<T: Float + FromPrimitive>(
         {
             mct_nf_3dg_move_particle(domain, location, coord, *move_factor);
             *iteration += 1;
-            *move_factor = *move_factor * two;
+            *move_factor *= two;
 
             if *move_factor > threshold {
                 *move_factor = threshold;
@@ -354,7 +347,7 @@ fn mct_nf_find_nearest<T: Float + FromPrimitive>(
     (nearest_facet, retry)
 }
 
-fn mct_facet_points_3dg<T: Float>(
+fn mct_facet_points_3dg<T: CustomFloat>(
     domain: &MCDomain<T>,
     cell: usize,
     facet: usize,
@@ -368,7 +361,7 @@ fn mct_facet_points_3dg<T: Float>(
     res
 }
 
-fn mct_nf_3dg_dist_to_segment<T: Float + FromPrimitive>(
+fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     plane_tolerance: T,
     facet_normal_dot_dcos: T,
     plane: MCGeneralPlane<T>,
@@ -380,7 +373,8 @@ fn mct_nf_3dg_dist_to_segment<T: Float + FromPrimitive>(
     let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
     let pfive: T = FromPrimitive::from_f64(0.5).unwrap();
     let bounding_box_tolerance: T = FromPrimitive::from_f64(1e-9).unwrap();
-    let numerator: T = plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d;
+    let numerator: T =
+        -one::<T>() * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
 
     if !allow_enter & (numerator < zero()) & (numerator * numerator > plane_tolerance) {
         return huge_f;

@@ -1,10 +1,13 @@
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
-use crate::{montecarlo::MonteCarlo, physical_constants::TINY_FLOAT};
+use crate::{
+    constants::{physical::TINY_FLOAT, CustomFloat},
+    montecarlo::MonteCarlo,
+};
 
 /// Computes the reaction-specific number-density-weighted
 /// macroscopic cross section of a cell.
-pub fn macroscopic_cross_section<T: Float + FromPrimitive>(
+pub fn macroscopic_cross_section<T: CustomFloat>(
     mcco: &MonteCarlo<T>,
     reaction_idx: usize,
     domain_idx: usize,
@@ -37,7 +40,7 @@ pub fn macroscopic_cross_section<T: Float + FromPrimitive>(
 /// Computes the total number-density-weighted macroscopic
 /// cross section of a cell. This additional method replaces
 /// the use of a magic value (-1) for `reaction_idx`.
-pub fn macroscopic_total_cross_section<T: Float + FromPrimitive>(
+pub fn macroscopic_total_cross_section<T: CustomFloat>(
     mcco: &MonteCarlo<T>,
     domain_idx: usize,
     cell_idx: usize,
@@ -68,7 +71,7 @@ pub fn macroscopic_total_cross_section<T: Float + FromPrimitive>(
 
 /// Computes the number-density-weighted macroscopic cross section
 /// of the collection of isotopes in a cell.
-pub fn weighted_macroscopic_cross_section<T: Float + FromPrimitive>(
+pub fn weighted_macroscopic_cross_section<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     domain_idx: usize,
     cell_idx: usize,
@@ -86,8 +89,8 @@ pub fn weighted_macroscopic_cross_section<T: Float + FromPrimitive>(
     let n_isotopes: usize = mcco.material_database.mat[global_material_idx].iso.len();
 
     (0..n_isotopes).into_iter().for_each(|isotope_idx| {
-        sum = sum
-            + macroscopic_total_cross_section(mcco, domain_idx, cell_idx, isotope_idx, energy_group)
+        sum +=
+            macroscopic_total_cross_section(mcco, domain_idx, cell_idx, isotope_idx, energy_group)
     });
 
     // atomic in original code

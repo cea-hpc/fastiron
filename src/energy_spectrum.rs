@@ -1,32 +1,30 @@
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
+use std::fs::File;
 use std::io::Write;
-use std::{fs::File, marker::PhantomData};
 
-use num::{Float, FromPrimitive};
-
+use crate::constants::CustomFloat;
 use crate::{mc::mc_utils::load_particle, montecarlo::MonteCarlo};
 
 /// Structure used to represent the energy spectrum
 /// of the problem, i.e. the distribution of particles
 /// among energy levels.
 #[derive(Debug)]
-pub struct EnergySpectrum<T: Float> {
-    float_type: PhantomData<T>,
-    file_name: String,
-    census_energy_spectrum: Vec<u64>,
+pub struct EnergySpectrum {
+    pub file_name: String,
+    pub census_energy_spectrum: Vec<u64>,
 }
 
-impl<T: Float + Display + FromPrimitive> EnergySpectrum<T> {
+impl EnergySpectrum {
     pub fn new(name: String, size: usize) -> Self {
         Self {
-            float_type: Default::default(),
             file_name: name,
-            census_energy_spectrum: Vec::with_capacity(size),
+            census_energy_spectrum: vec![0; size + 1],
         }
     }
 
     /// Update its fields using the [MonteCarlo] Object.
-    pub fn update_spectrum(&mut self, mcco: &MonteCarlo<T>) {
+    /// REPLACED BY EPONYMOUS FUNCTION OF MCCO
+    pub fn update_spectrum<T: CustomFloat>(&mut self, mcco: &MonteCarlo<T>) {
         if self.file_name.is_empty() {
             return;
         }
@@ -38,7 +36,8 @@ impl<T: Float + Display + FromPrimitive> EnergySpectrum<T> {
             .for_each(|vv| {
                 // We need to iterate on the index in order to access all particles, even invalid ones
                 (0..vv.size()).into_iter().for_each(|particle_idx| {
-                    let pp = load_particle(mcco, vv, particle_idx);
+                    let mut pp = load_particle(vv, particle_idx, mcco.time_info.time_step).unwrap();
+                    pp.energy_group = mcco.nuclear_data.get_energy_groups(pp.kinetic_energy);
                     self.census_energy_spectrum[pp.energy_group] += 1;
                 });
             });
@@ -49,14 +48,18 @@ impl<T: Float + Display + FromPrimitive> EnergySpectrum<T> {
             .for_each(|vv| {
                 // We need to iterate on the index in order to access all particles, even invalid ones
                 (0..vv.size()).into_iter().for_each(|particle_idx| {
-                    let pp = load_particle(mcco, vv, particle_idx);
+                    let mut pp = load_particle(vv, particle_idx, mcco.time_info.time_step).unwrap();
+                    pp.energy_group = mcco.nuclear_data.get_energy_groups(pp.kinetic_energy);
                     self.census_energy_spectrum[pp.energy_group] += 1;
                 });
             });
     }
 
     /// Print the spectrum.
-    pub fn print_spectrum(&self, mcco: &MonteCarlo<T>) {
+    pub fn print_spectrum<T: CustomFloat>(&self, mcco: &MonteCarlo<T>) {
+        if self.file_name.is_empty() {
+            return;
+        }
         let levels = mcco.nuclear_data.energies.len();
         let mut path = self.file_name.to_owned();
         path.push_str(".dat");

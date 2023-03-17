@@ -1,18 +1,18 @@
 use std::fmt::Debug;
 
-use num::{Float, FromPrimitive, Zero};
+use num::{zero, FromPrimitive};
 
-use crate::physical_constants::TINY_FLOAT;
+use crate::constants::{physical::TINY_FLOAT, CustomFloat};
 
 /// Custom type for vector representation.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct MCVector<T: Float> {
+pub struct MCVector<T: CustomFloat> {
     pub x: T,
     pub y: T,
     pub z: T,
 }
 
-impl<T: Float + FromPrimitive> MCVector<T> {
+impl<T: CustomFloat> MCVector<T> {
     /// Returns true if the vector is almost the zero element. This method is
     /// necessary because of floating-point errors.
     /// NEED TO FIND A WAY TO HARDCODE THE THRESHOLD WITH THE T GENERIC TYPE
@@ -56,12 +56,12 @@ impl<T: Float + FromPrimitive> MCVector<T> {
     }
 }
 
-impl<T: Float> Default for MCVector<T> {
+impl<T: CustomFloat> Default for MCVector<T> {
     fn default() -> Self {
         MCVector {
-            x: Zero::zero(),
-            y: Zero::zero(),
-            z: Zero::zero(),
+            x: zero(),
+            y: zero(),
+            z: zero(),
         }
     }
 }
@@ -71,7 +71,7 @@ impl<T: Float> Default for MCVector<T> {
 // impl block as these ops consume the object in Rust
 // but not in C++
 
-impl<T: Float> core::ops::Add<MCVector<T>> for MCVector<T> {
+impl<T: CustomFloat> core::ops::Add<MCVector<T>> for MCVector<T> {
     type Output = MCVector<T>;
     fn add(self, vv: MCVector<T>) -> Self::Output {
         MCVector {
@@ -82,7 +82,7 @@ impl<T: Float> core::ops::Add<MCVector<T>> for MCVector<T> {
     }
 }
 
-impl<T: Float> core::ops::Sub<MCVector<T>> for MCVector<T> {
+impl<T: CustomFloat> core::ops::Sub<MCVector<T>> for MCVector<T> {
     type Output = MCVector<T>;
     fn sub(self, vv: MCVector<T>) -> Self::Output {
         MCVector {
@@ -93,7 +93,7 @@ impl<T: Float> core::ops::Sub<MCVector<T>> for MCVector<T> {
     }
 }
 
-impl<T: Float> core::ops::Mul<T> for MCVector<T> {
+impl<T: CustomFloat> core::ops::Mul<T> for MCVector<T> {
     type Output = MCVector<T>;
     fn mul(self, f: T) -> Self::Output {
         MCVector {
@@ -106,36 +106,36 @@ impl<T: Float> core::ops::Mul<T> for MCVector<T> {
 
 // Assign-operations implems
 
-impl<T: Float> core::ops::AddAssign<MCVector<T>> for MCVector<T> {
+impl<T: CustomFloat> core::ops::AddAssign<MCVector<T>> for MCVector<T> {
     fn add_assign(&mut self, vv: MCVector<T>) {
-        self.x = self.x + vv.x;
-        self.y = self.y + vv.y;
-        self.z = self.z + vv.z;
+        self.x += vv.x;
+        self.y += vv.y;
+        self.z += vv.z;
     }
 }
 
-impl<T: Float> core::ops::SubAssign<MCVector<T>> for MCVector<T> {
+impl<T: CustomFloat> core::ops::SubAssign<MCVector<T>> for MCVector<T> {
     fn sub_assign(&mut self, vv: MCVector<T>) {
-        self.x = self.x - vv.x;
-        self.y = self.y - vv.y;
-        self.z = self.z - vv.z;
+        self.x -= vv.x;
+        self.y -= vv.y;
+        self.z -= vv.z;
     }
 }
 
-impl<T: Float> core::ops::MulAssign<T> for MCVector<T> {
+impl<T: CustomFloat> core::ops::MulAssign<T> for MCVector<T> {
     fn mul_assign(&mut self, f: T) {
-        self.x = self.x * f;
-        self.y = self.y * f;
-        self.z = self.z * f;
+        self.x *= f;
+        self.y *= f;
+        self.z *= f;
     }
 }
 
-impl<T: Float> core::ops::DivAssign<T> for MCVector<T> {
+impl<T: CustomFloat> core::ops::DivAssign<T> for MCVector<T> {
     fn div_assign(&mut self, f: T) {
         // cant make *= 1.0/f work :(
         assert!(!f.is_zero());
-        self.x = self.x / f;
-        self.y = self.y / f;
-        self.z = self.z / f;
+        self.x /= f;
+        self.y /= f;
+        self.z /= f;
     }
 }

@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
-use num::{one, zero, Float, FromPrimitive};
+use num::{one, zero, FromPrimitive};
 
 use crate::{
+    constants::CustomFloat,
     decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
+    material_database::MaterialDatabase,
     mesh_partition::{CellInfo, MeshPartition},
-    parameters::Parameters,
+    parameters::{GeometryParameters, Parameters, Shape},
 };
 
 use super::{
@@ -15,6 +17,7 @@ use super::{
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
     mc_location::MCLocation,
     mc_vector::MCVector,
+    mct::cell_position_3dg,
 };
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -57,7 +60,7 @@ const OPPOSING_FACET: [usize; 24] = [
 
 /// Structure that manages a data set on a mesh-like geometry
 #[derive(Debug)]
-pub struct MCMeshDomain<T: Float> {
+pub struct MCMeshDomain<T: CustomFloat> {
     /// Global identifier of the domain
     pub domain_gid: usize,
     /// List of domain global identifiers
@@ -72,7 +75,7 @@ pub struct MCMeshDomain<T: Float> {
     pub cell_geometry: Vec<MCFacetGeometryCell<T>>,
 }
 
-impl<T: Float + FromPrimitive> MCMeshDomain<T> {
+impl<T: CustomFloat> MCMeshDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition,
@@ -100,19 +103,19 @@ impl<T: Float + FromPrimitive> MCMeshDomain<T> {
         );
 
         // node
-        let mut node: Vec<MCVector<T>> = Vec::with_capacity(node_idx_map.len());
+        let mut node: Vec<MCVector<T>> = vec![MCVector::default(); node_idx_map.len()];
         node_idx_map.iter().for_each(|(node_gid, node_idx)| {
             node[*node_idx] = grid.node_coord_from_idx(*node_gid);
         });
 
         // cell_geometry
         let mut cell_geometry: Vec<MCFacetGeometryCell<T>> =
-            Vec::with_capacity(cell_connectivity.len());
+            vec![MCFacetGeometryCell::default(); cell_connectivity.len()];
         (0..cell_connectivity.len())
             .into_iter()
             .for_each(|cell_idx| {
                 let n_facets = cell_connectivity[cell_idx].facet.len(); // TODO: remove and use const; same in array def
-                cell_geometry[cell_idx] = Vec::with_capacity(n_facets); // replace MCFacetGeometryCell vec by array?
+                cell_geometry[cell_idx] = vec![MCGeneralPlane::default(); n_facets]; // replace MCFacetGeometryCell vec by array?
                 (0..n_facets).into_iter().for_each(|facet_idx| {
                     let r0: MCVector<T> =
                         node[cell_connectivity[cell_idx].facet[facet_idx].point[0].unwrap()];
@@ -137,7 +140,7 @@ impl<T: Float + FromPrimitive> MCMeshDomain<T> {
 
 /// Structure used to manage a domain, i.e. a spatial region of the problem
 #[derive(Debug)]
-pub struct MCDomain<T: Float> {
+pub struct MCDomain<T: CustomFloat> {
     /// Global domain number
     pub global_domain: usize,
     /// List of cells and their state (See [MCCellState] for more)
@@ -146,26 +149,32 @@ pub struct MCDomain<T: Float> {
     pub mesh: MCMeshDomain<T>,
 }
 
-impl<T: Float + FromPrimitive> MCDomain<T> {
+impl<T: CustomFloat> MCDomain<T> {
     /// Constructor.
     pub fn new(
         mesh_partition: &MeshPartition,
         grid: &GlobalFccGrid<T>,
         ddc: &DecompositionObject,
-        params: &Parameters,
-        num_energy_groups: usize,
+        params: &Parameters<T>,
+        mat_db: &MaterialDatabase<T>,
     ) -> Self {
         let mesh = MCMeshDomain::new(mesh_partition, grid, ddc, &get_boundary_conditions(params));
-        let cell_state: Vec<MCCellState<T>> = Vec::with_capacity(mesh.cell_geometry.len());
+        let cell_state: Vec<MCCellState<T>> =
+            vec![MCCellState::default(); mesh.cell_geometry.len()];
         let mut mcdomain = MCDomain {
             global_domain: mesh.domain_gid,
             cell_state,
             mesh,
         };
 
+        let num_energy_groups: usize = params.simulation_params.n_groups;
+
         (0..mcdomain.cell_state.len()).into_iter().for_each(|ii| {
             mcdomain.cell_state[ii].volume = mcdomain.cell_volume(ii);
 
+            let rr = cell_position_3dg(&mcdomain, ii);
+            let mat_name = Self::find_material(&params.geometry_params, &rr);
+            mcdomain.cell_state[ii].material = mat_db.find_material(&mat_name).unwrap();
             mcdomain.cell_state[ii].total = vec![zero(); num_energy_groups];
 
             mcdomain.cell_state[ii].cell_number_density = one();
@@ -180,12 +189,47 @@ impl<T: Float + FromPrimitive> MCDomain<T> {
 
     /// Clears the cross section cache for future uses.
     pub fn clear_cross_section_cache(&mut self) {
-        self.cell_state.iter_mut().for_each(|cs| cs.total.clear())
+        self.cell_state
+            .iter_mut()
+            .for_each(|cs| cs.total = vec![zero(); cs.total.len()])
+    }
+
+    fn find_material(geometry_params: &[GeometryParameters<T>], rr: &MCVector<T>) -> String {
+        let mut mat_name = String::default();
+
+        geometry_params.iter().rev().for_each(|geom| {
+            if Self::is_inside(geom, rr) {
+                // cant return directly because of the behavior of original function
+                mat_name = geom.material_name.to_owned();
+            }
+        });
+
+        mat_name
+    }
+
+    fn is_inside(geom: &GeometryParameters<T>, rr: &MCVector<T>) -> bool {
+        match geom.shape {
+            Shape::Brick => {
+                let in_x = (rr.x >= geom.x_min) & (rr.x <= geom.x_max);
+                let in_y = (rr.y >= geom.y_min) & (rr.y <= geom.y_max);
+                let in_z = (rr.z >= geom.z_min) & (rr.z <= geom.z_max);
+                in_x & in_y & in_z
+            }
+            Shape::Sphere => {
+                let center: MCVector<T> = MCVector {
+                    x: geom.x_center,
+                    y: geom.y_center,
+                    z: geom.z_center,
+                };
+                (*rr - center).length() <= geom.radius
+            }
+            Shape::Undefined => unreachable!(),
+        }
     }
 
     /// Returns the coordinates of the center of
     /// the specified cell.
-    pub fn cell_center(&self, cell_idx: usize) -> MCVector<T> {
+    fn cell_center(&self, cell_idx: usize) -> MCVector<T> {
         let cell = &self.mesh.cell_connectivity[cell_idx];
         let node = &self.mesh.node;
         let mut center: MCVector<T> = MCVector::default();
@@ -198,7 +242,7 @@ impl<T: Float + FromPrimitive> MCDomain<T> {
     }
 
     /// Computes the volume of the specified cell.
-    pub fn cell_volume(&self, cell_idx: usize) -> T {
+    fn cell_volume(&self, cell_idx: usize) -> T {
         let center = self.cell_center(cell_idx);
         let cell = &self.mesh.cell_connectivity[cell_idx];
         let node = &self.mesh.node;
@@ -210,35 +254,66 @@ impl<T: Float + FromPrimitive> MCDomain<T> {
             let aa: MCVector<T> = node[corners[0].unwrap()] - center;
             let bb: MCVector<T> = node[corners[1].unwrap()] - center;
             let cc: MCVector<T> = node[corners[2].unwrap()] - center;
-            volume = volume + aa.dot(&bb.cross(&cc)).abs();
+            volume += aa.dot(&bb.cross(&cc)).abs();
         });
-        volume = volume / FromPrimitive::from_f64(6.0).unwrap();
+        volume /= FromPrimitive::from_f64(6.0).unwrap();
         volume
     }
 }
 
 /// Need to compare to original code
-fn bootstrap_node_map<T: Float + FromPrimitive>(
+fn bootstrap_node_map<T: CustomFloat>(
     partition: &MeshPartition,
     grid: &GlobalFccGrid<T>,
 ) -> HashMap<usize, usize> {
+    // res
     let mut node_idx_map: HashMap<usize, usize> = Default::default();
+    // intermediate struct
+    let mut face_centers: HashMap<usize, usize> = Default::default();
 
     for (k, v) in &partition.cell_info_map {
+        // only process partition of our domain
         if v.domain_gid.unwrap() != partition.domain_gid {
             continue;
         }
+        // process
         let node_gids = grid.get_node_gids(*k);
-        (0..14).into_iter().for_each(|ii| {
-            node_idx_map.insert(node_gids[ii], node_idx_map.len());
+        // corners first
+        (0..8).into_iter().for_each(|ii| {
+            let len = node_idx_map.len();
+            node_idx_map.entry(node_gids[ii]).or_insert_with(|| len);
+        });
+        // faces later
+        (8..14).into_iter().for_each(|ii| {
+            let len = face_centers.len();
+            face_centers.entry(node_gids[ii]).or_insert_with(|| len);
         });
     }
+    // Debug
+    // probably happens because of a specific behavior of
+    // maps with keys that are already present
+    face_centers.values().for_each(|val| {
+        if *val == face_centers.len() {
+            println!("should not happen1");
+        }
+    });
+    node_idx_map.values().for_each(|val| {
+        if *val == node_idx_map.len() {
+            println!("should not happen2");
+        }
+    });
+
+    face_centers.values_mut().for_each(|val| {
+        *val += node_idx_map.len();
+    });
+
+    node_idx_map.extend(face_centers.iter());
 
     node_idx_map
 }
 
 /// Build the cells object of the mesh.
-fn build_cells<T: Float + FromPrimitive>(
+fn build_cells<T: CustomFloat>(
     node_idx_map: &HashMap<usize, usize>,
     nbr_domain: &[usize],
     partition: &MeshPartition,
@@ -273,7 +348,7 @@ fn build_cells<T: Float + FromPrimitive>(
             // faces
             let face_nbr = grid.get_face_nbr_gids(*cell_gid);
             let mut face_info = vec![FaceInfo::default(); 6];
-            (0..new_cell.facet.len()).into_iter().for_each(|ii| {
+            (0..face_nbr.len()).into_iter().for_each(|ii| {
                 // faces
                 let face_cell_info = partition.cell_info_map[&face_nbr[ii]];
                 face_info[ii].cell_info = face_cell_info;
@@ -327,7 +402,7 @@ fn make_facet(
     facet.subfacet.adjacent.domain = face_info[face_id].cell_info.domain_index;
     facet.subfacet.adjacent.cell = face_info[face_id].cell_info.cell_index;
     facet.subfacet.adjacent.facet = Some(OPPOSING_FACET[facet_id]);
-    facet.subfacet.neighbor_index = Some(face_info[face_id].nbr_idx.unwrap());
+    facet.subfacet.neighbor_index = face_info[face_id].nbr_idx;
     facet.subfacet.neighbor_global_domain = face_info[face_id].cell_info.domain_gid;
     facet.subfacet.neighbor_foreman = face_info[face_id].cell_info.foreman;
 
@@ -340,7 +415,9 @@ fn make_facet(
 }
 
 /// Match the boundary conditions of Parameters to its Enum representation.
-fn get_boundary_conditions(params: &Parameters) -> [MCSubfacetAdjacencyEvent; 6] {
+fn get_boundary_conditions<T: CustomFloat>(
+    params: &Parameters<T>,
+) -> [MCSubfacetAdjacencyEvent; 6] {
     match params.simulation_params.boundary_condition.as_ref() {
         "reflect" => [MCSubfacetAdjacencyEvent::BoundaryReflection; 6],
         "escape" => [MCSubfacetAdjacencyEvent::BoundaryEscape; 6],
@@ -353,5 +430,152 @@ fn get_boundary_conditions(params: &Parameters) -> [MCSubfacetAdjacencyEvent; 6]
             MCSubfacetAdjacencyEvent::BoundaryReflection,
         ],
         _ => unreachable!(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn inside_material() {
+        // Sphere centered at (2.0, 2.0, 2.0), radius 1.0
+        let geom_a = GeometryParameters {
+            material_name: String::from("mat_a"),
+            shape: Shape::Sphere,
+            radius: 1.0,
+            x_center: 2.0,
+            y_center: 2.0,
+            z_center: 2.0,
+            ..Default::default()
+        };
+        let geom_b = GeometryParameters {
+            material_name: String::from("mat_b"),
+            shape: Shape::Brick,
+            x_min: 0.0,
+            y_min: 0.0,
+            z_min: 0.0,
+            x_max: 4.0,
+            y_max: 2.0,
+            z_max: 1.0,
+            ..Default::default()
+        };
+        let geom_c = GeometryParameters {
+            material_name: String::from("mat_c"),
+            shape: Shape::Sphere,
+            radius: 2.0,
+            x_center: 6.0,
+            y_center: 2.0,
+            z_center: 2.0,
+            ..Default::default()
+        };
+        let geom_d = GeometryParameters {
+            material_name: String::from("mat_d"),
+            shape: Shape::Brick,
+            x_min: 0.0,
+            y_min: 2.0,
+            z_min: 0.0,
+            x_max: 4.0,
+            y_max: 4.0,
+            z_max: 1.0,
+            ..Default::default()
+        };
+
+        // is_inside
+        let r1 = MCVector {
+            x: 2.0,
+            y: 1.0,
+            z: 0.5,
+        }; // in brick b
+        assert!(MCDomain::is_inside(&geom_b, &r1));
+
+        let r2 = MCVector {
+            x: 2.0,
+            y: 2.1,
+            z: 0.5,
+        }; // out brick b, in brick d
+        assert!(!MCDomain::is_inside(&geom_b, &r2));
+
+        let r3 = MCVector {
+            x: 1.5,
+            y: 2.0,
+            z: 2.5,
+        }; // in sphere a
+        assert!(MCDomain::is_inside(&geom_a, &r3));
+
+        let r4 = MCVector {
+            x: 2.0,
+            y: 2.0,
+            z: 3.1,
+        }; // out sphere a
+        assert!(!MCDomain::is_inside(&geom_a, &r4));
+
+        let r5 = MCVector {
+            x: 2.0,
+            y: 2.0,
+            z: 1.0,
+        }; // in both a, b (single common point)
+        assert!(MCDomain::is_inside(&geom_a, &r5));
+        assert!(MCDomain::is_inside(&geom_b, &r5));
+
+        let r6 = MCVector {
+            x: 5.0,
+            y: 2.0,
+            z: 2.0,
+        }; // out both a, b, in c
+        assert!(!MCDomain::is_inside(&geom_b, &r6));
+        assert!(!MCDomain::is_inside(&geom_b, &r6));
+
+        // find_material
+        let geoms = vec![geom_a, geom_b, geom_c, geom_d];
+        assert_eq!(MCDomain::find_material(&geoms, &r1), String::from("mat_b"));
+        assert_eq!(MCDomain::find_material(&geoms, &r2), String::from("mat_d"));
+        assert_eq!(MCDomain::find_material(&geoms, &r3), String::from("mat_a"));
+        assert_eq!(MCDomain::find_material(&geoms, &r5), String::from("mat_a")); // first of the list takes priority
+        assert_eq!(MCDomain::find_material(&geoms, &r6), String::from("mat_c"));
+    }
+
+    #[test]
+    fn domain_construction() {
+        // simple grid 2*2*2 grid, each cell dim is 1
+        let grid = GlobalFccGrid::new(2, 2, 2, 1.0, 1.0, 1.0);
+        // 2 symetrical centers
+        let c1 = MCVector {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+        let c2 = MCVector {
+            x: 2.0,
+            y: 2.0,
+            z: 2.0,
+        };
+        let centers = vec![c1, c2];
+        let domain_gids: Vec<usize> = vec![0, 1];
+        let mut partition: Vec<MeshPartition> = Vec::with_capacity(centers.len());
+        domain_gids.iter().for_each(|ii| {
+            partition.push(MeshPartition::new(*ii, *ii, 0));
+        });
+        partition.iter_mut().for_each(|part| {
+            let remote_cells = part.build_mesh_partition(&grid, &centers);
+            // only 2 domains, we can manually process those
+            println!("{} remote cells", remote_cells.len());
+            remote_cells
+                .iter()
+                .for_each(|(remote_domain_gid, cell_gid)| {
+                    println!("remote domain: {remote_domain_gid}");
+                    println!("cell: {:#?}", part.cell_info_map[cell_gid]);
+                });
+            println!("{part:#?}");
+        });
+        // Are uninitialized cells still present in the map in QS ?
+        partition.iter().for_each(|part| {
+            part.cell_info_map.values().for_each(|cell_info| {
+                assert!((cell_info.domain_gid.is_some()));
+                assert!((cell_info.cell_index.is_some()));
+                assert!((cell_info.domain_index.is_some()));
+                assert!((cell_info.foreman.is_some()));
+            });
+        });
     }
 }

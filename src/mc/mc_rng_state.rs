@@ -1,8 +1,10 @@
-use num::{Float, FromPrimitive};
+use num::FromPrimitive;
+
+use crate::constants::CustomFloat;
 
 /// Returns the pseudo-random number produced by a call to a random
-/// number generator.
-pub fn rng_sample<T: Float + FromPrimitive>(seed: &mut u64) -> T {
+/// number generator. The returned number is a decimal in segment [0;1]
+pub fn rng_sample<T: CustomFloat>(seed: &mut u64) -> T {
     // Reset the state from previous value
     *seed = 2862933555777941757u64
         .overflowing_mul(*seed)
@@ -18,7 +20,7 @@ pub fn rng_sample<T: Float + FromPrimitive>(seed: &mut u64) -> T {
 
 /// Generates a new random number seed from the parent seed passed as
 /// argument.
-pub fn spawn_rn_seed<T: Float + FromPrimitive>(parent_seed: &mut u64) -> u64 {
+pub fn spawn_rn_seed<T: CustomFloat>(parent_seed: &mut u64) -> u64 {
     let spawned_seed = hash_state(*parent_seed);
     rng_sample::<T>(parent_seed);
     spawned_seed

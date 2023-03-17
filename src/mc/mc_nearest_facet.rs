@@ -1,9 +1,11 @@
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
+
+use crate::constants::CustomFloat;
 
 /// Structure used to represent the nearest facet to a point,
 /// holding relevant data for computation.
 #[derive(Debug, Clone, Copy)]
-pub struct MCNearestFacet<T: Float> {
+pub struct MCNearestFacet<T: CustomFloat> {
     /// Facet the particle is the closest to
     pub facet: usize,
     /// Distance between facet and particle
@@ -12,7 +14,7 @@ pub struct MCNearestFacet<T: Float> {
     pub dot_product: T,
 }
 
-impl<T: Float + FromPrimitive> Default for MCNearestFacet<T> {
+impl<T: CustomFloat> Default for MCNearestFacet<T> {
     fn default() -> Self {
         Self {
             facet: 0,

@@ -1,6 +1,6 @@
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
-use crate::mc::mc_vector::MCVector;
+use crate::{constants::CustomFloat, mc::mc_vector::MCVector};
 
 /// Custom alias for readability.
 pub type Tuple3 = (usize, usize, usize);
@@ -9,7 +9,7 @@ pub type Tuple4 = (usize, usize, usize, usize);
 
 /// Structure representing the spatial grid of the problem.
 #[derive(Debug)]
-pub struct GlobalFccGrid<T: Float> {
+pub struct GlobalFccGrid<T: CustomFloat> {
     /// Number of cells along the x axis
     pub nx: usize,
     /// Number of cells along the y axis
@@ -35,7 +35,7 @@ pub struct GlobalFccGrid<T: Float> {
     pub face_offset: [(i32, i32, i32); 6], // TODO: change to a CONST
 }
 
-impl<T: Float + FromPrimitive> GlobalFccGrid<T> {
+impl<T: CustomFloat> GlobalFccGrid<T> {
     /// Constructor.
     pub fn new(nx: usize, ny: usize, nz: usize, lx: T, ly: T, lz: T) -> Self {
         let tmpx: T = FromPrimitive::from_usize(nx).unwrap();
@@ -136,8 +136,8 @@ impl<T: Float + FromPrimitive> GlobalFccGrid<T> {
         let qx = idx / (self.nx + 1);
         let y = qx % (self.ny + 1);
         let qy = qx / (self.ny + 1);
-        let z = qy % self.nz;
-        let b = qy / self.nz;
+        let z = qy % (self.nz + 1);
+        let b = qy / (self.nz + 1);
         (x, y, z, b)
     }
 

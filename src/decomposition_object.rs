@@ -15,13 +15,13 @@ impl DecompositionObject {
         let mut assigned_gids: Vec<usize> = Vec::with_capacity(dom_per_rank);
 
         (0..n_domains).into_iter().for_each(|domain_idx| {
-            rank[domain_idx] = domain_idx / dom_per_rank;
-            index[domain_idx] = domain_idx % dom_per_rank;
+            rank.push(domain_idx / dom_per_rank);
+            index.push(domain_idx % dom_per_rank);
         });
 
         (0..dom_per_rank).into_iter().for_each(|ii| {
             let idx = dom_per_rank * my_rank + ii;
-            assigned_gids[ii] = dom_per_rank * rank[idx] + index[idx];
+            assigned_gids.push(dom_per_rank * rank[idx] + index[idx]);
         });
 
         Self {

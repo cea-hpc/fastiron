@@ -1,17 +1,13 @@
-use num::{Float, FromPrimitive};
+use crate::{constants::CustomFloat, montecarlo::MonteCarlo, tallies::MCTallyEvent};
 
-use crate::{montecarlo::MonteCarlo, particle_vault::ParticleVault, tallies::MCTallyEvent};
-
-use super::{
-    mc_facet_adjacency::MCSubfacetAdjacencyEvent, mc_particle::MCParticle, mct::reflect_particle,
-};
+use super::{mc_facet_adjacency::MCSubfacetAdjacencyEvent, mc_particle::MCParticle};
 
 /// Computes and transform accordingly a [MCParticle] object crossing a facet.
-pub fn event<T: Float + FromPrimitive>(
+pub fn facet_crossing_event<T: CustomFloat>(
     mc_particle: &mut MCParticle<T>,
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
-    processing_vault: &mut ParticleVault<T>,
+    processing_vault_idx: usize,
 ) -> MCTallyEvent {
     let location = mc_particle.get_location();
     let facet_adjacency = &mcco.domain[location.domain.unwrap()].mesh.cell_connectivity
@@ -38,18 +34,28 @@ pub fn event<T: Float + FromPrimitive>(
         MCSubfacetAdjacencyEvent::TransitOffProcessor => {
             // particle enters an adjacent cell that belongs to
             // a domain managed by another processor.
+            println!(
+                "facet_adjacency.adjacent.domain: {:?}",
+                facet_adjacency.adjacent.domain
+            );
+            println!(
+                "facet_adjacency.adjacent.cell: {:?}",
+                facet_adjacency.adjacent.cell
+            );
+            println!(
+                "facet_adjacency.adjacent.facet: {:?}",
+                facet_adjacency.adjacent.facet
+            );
             mc_particle.domain = facet_adjacency.adjacent.domain.unwrap();
             mc_particle.cell = facet_adjacency.adjacent.cell.unwrap();
             mc_particle.facet = facet_adjacency.adjacent.facet.unwrap();
             mc_particle.last_event = MCTallyEvent::FacetCrossingCommunication;
 
-            // added from cycle tracking; necessary since we dont pass around a pointer
-            reflect_particle(mcco, mc_particle);
-
             let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
                 .mesh
                 .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
-            processing_vault.put_particle(mc_particle.clone(), particle_idx);
+            mcco.particle_vault_container.processing_vaults[processing_vault_idx]
+                .put_particle(mc_particle.clone(), particle_idx);
 
             mcco.particle_vault_container
                 .get_send_queue()

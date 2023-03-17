@@ -1,9 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 
-use num::{Float, FromPrimitive};
-
 use crate::{
-    comm_object::CommObject,
+    constants::CustomFloat,
     global_fcc_grid::{GlobalFccGrid, Tuple3},
     grid_assignment_object::GridAssignmentObject,
     mc::mc_vector::MCVector,
@@ -26,7 +24,7 @@ pub struct CellInfo {
 
 /// Structure used to represent the mesh partition of the space.
 /// Holds the different cells' information.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MeshPartition {
     /// Domain global identifier
     pub domain_gid: usize,
@@ -53,27 +51,27 @@ impl MeshPartition {
         }
     }
     /// Builds the mesh partition.
-    pub fn build_mesh_partition<T: Float + FromPrimitive>(
+    pub fn build_mesh_partition<T: CustomFloat>(
         &mut self,
         grid: &GlobalFccGrid<T>,
         centers: &[MCVector<T>],
-        comm: &mut CommObject,
-    ) {
+        //comm: &mut CommObject,
+    ) -> Vec<(usize, usize)> {
         self.assign_cells_to_domain(centers, grid);
 
-        self.build_cell_idx_map(grid, comm);
+        self.build_cell_idx_map(grid)
     }
 
     /// Internal function that associates cells to domains
-    fn assign_cells_to_domain<T: Float + FromPrimitive>(
+    fn assign_cells_to_domain<T: CustomFloat>(
         &mut self,
         domain_center: &[MCVector<T>],
         grid: &GlobalFccGrid<T>,
+        //comm: &CommObject,
     ) {
         let mut assigner = GridAssignmentObject::new(domain_center);
         let mut flood_queue: VecDeque<usize> = VecDeque::new();
         let mut wet_cells: Vec<usize> = Vec::new();
-        let mut remote_domain: Vec<usize> = Vec::new();
 
         let root = grid.which_cell(&domain_center[self.domain_gid]);
 
@@ -86,29 +84,30 @@ impl MeshPartition {
             let rr = grid.cell_center(cell_idx);
             let domain = assigner.nearest_center(rr);
 
-            self.cell_info_map.insert(
-                cell_idx,
-                CellInfo {
-                    domain_gid: Some(domain),
-                    ..Default::default()
-                },
-            );
+            // insert only if the key is absent; in c++ there's no overwriting of keys
+            self.cell_info_map.entry(cell_idx).or_insert(CellInfo {
+                domain_gid: Some(domain),
+                //foreman: Some(self.foreman),
+                //domain_index: Some(comm.gid_to_idx[domain]),
+                ..Default::default()
+            });
 
             if domain == self.domain_gid {
                 Self::add_nbrs_to_flood(cell_idx, grid, &mut flood_queue, &mut wet_cells);
-            } else {
-                remote_domain.push(domain);
+            } else if !self.nbr_domains.contains(&domain) {
+                // identify remote domains
+                self.nbr_domains.push(domain);
             }
-
-            self.nbr_domains.extend(remote_domain.iter());
         }
     }
 
-    fn build_cell_idx_map<T: Float + FromPrimitive>(
+    fn build_cell_idx_map<T: CustomFloat>(
         &mut self,
         grid: &GlobalFccGrid<T>,
-        comm: &mut CommObject,
-    ) {
+        //comm: &mut CommObject,
+    ) -> Vec<(usize, usize)> {
+        let mut remote_cells: Vec<(usize, usize)> = Vec::new();
+
         let mut n_local_cells: usize = 0;
         // init a map
         let mut remote_domain_map: HashMap<usize, usize> = Default::default();
@@ -116,9 +115,7 @@ impl MeshPartition {
             remote_domain_map.insert(self.nbr_domains[ii], ii);
         });
 
-        let read_map = self.cell_info_map.clone();
-
-        for (cell_gid, cell_info) in &mut self.cell_info_map {
+        for cell_info in self.cell_info_map.values_mut() {
             let domain_gid: usize = cell_info.domain_gid.unwrap();
             if domain_gid == self.domain_gid {
                 // local cell
@@ -126,7 +123,14 @@ impl MeshPartition {
                 n_local_cells += 1;
                 cell_info.domain_index = Some(self.domain_index);
                 cell_info.foreman = Some(self.foreman);
-            } else {
+            }
+        }
+
+        let read_map = self.cell_info_map.clone();
+
+        for (cell_gid, cell_info) in &self.cell_info_map {
+            let domain_gid: usize = cell_info.domain_gid.unwrap();
+            if domain_gid != self.domain_gid {
                 let remote_n_idx = remote_domain_map.get(&domain_gid).unwrap();
                 let face_nbr = grid.get_face_nbr_gids(*cell_gid);
 
@@ -136,17 +140,23 @@ impl MeshPartition {
                             continue;
                         }
                         // replace the update to sendSet
-                        comm.add_to_send((*remote_n_idx, j_cell_gid));
+                        //comm.add_to_send((*remote_n_idx, j_cell_gid));
+                        // technically should check if its already here because
+                        // the original code uses sets
+                        if !remote_cells.contains(&(*remote_n_idx, j_cell_gid)) {
+                            remote_cells.push((*remote_n_idx, j_cell_gid));
+                        }
                     }
                 }
             }
         }
 
         // replace comm.exchange
-        comm.send(&mut self.cell_info_map, &self.nbr_domains)
+        //comm.send(&mut self.cell_info_map, &self.nbr_domains)
+        remote_cells
     }
 
-    fn add_nbrs_to_flood<T: Float + FromPrimitive>(
+    fn add_nbrs_to_flood<T: CustomFloat>(
         cell_idx: usize,
         grid: &GlobalFccGrid<T>,
         flood_queue: &mut VecDeque<usize>,

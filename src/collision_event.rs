@@ -1,8 +1,10 @@
-use std::fmt::Debug;
-
-use num::{zero, Float, FromPrimitive};
+use num::FromPrimitive;
 
 use crate::{
+    constants::{
+        physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
+        CustomFloat,
+    },
     macro_cross_section::macroscopic_cross_section,
     mc::{
         mc_particle::MCParticle,
@@ -10,15 +12,10 @@ use crate::{
     },
     montecarlo::MonteCarlo,
     nuclear_data::ReactionType,
-    physical_constants::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
 };
 
 /// Update the a particle's energy and trajectory after a collision.
-pub fn update_trajectory<T: Float + FromPrimitive + Debug>(
-    energy: T,
-    angle: T,
-    particle: &mut MCParticle<T>,
-) {
+pub fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParticle<T>) {
     // constants
     let pi: T = FromPrimitive::from_f64(PI).unwrap();
     let c: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
@@ -49,7 +46,7 @@ pub fn update_trajectory<T: Float + FromPrimitive + Debug>(
 
 /// Computes and transform accordingly a [MCParticle] object that
 /// undergo a collision. Returns true if the particle will continue
-pub fn collision_event<T: Float + FromPrimitive + Debug>(
+pub fn collision_event<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     mc_particle: &mut MCParticle<T>,
     tally_idx: usize,
@@ -60,7 +57,10 @@ pub fn collision_event<T: Float + FromPrimitive + Debug>(
     // Pick an isotope & reaction
     let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
     let total_xsection: T = mc_particle.total_cross_section;
+    //println!("total xs: {total_xsection}");
+
     let mut current_xsection: T = total_xsection * rdm_number;
+    //println!("starting xs: {current_xsection}");
 
     let mut selected_iso: usize = usize::MAX; // sort of a magic value
     let mut selected_unique_n: usize = usize::MAX;
@@ -68,12 +68,13 @@ pub fn collision_event<T: Float + FromPrimitive + Debug>(
 
     let n_iso: usize = mcco.material_database.mat[mat_gidx].iso.len();
 
-    for iso_idx in 0..n_iso {
-        let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
-        let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
-        for reaction_idx in 0..n_reactions {
-            current_xsection = current_xsection
-                - macroscopic_cross_section(
+    loop {
+        //println!("infinite loop? current xs: {current_xsection}");
+        for iso_idx in 0..n_iso {
+            let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
+            let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
+            for reaction_idx in 0..n_reactions {
+                current_xsection -= macroscopic_cross_section(
                     mcco,
                     reaction_idx,
                     mc_particle.domain,
@@ -81,14 +82,18 @@ pub fn collision_event<T: Float + FromPrimitive + Debug>(
                     iso_idx,
                     mc_particle.energy_group,
                 );
-            if current_xsection < zero() {
-                selected_iso = iso_idx;
-                selected_unique_n = unique_n;
-                selected_react = reaction_idx;
+                if current_xsection.is_sign_negative() {
+                    selected_iso = iso_idx;
+                    selected_unique_n = unique_n;
+                    selected_react = reaction_idx;
+                    break;
+                }
+            }
+            if current_xsection.is_sign_negative() {
                 break;
             }
         }
-        if current_xsection < zero() {
+        if current_xsection.is_sign_negative() {
             break;
         }
     }

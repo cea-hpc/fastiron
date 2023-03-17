@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
-use num::{zero, Float, FromPrimitive};
+use num::zero;
 
-use crate::{direction_cosine::DirectionCosine, tallies::MCTallyEvent};
+use crate::{constants::CustomFloat, direction_cosine::DirectionCosine, tallies::MCTallyEvent};
 
 use super::{
     mc_base_particle::{MCBaseParticle, Species},
@@ -12,7 +12,7 @@ use super::{
 
 /// Structure used to represent a particle.
 #[derive(Debug, Default, Clone)]
-pub struct MCParticle<T: Float> {
+pub struct MCParticle<T: CustomFloat> {
     /// Current position
     pub coordinate: MCVector<T>,
     /// Current velocity
@@ -46,7 +46,7 @@ pub struct MCParticle<T: Float> {
     /// Number of segments the particle travelled?
     pub num_segments: T,
     /// Task working on (should be usize?)
-    pub task: u32,
+    pub task: usize,
     /// Species of the particle
     pub species: Species,
     /// Breed of the particle, i.e. how it was produced (should be usize?)
@@ -63,7 +63,7 @@ pub struct MCParticle<T: Float> {
     pub normal_dot: T,
 }
 
-impl<T: Float + FromPrimitive> MCParticle<T> {
+impl<T: CustomFloat> MCParticle<T> {
     /// Constructor from a [MCBaseParticle] object.
     pub fn new(from_particle: &MCBaseParticle<T>) -> Self {
         let speed = from_particle.velocity.length();
@@ -113,14 +113,14 @@ impl<T: Float + FromPrimitive> MCParticle<T> {
     /// Update the particle's field to model its movement along the specified
     /// direction and distance
     pub fn move_particle(&mut self, direction_cosine: &DirectionCosine<T>, distance: T) {
-        self.coordinate.x = self.coordinate.x + direction_cosine.alpha * distance;
-        self.coordinate.y = self.coordinate.y + direction_cosine.beta * distance;
-        self.coordinate.z = self.coordinate.z + direction_cosine.gamma * distance;
+        self.coordinate.x += direction_cosine.alpha * distance;
+        self.coordinate.y += direction_cosine.beta * distance;
+        self.coordinate.z += direction_cosine.gamma * distance;
     }
 }
 
 // replaces original method `PrintParticle`
-impl<T: Float + Display> Display for MCParticle<T> {
+impl<T: CustomFloat> Display for MCParticle<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(
             f,

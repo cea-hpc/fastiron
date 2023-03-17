@@ -1,6 +1,6 @@
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
-use crate::mc::mc_rng_state::rng_sample;
+use crate::{constants::CustomFloat, mc::mc_rng_state::rng_sample};
 
 /// Enum representing a reaction type. Named `Enum` in
 /// the original code.
@@ -16,15 +16,15 @@ pub enum ReactionType {
 /// Private fields represent the coefficients, `aa`
 /// corresponding to `x^4`, `ee` to `x^0`.
 #[derive(Debug)]
-pub struct Polynomial<T: Float> {
-    aa: T,
-    bb: T,
-    cc: T,
-    dd: T,
-    ee: T,
+pub struct Polynomial<T: CustomFloat> {
+    pub aa: T,
+    pub bb: T,
+    pub cc: T,
+    pub dd: T,
+    pub ee: T,
 }
 
-impl<T: Float> Polynomial<T> {
+impl<T: CustomFloat> Polynomial<T> {
     /// Returns the value of the polynomial function in xx.
     pub fn val(&self, xx: T) -> T {
         self.ee + xx * (self.dd + xx * (self.cc + xx * (self.bb + xx * self.aa)))
@@ -33,13 +33,13 @@ impl<T: Float> Polynomial<T> {
 
 /// Lowest-level structure to represent a reaction.
 #[derive(Debug)]
-pub struct NuclearDataReaction<T: Float> {
+pub struct NuclearDataReaction<T: CustomFloat> {
     pub cross_section: Vec<T>,
     pub reaction_type: ReactionType,
     pub nu_bar: T,
 }
 
-impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
+impl<T: CustomFloat> NuclearDataReaction<T> {
     /// Constructor.
     pub fn new(
         rtype: ReactionType,
@@ -49,7 +49,7 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
         reaction_cross_section: T,
     ) -> Self {
         let n_groups = energies.len() - 1;
-        let mut xsection: Vec<T> = Vec::with_capacity(n_groups);
+        let mut xsection: Vec<T> = vec![zero(); n_groups];
 
         let mut normal_value: T = zero();
         let one: T = FromPrimitive::from_f32(1.0).unwrap();
@@ -61,15 +61,14 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
             let base: T = FromPrimitive::from_f32(10.0).unwrap();
             xsection[ii] = base.powf(polynomial.val(energy.log10()));
 
-            if (normal_value == zero()) & (xsection[ii] >= one) {
+            if (energies[ii + 1] >= one) & normal_value.is_zero() {
                 normal_value = xsection[ii];
             }
+        });
 
-            let scale = reaction_cross_section / normal_value;
-            // replace with map later?
-            (0..n_groups).into_iter().for_each(|ii| {
-                xsection[ii] = xsection[ii] * scale;
-            });
+        let scale = reaction_cross_section / normal_value;
+        (0..n_groups).into_iter().for_each(|ii| {
+            xsection[ii] *= scale;
         });
 
         Self {
@@ -112,8 +111,8 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
                 // is quite unclear. There is an assert but it only prints
                 // a message, not stop the method
                 let num_particle_out = (self.nu_bar + rng_sample(seed)).to_usize().unwrap();
-                energy_out.reserve(num_particle_out);
-                angle_out.reserve(num_particle_out);
+                energy_out.extend(vec![zero(); num_particle_out].iter());
+                angle_out.extend(vec![zero(); num_particle_out].iter());
                 (0..num_particle_out).into_iter().for_each(|ii| {
                     let mut rand_n: T = rng_sample(seed);
                     rand_n = (rand_n + one) / two;
@@ -132,13 +131,13 @@ impl<T: Float + FromPrimitive> NuclearDataReaction<T> {
 }
 
 /// Structure used to hold a list of reactions.
-#[derive(Debug)]
-pub struct NuclearDataSpecies<T: Float> {
+#[derive(Debug, Default)]
+pub struct NuclearDataSpecies<T: CustomFloat> {
     /// List of reactions
     pub reactions: Vec<NuclearDataReaction<T>>,
 }
 
-impl<T: Float + FromPrimitive> NuclearDataSpecies<T> {
+impl<T: CustomFloat> NuclearDataSpecies<T> {
     /// Adds a reaction to the internal list.
     pub fn add_reaction(
         &mut self,
@@ -164,7 +163,7 @@ pub type NuclearDataIsotope<T> = Vec<NuclearDataSpecies<T>>;
 /// Top level structure used to handle all things related to
 /// nuclear data.
 #[derive(Debug)]
-pub struct NuclearData<T: Float> {
+pub struct NuclearData<T: CustomFloat> {
     /// Total number of energy groups?
     pub num_energy_groups: usize,
     /// Reactions and cross sections are stored by isotopes,
@@ -174,10 +173,10 @@ pub struct NuclearData<T: Float> {
     pub energies: Vec<T>,
 }
 
-impl<T: Float + FromPrimitive> NuclearData<T> {
+impl<T: CustomFloat> NuclearData<T> {
     /// Extra messy constructor.
     pub fn new(num_groups: usize, energy_low: T, energy_high: T) -> Self {
-        let mut energies = Vec::with_capacity(num_groups + 1);
+        let mut energies = vec![zero(); num_groups + 1];
         let length: T = FromPrimitive::from_usize(num_groups + 1).unwrap();
         // complete energy levels
         energies[0] = energy_low;
@@ -203,7 +202,7 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
     #[allow(clippy::too_many_arguments)]
     pub fn add_isotope(
         &mut self,
-        n_reactions: u64,
+        n_reactions: usize,
         fission_function: &Polynomial<T>,
         scatter_function: &Polynomial<T>,
         absorption_function: &Polynomial<T>,
@@ -213,7 +212,7 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
         scatter_weight: T,
         absorption_weight: T,
     ) -> usize {
-        self.isotopes.push(Vec::new());
+        self.isotopes.push(vec![NuclearDataSpecies::default()]);
         let total_weight = fission_weight + scatter_weight + absorption_weight;
 
         let mut n_fission = n_reactions / 3;
@@ -232,32 +231,36 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
             0 => (),
             _ => unreachable!(),
         }
-        let mut f: T = FromPrimitive::from_u64(n_fission).unwrap();
+        let mut f: T = FromPrimitive::from_usize(n_fission).unwrap();
         let fission_xsection: T = (total_cross_section * fission_weight) / (f * total_weight);
-        f = FromPrimitive::from_u64(n_scatter).unwrap();
+        f = FromPrimitive::from_usize(n_scatter).unwrap();
         let scatter_xsection: T = (total_cross_section * scatter_weight) / (f * total_weight);
-        f = FromPrimitive::from_u64(n_absorption).unwrap();
+        f = FromPrimitive::from_usize(n_absorption).unwrap();
         let absorption_xsection: T = (total_cross_section * absorption_weight) / (f * total_weight);
 
         let n = self.isotopes.len();
-        self.isotopes[n][0].reactions.reserve(n_reactions as usize);
+        //if n == 0 {
+        //    self.isotopes.push(vec![NuclearDataSpecies::default()])
+        //} else {
+        self.isotopes[n - 1][0].reactions.reserve(n_reactions);
+        //}
 
         (0..n_reactions).into_iter().for_each(|ii| match ii % 3 {
-            0 => self.isotopes[n][0].add_reaction(
+            0 => self.isotopes[n - 1][0].add_reaction(
                 ReactionType::Scatter,
                 nu_bar,
                 &self.energies,
                 scatter_function,
                 scatter_xsection,
             ),
-            1 => self.isotopes[n][0].add_reaction(
+            1 => self.isotopes[n - 1][0].add_reaction(
                 ReactionType::Fission,
                 nu_bar,
                 &self.energies,
                 fission_function,
                 fission_xsection,
             ),
-            2 => self.isotopes[n][0].add_reaction(
+            2 => self.isotopes[n - 1][0].add_reaction(
                 ReactionType::Absorption,
                 nu_bar,
                 &self.energies,
@@ -271,6 +274,7 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
 
     /// Returns the energy group a specific energy belongs to.
     pub fn get_energy_groups(&self, energy: T) -> usize {
+        //println!("kin energy: {energy}");
         let num_energies = self.energies.len();
 
         // extreme low
@@ -309,8 +313,8 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
         let mut total_xsection: T = zero();
 
         (0..num_reactions).into_iter().for_each(|r_idx| {
-            total_xsection = total_xsection
-                + self.isotopes[isotope_index][0].reactions[r_idx].get_cross_section(group);
+            total_xsection +=
+                self.isotopes[isotope_index][0].reactions[r_idx].get_cross_section(group);
         });
 
         total_xsection
@@ -324,5 +328,15 @@ impl<T: Float + FromPrimitive> NuclearData<T> {
         group: usize,
     ) -> T {
         self.isotopes[isotope_index][0].reactions[react_index].get_cross_section(group)
+    }
+}
+
+impl<T: CustomFloat> Default for NuclearData<T> {
+    fn default() -> Self {
+        Self {
+            num_energy_groups: 0,
+            isotopes: Vec::new(),
+            energies: Vec::new(),
+        }
     }
 }

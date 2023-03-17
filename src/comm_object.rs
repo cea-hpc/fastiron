@@ -10,16 +10,17 @@ pub struct CommObject {
 
 impl CommObject {
     /// Constructor.
-    pub fn new(partition: Vec<MeshPartition>) -> Self {
-        let mut gid_to_idx: Vec<usize> = Vec::with_capacity(partition.len());
+    pub fn new(partition: &[MeshPartition]) -> Self {
+        let mut gid_to_idx: Vec<usize> = vec![0; partition.len()];
 
         (0..partition.len()).for_each(|ii| {
             assert!(partition[ii].domain_gid < partition.len());
             gid_to_idx[partition[ii].domain_gid] = ii;
         });
+        let p = partition.to_vec();
 
         Self {
-            partition,
+            partition: p,
             gid_to_idx,
             s_list: Vec::new(),
         }
@@ -36,6 +37,8 @@ impl CommObject {
             let target_domain_gid = nbr_domain[*remote_domain_idx];
             let target_partition = &mut self.partition[self.gid_to_idx[target_domain_gid]];
             let cell_to_send = cell_info_map.get(cell_gid).unwrap();
+            assert!(cell_to_send.domain_index.is_some());
+            assert!(cell_to_send.cell_index.is_some());
             target_partition
                 .cell_info_map
                 .insert(*cell_gid, *cell_to_send);

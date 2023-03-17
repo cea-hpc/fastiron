@@ -1,12 +1,16 @@
 use std::collections::VecDeque;
 
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
-use crate::{global_fcc_grid::Tuple3, mc::mc_vector::MCVector, physical_constants::TINY_FLOAT};
+use crate::{
+    constants::{physical::TINY_FLOAT, CustomFloat},
+    global_fcc_grid::Tuple3,
+    mc::mc_vector::MCVector,
+};
 
 /// Internal structure of [GridAssignmentObject].
 /// Represents a cell.
-#[derive(Debug, Default)] // default value of bool is false
+#[derive(Debug, Clone, Default)] // default value of bool is false
 pub struct GridCell {
     pub burned: bool,
     pub my_centers: Vec<usize>,
@@ -14,7 +18,7 @@ pub struct GridCell {
 
 /// Structure used to "locate" vectors in the grid.
 #[derive(Debug)]
-pub struct GridAssignmentObject<T: Float> {
+pub struct GridAssignmentObject<T: CustomFloat> {
     /// Number of cells along the x axis
     pub nx: usize,
     /// Number of cells along the y axis
@@ -41,7 +45,7 @@ pub struct GridAssignmentObject<T: Float> {
     wet_list: VecDeque<usize>,
 }
 
-impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
+impl<T: CustomFloat> GridAssignmentObject<T> {
     /// Constructor.
     pub fn new(centers: &[MCVector<T>]) -> Self {
         // sets the length scale of the grid cells
@@ -53,17 +57,17 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
         let mut max_coords = centers[0];
         centers.iter().for_each(|vv| {
             min_coords.x = min_coords.x.min(vv.x);
-            min_coords.y = min_coords.x.min(vv.y);
-            min_coords.z = min_coords.x.min(vv.z);
+            min_coords.y = min_coords.y.min(vv.y);
+            min_coords.z = min_coords.z.min(vv.z);
             max_coords.x = max_coords.x.max(vv.x);
-            max_coords.y = max_coords.x.max(vv.y);
-            max_coords.z = max_coords.x.max(vv.z);
+            max_coords.y = max_coords.y.max(vv.y);
+            max_coords.z = max_coords.z.max(vv.z);
         });
 
         let lx = one.max(max_coords.x - min_coords.x);
         let ly = one.max(max_coords.y - min_coords.y);
         let lz = one.max(max_coords.z - min_coords.z);
-        let dim: T = n_centers / (centers_per_cell * lx * ly * lz).cbrt();
+        let dim: T = (n_centers / (centers_per_cell * lx * ly * lz)).cbrt(); // cell per unit of length
         let nx = one.max((dim * lx).floor());
         let ny = one.max((dim * ly).floor());
         let nz = one.max((dim * lz).floor());
@@ -72,7 +76,7 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
         let dz = lz / nz;
 
         let n_cells: usize = (nx * ny * nz).to_usize().unwrap();
-        let grid: Vec<GridCell> = Vec::with_capacity(n_cells);
+        let grid: Vec<GridCell> = vec![GridCell::default(); n_cells];
 
         let mut gao: GridAssignmentObject<T> = Self {
             nx: nx.to_usize().unwrap(),
@@ -184,16 +188,15 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
         let r_idx: Tuple3 = self.which_cell_tuple(r);
         let tuple_idx: Tuple3 = self.index_to_tuple(cell_idx);
 
-        let rx: T = (self.dx
-            * (FromPrimitive::from_usize(tuple_idx.0.abs_diff(r_idx.0) - 1)).unwrap())
-        .max(zero());
-        let ry: T = (self.dy
-            * (FromPrimitive::from_usize(tuple_idx.1.abs_diff(r_idx.1) - 1)).unwrap())
-        .max(zero());
-        let rz: T = (self.dz
-            * (FromPrimitive::from_usize(tuple_idx.2.abs_diff(r_idx.2) - 1)).unwrap())
-        .max(zero());
-
+        let rx: T = self.dx
+            * (FromPrimitive::from_usize(tuple_idx.0.abs_diff(r_idx.0).saturating_sub(1))).unwrap();
+        let ry: T = self.dy
+            * (FromPrimitive::from_usize(tuple_idx.1.abs_diff(r_idx.1).saturating_sub(1))).unwrap();
+        let rz: T = self.dz
+            * (FromPrimitive::from_usize(tuple_idx.2.abs_diff(r_idx.2).saturating_sub(1))).unwrap();
+        assert!(rx >= zero());
+        assert!(ry >= zero());
+        assert!(rz >= zero());
         rx * rx + ry * ry + rz * rz
     }
 
@@ -244,5 +247,51 @@ impl<T: Float + FromPrimitive> GridAssignmentObject<T> {
             tmp.2 -= 1;
             self.add_tuple_to_queue(tmp);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use num::Float;
+
+    use super::*;
+    #[test]
+    fn basic() {
+        let c1 = MCVector {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+        let c2 = MCVector {
+            x: 2.0,
+            y: 1.0,
+            z: 0.0,
+        };
+        let c3 = MCVector {
+            x: 1.0,
+            y: 2.0,
+            z: 4.0,
+        };
+        let c4 = MCVector {
+            x: 0.0,
+            y: 3.0,
+            z: 1.0,
+        };
+        let assigner = GridAssignmentObject::new(&[c1, c2, c3, c4]);
+
+        let lx = 2.0;
+        let ly = 3.0;
+        let lz = 4.0;
+        let center_per_cell = 5.0;
+        let cell_per_length = (4.0 / (center_per_cell * lx * ly * lz)).cbrt();
+        let nx = 1.0.max((lx * cell_per_length).floor());
+        let ny = 1.0.max((ly * cell_per_length).floor());
+        let nz = 1.0.max((lz * cell_per_length).floor());
+        let dx = lx / nx;
+        let dy = ly / ny;
+        let dz = lz / nz;
+        assert_eq!(dx, assigner.dx);
+        assert_eq!(dy, assigner.dy);
+        assert_eq!(dz, assigner.dz);
     }
 }

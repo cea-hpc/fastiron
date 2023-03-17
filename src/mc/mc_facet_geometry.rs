@@ -1,20 +1,20 @@
-use num::{Float, FromPrimitive};
+use num::FromPrimitive;
 
-use crate::physical_constants::TINY_FLOAT;
+use crate::constants::{physical::TINY_FLOAT, CustomFloat};
 
 use super::mc_vector::MCVector;
 
 /// Structure representing a plane of equation `A*x + B*y + C*z + D = 0`
 /// (A,B,C) is normalized.
 #[derive(Debug, Clone, Copy, Default)]
-pub struct MCGeneralPlane<T: Float> {
+pub struct MCGeneralPlane<T: CustomFloat> {
     pub a: T,
     pub b: T,
     pub c: T,
     pub d: T,
 }
 
-impl<T: Float + FromPrimitive> MCGeneralPlane<T> {
+impl<T: CustomFloat> MCGeneralPlane<T> {
     pub fn new(r0: &MCVector<T>, r1: &MCVector<T>, r2: &MCVector<T>) -> Self {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
@@ -32,10 +32,10 @@ impl<T: Float + FromPrimitive> MCGeneralPlane<T> {
             magnitude = one;
         }
         // normalize
-        a = a / magnitude;
-        b = b / magnitude;
-        c = c / magnitude;
-        d = d / magnitude;
+        a /= magnitude;
+        b /= magnitude;
+        c /= magnitude;
+        d /= magnitude;
 
         Self { a, b, c, d }
     }

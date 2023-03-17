@@ -1,13 +1,10 @@
-use std::{cell::RefCell, rc::Rc};
-
-use num::Float;
-
-use crate::{montecarlo::MonteCarlo, parameters::Parameters};
+use crate::{constants::CustomFloat, montecarlo::MonteCarlo, parameters::Parameters};
 
 /// Adjust some data for the coral benchmark if it's running.
-pub fn coral_benchmark_correctness<T: Float>(
-    mcco: Rc<RefCell<MonteCarlo<T>>>,
-    params: &Parameters,
-) {
+pub fn coral_benchmark_correctness<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
+    let params: &Parameters<T> = &mcco.params;
+    if !params.simulation_params.coral_benchmark {
+        return;
+    }
     todo!()
 }

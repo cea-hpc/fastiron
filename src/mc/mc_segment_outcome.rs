@@ -1,13 +1,16 @@
 use core::panic;
-use std::fmt::Display;
+use std::fmt::Debug;
 
-use num::{zero, Float, FromPrimitive};
+use num::{zero, FromPrimitive};
 
 use crate::{
+    constants::{
+        physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
+        CustomFloat,
+    },
     macro_cross_section::weighted_macroscopic_cross_section,
     mc::{mc_nearest_facet::MCNearestFacet, mc_rng_state::rng_sample, mct::nearest_facet},
     montecarlo::MonteCarlo,
-    physical_constants::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
     tallies::MCTallyEvent,
 };
 
@@ -22,16 +25,8 @@ pub enum MCSegmentOutcome {
     Census = 2,
 }
 
-/// Enum representing the action to take after a particle collides.
-#[derive(Debug)]
-pub enum MCCollisionEventReturn {
-    StopTracking = 0,
-    ContinueTracking = 1,
-    ContinueCollision = 2,
-}
-
 /// Computes the outcome of the current segment for a given particle.
-pub fn outcome<T: Float + FromPrimitive + Display>(
+pub fn outcome<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     mc_particle: &mut MCParticle<T>,
     flux_tally_idx: usize,
@@ -47,7 +42,7 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
     let particle_speed = mc_particle.velocity.length();
 
     let mut force_collision = false;
-    if mc_particle.num_mean_free_paths < zero() {
+    if mc_particle.num_mean_free_paths.is_sign_negative() {
         force_collision = true;
         mc_particle.num_mean_free_paths = small_f;
     }
@@ -83,7 +78,7 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
             mc_particle.num_mean_free_paths * mc_particle.mean_free_path;
     }
     // census
-    distance[MCSegmentOutcome::Census as usize] = particle_speed * mc_particle.mean_free_path;
+    distance[MCSegmentOutcome::Census as usize] = particle_speed * mc_particle.time_to_census;
 
     // nearest facet
     let nearest_facet: MCNearestFacet<T> = nearest_facet(mc_particle, mcco);
@@ -105,12 +100,11 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
 
     let segment_outcome = find_min(&distance);
 
-    if distance[segment_outcome as usize] < zero() {
+    if distance[segment_outcome as usize].is_sign_negative() {
         panic!()
     }
     mc_particle.segment_path_length = distance[segment_outcome as usize];
-    mc_particle.num_mean_free_paths = mc_particle.num_mean_free_paths
-        - mc_particle.segment_path_length / mc_particle.mean_free_path;
+    mc_particle.num_mean_free_paths -= mc_particle.segment_path_length / mc_particle.mean_free_path;
 
     // update the last event
     mc_particle.last_event = match segment_outcome {
@@ -145,8 +139,8 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
 
     // decrement time to census & increment age
     let segment_path_time = mc_particle.segment_path_length / particle_speed;
-    mc_particle.time_to_census = mc_particle.time_to_census - segment_path_time;
-    mc_particle.age = mc_particle.age + segment_path_time;
+    mc_particle.time_to_census -= segment_path_time;
+    mc_particle.age += segment_path_time;
     if mc_particle.time_to_census < zero() {
         mc_particle.time_to_census = zero();
     }
@@ -163,7 +157,7 @@ pub fn outcome<T: Float + FromPrimitive + Display>(
     segment_outcome
 }
 
-fn find_min<T: Float + FromPrimitive>(distance: &[T]) -> MCSegmentOutcome {
+fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
     let mut min_val: T = distance[0];
     let mut min_idx: usize = 0;
     (0..distance.len()).into_iter().for_each(|idx| {

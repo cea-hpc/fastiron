@@ -1,3 +1,4 @@
+use crate::constants::CustomFloat;
 use std::collections::HashMap;
 
 use crate::io_utils::{self, InputError};
@@ -30,25 +31,157 @@ pub enum Shape {
     Sphere,
 }
 
+impl<T: CustomFloat> Parameters<T> {
+    /// Use the cli arguments to initialize parameters of the simulation, complete the
+    /// structure and return it. The function will fail if
+    /// - it cannot read or find the specified input_file (if specified)
+    /// - the resulting [Parameters] object is compromised
+    pub fn get_parameters(cli: io_utils::Cli) -> Result<Self, Vec<io_utils::InputError>> {
+        // structs init
+        let mut params = Self {
+            simulation_params: SimulationParameters::from_cli(&cli),
+            geometry_params: Vec::new(),
+            material_params: HashMap::new(),
+            cross_section_params: HashMap::new(),
+        };
+
+        if let Some(filename) = cli.input_file {
+            io_utils::parse_input_file(filename, &mut params)?
+        };
+        if let Some(filename) = cli.energy_spectrum {
+            params.simulation_params.energy_spectrum = filename
+        };
+        if let Some(filename) = cli.cross_sections_out {
+            params.simulation_params.cross_sections_out = filename
+        };
+
+        params.supply_defaults();
+        if let Err(e) = params.check_parameters_integrity() {
+            println!("{e:?}");
+            return Err(vec![InputError::BadInputFile]);
+        };
+
+        Ok(params)
+    }
+
+    /// Supply default parameters for the simulation if needed. The default problem
+    /// is provided if no geometries were specified.
+    pub fn supply_defaults(&mut self) {
+        // no need for default problem
+        if !self.geometry_params.is_empty() {
+            return;
+        }
+
+        // add a flat cross section
+        let flat_cross_section = CrossSectionParameters {
+            name: "flat".to_string(),
+            ..Default::default()
+        };
+        self.cross_section_params
+            .insert(flat_cross_section.name.to_owned(), flat_cross_section);
+
+        // add source material data
+        let mut source_material = MaterialParameters {
+            name: "source_material".to_string(),
+            ..Default::default()
+        };
+        source_material.mass = T::from_f64(1000.0).unwrap();
+        source_material.source_rate = T::from_f64(1e10).unwrap();
+        source_material.scattering_cross_section = "flat".to_string();
+        source_material.absorption_cross_section = "flat".to_string();
+        source_material.fission_cross_section = "flat".to_string();
+        source_material.fission_cross_section_ratio = T::from_f64(0.1).unwrap();
+        self.material_params
+            .insert(source_material.name.to_owned(), source_material);
+
+        // add source geometry. source material occupies all the space
+        let mut source_geometry = GeometryParameters::<T> {
+            material_name: "source_material".to_string(),
+            ..Default::default()
+        };
+        source_geometry.shape = Shape::Brick;
+        source_geometry.x_max = self.simulation_params.lx;
+        source_geometry.y_max = self.simulation_params.ly;
+        source_geometry.z_max = self.simulation_params.lz;
+        self.geometry_params.push(source_geometry);
+    }
+
+    /// Verify that the Parameters object passed as argument allows
+    /// for simulation (not necessarily as intended though), i.e.:
+    /// 1. There is at least one geometry
+    /// 2. All geometries shape are defined, i.e. set as brick or sphere
+    /// 3. All material referenced in geometries exist in the material list
+    /// 4. All cross sections referenced in materials exist in the cross section list
+    pub fn check_parameters_integrity(&self) -> Result<(), Vec<ParameterError>> {
+        let mut errors: Vec<ParameterError> = Vec::new();
+        // 1.
+        if self.geometry_params.is_empty() {
+            errors.push(ParameterError::NoGeometry);
+        }
+        // 2. and 3.
+        self.geometry_params
+            .iter()
+            .for_each(|g: &GeometryParameters<T>| {
+                if g.shape == Shape::Undefined {
+                    errors.push(ParameterError::UndefinedGeometry);
+                }
+                if !self.material_params.contains_key(&g.material_name) {
+                    errors.push(ParameterError::MissingMaterial(g.material_name.to_owned()));
+                }
+            });
+        // 4.
+        self.material_params.iter().for_each(|(_, val)| {
+            if !self
+                .cross_section_params
+                .contains_key(&val.absorption_cross_section)
+            {
+                errors.push(ParameterError::MissingCrossSection(
+                    val.name.to_owned() + ":" + val.absorption_cross_section.as_ref(),
+                ));
+            }
+            if !self
+                .cross_section_params
+                .contains_key(&val.scattering_cross_section)
+            {
+                errors.push(ParameterError::MissingCrossSection(
+                    val.name.to_owned() + ":" + val.scattering_cross_section.as_ref(),
+                ));
+            }
+            if !self
+                .cross_section_params
+                .contains_key(&val.fission_cross_section)
+            {
+                errors.push(ParameterError::MissingCrossSection(
+                    val.name.to_owned() + ":" + val.fission_cross_section.as_ref(),
+                ));
+            }
+        });
+        if errors.is_empty() {
+            return Ok(());
+        }
+        Err(errors)
+    }
+}
+
 /// Structure used to describe a geometry, i.e. a physical space of a
 /// certain shape and certain material.
 #[derive(Debug)]
-pub struct GeometryParameters {
+pub struct GeometryParameters<T: CustomFloat> {
     pub material_name: String,
     pub shape: Shape,
-    pub radius: f64,
-    pub x_center: f64,
-    pub y_center: f64,
-    pub z_center: f64,
-    pub x_min: f64,
-    pub y_min: f64,
-    pub z_min: f64,
-    pub x_max: f64,
-    pub y_max: f64,
-    pub z_max: f64,
+    pub radius: T,
+    pub x_center: T,
+    pub y_center: T,
+    pub z_center: T,
+    pub x_min: T,
+    pub y_min: T,
+    pub z_min: T,
+    pub x_max: T,
+    pub y_max: T,
+    pub z_max: T,
 }
 
-impl GeometryParameters {
+impl<T: CustomFloat> GeometryParameters<T> {
     /// Creates a [GeometryParameters] object using the [Block] passed as
     /// argument. Any field not specified in the block will have its default
     /// value as defined in the [Default] implementation. May return an error
@@ -96,21 +229,21 @@ impl GeometryParameters {
     }
 }
 
-impl Default for GeometryParameters {
+impl<T: CustomFloat> Default for GeometryParameters<T> {
     fn default() -> Self {
         Self {
             material_name: Default::default(),
             shape: Shape::Undefined,
-            radius: 0.0,
-            x_center: 0.0,
-            y_center: 0.0,
-            z_center: 0.0,
-            x_min: 0.0,
-            y_min: 0.0,
-            z_min: 0.0,
-            x_max: 0.0,
-            y_max: 0.0,
-            z_max: 0.0,
+            radius: T::zero(),
+            x_center: T::zero(),
+            y_center: T::zero(),
+            z_center: T::zero(),
+            x_min: T::zero(),
+            y_min: T::zero(),
+            z_min: T::zero(),
+            x_max: T::zero(),
+            y_max: T::zero(),
+            z_max: T::zero(),
         }
     }
 }
@@ -118,22 +251,22 @@ impl Default for GeometryParameters {
 /// Struct used to describe a material, i.e. its name and relevant physical
 /// properties.
 #[derive(Debug)]
-pub struct MaterialParameters {
+pub struct MaterialParameters<T: CustomFloat> {
     pub name: String,
-    pub mass: f64,
-    pub total_cross_section: f64,
-    pub n_isotopes: u32,
-    pub n_reactions: u32,
-    pub source_rate: f64,
+    pub mass: T,
+    pub total_cross_section: T,
+    pub n_isotopes: usize,
+    pub n_reactions: usize,
+    pub source_rate: T,
     pub scattering_cross_section: String,
     pub absorption_cross_section: String,
     pub fission_cross_section: String,
-    pub scattering_cross_section_ratio: f64,
-    pub absorbtion_cross_section_ratio: f64,
-    pub fission_cross_section_ratio: f64,
+    pub scattering_cross_section_ratio: T,
+    pub absorbtion_cross_section_ratio: T,
+    pub fission_cross_section_ratio: T,
 }
 
-impl MaterialParameters {
+impl<T: CustomFloat> MaterialParameters<T> {
     /// Creates a [MaterialParameters] object using the [Block] passed as
     /// argument. Any field not specified in the block will have its default
     /// value as defined in the [Default] implementation. May return an error
@@ -175,21 +308,21 @@ impl MaterialParameters {
     }
 }
 
-impl Default for MaterialParameters {
+impl<T: CustomFloat> Default for MaterialParameters<T> {
     fn default() -> Self {
         Self {
             name: Default::default(),
-            mass: 1000.0,
-            total_cross_section: 1.0,
+            mass: T::from_f32(1000.0).unwrap(),
+            total_cross_section: T::one(),
             n_isotopes: 10,
             n_reactions: 9,
-            source_rate: 0.0,
+            source_rate: T::zero(),
             scattering_cross_section: Default::default(),
             absorption_cross_section: Default::default(),
             fission_cross_section: Default::default(),
-            scattering_cross_section_ratio: 1.0,
-            absorbtion_cross_section_ratio: 1.0,
-            fission_cross_section_ratio: 1.0,
+            scattering_cross_section_ratio: T::one(),
+            absorbtion_cross_section_ratio: T::one(),
+            fission_cross_section_ratio: T::one(),
         }
     }
 }
@@ -197,17 +330,17 @@ impl Default for MaterialParameters {
 /// Structure used to describe a cross section, i.e. a probability density
 /// representation.
 #[derive(Debug)]
-pub struct CrossSectionParameters {
+pub struct CrossSectionParameters<T: CustomFloat> {
     pub name: String,
-    pub aa: f64,
-    pub bb: f64,
-    pub cc: f64,
-    pub dd: f64,
-    pub ee: f64,
-    pub nu_bar: f64,
+    pub aa: T,
+    pub bb: T,
+    pub cc: T,
+    pub dd: T,
+    pub ee: T,
+    pub nu_bar: T,
 }
 
-impl CrossSectionParameters {
+impl<T: CustomFloat> CrossSectionParameters<T> {
     /// Creates a [CrossSectionParameters] object using the [Block] passed as
     /// argument. Any field not specified in the block will have its default
     /// value as defined in the [Default] implementation. May return an error
@@ -244,16 +377,16 @@ impl CrossSectionParameters {
     }
 }
 
-impl Default for CrossSectionParameters {
+impl<T: CustomFloat> Default for CrossSectionParameters<T> {
     fn default() -> Self {
         Self {
             name: Default::default(),
-            aa: 0.0,
-            bb: 0.0,
-            cc: 0.0,
-            dd: 0.0,
-            ee: 1.0,
-            nu_bar: 2.4,
+            aa: T::zero(),
+            bb: T::zero(),
+            cc: T::zero(),
+            dd: T::zero(),
+            ee: T::one(),
+            nu_bar: T::from_f32(2.4).unwrap(),
         }
     }
 }
@@ -262,7 +395,7 @@ impl Default for CrossSectionParameters {
 /// execution flow, it is first initialized using the CLI arguments,
 /// then optionally updated with a specified input file.
 #[derive(Debug)]
-pub struct SimulationParameters {
+pub struct SimulationParameters<T: CustomFloat> {
     pub input_file: String,
     pub energy_spectrum: String,
     pub cross_sections_out: String,
@@ -273,30 +406,30 @@ pub struct SimulationParameters {
     pub n_particles: u64,
     pub batch_size: u64,
     pub n_batches: u64,
-    pub n_steps: u32,
-    pub nx: u32,
-    pub ny: u32,
-    pub nz: u32,
-    pub seed: u32,
+    pub n_steps: usize,
+    pub nx: usize,
+    pub ny: usize,
+    pub nz: usize,
+    pub seed: u64,
     //x_dom: u32,
     //y_dom: u32,
     //z_dom: u32,
-    pub dt: f64,
-    pub f_max: f64,
-    pub lx: f64,
-    pub ly: f64,
-    pub lz: f64,
-    pub e_min: f64,
-    pub e_max: f64,
-    pub n_groups: u32,
-    pub low_weight_cutoff: f64,
+    pub dt: T,
+    pub f_max: T,
+    pub lx: T,
+    pub ly: T,
+    pub lz: T,
+    pub e_min: T,
+    pub e_max: T,
+    pub n_groups: usize,
+    pub low_weight_cutoff: T,
     pub balance_tally_replications: u32,
     pub flux_tally_replications: u32,
     pub cell_tally_replications: u32,
     pub coral_benchmark: bool,
 }
 
-impl SimulationParameters {
+impl<T: CustomFloat> SimulationParameters<T> {
     /// Initialize a [SimulationParameters] object using a Cli object created
     /// from the arguments supplied via command line.
     ///
@@ -307,7 +440,7 @@ impl SimulationParameters {
     ///
     ///
     /// let cli = Cli::parse_from("./fastiron -i somefile -c -l".split(' '));
-    /// let simulation_params = SimulationParameters::from_cli(&cli);
+    /// let simulation_params = SimulationParameters::<f64>::from_cli(&cli);
     /// // compare the structures...
     /// println!("{:#?}", cli);
     /// println!("{:#?}", simulation_params);
@@ -320,7 +453,7 @@ impl SimulationParameters {
         macro_rules! fetch_from_cli {
             ($f: ident) => {
                 match &cli.$f {
-                    Some(val) => simulation_params.$f = val.to_owned(),
+                    Some(val) => simulation_params.$f = val.to_owned().into(),
                     None => (),
                 }
             };
@@ -356,7 +489,7 @@ impl SimulationParameters {
     }
 }
 
-impl Default for SimulationParameters {
+impl<T: CustomFloat> Default for SimulationParameters<T> {
     fn default() -> Self {
         Self {
             input_file: Default::default(),
@@ -377,15 +510,15 @@ impl Default for SimulationParameters {
             //x_dom: 0,
             //y_dom: 0,
             //z_dom: 0,
-            dt: 1e-8,
-            f_max: 0.1,
-            lx: 100.0,
-            ly: 100.0,
-            lz: 100.0,
-            e_min: 1e-9,
-            e_max: 20.0,
+            dt: T::from_f64(1e-8).unwrap(),
+            f_max: T::from_f64(0.1).unwrap(),
+            lx: T::from_f64(100.0).unwrap(),
+            ly: T::from_f64(100.0).unwrap(),
+            lz: T::from_f64(100.0).unwrap(),
+            e_min: T::from_f64(1e-9).unwrap(),
+            e_max: T::from_f64(20.0).unwrap(),
             n_groups: 230,
-            low_weight_cutoff: 0.001,
+            low_weight_cutoff: T::from_f64(0.001).unwrap(),
             balance_tally_replications: 1,
             flux_tally_replications: 1,
             cell_tally_replications: 1,
@@ -397,18 +530,18 @@ impl Default for SimulationParameters {
 /// Strucure encompassing all the problem's parameters. It is
 /// created, completed and returned by the [get_parameters] method.
 #[derive(Debug, Default)]
-pub struct Parameters {
+pub struct Parameters<T: CustomFloat> {
     /// Object used to store simulation parameters
-    pub simulation_params: SimulationParameters,
+    pub simulation_params: SimulationParameters<T>,
     /// List of geometries. See [GeometryParameters] for more.
-    pub geometry_params: Vec<GeometryParameters>,
+    pub geometry_params: Vec<GeometryParameters<T>>,
     /// Map of materials. See [MaterialParameters] for more.
-    pub material_params: HashMap<String, MaterialParameters>,
+    pub material_params: HashMap<String, MaterialParameters<T>>,
     /// Map of cross sections. See [CrossSectionParameters] for more.
-    pub cross_section_params: HashMap<String, CrossSectionParameters>,
+    pub cross_section_params: HashMap<String, CrossSectionParameters<T>>,
 }
 
-impl Parameters {
+impl<T: CustomFloat> Parameters<T> {
     /// Update the object's [SimulationParameters] field using the [Block] passed
     /// as argument. May return an error if the block isn't a proper Simulation
     /// block, i.e.:
@@ -474,154 +607,16 @@ impl Parameters {
         Ok(())
     }
     /// Add a new [GeometryParameters] object to the internal list.
-    pub fn add_geometry_parameter(&mut self, some_geometry: GeometryParameters) {
+    pub fn add_geometry_parameter(&mut self, some_geometry: GeometryParameters<T>) {
         self.geometry_params.push(some_geometry);
     }
     /// Add a new [MaterialParameters] object to the internal map.
-    pub fn add_material_parameter(&mut self, some_material: MaterialParameters) {
+    pub fn add_material_parameter(&mut self, some_material: MaterialParameters<T>) {
         self.material_params
             .insert(some_material.name.to_owned(), some_material);
     }
-    pub fn add_cross_section_parameter(&mut self, cross_section: CrossSectionParameters) {
+    pub fn add_cross_section_parameter(&mut self, cross_section: CrossSectionParameters<T>) {
         self.cross_section_params
             .insert(cross_section.name.to_owned(), cross_section);
     }
-}
-
-/// Use the cli arguments to initialize parameters of the simulation, complete the
-/// structure and return it. The function will fail if
-/// - it cannot read or find the specified input_file (if specified)
-/// - the resulting [Parameters] object is compromised
-pub fn get_parameters(cli: io_utils::Cli) -> Result<Parameters, Vec<io_utils::InputError>> {
-    // structs init
-    let simulation_params: SimulationParameters = SimulationParameters::from_cli(&cli);
-    let geometry_params: Vec<GeometryParameters> = Vec::new();
-    let material_params: HashMap<String, MaterialParameters> = HashMap::new();
-    let cross_section_params: HashMap<String, CrossSectionParameters> = HashMap::new();
-
-    let mut params = Parameters {
-        simulation_params,
-        geometry_params,
-        material_params,
-        cross_section_params,
-    };
-
-    if let Some(filename) = cli.input_file {
-        io_utils::parse_input_file(filename, &mut params)?
-    };
-    if let Some(filename) = cli.energy_spectrum {
-        params.simulation_params.energy_spectrum = filename
-    };
-    if let Some(filename) = cli.cross_sections_out {
-        params.simulation_params.cross_sections_out = filename
-    };
-
-    supply_defaults(&mut params);
-    if let Err(e) = check_parameters_integrity(&params) {
-        println!("{e:?}");
-        return Err(vec![InputError::BadInputFile]);
-    };
-
-    Ok(params)
-}
-
-/// Supply default parameters for the simulation if needed. The default problem
-/// is provided if no geometries were specified.
-pub fn supply_defaults(params: &mut Parameters) {
-    // no need for default problem
-    if !params.geometry_params.is_empty() {
-        return;
-    }
-
-    // add a flat cross section
-    let flat_cross_section = CrossSectionParameters {
-        name: "flat".to_string(),
-        ..Default::default()
-    };
-    params
-        .cross_section_params
-        .insert(flat_cross_section.name.to_owned(), flat_cross_section);
-
-    // add source material data
-    let mut source_material = MaterialParameters {
-        name: "source_material".to_string(),
-        ..Default::default()
-    };
-    source_material.mass = 1000.0;
-    source_material.source_rate = 1e10;
-    source_material.scattering_cross_section = "flat".to_string();
-    source_material.absorption_cross_section = "flat".to_string();
-    source_material.fission_cross_section = "flat".to_string();
-    source_material.fission_cross_section_ratio = 0.1;
-    params
-        .material_params
-        .insert(source_material.name.to_owned(), source_material);
-
-    // add source geometry. source material occupies all the space
-    let mut source_geometry: GeometryParameters = GeometryParameters {
-        material_name: "source_material".to_string(),
-        ..Default::default()
-    };
-    source_geometry.shape = Shape::Brick;
-    source_geometry.x_max = params.simulation_params.lx;
-    source_geometry.y_max = params.simulation_params.ly;
-    source_geometry.z_max = params.simulation_params.lz;
-    params.geometry_params.push(source_geometry);
-}
-
-/// Verify that the Parameters object passed as argument allows
-/// for simulation (not necessarily as intended though), i.e.:
-/// 1. There is at least one geometry
-/// 2. All geometries shape are defined, i.e. set as brick or sphere
-/// 3. All material referenced in geometries exist in the material list
-/// 4. All cross sections referenced in materials exist in the cross section list
-pub fn check_parameters_integrity(params: &Parameters) -> Result<(), Vec<ParameterError>> {
-    let mut errors: Vec<ParameterError> = Vec::new();
-    // 1.
-    if params.geometry_params.is_empty() {
-        errors.push(ParameterError::NoGeometry);
-    }
-    // 2. and 3.
-    params
-        .geometry_params
-        .iter()
-        .for_each(|g: &GeometryParameters| {
-            if g.shape == Shape::Undefined {
-                errors.push(ParameterError::UndefinedGeometry);
-            }
-            if !params.material_params.contains_key(&g.material_name) {
-                errors.push(ParameterError::MissingMaterial(g.material_name.to_owned()));
-            }
-        });
-    // 4.
-    params.material_params.iter().for_each(|(_, val)| {
-        if !params
-            .cross_section_params
-            .contains_key(&val.absorption_cross_section)
-        {
-            errors.push(ParameterError::MissingCrossSection(
-                val.name.to_owned() + ":" + val.absorption_cross_section.as_ref(),
-            ));
-        }
-        if !params
-            .cross_section_params
-            .contains_key(&val.scattering_cross_section)
-        {
-            errors.push(ParameterError::MissingCrossSection(
-                val.name.to_owned() + ":" + val.scattering_cross_section.as_ref(),
-            ));
-        }
-        if !params
-            .cross_section_params
-            .contains_key(&val.fission_cross_section)
-        {
-            errors.push(ParameterError::MissingCrossSection(
-                val.name.to_owned() + ":" + val.fission_cross_section.as_ref(),
-            ));
-        }
-    });
-    if errors.is_empty() {
-        return Ok(());
-    }
-    Err(errors)
 }
