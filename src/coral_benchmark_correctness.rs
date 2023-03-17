@@ -2,7 +2,7 @@ use crate::{constants::CustomFloat, montecarlo::MonteCarlo, parameters::Paramete
 
 /// Adjust some data for the coral benchmark if it's running.
 pub fn coral_benchmark_correctness<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
-    let params: &Parameters = &mcco.params;
+    let params: &Parameters<T> = &mcco.params;
     if !params.simulation_params.coral_benchmark {
         return;
     }

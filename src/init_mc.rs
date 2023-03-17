@@ -15,7 +15,7 @@ use crate::{
 use num::{one, zero, Float, FromPrimitive};
 
 /// Creates a [MonteCarlo] object using the specified parameters.
-pub fn init_mc<T: CustomFloat>(params: Parameters) -> MonteCarlo<T> {
+pub fn init_mc<T: CustomFloat>(params: Parameters<T>) -> MonteCarlo<T> {
     println!("---init_mc");
     let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
 
@@ -34,25 +34,29 @@ fn init_proc_info<T: CustomFloat>(_mcco: &mut MonteCarlo<T>) {}
 
 fn init_time_info<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
-    mcco.time_info.time_step = FromPrimitive::from_f64(params.simulation_params.dt).unwrap();
+    mcco.time_info.time_step = params.simulation_params.dt;
 }
 
 fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
-    let energy_low: T = FromPrimitive::from_f64(params.simulation_params.e_min).unwrap();
-    let energy_high: T = FromPrimitive::from_f64(params.simulation_params.e_max).unwrap();
+    let energy_low: T = params.simulation_params.e_min;
+    let energy_high: T = params.simulation_params.e_max;
     mcco.nuclear_data =
         NuclearData::new(params.simulation_params.n_groups, energy_low, energy_high);
     //mcco.material_database = MaterialDatabase::default(); // will already be done in the mcco constructor
 
     let mut cross_section: HashMap<String, Polynomial<T>> = Default::default();
     for xs_params in params.cross_section_params.values() {
-        let aa = FromPrimitive::from_f64(xs_params.aa).unwrap();
-        let bb = FromPrimitive::from_f64(xs_params.bb).unwrap();
-        let cc = FromPrimitive::from_f64(xs_params.cc).unwrap();
-        let dd = FromPrimitive::from_f64(xs_params.dd).unwrap();
-        let ee = FromPrimitive::from_f64(xs_params.ee).unwrap();
-        cross_section.insert(xs_params.name.to_owned(), Polynomial { aa, bb, cc, dd, ee });
+        cross_section.insert(
+            xs_params.name.to_owned(),
+            Polynomial {
+                aa: xs_params.aa,
+                bb: xs_params.bb,
+                cc: xs_params.cc,
+                dd: xs_params.dd,
+                ee: xs_params.ee,
+            },
+        );
     }
 
     let mut n_isotopes: usize = 0;
@@ -69,12 +73,10 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     for mp in params.material_params.values() {
         let mut material: Material<T> = Material {
             name: mp.name.to_owned(),
-            mass: FromPrimitive::from_f64(mp.mass).unwrap(),
+            mass: mp.mass,
             ..Default::default()
         };
-        let nu_bar: T =
-            FromPrimitive::from_f64(params.cross_section_params[&mp.fission_cross_section].nu_bar)
-                .unwrap();
+
         material.iso.reserve(mp.n_isotopes);
 
         (0..mp.n_isotopes).into_iter().for_each(|_| {
@@ -83,11 +85,11 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 &cross_section[&mp.fission_cross_section],
                 &cross_section[&mp.scattering_cross_section],
                 &cross_section[&mp.absorption_cross_section],
-                nu_bar,
-                FromPrimitive::from_f64(mp.total_cross_section).unwrap(),
-                FromPrimitive::from_f64(mp.fission_cross_section_ratio).unwrap(),
-                FromPrimitive::from_f64(mp.scattering_cross_section_ratio).unwrap(),
-                FromPrimitive::from_f64(mp.absorbtion_cross_section_ratio).unwrap(),
+                params.cross_section_params[&mp.fission_cross_section].nu_bar,
+                mp.total_cross_section,
+                mp.fission_cross_section_ratio,
+                mp.scattering_cross_section_ratio,
+                mp.absorbtion_cross_section_ratio,
             );
             // All isotopes are equally prevalent => each weight 1/n_isotopes
             material.add_isotope(Isotope {
@@ -99,7 +101,11 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     }
 }
 
-fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>], params: &Parameters) {
+fn consistency_check<T: CustomFloat>(
+    my_rank: usize,
+    domain: &[MCDomain<T>],
+    params: &Parameters<T>,
+) {
     if my_rank == 0 {
         println!("Starting consistency check");
     }
@@ -147,7 +153,10 @@ fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>], par
                             );
                             println!();
                         }
-                        if ! ((backside.adjacent.domain.unwrap() == domain_idx) | (backside.adjacent.cell.unwrap() == cell_idx) | (backside.adjacent.facet.unwrap() == facet_idx)) {
+                        if !((backside.adjacent.domain.unwrap() == domain_idx)
+                            | (backside.adjacent.cell.unwrap() == cell_idx)
+                            | (backside.adjacent.facet.unwrap() == facet_idx))
+                        {
                             panic!()
                         }
                     }
@@ -208,9 +217,9 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let ny: usize = params.simulation_params.ny;
     let nz: usize = params.simulation_params.nz;
 
-    let lx: T = FromPrimitive::from_f64(params.simulation_params.lx).unwrap();
-    let ly: T = FromPrimitive::from_f64(params.simulation_params.ly).unwrap();
-    let lz: T = FromPrimitive::from_f64(params.simulation_params.lz).unwrap();
+    let lx: T = params.simulation_params.lx;
+    let ly: T = params.simulation_params.ly;
+    let lz: T = params.simulation_params.lz;
 
     // fixed value for now, this is mpi related so it should be deleted
     // these values may be somewhat equivalent to no MPI usage?

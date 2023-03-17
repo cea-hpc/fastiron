@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::{
     fmt::{Debug, Display, LowerExp},
     ops::{AddAssign, DivAssign, MulAssign, SubAssign},
@@ -7,7 +8,7 @@ use num::{Float, FromPrimitive};
 
 pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
 pub trait UtilsFloat: Default + Debug + Display + LowerExp {}
-pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {}
+pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat + FromStr + From<f32> {}
 
 impl OpsFloat for f32 {}
 impl UtilsFloat for f32 {}

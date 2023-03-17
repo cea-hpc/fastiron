@@ -227,3 +227,31 @@ impl<T: CustomFloat> core::ops::IndexMut<usize> for ParticleVault<T> {
         &mut self.particles[index]
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::default::Default;
+    use super::*;
+
+    #[test]
+    fn basic() {
+        let mut vault = ParticleVault::<f64>::default();
+        assert_eq!(vault.size(), 0);
+        assert!(vault.pop_particle().is_none());
+
+        // Not clear if this should fail
+        vault.push_particle(MCParticle::<f64>::default());
+
+        assert!(vault.size() > 0);
+        assert!(vault.pop_particle().is_some());
+        assert!(vault.pop_particle().is_none());
+    }
+
+    #[test]
+    #[should_panic]
+    fn basic_panic() {
+        let mut vault = ParticleVault::<f64>::default();
+        assert_eq!(vault.size(), 0);
+        vault.put_particle(Default::default(), 1);
+    }
+}

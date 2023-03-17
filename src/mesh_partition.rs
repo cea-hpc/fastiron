@@ -97,7 +97,8 @@ impl MeshPartition {
 
             if domain == self.domain_gid {
                 Self::add_nbrs_to_flood(cell_idx, grid, &mut flood_queue, &mut wet_cells);
-            } else if !self.nbr_domains.contains(&domain) { // identify remote domains
+            } else if !self.nbr_domains.contains(&domain) {
+                // identify remote domains
                 self.nbr_domains.push(domain);
             }
         }

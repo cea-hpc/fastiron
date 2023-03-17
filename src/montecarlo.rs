@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use num::{zero, ToPrimitive};
+use num::zero;
 
 use crate::constants::CustomFloat;
 use crate::material_database::MaterialDatabase;
@@ -13,6 +13,7 @@ use crate::mc::{
 };
 use crate::nuclear_data::NuclearData;
 use crate::parameters::Parameters;
+use crate::particle_vault::ParticleVault;
 use crate::particle_vault_container::ParticleVaultContainer;
 use crate::tallies::Tallies;
 
@@ -22,7 +23,7 @@ pub struct MonteCarlo<T: CustomFloat> {
     /// List of spatial domains
     pub domain: Vec<MCDomain<T>>,
     /// Parameters of the problem
-    pub params: Parameters,
+    pub params: Parameters<T>,
     /// Object storing all data related to particles
     pub nuclear_data: NuclearData<T>,
     /// Container for all the particle vaults used during simulation
@@ -32,7 +33,7 @@ pub struct MonteCarlo<T: CustomFloat> {
     /// Object storing all tallies of the simulation
     pub tallies: Tallies<T>,
     /// Object storing data related to the advancement of the simulation
-    pub time_info: MCTimeInfo,
+    pub time_info: MCTimeInfo<T>,
     /// Container for the timers used for performance measurements
     pub fast_timer: MCFastTimerContainer,
     /// Object storing data related to the processor and execution mode
@@ -40,12 +41,12 @@ pub struct MonteCarlo<T: CustomFloat> {
     /// Buffer used for potential spatial multithreading
     pub particle_buffer: MCParticleBuffer<T>,
     /// Weight of the particles at creation in a source zone
-    pub source_particle_weight: f64,
+    pub source_particle_weight: T,
 }
 
 impl<T: CustomFloat> MonteCarlo<T> {
     /// Constructor
-    pub fn new(params: Parameters) -> Self {
+    pub fn new(params: Parameters<T>) -> Self {
         let tallies: Tallies<T> = Tallies::new(
             params.simulation_params.balance_tally_replications,
             params.simulation_params.flux_tally_replications,
@@ -54,7 +55,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
             params.simulation_params.n_groups,
         );
         let processor_info = MCProcessorInfo::new();
-        let time_info: MCTimeInfo = MCTimeInfo::default();
+        let time_info = MCTimeInfo::<T>::default();
         let fast_timer: MCFastTimerContainer = MCFastTimerContainer::default();
 
         let num_proc = processor_info.num_processors;
@@ -136,28 +137,28 @@ impl<T: CustomFloat> MonteCarlo<T> {
             println!("No output name specified for energy");
             return;
         }
+
+        let update_function = |vault: &ParticleVault<T>, spectrum: &mut [u64]| {
+            // We need to iterate on the index in order to access all particles, even invalid ones
+            (0..vault.size()).into_iter().for_each(|particle_idx| {
+                // load particle & update energy group
+                let mut pp = load_particle(vault, particle_idx, self.time_info.time_step).unwrap();
+                pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
+                spectrum[pp.energy_group] += 1;
+            });
+        };
+
         // Check energy levels on processing particles
         // Iterate on processing vaults
         for vv in &self.particle_vault_container.processed_vaults {
-            // We need to iterate on the index in order to access all particles, even invalid ones
-            (0..vv.size()).into_iter().for_each(|particle_idx| {
-                // load particle & update energy group
-                let mut pp = load_particle(vv, particle_idx, self.time_info.time_step).unwrap();
-                pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
-                self.tallies.spectrum.census_energy_spectrum[pp.energy_group] += 1;
-            });
+            update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
         }
         // Iterate on processed vaults
         self.particle_vault_container
             .processed_vaults
             .iter()
             .for_each(|vv| {
-                // We need to iterate on the index in order to access all particles, even invalid ones
-                (0..vv.size()).into_iter().for_each(|particle_idx| {
-                    let mut pp = load_particle(vv, particle_idx, self.time_info.time_step).unwrap();
-                    pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
-                    self.tallies.spectrum.census_energy_spectrum[pp.energy_group] += 1;
-                });
+                update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
             });
     }
 
