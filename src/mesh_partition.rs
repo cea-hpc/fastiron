@@ -136,9 +136,6 @@ impl MeshPartition {
                             continue;
                         }
                         // replace the update to sendSet
-                        //comm.add_to_send((*remote_n_idx, j_cell_gid));
-                        // technically should check if its already here because
-                        // the original code uses sets
                         if !remote_cells.contains(&(*remote_n_idx, j_cell_gid)) {
                             remote_cells.push((*remote_n_idx, j_cell_gid));
                         }
@@ -147,8 +144,7 @@ impl MeshPartition {
             }
         }
 
-        // replace comm.exchange
-        //comm.send(&mut self.cell_info_map, &self.nbr_domains)
+        // processing of the return value replaces comm.exchange
         remote_cells
     }
 
@@ -188,7 +184,7 @@ mod tests {
     #[test]
     fn partition_building() {
         // simple grid 2*2*2 grid, each cell dim is 1
-        let grid = GlobalFccGrid::new(2, 2, 2, 1.0, 1.0, 1.0);
+        let grid = GlobalFccGrid::new(2, 2, 2, 2.0, 2.0, 2.0);
         // 2 symetrical centers
         let c1 = MCVector {
             x: 0.0,
