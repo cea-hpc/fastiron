@@ -86,12 +86,11 @@ impl MeshPartition {
 
             // insert only if the key is absent; in c++ there's no overwriting of keys
             self.cell_info_map.entry(cell_idx).or_insert(CellInfo {
-                        domain_gid: Some(domain),
-                        //foreman: Some(self.foreman),
-                        //domain_index: Some(comm.gid_to_idx[domain]),
-                        ..Default::default()
-                    });
-            
+                domain_gid: Some(domain),
+                //foreman: Some(self.foreman),
+                //domain_index: Some(comm.gid_to_idx[domain]),
+                ..Default::default()
+            });
 
             if domain == self.domain_gid {
                 Self::add_nbrs_to_flood(cell_idx, grid, &mut flood_queue, &mut wet_cells);
@@ -106,7 +105,7 @@ impl MeshPartition {
         &mut self,
         grid: &GlobalFccGrid<T>,
         //comm: &mut CommObject,
-    ) -> Vec<(usize, usize)>{
+    ) -> Vec<(usize, usize)> {
         let mut remote_cells: Vec<(usize, usize)> = Vec::new();
 
         let mut n_local_cells: usize = 0;
@@ -142,7 +141,7 @@ impl MeshPartition {
                         }
                         // replace the update to sendSet
                         //comm.add_to_send((*remote_n_idx, j_cell_gid));
-                        // technically should check if its already here because 
+                        // technically should check if its already here because
                         // the original code uses sets
                         if !remote_cells.contains(&(*remote_n_idx, j_cell_gid)) {
                             remote_cells.push((*remote_n_idx, j_cell_gid));
