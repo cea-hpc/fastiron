@@ -67,7 +67,7 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
         let lx = one.max(max_coords.x - min_coords.x);
         let ly = one.max(max_coords.y - min_coords.y);
         let lz = one.max(max_coords.z - min_coords.z);
-        let dim: T = n_centers / (centers_per_cell * lx * ly * lz).cbrt();
+        let dim: T = (n_centers / (centers_per_cell * lx * ly * lz)).cbrt(); // cell per unit of length
         let nx = one.max((dim * lx).floor());
         let ny = one.max((dim * ly).floor());
         let nz = one.max((dim * lz).floor());
@@ -247,5 +247,51 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
             tmp.2 -= 1;
             self.add_tuple_to_queue(tmp);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use num::Float;
+
+    use super::*;
+    #[test]
+    fn basic() {
+        let c1 = MCVector {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+        let c2 = MCVector {
+            x: 2.0,
+            y: 1.0,
+            z: 0.0,
+        };
+        let c3 = MCVector {
+            x: 1.0,
+            y: 2.0,
+            z: 4.0,
+        };
+        let c4 = MCVector {
+            x: 0.0,
+            y: 3.0,
+            z: 1.0,
+        };
+        let assigner = GridAssignmentObject::new(&[c1, c2, c3, c4]);
+
+        let lx = 2.0;
+        let ly = 3.0;
+        let lz = 4.0; 
+        let center_per_cell = 5.0;
+        let cell_per_length = (4.0 / (center_per_cell * lx * ly * lz)).cbrt();
+        let nx = 1.0.max((lx * cell_per_length).floor());
+        let ny = 1.0.max((ly * cell_per_length).floor());
+        let nz = 1.0.max((lz * cell_per_length).floor());
+        let dx = lx / nx;
+        let dy = ly / ny;
+        let dz = lz / nz;
+        assert_eq!(dx, assigner.dx);
+        assert_eq!(dy, assigner.dy);
+        assert_eq!(dz, assigner.dz);
     }
 }
