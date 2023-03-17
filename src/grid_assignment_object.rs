@@ -92,7 +92,7 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
             wet_list: Default::default(),
         };
 
-        (0..centers.len()).into_iter().for_each(|center_idx| {
+        (0..centers.len()).for_each(|center_idx| {
             let cell_idx = gao.which_cell(centers[center_idx]);
             gao.grid[cell_idx].my_centers.push(center_idx);
         });
