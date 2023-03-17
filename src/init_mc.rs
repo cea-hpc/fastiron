@@ -265,8 +265,7 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 assert!(cell_to_send.cell_index.is_some());
                 target_partition
                     .cell_info_map
-                    .entry(*cell_gid)
-                    .or_insert(cell_to_send);
+                    .insert(*cell_gid, cell_to_send);
             }
         });
 
