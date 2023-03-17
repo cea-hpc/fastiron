@@ -207,7 +207,7 @@ impl<T: CustomFloat> MCDomain<T> {
         mat_name
     }
 
-    pub fn is_inside(geom: &GeometryParameters<T>, rr: &MCVector<T>) -> bool {
+    fn is_inside(geom: &GeometryParameters<T>, rr: &MCVector<T>) -> bool {
         match geom.shape {
             Shape::Brick => {
                 let in_x = (rr.x >= geom.x_min) & (rr.x <= geom.x_max);
@@ -229,7 +229,7 @@ impl<T: CustomFloat> MCDomain<T> {
 
     /// Returns the coordinates of the center of
     /// the specified cell.
-    pub fn cell_center(&self, cell_idx: usize) -> MCVector<T> {
+    fn cell_center(&self, cell_idx: usize) -> MCVector<T> {
         let cell = &self.mesh.cell_connectivity[cell_idx];
         let node = &self.mesh.node;
         let mut center: MCVector<T> = MCVector::default();
@@ -242,7 +242,7 @@ impl<T: CustomFloat> MCDomain<T> {
     }
 
     /// Computes the volume of the specified cell.
-    pub fn cell_volume(&self, cell_idx: usize) -> T {
+    fn cell_volume(&self, cell_idx: usize) -> T {
         let center = self.cell_center(cell_idx);
         let cell = &self.mesh.cell_connectivity[cell_idx];
         let node = &self.mesh.node;
@@ -435,19 +435,19 @@ fn get_boundary_conditions<T: CustomFloat>(
 
 #[cfg(test)]
 mod tests {
-    use crate::{parameters::{GeometryParameters, Shape}, mc::{mc_domain::MCDomain, mc_vector::MCVector}, global_fcc_grid::GlobalFccGrid, mesh_partition::MeshPartition};
+    use super::*;
 
     #[test]
     fn inside_material() {
         // Sphere centered at (2.0, 2.0, 2.0), radius 1.0
-        let geom_a = GeometryParameters { 
+        let geom_a = GeometryParameters {
             material_name: String::from("mat_a"),
-            shape: Shape::Sphere, 
-            radius: 1.0, 
-            x_center: 2.0, 
-            y_center: 2.0, 
-            z_center: 2.0, 
-            ..Default::default() 
+            shape: Shape::Sphere,
+            radius: 1.0,
+            x_center: 2.0,
+            y_center: 2.0,
+            z_center: 2.0,
+            ..Default::default()
         };
         let geom_b = GeometryParameters {
             material_name: String::from("mat_b"),
@@ -460,14 +460,14 @@ mod tests {
             z_max: 1.0,
             ..Default::default()
         };
-        let geom_c = GeometryParameters { 
+        let geom_c = GeometryParameters {
             material_name: String::from("mat_c"),
-            shape: Shape::Sphere, 
-            radius: 2.0, 
-            x_center: 6.0, 
-            y_center: 2.0, 
-            z_center: 2.0, 
-            ..Default::default() 
+            shape: Shape::Sphere,
+            radius: 2.0,
+            x_center: 6.0,
+            y_center: 2.0,
+            z_center: 2.0,
+            ..Default::default()
         };
         let geom_d = GeometryParameters {
             material_name: String::from("mat_d"),
@@ -482,23 +482,47 @@ mod tests {
         };
 
         // is_inside
-        let r1 = MCVector {x: 2.0, y: 1.0, z: 0.5 }; // in brick b
+        let r1 = MCVector {
+            x: 2.0,
+            y: 1.0,
+            z: 0.5,
+        }; // in brick b
         assert!(MCDomain::is_inside(&geom_b, &r1));
 
-        let r2 = MCVector {x: 2.0, y: 2.1, z: 0.5 }; // out brick b, in brick d
+        let r2 = MCVector {
+            x: 2.0,
+            y: 2.1,
+            z: 0.5,
+        }; // out brick b, in brick d
         assert!(!MCDomain::is_inside(&geom_b, &r2));
 
-        let r3 = MCVector {x: 1.5, y: 2.0, z: 2.5 }; // in sphere a
+        let r3 = MCVector {
+            x: 1.5,
+            y: 2.0,
+            z: 2.5,
+        }; // in sphere a
         assert!(MCDomain::is_inside(&geom_a, &r3));
 
-        let r4 = MCVector {x: 2.0, y: 2.0, z: 3.1 }; // out sphere a
+        let r4 = MCVector {
+            x: 2.0,
+            y: 2.0,
+            z: 3.1,
+        }; // out sphere a
         assert!(!MCDomain::is_inside(&geom_a, &r4));
 
-        let r5 = MCVector {x: 2.0, y: 2.0, z: 1.0 }; // in both a, b (single common point)
+        let r5 = MCVector {
+            x: 2.0,
+            y: 2.0,
+            z: 1.0,
+        }; // in both a, b (single common point)
         assert!(MCDomain::is_inside(&geom_a, &r5));
         assert!(MCDomain::is_inside(&geom_b, &r5));
 
-        let r6 = MCVector {x: 5.0, y: 2.0, z: 2.0 }; // out both a, b, in c
+        let r6 = MCVector {
+            x: 5.0,
+            y: 2.0,
+            z: 2.0,
+        }; // out both a, b, in c
         assert!(!MCDomain::is_inside(&geom_b, &r6));
         assert!(!MCDomain::is_inside(&geom_b, &r6));
 
@@ -508,15 +532,14 @@ mod tests {
         assert_eq!(MCDomain::find_material(&geoms, &r2), String::from("mat_d"));
         assert_eq!(MCDomain::find_material(&geoms, &r3), String::from("mat_a"));
         assert_eq!(MCDomain::find_material(&geoms, &r5), String::from("mat_a")); // first of the list takes priority
-        assert_eq!(MCDomain::find_material(&geoms, &r6), String::from("mat_c")); 
-
+        assert_eq!(MCDomain::find_material(&geoms, &r6), String::from("mat_c"));
     }
 
     #[test]
     fn domain_construction() {
         // simple grid 2*2*2 grid, each cell dim is 1
         let grid = GlobalFccGrid::new(2, 2, 2, 1.0, 1.0, 1.0);
-        // 2 symetrical centers 
+        // 2 symetrical centers
         let c1 = MCVector {
             x: 0.0,
             y: 0.0,
@@ -528,7 +551,7 @@ mod tests {
             z: 2.0,
         };
         let centers = vec![c1, c2];
-        let domain_gids: Vec<usize> = vec![0,1];
+        let domain_gids: Vec<usize> = vec![0, 1];
         let mut partition: Vec<MeshPartition> = Vec::with_capacity(centers.len());
         domain_gids.iter().for_each(|ii| {
             partition.push(MeshPartition::new(*ii, *ii, 0));
@@ -537,10 +560,12 @@ mod tests {
             let remote_cells = part.build_mesh_partition(&grid, &centers);
             // only 2 domains, we can manually process those
             println!("{} remote cells", remote_cells.len());
-            remote_cells.iter().for_each(|(remote_domain_gid, cell_gid)| {
-                println!("remote domain: {remote_domain_gid}");
-                println!("cell: {:#?}", part.cell_info_map[cell_gid]);
-            });
+            remote_cells
+                .iter()
+                .for_each(|(remote_domain_gid, cell_gid)| {
+                    println!("remote domain: {remote_domain_gid}");
+                    println!("cell: {:#?}", part.cell_info_map[cell_gid]);
+                });
             println!("{part:#?}");
         });
         // Are uninitialized cells still present in the map in QS ?
