@@ -145,6 +145,10 @@ impl MeshPartition {
         }
 
         // processing of the return value replaces comm.exchange
+        // remote cells are the cells of the CURRENT partition that
+        // are neighbors to the neighbor partition
+        // hence they are supposed to be inserted in the corresponding
+        // neighbor partition as they are (they contain correct info).
         remote_cells
     }
 
