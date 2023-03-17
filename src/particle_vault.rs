@@ -100,6 +100,9 @@ impl<T: CustomFloat> ParticleVault<T> {
     }
 
     /// Put a particle into the vault, casting it into a [MCBaseParticle].
+    /// The particle is pushed at the first empty space found, not necessarily after
+    /// the last non-empty space.
+    /// Fails if the vault has no empty space left (i.e. None value).
     /// Has an atomic increment in the original code.
     pub fn push_particle(&mut self, particle: MCParticle<T>) {
         let insert_idx = self
@@ -111,7 +114,9 @@ impl<T: CustomFloat> ParticleVault<T> {
         self.particles[insert_idx] = Some(MCBaseParticle::new(&particle));
     }
 
-    /// Put a base particle into the vault.
+    /// Put a base particle into the vault. The particle is pushed at the first 
+    /// empty space found, not necessarily after the last non-empty space.
+    /// Fails if the vault has no empty space left (i.e. None value).
     pub fn push_base_particle(&mut self, particle: MCBaseParticle<T>) {
         let insert_idx = self
             .particles
@@ -234,17 +239,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn basic() {
+    fn push() {
         let mut vault = ParticleVault::<f64>::default();
         assert_eq!(vault.size(), 0);
         assert!(vault.pop_particle().is_none());
 
-        // Not clear if this should fail
+        vault.reserve(1); // vault has the capacity to receive the particle
         vault.push_particle(MCParticle::<f64>::default());
 
         assert!(vault.size() > 0);
         assert!(vault.pop_particle().is_some());
         assert!(vault.pop_particle().is_none());
+    }
+
+    #[test]
+    #[should_panic]
+    fn push_panic() {
+        let mut vault = ParticleVault::<f64>::default();
+        assert_eq!(vault.size(), 0);
+        assert!(vault.pop_particle().is_none());
+
+        //vault.reserve(1); 
+        // vault is initialized but no space has been reserved
+        vault.push_particle(MCParticle::<f64>::default());
+
     }
 
     #[test]
