@@ -136,8 +136,8 @@ impl MeshPartition {
                             continue;
                         }
                         // replace the update to sendSet
-                        if !remote_cells.contains(&(*remote_n_idx, j_cell_gid)) {
-                            remote_cells.push((*remote_n_idx, j_cell_gid));
+                        if !remote_cells.contains(&(domain_gid, j_cell_gid)) {
+                            remote_cells.push((domain_gid, j_cell_gid));
                         }
                     }
                 }
@@ -206,22 +206,45 @@ mod tests {
         domain_gids.iter().for_each(|ii| {
             partition.push(MeshPartition::new(*ii, *ii, 0));
         });
-        partition.iter_mut().for_each(|part| {
-            let remote_cells = part.build_mesh_partition(&grid, &centers);
-            // only 2 domains, we can manually process those
+
+        (0..partition.len()).for_each(|part_idx| {
+            let remote_cells = partition[part_idx].build_mesh_partition(&grid, &centers);
+            // only 2 domains, we can manually process those; gids and indexes are coherent
             println!("{} remote cells", remote_cells.len());
+            // remote cells are a special case where we want to overwrite the target map's entry
             remote_cells
                 .iter()
                 .for_each(|(remote_domain_gid, cell_gid)| {
+                    let cell_to_insert = partition[part_idx].cell_info_map[cell_gid];
+                    partition[*remote_domain_gid]
+                        .cell_info_map
+                        .insert(*cell_gid, cell_to_insert);
+
                     println!("remote domain: {remote_domain_gid}");
-                    println!("cell (gid {cell_gid}): {:#?}", part.cell_info_map[cell_gid]);
+                    println!(
+                        "cell (gid {cell_gid}): {:#?}",
+                        partition[part_idx].cell_info_map[cell_gid]
+                    );
                 });
-            println!("{part:#?}");
+
+            println!("{:#?}", partition[part_idx]);
             println!();
         });
-        // Are uninitialized cells still present in the map in QS ?
+
+        // TODO: these tests are wrong, only the belonging and neighboring cells are initialized
+        // TODO: is there away to test this or remove non neighboring cells?
+        // for this simple case, non neighboring cell are gid 0 in domain 1 and
+        // gid 7 in domain 0
         partition.iter().for_each(|part| {
-            part.cell_info_map.values().for_each(|cell_info| {
+            part.cell_info_map.iter().for_each(|(cell_gid, cell_info)| {
+                if ((*cell_gid == 0) & (part.domain_gid == 1))
+                    || ((*cell_gid == 7) & (part.domain_gid == 0))
+                {
+                    assert!(cell_info.cell_index.is_none());
+                    assert!((cell_info.domain_index.is_none()));
+                    assert!((cell_info.foreman.is_none()));
+                    return;
+                }
                 assert!((cell_info.domain_gid.is_some()));
                 assert!((cell_info.cell_index.is_some()));
                 assert!((cell_info.domain_index.is_some()));
