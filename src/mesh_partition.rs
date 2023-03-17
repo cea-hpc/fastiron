@@ -210,7 +210,7 @@ mod tests {
                 .iter()
                 .for_each(|(remote_domain_gid, cell_gid)| {
                     println!("remote domain: {remote_domain_gid}");
-                    println!("cell: {:#?}", part.cell_info_map[cell_gid]);
+                    println!("cell (gid {cell_gid}): {:#?}", part.cell_info_map[cell_gid]);
                 });
             println!("{part:#?}");
             println!();
