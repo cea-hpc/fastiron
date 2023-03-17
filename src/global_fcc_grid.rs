@@ -148,7 +148,7 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
         let tt: Tuple3 = self.cell_idx_to_tuple(cell_gid);
 
         // TODO: change to a CONST
-        (0..14).into_iter().for_each(|ii| {
+        (0..14).for_each(|ii| {
             let tmp: Tuple4 = (
                 tt.0 + self.corner_offset[ii].0,
                 tt.1 + self.corner_offset[ii].1,
@@ -167,7 +167,7 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
 
         let cell_tt = self.cell_idx_to_tuple(cell_gid);
         // TODO: change to a CONST
-        (0..6).into_iter().for_each(|ii| {
+        (0..6).for_each(|ii| {
             let face_nbr = (
                 cell_tt.0 as i32 + self.face_offset[ii].0,
                 cell_tt.1 as i32 + self.face_offset[ii].1,
