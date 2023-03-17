@@ -110,11 +110,6 @@ impl MeshPartition {
         let mut remote_cells: Vec<(usize, usize)> = Vec::new();
 
         let mut n_local_cells: usize = 0;
-        // init a map
-        let mut remote_domain_map: HashMap<usize, usize> = Default::default();
-        (0..self.nbr_domains.len()).into_iter().for_each(|ii| {
-            remote_domain_map.insert(self.nbr_domains[ii], ii);
-        });
 
         let read_map = self.cell_info_map.clone();
 
@@ -127,7 +122,6 @@ impl MeshPartition {
                 cell_info.domain_index = Some(self.domain_index);
                 cell_info.foreman = Some(self.foreman);
             } else {
-                let remote_n_idx = remote_domain_map.get(&domain_gid).unwrap();
                 let face_nbr = grid.get_face_nbr_gids(*cell_gid);
 
                 for j_cell_gid in face_nbr {

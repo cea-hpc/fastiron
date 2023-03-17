@@ -21,7 +21,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     particle_idx: usize,
     processed_num: &mut usize,
     processing_vault_idx: usize,
-    processed_vault_idx: usize,
+    //processed_vault_idx: usize,
 ) {
     let processing_vault = &mcco.particle_vault_container.processing_vaults[processing_vault_idx];
     //println!("processing particle #{particle_idx}");
@@ -37,7 +37,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
             &mut particle,
             particle_idx,
             processing_vault_idx,
-            processed_vault_idx,
+            //processed_vault_idx,
         );
 
         //mcco.particle_vault_container.processing_vaults[processing_vault_idx]
@@ -55,7 +55,7 @@ pub fn cycle_tracking_function<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     particle_idx: usize,
     processing_vault_idx: usize,
-    processed_vault_idx: usize,
+    //processed_vault_idx: usize,
 ) {
     let mut keep_tracking: bool;
     let tally_idx: usize = particle_idx % mcco.tallies.num_balance_replications as usize;

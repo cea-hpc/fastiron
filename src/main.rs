@@ -154,9 +154,9 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 }
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 
-                let processed_vault_idx: usize = mcco
-                    .particle_vault_container
-                    .get_first_empty_processed_vault();
+                //let processed_vault_idx: usize = mcco
+                //    .particle_vault_container
+                //    .get_first_empty_processed_vault();
 
                 //println!("current processed vault #{processed_vault_idx}");
 
@@ -177,7 +177,7 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                             particle_idx,
                             &mut processed_particles,
                             processing_vault_idx,
-                            processed_vault_idx,
+                            //processed_vault_idx,
                         );
                         // incremented in cycle_tracking guts, only if the particle was not invalid
                         particle_idx += 1;
