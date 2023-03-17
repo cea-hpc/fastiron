@@ -144,7 +144,9 @@ impl MeshPartition {
                         //comm.add_to_send((*remote_n_idx, j_cell_gid));
                         // technically should check if its already here because 
                         // the original code uses sets
-                        remote_cells.push((*remote_n_idx, j_cell_gid));
+                        if !remote_cells.contains(&(*remote_n_idx, j_cell_gid)) {
+                            remote_cells.push((*remote_n_idx, j_cell_gid));
+                        }
                     }
                 }
             }

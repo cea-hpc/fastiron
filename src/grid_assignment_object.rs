@@ -57,11 +57,11 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
         let mut max_coords = centers[0];
         centers.iter().for_each(|vv| {
             min_coords.x = min_coords.x.min(vv.x);
-            min_coords.y = min_coords.x.min(vv.y);
-            min_coords.z = min_coords.x.min(vv.z);
+            min_coords.y = min_coords.y.min(vv.y);
+            min_coords.z = min_coords.z.min(vv.z);
             max_coords.x = max_coords.x.max(vv.x);
-            max_coords.y = max_coords.x.max(vv.y);
-            max_coords.z = max_coords.x.max(vv.z);
+            max_coords.y = max_coords.y.max(vv.y);
+            max_coords.z = max_coords.z.max(vv.z);
         });
 
         let lx = one.max(max_coords.x - min_coords.x);
