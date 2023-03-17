@@ -45,9 +45,9 @@ impl<T: CustomFloat> Fluence<T> {
             };
             self.domain.push(new_domain);
         }
-        (0..n_cells).into_iter().for_each(|cell_idx| {
+        (0..n_cells).for_each(|cell_idx| {
             let n_groups = scalar_flux_domain.task[0].cell[cell_idx].len();
-            (0..n_groups).into_iter().for_each(|group_idx| {
+            (0..n_groups).for_each(|group_idx| {
                 self.domain[domain_idx].add_cell(
                     cell_idx,
                     scalar_flux_domain.task[0].cell[cell_idx][group_idx],
@@ -137,9 +137,7 @@ impl<T: CustomFloat> CellTallyTask<T> {
     /// Add another [CellTallyTask]'s value to its own. Replace by an overload?
     pub fn add(&mut self, cell_tally_task: &CellTallyTask<T>) {
         //assert_eq!(self.cell.len(), cell_tally_task.cell.len());
-        (0..self.cell.len())
-            .into_iter()
-            .for_each(|ii| self.cell[ii] += cell_tally_task.cell[ii]);
+        (0..self.cell.len()).for_each(|ii| self.cell[ii] += cell_tally_task.cell[ii]);
     }
 }
 
@@ -155,9 +153,7 @@ impl<T: CustomFloat> ScalarFluxTask<T> {
         let mut cell = Vec::with_capacity(domain.cell_state.len());
 
         // originally uses BulkStorage object for contiguous memory
-        (0..domain.cell_state.len())
-            .into_iter()
-            .for_each(|_| cell.push(vec![zero(); num_groups]));
+        (0..domain.cell_state.len()).for_each(|_| cell.push(vec![zero(); num_groups]));
 
         Self { cell }
     }
@@ -172,8 +168,8 @@ impl<T: CustomFloat> ScalarFluxTask<T> {
     /// Add another [ScalarFluxTask]'s value to its own. Replace by an overload?
     pub fn add(&mut self, scalar_flux_task: &ScalarFluxTask<T>) {
         let n_groups = self.cell[0].len();
-        (0..self.cell.len()).into_iter().for_each(|cell_idx| {
-            (0..n_groups).into_iter().for_each(|group_idx| {
+        (0..self.cell.len()).for_each(|cell_idx| {
+            (0..n_groups).for_each(|group_idx| {
                 self.cell[cell_idx][group_idx] += scalar_flux_task.cell[cell_idx][group_idx];
             })
         });
@@ -190,9 +186,7 @@ impl<T: CustomFloat> CellTallyDomain<T> {
     /// Constructor
     pub fn new(domain: &MCDomain<T>, cell_tally_replications: usize) -> Self {
         let mut task = Vec::with_capacity(cell_tally_replications);
-        (0..cell_tally_replications)
-            .into_iter()
-            .for_each(|_| task.push(CellTallyTask::new(domain)));
+        (0..cell_tally_replications).for_each(|_| task.push(CellTallyTask::new(domain)));
         Self { task }
     }
 }
@@ -207,9 +201,7 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
     // Constructor
     pub fn new(domain: &MCDomain<T>, num_groups: usize, flux_replications: usize) -> Self {
         let mut task = Vec::with_capacity(flux_replications);
-        (0..flux_replications)
-            .into_iter()
-            .for_each(|_| task.push(ScalarFluxTask::new(domain, num_groups)));
+        (0..flux_replications).for_each(|_| task.push(ScalarFluxTask::new(domain, num_groups)));
         Self { task }
     }
 }
@@ -291,11 +283,9 @@ impl<T: CustomFloat> Tallies<T> {
                     .reserve(self.num_balance_replications as usize);
             }
 
-            (0..self.num_balance_replications)
-                .into_iter()
-                .for_each(|_| {
-                    self.balance_task.push(Balance::default());
-                });
+            (0..self.num_balance_replications).for_each(|_| {
+                self.balance_task.push(Balance::default());
+            });
         }
 
         // Initialize the cell tallies
@@ -304,7 +294,7 @@ impl<T: CustomFloat> Tallies<T> {
                 self.cell_tally_domain.reserve(domain.len());
             }
 
-            (0..domain.len()).into_iter().for_each(|domain_idx| {
+            (0..domain.len()).for_each(|domain_idx| {
                 self.cell_tally_domain.push(CellTallyDomain::new(
                     &domain[domain_idx],
                     self.num_cell_tally_replications as usize,
@@ -318,7 +308,7 @@ impl<T: CustomFloat> Tallies<T> {
                 self.scalar_flux_domain.reserve(domain.len());
             }
 
-            (0..domain.len()).into_iter().for_each(|domain_idx| {
+            (0..domain.len()).for_each(|domain_idx| {
                 self.scalar_flux_domain.push(ScalarFluxDomain::new(
                     &domain[domain_idx],
                     num_energy_groups,
@@ -331,13 +321,11 @@ impl<T: CustomFloat> Tallies<T> {
     /// Sums the task-level data. This is used when replications
     /// is active.
     pub fn sum_tasks(&mut self) {
-        (1..self.num_balance_replications)
-            .into_iter()
-            .for_each(|rep_idx| {
-                let bal = self.balance_task[rep_idx as usize].clone(); // is there a cheaper way?
-                self.balance_task[0].add(&bal);
-                self.balance_task[rep_idx as usize].reset();
-            });
+        (1..self.num_balance_replications).for_each(|rep_idx| {
+            let bal = self.balance_task[rep_idx as usize].clone(); // is there a cheaper way?
+            self.balance_task[0].add(&bal);
+            self.balance_task[rep_idx as usize].reset();
+        });
     }
 
     /// End-of-simulation routine that updates its own data and other structures'.
@@ -350,42 +338,33 @@ impl<T: CustomFloat> Tallies<T> {
         self.balance_cumulative.add(&self.balance_task[0]);
 
         let new_start: u64 = self.balance_task[0].end;
-        (0..self.balance_task.len())
-            .into_iter()
-            .for_each(|balance_idx| {
-                self.balance_task[balance_idx].reset();
-            });
+        (0..self.balance_task.len()).for_each(|balance_idx| {
+            self.balance_task[balance_idx].reset();
+        });
         self.balance_task[0].start = new_start;
 
-        (0..self.scalar_flux_domain.len())
-            .into_iter()
-            .for_each(|domain_idx| {
-                // Sum on replicated cell tallies and resets them
-                (1..self.num_cell_tally_replications)
-                    .into_iter()
-                    .for_each(|rep_idx| {
-                        let val = self.cell_tally_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
-                        self.cell_tally_domain[domain_idx].task[0].add(&val);
-                        self.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
-                    });
-
-                // Sum on replciated scalar flux tallies and resets them
-                (1..self.num_flux_replications)
-                    .into_iter()
-                    .for_each(|rep_idx| {
-                        let val =
-                            self.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
-                        self.scalar_flux_domain[domain_idx].task[0].add(&val);
-                        self.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
-                    });
-
-                if mcco.params.simulation_params.coral_benchmark {
-                    self.fluence
-                        .compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
-                }
-                self.cell_tally_domain[domain_idx].task[0].reset();
-                self.scalar_flux_domain[domain_idx].task[0].reset();
+        (0..self.scalar_flux_domain.len()).for_each(|domain_idx| {
+            // Sum on replicated cell tallies and resets them
+            (1..self.num_cell_tally_replications).for_each(|rep_idx| {
+                let val = self.cell_tally_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                self.cell_tally_domain[domain_idx].task[0].add(&val);
+                self.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
             });
+
+            // Sum on replciated scalar flux tallies and resets them
+            (1..self.num_flux_replications).for_each(|rep_idx| {
+                let val = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                self.scalar_flux_domain[domain_idx].task[0].add(&val);
+                self.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
+            });
+
+            if mcco.params.simulation_params.coral_benchmark {
+                self.fluence
+                    .compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
+            }
+            self.cell_tally_domain[domain_idx].task[0].reset();
+            self.scalar_flux_domain[domain_idx].task[0].reset();
+        });
         self.spectrum.update_spectrum(mcco);
     }
 
@@ -434,23 +413,21 @@ impl<T: CustomFloat> Tallies<T> {
         // single threaded for now so this should cover all
         // actual hell loop
         let n_domain = self.scalar_flux_domain.len();
-        (0..n_domain).into_iter().for_each(|domain_idx| {
-            (0..self.num_flux_replications)
-                .into_iter()
-                .for_each(|rep_idx| {
-                    let n_cells = self.scalar_flux_domain[domain_idx].task[rep_idx as usize]
-                        .cell
+        (0..n_domain).for_each(|domain_idx| {
+            (0..self.num_flux_replications).for_each(|rep_idx| {
+                let n_cells = self.scalar_flux_domain[domain_idx].task[rep_idx as usize]
+                    .cell
+                    .len();
+                (0..n_cells).for_each(|cell_idx| {
+                    let n_groups = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
+                        [cell_idx]
                         .len();
-                    (0..n_cells).into_iter().for_each(|cell_idx| {
-                        let n_groups = self.scalar_flux_domain[domain_idx].task[rep_idx as usize]
-                            .cell[cell_idx]
-                            .len();
-                        (0..n_groups).into_iter().for_each(|group_idx| {
-                            sum += self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
-                                [cell_idx][group_idx];
-                        })
+                    (0..n_groups).for_each(|group_idx| {
+                        sum += self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
+                            [cell_idx][group_idx];
                     })
                 })
+            })
         });
 
         sum
