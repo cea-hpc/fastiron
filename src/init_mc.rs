@@ -43,7 +43,6 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let energy_high: T = params.simulation_params.e_max;
     mcco.nuclear_data =
         NuclearData::new(params.simulation_params.n_groups, energy_low, energy_high);
-    //mcco.material_database = MaterialDatabase::default(); // will already be done in the mcco constructor
 
     let mut cross_section: HashMap<String, Polynomial<T>> = Default::default();
     for xs_params in params.cross_section_params.values() {
@@ -125,7 +124,7 @@ fn consistency_check<T: CustomFloat>(
                         );
                     }
                     let adjacent = ff.subfacet.adjacent;
-                    // These can be none e.g. if the current is on the border of the problem
+                    // These can be none e.g. if the current cell is on the border of the problem
                     if adjacent.domain.is_some()
                         & adjacent.cell.is_some()
                         & adjacent.facet.is_some()
@@ -197,19 +196,6 @@ fn initialize_centers_rand<T: CustomFloat>(
     centers
 }
 
-/*
-fn initialize_centers_grid<T: Float>(
-    lx: T,
-    ly: T,
-    lz: T,
-    x_dom: usize,
-    y_dom: usize,
-    z_dom: usize,
-) -> Vec<MCVector<T>> {
-    todo!()
-}
-*/
-
 fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
     println!("n_energy_groups: {}", params.simulation_params.n_groups);
@@ -223,9 +209,6 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
     // fixed value for now, this is mpi related so it should be deleted
     // these values may be somewhat equivalent to no MPI usage?
-    //let x_dom: usize = 0;
-    //let y_dom: usize = 0;
-    //let z_dom: usize = 0;
     let n_ranks: usize = 1;
     let n_domains_per_rank = 4; // why 4 in original code?
     let my_rank = 0;
@@ -253,7 +236,6 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
         // replace the send call originally in build_cell_idx_map
         for (remote_domain_gid, cell_gid) in &remote_cells {
-            //let target_domain_gid = comm.partition[mesh_p_idx].nbr_domains[*remote_domain_idx];
             let cell_to_send = *comm.partition[mesh_p_idx]
                 .cell_info_map
                 .get(cell_gid)
