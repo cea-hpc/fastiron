@@ -247,27 +247,25 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
     let mut comm: CommObject = CommObject::new(&partition);
     // indexing should be coherent since we cloned partition in comm's construction
-    partition
-        .iter_mut()
-        .enumerate()
-        .for_each(|(mesh_p_idx, mesh_p)| {
+    (0..comm.partition.len())
+        .into_iter()
+        .for_each(|mesh_p_idx| {
             let remote_cells =
                 comm.partition[mesh_p_idx].build_mesh_partition(&global_grid, &domain_centers);
 
             // replace the send call originally in build_cell_idx_map
-            for (remote_domain_idx, cell_gid) in &remote_cells {
-                let target_domain_gid = comm.partition[mesh_p_idx].nbr_domains[*remote_domain_idx];
+            for (remote_domain_gid, cell_gid) in &remote_cells {
+                //let target_domain_gid = comm.partition[mesh_p_idx].nbr_domains[*remote_domain_idx];
                 let cell_to_send = *comm.partition[mesh_p_idx]
                     .cell_info_map
                     .get(cell_gid)
                     .unwrap();
-                let target_partition = &mut comm.partition[comm.gid_to_idx[target_domain_gid]];
+                let target_partition = &mut comm.partition[comm.gid_to_idx[*remote_domain_gid]];
                 assert!(cell_to_send.domain_index.is_some());
                 assert!(cell_to_send.cell_index.is_some());
                 target_partition
                     .cell_info_map
-                    .entry(*cell_gid)
-                    .or_insert(cell_to_send);
+                    .insert(*cell_gid, cell_to_send);
             }
         });
 

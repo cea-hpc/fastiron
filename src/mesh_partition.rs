@@ -93,9 +93,10 @@ impl MeshPartition {
             });
 
             if domain == self.domain_gid {
+                // if current cell is in domain, check neighbor
                 Self::add_nbrs_to_flood(cell_idx, grid, &mut flood_queue, &mut wet_cells);
             } else if !self.nbr_domains.contains(&domain) {
-                // identify remote domains
+                // else, keep track of neighbor domains
                 self.nbr_domains.push(domain);
             }
         }
@@ -109,13 +110,10 @@ impl MeshPartition {
         let mut remote_cells: Vec<(usize, usize)> = Vec::new();
 
         let mut n_local_cells: usize = 0;
-        // init a map
-        let mut remote_domain_map: HashMap<usize, usize> = Default::default();
-        (0..self.nbr_domains.len()).into_iter().for_each(|ii| {
-            remote_domain_map.insert(self.nbr_domains[ii], ii);
-        });
 
-        for cell_info in self.cell_info_map.values_mut() {
+        let read_map = self.cell_info_map.clone();
+
+        for (cell_gid, cell_info) in &mut self.cell_info_map {
             let domain_gid: usize = cell_info.domain_gid.unwrap();
             if domain_gid == self.domain_gid {
                 // local cell
@@ -123,15 +121,7 @@ impl MeshPartition {
                 n_local_cells += 1;
                 cell_info.domain_index = Some(self.domain_index);
                 cell_info.foreman = Some(self.foreman);
-            }
-        }
-
-        let read_map = self.cell_info_map.clone();
-
-        for (cell_gid, cell_info) in &self.cell_info_map {
-            let domain_gid: usize = cell_info.domain_gid.unwrap();
-            if domain_gid != self.domain_gid {
-                let remote_n_idx = remote_domain_map.get(&domain_gid).unwrap();
+            } else {
                 let face_nbr = grid.get_face_nbr_gids(*cell_gid);
 
                 for j_cell_gid in face_nbr {
@@ -140,19 +130,19 @@ impl MeshPartition {
                             continue;
                         }
                         // replace the update to sendSet
-                        //comm.add_to_send((*remote_n_idx, j_cell_gid));
-                        // technically should check if its already here because
-                        // the original code uses sets
-                        if !remote_cells.contains(&(*remote_n_idx, j_cell_gid)) {
-                            remote_cells.push((*remote_n_idx, j_cell_gid));
+                        if !remote_cells.contains(&(domain_gid, j_cell_gid)) {
+                            remote_cells.push((domain_gid, j_cell_gid));
                         }
                     }
                 }
             }
         }
 
-        // replace comm.exchange
-        //comm.send(&mut self.cell_info_map, &self.nbr_domains)
+        // processing of the return value replaces comm.exchange
+        // remote cells are the cells of the CURRENT partition that
+        // are neighbors to the neighbor partition
+        // hence they are supposed to be inserted in the corresponding
+        // neighbor partition as they are (they contain correct info).
         remote_cells
     }
 
@@ -178,6 +168,78 @@ impl MeshPartition {
                         wet_cells.push(nbr_idx);
                     }
                 });
+            });
+        });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{global_fcc_grid::GlobalFccGrid, mc::mc_vector::MCVector};
+
+    use super::MeshPartition;
+
+    #[test]
+    fn partition_building() {
+        // simple grid 2*2*2 grid, each cell dim is 1
+        let grid = GlobalFccGrid::new(2, 2, 2, 2.0, 2.0, 2.0);
+        // 2 symetrical centers
+        let c1 = MCVector {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+        let c2 = MCVector {
+            x: 2.0,
+            y: 2.0,
+            z: 2.0,
+        };
+        let centers = vec![c1, c2];
+        let domain_gids: Vec<usize> = vec![0, 1];
+        let mut partition: Vec<MeshPartition> = Vec::with_capacity(centers.len());
+        domain_gids.iter().for_each(|ii| {
+            partition.push(MeshPartition::new(*ii, *ii, 0));
+        });
+
+        (0..partition.len()).for_each(|part_idx| {
+            let remote_cells = partition[part_idx].build_mesh_partition(&grid, &centers);
+            // only 2 domains, we can manually process those; gids and indexes are coherent
+            println!("{} remote cells", remote_cells.len());
+            // remote cells are a special case where we want to overwrite the target map's entry
+            remote_cells
+                .iter()
+                .for_each(|(remote_domain_gid, cell_gid)| {
+                    let cell_to_insert = partition[part_idx].cell_info_map[cell_gid];
+                    partition[*remote_domain_gid]
+                        .cell_info_map
+                        .insert(*cell_gid, cell_to_insert);
+
+                    println!("remote domain: {remote_domain_gid}");
+                    println!("cell (gid {cell_gid}): {cell_to_insert:#?}");
+                });
+
+            println!("{:#?}", partition[part_idx]);
+            println!();
+        });
+
+        // TODO: these tests are wrong, only the belonging and neighboring cells are initialized
+        // TODO: is there away to test this or remove non neighboring cells?
+        // for this simple case, non neighboring cell are gid 0 in domain 1 and
+        // gid 7 in domain 0
+        partition.iter().for_each(|part| {
+            part.cell_info_map.iter().for_each(|(cell_gid, cell_info)| {
+                if ((*cell_gid == 0) & (part.domain_gid == 1))
+                    || ((*cell_gid == 7) & (part.domain_gid == 0))
+                {
+                    assert!(cell_info.cell_index.is_none());
+                    assert!((cell_info.domain_index.is_none()));
+                    assert!((cell_info.foreman.is_none()));
+                    return;
+                }
+                assert!((cell_info.domain_gid.is_some()));
+                assert!((cell_info.cell_index.is_some()));
+                assert!((cell_info.domain_index.is_some()));
+                assert!((cell_info.foreman.is_some()));
             });
         });
     }
