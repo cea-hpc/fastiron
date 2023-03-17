@@ -40,6 +40,11 @@ impl<T: CustomFloat> ParticleVault<T> {
         self.particles.iter().filter(|pp| pp.is_some()).count()
     }
 
+    /// Returns the capacity of the vault, i.e. the length of the internal storage vector.
+    pub fn capacity(&self) -> usize {
+        self.particles.len()
+    }
+
     /// Add all particles of a second vault into this one.
     /// Second vault is left untouched.
     pub fn append(&mut self, vault2: &ParticleVault<T>) {
@@ -102,7 +107,7 @@ impl<T: CustomFloat> ParticleVault<T> {
     /// Put a particle into the vault, casting it into a [MCBaseParticle].
     /// The particle is pushed at the first empty space found, not necessarily after
     /// the last non-empty space.
-    /// Fails if the vault has no empty space left (i.e. None value).
+    /// Fails if the vault has no empty space left (i.e. no None value).
     /// Has an atomic increment in the original code.
     pub fn push_particle(&mut self, particle: MCParticle<T>) {
         let insert_idx = self
@@ -116,7 +121,7 @@ impl<T: CustomFloat> ParticleVault<T> {
 
     /// Put a base particle into the vault. The particle is pushed at the first 
     /// empty space found, not necessarily after the last non-empty space.
-    /// Fails if the vault has no empty space left (i.e. None value).
+    /// Fails if the vault has no empty space left (i.e. no None value).
     pub fn push_base_particle(&mut self, particle: MCBaseParticle<T>) {
         let insert_idx = self
             .particles
@@ -187,6 +192,9 @@ impl<T: CustomFloat> ParticleVault<T> {
 
     /// Put a particle into the vault, at a specific index.
     pub fn put_particle(&mut self, particle: MCParticle<T>, index: usize) {
+        if self.particles[index].is_some() {
+            println!("WARNING: overwriting particle at index {index}");
+        }
         self.particles[index] = Some(MCBaseParticle::new(&particle)); // will panic if out of bounds
     }
 
@@ -242,9 +250,12 @@ mod tests {
     fn push() {
         let mut vault = ParticleVault::<f64>::default();
         assert_eq!(vault.size(), 0);
+        assert_eq!(vault.capacity(), 0);
         assert!(vault.pop_particle().is_none());
 
         vault.reserve(1); // vault has the capacity to receive the particle
+        assert_eq!(vault.size(), 0);
+        assert_eq!(vault.capacity(), 1);
         vault.push_particle(MCParticle::<f64>::default());
 
         assert!(vault.size() > 0);
