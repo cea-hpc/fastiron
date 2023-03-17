@@ -54,7 +54,7 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
         let mut normal_value: T = zero();
         let one: T = FromPrimitive::from_f32(1.0).unwrap();
 
-        (0..n_groups).into_iter().for_each(|ii| {
+        (0..n_groups).for_each(|ii| {
             let factor: T = FromPrimitive::from_f32(2.0).unwrap();
             let energy: T = (energies[ii] + energies[ii + 1]) / factor;
             // 10^(Poly(log10(energy)))
@@ -67,7 +67,7 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
         });
 
         let scale = reaction_cross_section / normal_value;
-        (0..n_groups).into_iter().for_each(|ii| {
+        (0..n_groups).for_each(|ii| {
             xsection[ii] *= scale;
         });
 
@@ -113,7 +113,7 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
                 let num_particle_out = (self.nu_bar + rng_sample(seed)).to_usize().unwrap();
                 energy_out.extend(vec![zero(); num_particle_out].iter());
                 angle_out.extend(vec![zero(); num_particle_out].iter());
-                (0..num_particle_out).into_iter().for_each(|ii| {
+                (0..num_particle_out).for_each(|ii| {
                     let mut rand_n: T = rng_sample(seed);
                     rand_n = (rand_n + one) / two;
                     let twenty: T = FromPrimitive::from_f32(20.0).unwrap();
@@ -185,7 +185,7 @@ impl<T: CustomFloat> NuclearData<T> {
         let log_high: T = energy_high.ln();
         let delta = (log_high - log_low) / length;
 
-        (1..num_groups).into_iter().for_each(|ii| {
+        (1..num_groups).for_each(|ii| {
             let step = FromPrimitive::from_usize(ii).unwrap();
             let log_value: T = log_low + delta * step;
             energies[ii] = log_value.exp();
@@ -245,7 +245,7 @@ impl<T: CustomFloat> NuclearData<T> {
         self.isotopes[n - 1][0].reactions.reserve(n_reactions);
         //}
 
-        (0..n_reactions).into_iter().for_each(|ii| match ii % 3 {
+        (0..n_reactions).for_each(|ii| match ii % 3 {
             0 => self.isotopes[n - 1][0].add_reaction(
                 ReactionType::Scatter,
                 nu_bar,
@@ -312,7 +312,7 @@ impl<T: CustomFloat> NuclearData<T> {
         let num_reactions = self.isotopes[isotope_index][0].reactions.len();
         let mut total_xsection: T = zero();
 
-        (0..num_reactions).into_iter().for_each(|r_idx| {
+        (0..num_reactions).for_each(|r_idx| {
             total_xsection +=
                 self.isotopes[isotope_index][0].reactions[r_idx].get_cross_section(group);
         });

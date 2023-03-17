@@ -4,11 +4,11 @@ use std::collections::HashMap;
 pub fn map_behavior() {
     let mut map: HashMap<usize, usize> = Default::default();
     let mut complementary_map: HashMap<usize, usize> = Default::default();
-    (0..10).into_iter().for_each(|jj| {
-        (0..5).into_iter().for_each(|ii| {
+    (0..10).for_each(|jj| {
+        (0..5).for_each(|ii| {
             map.insert(jj * 12 + ii, jj * 12 + ii);
         });
-        (5..12).into_iter().for_each(|ii| {
+        (5..12).for_each(|ii| {
             complementary_map.insert(jj * 12 + ii, jj * 12 + ii);
         });
         //assert_eq!(map.len(), 5);

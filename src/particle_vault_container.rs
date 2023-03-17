@@ -34,7 +34,7 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
             vec![ParticleVault::default(); num_vaults];
         let mut processed_vaults: Vec<ParticleVault<T>> =
             vec![ParticleVault::default(); num_vaults];
-        (0..num_vaults).into_iter().for_each(|ii| {
+        (0..num_vaults).for_each(|ii| {
             processing_vaults[ii].reserve(vault_size);
             processed_vaults[ii].reserve(vault_size);
         });
