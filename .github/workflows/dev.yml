@@ -1,10 +1,6 @@
 name: DevJobs
 
-on:
-  push:
-    branches: [ "main", "dev" ]
-  pull_request:
-  workflow_dispatch:
+on: [push, pull_request, workflow_dispatch]
 
 env:
   CARGO_TERM_COLOR: always
