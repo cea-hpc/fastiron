@@ -213,6 +213,7 @@ mod tests {
                     println!("cell: {:#?}", part.cell_info_map[cell_gid]);
                 });
             println!("{part:#?}");
+            println!();
         });
         // Are uninitialized cells still present in the map in QS ?
         partition.iter().for_each(|part| {
