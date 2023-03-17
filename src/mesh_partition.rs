@@ -55,7 +55,6 @@ impl MeshPartition {
         &mut self,
         grid: &GlobalFccGrid<T>,
         centers: &[MCVector<T>],
-        //comm: &mut CommObject,
     ) -> Vec<(usize, usize)> {
         self.assign_cells_to_domain(centers, grid);
 
@@ -67,7 +66,6 @@ impl MeshPartition {
         &mut self,
         domain_center: &[MCVector<T>],
         grid: &GlobalFccGrid<T>,
-        //comm: &CommObject,
     ) {
         let mut assigner = GridAssignmentObject::new(domain_center);
         let mut flood_queue: VecDeque<usize> = VecDeque::new();
@@ -87,8 +85,6 @@ impl MeshPartition {
             // insert only if the key is absent; in c++ there's no overwriting of keys
             self.cell_info_map.entry(cell_idx).or_insert(CellInfo {
                 domain_gid: Some(domain),
-                //foreman: Some(self.foreman),
-                //domain_index: Some(comm.gid_to_idx[domain]),
                 ..Default::default()
             });
 
@@ -105,7 +101,6 @@ impl MeshPartition {
     fn build_cell_idx_map<T: CustomFloat>(
         &mut self,
         grid: &GlobalFccGrid<T>,
-        //comm: &mut CommObject,
     ) -> Vec<(usize, usize)> {
         let mut remote_cells: Vec<(usize, usize)> = Vec::new();
 
@@ -154,9 +149,9 @@ impl MeshPartition {
     ) {
         let tt: Tuple3 = grid.cell_idx_to_tuple(cell_idx);
 
-        (-1..2).into_iter().for_each(|ii: i32| {
-            (-1..2).into_iter().for_each(|jj: i32| {
-                (-1..2).into_iter().for_each(|kk: i32| {
+        (-1..2).for_each(|ii: i32| {
+            (-1..2).for_each(|jj: i32| {
+                (-1..2).for_each(|kk: i32| {
                     if (ii == 0) & (jj == 0) & (kk == 0) {
                         return;
                     }

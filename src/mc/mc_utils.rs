@@ -47,13 +47,11 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let time_step = mcco.time_info.time_step;
 
     let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];
-    (0..mcco.material_database.mat.len())
-        .into_iter()
-        .for_each(|mat_idx| {
-            let name = &mcco.material_database.mat[mat_idx].name;
-            let sr = mcco.params.material_params[name].source_rate;
-            source_rate[mat_idx] = sr;
-        });
+    (0..mcco.material_database.mat.len()).for_each(|mat_idx| {
+        let name = &mcco.material_database.mat[mat_idx].name;
+        let sr = mcco.params.material_params[name].source_rate;
+        source_rate[mat_idx] = sr;
+    });
 
     let mut total_weight_particles: T = zero();
     mcco.domain.iter().for_each(|dom| {
@@ -102,7 +100,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                     cell_source_tally[cell_idx] = cell.source_tally;
                     // create cell_n_particles and add them to the vaults
                     //println!("creating {cell_n_particles} particles in cell {cell_idx}");
-                    (0..cell_n_particles).into_iter().for_each(|_ii| {
+                    (0..cell_n_particles).for_each(|_ii| {
                         let mut particle: MCParticle<T> = MCParticle::default();
                         // atomic in original code
                         let mut rand_n_seed = cell_source_tally[cell_idx] as u64;
@@ -153,7 +151,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                     });
                 });
             // update source_tally
-            (0..dom.cell_state.len()).into_iter().for_each(|cell_idx| {
+            (0..dom.cell_state.len()).for_each(|cell_idx| {
                 dom.cell_state[cell_idx].source_tally = cell_source_tally[cell_idx];
             });
         });

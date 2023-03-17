@@ -140,7 +140,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
 
         let update_function = |vault: &ParticleVault<T>, spectrum: &mut [u64]| {
             // We need to iterate on the index in order to access all particles, even invalid ones
-            (0..vault.size()).into_iter().for_each(|particle_idx| {
+            (0..vault.size()).for_each(|particle_idx| {
                 // load particle & update energy group
                 let mut pp = load_particle(vault, particle_idx, self.time_info.time_step).unwrap();
                 pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
@@ -174,45 +174,35 @@ impl<T: CustomFloat> MonteCarlo<T> {
             .add(&self.tallies.balance_task[0]);
 
         let new_start: u64 = self.tallies.balance_task[0].end;
-        (0..self.tallies.balance_task.len())
-            .into_iter()
-            .for_each(|balance_idx| {
-                self.tallies.balance_task[balance_idx].reset();
-            });
+        (0..self.tallies.balance_task.len()).for_each(|balance_idx| {
+            self.tallies.balance_task[balance_idx].reset();
+        });
         self.tallies.balance_task[0].start = new_start;
 
-        (0..self.tallies.scalar_flux_domain.len())
-            .into_iter()
-            .for_each(|domain_idx| {
-                // Sum on replicated cell tallies and resets them
-                (1..self.tallies.num_cell_tally_replications)
-                    .into_iter()
-                    .for_each(|rep_idx| {
-                        let val = self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize]
-                            .clone(); // is there a cheaper way?
-                        self.tallies.cell_tally_domain[domain_idx].task[0].add(&val);
-                        self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
-                    });
-
-                // Sum on replciated scalar flux tallies and resets them
-                (1..self.tallies.num_flux_replications)
-                    .into_iter()
-                    .for_each(|rep_idx| {
-                        let val = self.tallies.scalar_flux_domain[domain_idx].task
-                            [rep_idx as usize]
-                            .clone(); // is there a cheaper way?
-                        self.tallies.scalar_flux_domain[domain_idx].task[0].add(&val);
-                        self.tallies.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
-                    });
-
-                if self.params.simulation_params.coral_benchmark {
-                    self.tallies
-                        .fluence
-                        .compute(domain_idx, &self.tallies.scalar_flux_domain[domain_idx]);
-                }
-                self.tallies.cell_tally_domain[domain_idx].task[0].reset();
-                self.tallies.scalar_flux_domain[domain_idx].task[0].reset();
+        (0..self.tallies.scalar_flux_domain.len()).for_each(|domain_idx| {
+            // Sum on replicated cell tallies and resets them
+            (1..self.tallies.num_cell_tally_replications).for_each(|rep_idx| {
+                let val = self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                self.tallies.cell_tally_domain[domain_idx].task[0].add(&val);
+                self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
             });
+
+            // Sum on replciated scalar flux tallies and resets them
+            (1..self.tallies.num_flux_replications).for_each(|rep_idx| {
+                let val =
+                    self.tallies.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                self.tallies.scalar_flux_domain[domain_idx].task[0].add(&val);
+                self.tallies.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
+            });
+
+            if self.params.simulation_params.coral_benchmark {
+                self.tallies
+                    .fluence
+                    .compute(domain_idx, &self.tallies.scalar_flux_domain[domain_idx]);
+            }
+            self.tallies.cell_tally_domain[domain_idx].task[0].reset();
+            self.tallies.scalar_flux_domain[domain_idx].task[0].reset();
+        });
         self.update_spectrum();
     }
 }

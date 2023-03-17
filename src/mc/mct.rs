@@ -120,7 +120,7 @@ pub fn cell_position_3dg<T: CustomFloat>(domain: &MCDomain<T>, cell_idx: usize) 
 
     let n_points: usize = domain.mesh.cell_connectivity[cell_idx].point.len();
 
-    (0..n_points).into_iter().for_each(|point_idx| {
+    (0..n_points).for_each(|point_idx| {
         let point = domain.mesh.cell_connectivity[cell_idx].point[point_idx];
         coordinate += domain.mesh.node[point];
     });
@@ -191,7 +191,7 @@ fn mct_nf_3dg<T: CustomFloat>(
 
         let mut distance_to_facet: [MCDistanceToFacet<T>; 24] = [MCDistanceToFacet::default(); 24]; // why 24? == numfacetpercell?
 
-        (0..num_facets_per_cell).into_iter().for_each(|facet_idx| {
+        (0..num_facets_per_cell).for_each(|facet_idx| {
             distance_to_facet[facet_idx].distance = huge_f;
 
             let plane = &domain.mesh.cell_geometry[location.cell.unwrap()][facet_idx];
@@ -279,7 +279,7 @@ fn mct_nf_compute_nearest<T: CustomFloat>(
     };
 
     // determine the nearest facet
-    (0..num_facets_per_cell).into_iter().for_each(|facet_idx| {
+    (0..num_facets_per_cell).for_each(|facet_idx| {
         if distance_to_facet[facet_idx].distance > zero() {
             if distance_to_facet[facet_idx].distance <= nearest_facet.distance_to_facet {
                 nearest_facet.distance_to_facet = distance_to_facet[facet_idx].distance;
@@ -354,7 +354,7 @@ fn mct_facet_points_3dg<T: CustomFloat>(
 ) -> [usize; N_POINTS_PER_FACET] {
     let mut res: [usize; N_POINTS_PER_FACET] = [0; N_POINTS_PER_FACET];
 
-    (0..N_POINTS_PER_FACET).into_iter().for_each(|point_idx| {
+    (0..N_POINTS_PER_FACET).for_each(|point_idx| {
         res[point_idx] = domain.mesh.cell_connectivity[cell].facet[facet].point[point_idx].unwrap();
     });
 

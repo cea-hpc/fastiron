@@ -160,7 +160,7 @@ pub fn outcome<T: CustomFloat>(
 fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
     let mut min_val: T = distance[0];
     let mut min_idx: usize = 0;
-    (0..distance.len()).into_iter().for_each(|idx| {
+    (0..distance.len()).for_each(|idx| {
         if distance[idx] < min_val {
             min_idx = idx;
             min_val = distance[idx];

@@ -15,7 +15,7 @@ fn add_vectors(times: usize) {
         y: 4.0,
         z: 6.0,
     };
-    (0..times).into_iter().for_each(|_| {
+    (0..times).for_each(|_| {
         let res = uu + vv;
         black_box(res);
     });

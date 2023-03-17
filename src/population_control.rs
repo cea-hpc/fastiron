@@ -51,58 +51,53 @@ fn population_control_guts<T: CustomFloat>(
     let mut fill_vault_idx = current_n_particles / vault_size;
 
     // march backwards through particles; might be unecessary since we use vectors?
-    (0..current_n_particles)
-        .into_iter()
-        .rev()
-        .for_each(|particle_idx| {
-            //println!("particle_idx: {particle_idx}");
-            //println!("vault_size: {vault_size}");
-            let vault_idx = particle_idx / vault_size;
-            //let task_processing_vault = vault.get_task_processing_vault(vault_idx);
-            let task_particle_idx = particle_idx % vault_size;
+    (0..current_n_particles).rev().for_each(|particle_idx| {
+        //println!("particle_idx: {particle_idx}");
+        //println!("vault_size: {vault_size}");
+        let vault_idx = particle_idx / vault_size;
+        //let task_processing_vault = vault.get_task_processing_vault(vault_idx);
+        let task_particle_idx = particle_idx % vault_size;
 
-            // since we cant pass around a mutable reference to the inside of an option,
-            // we clone the particle and overwrite it.
-            if let Some(mut pp) =
-                vault.get_task_processing_vault(vault_idx)[task_particle_idx].clone()
-            {
-                let rand_n: T = rng_sample(&mut pp.random_number_seed);
-                if split_rr_factor < one() {
-                    let task_processing_vault = vault.get_task_processing_vault(vault_idx);
-                    if rand_n > split_rr_factor {
-                        task_processing_vault.erase_swap_particles(task_particle_idx);
-                        task_balance.rr += 1;
-                    } else {
-                        // update particle & overwrite old version
-                        pp.weight /= split_rr_factor;
-                        task_processing_vault[task_particle_idx] = Some(pp);
-                    }
-                } else if split_rr_factor > one() {
-                    let mut split_factor = split_rr_factor.floor();
-                    if rand_n > split_rr_factor - split_factor {
-                        split_factor -= one();
-                    }
+        // since we cant pass around a mutable reference to the inside of an option,
+        // we clone the particle and overwrite it.
+        if let Some(mut pp) = vault.get_task_processing_vault(vault_idx)[task_particle_idx].clone()
+        {
+            let rand_n: T = rng_sample(&mut pp.random_number_seed);
+            if split_rr_factor < one() {
+                let task_processing_vault = vault.get_task_processing_vault(vault_idx);
+                if rand_n > split_rr_factor {
+                    task_processing_vault.erase_swap_particles(task_particle_idx);
+                    task_balance.rr += 1;
+                } else {
+                    // update particle & overwrite old version
                     pp.weight /= split_rr_factor;
-
-                    // create child particle & add them to vault
-                    let n_split: usize = split_factor.to_usize().unwrap();
-                    (0..n_split).into_iter().for_each(|_| {
-                        let mut split_pp = pp.clone();
-                        task_balance.split += 1;
-                        split_pp.random_number_seed =
-                            spawn_rn_seed::<T>(&mut pp.random_number_seed);
-                        split_pp.identifier = split_pp.random_number_seed;
-                        // add to the vault
-                        vault.add_processing_particle(split_pp, &mut fill_vault_idx);
-                    });
-
-                    // add original back to the vault
-                    // No intermediate variable for the reference to the task processing vault
-                    // because we use a mut borrow in the interator above
-                    vault.get_task_processing_vault(vault_idx)[task_particle_idx] = Some(pp);
+                    task_processing_vault[task_particle_idx] = Some(pp);
                 }
+            } else if split_rr_factor > one() {
+                let mut split_factor = split_rr_factor.floor();
+                if rand_n > split_rr_factor - split_factor {
+                    split_factor -= one();
+                }
+                pp.weight /= split_rr_factor;
+
+                // create child particle & add them to vault
+                let n_split: usize = split_factor.to_usize().unwrap();
+                (0..n_split).for_each(|_| {
+                    let mut split_pp = pp.clone();
+                    task_balance.split += 1;
+                    split_pp.random_number_seed = spawn_rn_seed::<T>(&mut pp.random_number_seed);
+                    split_pp.identifier = split_pp.random_number_seed;
+                    // add to the vault
+                    vault.add_processing_particle(split_pp, &mut fill_vault_idx);
+                });
+
+                // add original back to the vault
+                // No intermediate variable for the reference to the task processing vault
+                // because we use a mut borrow in the interator above
+                vault.get_task_processing_vault(vault_idx)[task_particle_idx] = Some(pp);
             }
-        });
+        }
+    });
 }
 
 /// Play russian-roulette with low-weight particles relative
@@ -121,33 +116,30 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
         let weight_cutoff = low_weight_cutoff * source_particle_weight;
 
         // march backwards through particles; might be unecessary since we use vectors?
-        (0..current_n_particles)
-            .into_iter()
-            .rev()
-            .for_each(|particle_idx| {
-                let vault_idx = particle_idx / vault_size;
-                let task_particle_idx = if vault_idx == 0 {
-                    particle_idx
-                } else {
-                    particle_idx % vault_idx
-                };
+        (0..current_n_particles).rev().for_each(|particle_idx| {
+            let vault_idx = particle_idx / vault_size;
+            let task_particle_idx = if vault_idx == 0 {
+                particle_idx
+            } else {
+                particle_idx % vault_idx
+            };
 
-                let task_processing_vault = vault.get_task_processing_vault(vault_idx);
-                if let Some(mut pp) = task_processing_vault[task_particle_idx].clone() {
-                    if pp.weight < weight_cutoff {
-                        let rand_n: T = rng_sample(&mut pp.random_number_seed);
-                        if rand_n < l_weight_cutoff {
-                            // particle continues with an increased weight
-                            pp.weight /= l_weight_cutoff;
-                            task_processing_vault[task_particle_idx] = Some(pp);
-                        } else {
-                            // particle is killed
-                            task_processing_vault.invalidate_particle(task_particle_idx);
-                            task_balance.rr += 1;
-                        }
+            let task_processing_vault = vault.get_task_processing_vault(vault_idx);
+            if let Some(mut pp) = task_processing_vault[task_particle_idx].clone() {
+                if pp.weight < weight_cutoff {
+                    let rand_n: T = rng_sample(&mut pp.random_number_seed);
+                    if rand_n < l_weight_cutoff {
+                        // particle continues with an increased weight
+                        pp.weight /= l_weight_cutoff;
+                        task_processing_vault[task_particle_idx] = Some(pp);
+                    } else {
+                        // particle is killed
+                        task_processing_vault.invalidate_particle(task_particle_idx);
+                        task_balance.rr += 1;
                     }
                 }
-            });
+            }
+        });
         vault.collapse_processing();
     }
 }

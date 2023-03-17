@@ -6,16 +6,11 @@ use crate::{constants::CustomFloat, tallies::MCTallyEvent};
 
 use super::{mc_location::MCLocation, mc_particle::MCParticle, mc_vector::MCVector};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Species {
+    #[default]
     Unknown,
     Known, // \o/
-}
-
-impl Default for Species {
-    fn default() -> Self {
-        Species::Unknown
-    }
 }
 
 /// Structure used to represent a base particle, i.e. a fresh

@@ -88,7 +88,7 @@ impl<T: CustomFloat> MCMeshDomain<T> {
 
         // nbr_rank
         let mut nbr_rank: Vec<usize> = Vec::with_capacity(nbr_domain_gid.len());
-        (0..nbr_domain_gid.len()).into_iter().for_each(|ii| {
+        (0..nbr_domain_gid.len()).for_each(|ii| {
             nbr_rank.push(ddc.rank[nbr_domain_gid[ii]]);
         });
 
@@ -111,21 +111,19 @@ impl<T: CustomFloat> MCMeshDomain<T> {
         // cell_geometry
         let mut cell_geometry: Vec<MCFacetGeometryCell<T>> =
             vec![MCFacetGeometryCell::default(); cell_connectivity.len()];
-        (0..cell_connectivity.len())
-            .into_iter()
-            .for_each(|cell_idx| {
-                let n_facets = cell_connectivity[cell_idx].facet.len(); // TODO: remove and use const; same in array def
-                cell_geometry[cell_idx] = vec![MCGeneralPlane::default(); n_facets]; // replace MCFacetGeometryCell vec by array?
-                (0..n_facets).into_iter().for_each(|facet_idx| {
-                    let r0: MCVector<T> =
-                        node[cell_connectivity[cell_idx].facet[facet_idx].point[0].unwrap()];
-                    let r1: MCVector<T> =
-                        node[cell_connectivity[cell_idx].facet[facet_idx].point[1].unwrap()];
-                    let r2: MCVector<T> =
-                        node[cell_connectivity[cell_idx].facet[facet_idx].point[2].unwrap()];
-                    cell_geometry[cell_idx][facet_idx] = MCGeneralPlane::new(&r0, &r1, &r2);
-                });
+        (0..cell_connectivity.len()).for_each(|cell_idx| {
+            let n_facets = cell_connectivity[cell_idx].facet.len(); // TODO: remove and use const; same in array def
+            cell_geometry[cell_idx] = vec![MCGeneralPlane::default(); n_facets]; // replace MCFacetGeometryCell vec by array?
+            (0..n_facets).for_each(|facet_idx| {
+                let r0: MCVector<T> =
+                    node[cell_connectivity[cell_idx].facet[facet_idx].point[0].unwrap()];
+                let r1: MCVector<T> =
+                    node[cell_connectivity[cell_idx].facet[facet_idx].point[1].unwrap()];
+                let r2: MCVector<T> =
+                    node[cell_connectivity[cell_idx].facet[facet_idx].point[2].unwrap()];
+                cell_geometry[cell_idx][facet_idx] = MCGeneralPlane::new(&r0, &r1, &r2);
             });
+        });
 
         Self {
             domain_gid: mesh_partition.domain_gid,
@@ -169,7 +167,7 @@ impl<T: CustomFloat> MCDomain<T> {
 
         let num_energy_groups: usize = params.simulation_params.n_groups;
 
-        (0..mcdomain.cell_state.len()).into_iter().for_each(|ii| {
+        (0..mcdomain.cell_state.len()).for_each(|ii| {
             mcdomain.cell_state[ii].volume = mcdomain.cell_volume(ii);
 
             let rr = cell_position_3dg(&mcdomain, ii);
@@ -234,7 +232,7 @@ impl<T: CustomFloat> MCDomain<T> {
         let node = &self.mesh.node;
         let mut center: MCVector<T> = MCVector::default();
 
-        (0..cell.point.len()).into_iter().for_each(|ii| {
+        (0..cell.point.len()).for_each(|ii| {
             center += node[cell.point[ii]];
         });
         center /= FromPrimitive::from_usize(cell.point.len()).unwrap();
@@ -249,7 +247,7 @@ impl<T: CustomFloat> MCDomain<T> {
 
         let mut volume: T = zero();
 
-        (0..cell.facet.len()).into_iter().for_each(|facet_idx| {
+        (0..cell.facet.len()).for_each(|facet_idx| {
             let corners = &cell.facet[facet_idx].point;
             let aa: MCVector<T> = node[corners[0].unwrap()] - center;
             let bb: MCVector<T> = node[corners[1].unwrap()] - center;
@@ -279,12 +277,12 @@ fn bootstrap_node_map<T: CustomFloat>(
         // process
         let node_gids = grid.get_node_gids(*k);
         // corners first
-        (0..8).into_iter().for_each(|ii| {
+        (0..8).for_each(|ii| {
             let len = node_idx_map.len();
             node_idx_map.entry(node_gids[ii]).or_insert_with(|| len);
         });
         // faces later
-        (8..14).into_iter().for_each(|ii| {
+        (8..14).for_each(|ii| {
             let len = face_centers.len();
             face_centers.entry(node_gids[ii]).or_insert_with(|| len);
         });
@@ -322,7 +320,7 @@ fn build_cells<T: CustomFloat>(
 ) -> Vec<MCFacetAdjacencyCell> {
     // nbr_domain_idx[domain_gid] = local_nbr_idx
     let mut nbr_domain_idx: HashMap<usize, Option<usize>> = Default::default();
-    (0..nbr_domain.len()).into_iter().for_each(|ii| {
+    (0..nbr_domain.len()).for_each(|ii| {
         nbr_domain_idx.insert(nbr_domain[ii], Some(ii));
     });
     nbr_domain_idx.insert(partition.domain_gid, None);
@@ -341,14 +339,14 @@ fn build_cells<T: CustomFloat>(
 
             // nodes
             let node_gid = grid.get_node_gids(*cell_gid);
-            (0..new_cell.point.len()).into_iter().for_each(|ii| {
+            (0..new_cell.point.len()).for_each(|ii| {
                 new_cell.point[ii] = node_idx_map[&node_gid[ii]];
             });
 
             // faces
             let face_nbr = grid.get_face_nbr_gids(*cell_gid);
             let mut face_info = vec![FaceInfo::default(); 6];
-            (0..face_nbr.len()).into_iter().for_each(|ii| {
+            (0..face_nbr.len()).for_each(|ii| {
                 // faces
                 let face_cell_info = partition.cell_info_map[&face_nbr[ii]];
                 face_info[ii].cell_info = face_cell_info;
@@ -368,7 +366,7 @@ fn build_cells<T: CustomFloat>(
                 cell: cell_info.cell_index,
                 facet: None,
             };
-            (0..new_cell.facet.len()).into_iter().for_each(|ii| {
+            (0..new_cell.facet.len()).for_each(|ii| {
                 location.facet = Some(ii);
                 make_facet(
                     &mut new_cell.facet[ii],
