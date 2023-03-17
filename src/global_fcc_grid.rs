@@ -227,3 +227,17 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::GlobalFccGrid;
+
+    #[test]
+    fn snap_turtle() {
+        let grid = GlobalFccGrid::new(3, 3, 3, 9.0, 9.0, 9.0);
+        let t0: (i32, i32, i32) = (0, 2, 1); // in bounds
+        let t1: (i32, i32, i32) = (3, -1, -2); // out of bounds
+        assert_eq!(grid.snap_turtle(t0), (0, 2, 1));
+        assert_eq!(grid.snap_turtle(t1), (2, 0, 0));
+    }
+}
