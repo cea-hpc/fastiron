@@ -281,7 +281,7 @@ mod tests {
 
         let lx = 2.0;
         let ly = 3.0;
-        let lz = 4.0; 
+        let lz = 4.0;
         let center_per_cell = 5.0;
         let cell_per_length = (4.0 / (center_per_cell * lx * ly * lz)).cbrt();
         let nx = 1.0.max((lx * cell_per_length).floor());

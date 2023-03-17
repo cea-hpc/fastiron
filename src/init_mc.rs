@@ -251,12 +251,16 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         .iter_mut()
         .enumerate()
         .for_each(|(mesh_p_idx, mesh_p)| {
-            let remote_cells = comm.partition[mesh_p_idx].build_mesh_partition(&global_grid, &domain_centers);
+            let remote_cells =
+                comm.partition[mesh_p_idx].build_mesh_partition(&global_grid, &domain_centers);
 
             // replace the send call originally in build_cell_idx_map
             for (remote_domain_idx, cell_gid) in &remote_cells {
                 let target_domain_gid = comm.partition[mesh_p_idx].nbr_domains[*remote_domain_idx];
-                let cell_to_send = *comm.partition[mesh_p_idx].cell_info_map.get(cell_gid).unwrap();
+                let cell_to_send = *comm.partition[mesh_p_idx]
+                    .cell_info_map
+                    .get(cell_gid)
+                    .unwrap();
                 let target_partition = &mut comm.partition[comm.gid_to_idx[target_domain_gid]];
                 assert!(cell_to_send.domain_index.is_some());
                 assert!(cell_to_send.cell_index.is_some());

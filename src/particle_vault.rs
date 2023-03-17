@@ -119,7 +119,7 @@ impl<T: CustomFloat> ParticleVault<T> {
         self.particles[insert_idx] = Some(MCBaseParticle::new(&particle));
     }
 
-    /// Put a base particle into the vault. The particle is pushed at the first 
+    /// Put a base particle into the vault. The particle is pushed at the first
     /// empty space found, not necessarily after the last non-empty space.
     /// Fails if the vault has no empty space left (i.e. no None value).
     pub fn push_base_particle(&mut self, particle: MCBaseParticle<T>) {
@@ -243,8 +243,8 @@ impl<T: CustomFloat> core::ops::IndexMut<usize> for ParticleVault<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::default::Default;
     use super::*;
+    use std::default::Default;
 
     #[test]
     fn push() {
@@ -270,10 +270,9 @@ mod tests {
         assert_eq!(vault.size(), 0);
         assert!(vault.pop_particle().is_none());
 
-        //vault.reserve(1); 
+        //vault.reserve(1);
         // vault is initialized but no space has been reserved
         vault.push_particle(MCParticle::<f64>::default());
-
     }
 
     #[test]
