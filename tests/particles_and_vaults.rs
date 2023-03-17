@@ -105,7 +105,7 @@ fn erase_swap_particles() {
     };
     // vault is size 2, capacity 7
     assert_eq!(vault.size(), 2);
-    assert_eq!(vault.particles.len(), 7);
+    assert_eq!(vault.capacity(), 7);
 
     println!("before: {vault:#?}");
 
@@ -115,7 +115,7 @@ fn erase_swap_particles() {
 
     // vault should be size 1, capacity still 7
     assert_eq!(vault.size(), 1);
-    assert_eq!(vault.particles.len(), 7);
+    assert_eq!(vault.capacity(), 7);
     // At index 2 should be p2
     assert_eq!(vault.get_base_particle(2).unwrap().identifier, 406);
     // If we pop an element, we should have None since p1 was deleted

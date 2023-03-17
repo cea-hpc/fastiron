@@ -84,16 +84,14 @@ impl MeshPartition {
             let rr = grid.cell_center(cell_idx);
             let domain = assigner.nearest_center(rr);
 
-            // NEED TO INIT FOREMAN?
-            self.cell_info_map.insert(
-                cell_idx,
-                CellInfo {
-                    domain_gid: Some(domain),
-                    //foreman: Some(self.foreman),
-                    //domain_index: Some(comm.gid_to_idx[domain]),
-                    ..Default::default()
-                },
-            );
+            // insert only if the key is absent; in c++ there's no overwriting of keys
+            self.cell_info_map.entry(cell_idx).or_insert(CellInfo {
+                        domain_gid: Some(domain),
+                        //foreman: Some(self.foreman),
+                        //domain_index: Some(comm.gid_to_idx[domain]),
+                        ..Default::default()
+                    });
+            
 
             if domain == self.domain_gid {
                 Self::add_nbrs_to_flood(cell_idx, grid, &mut flood_queue, &mut wet_cells);
@@ -144,6 +142,8 @@ impl MeshPartition {
                         }
                         // replace the update to sendSet
                         //comm.add_to_send((*remote_n_idx, j_cell_gid));
+                        // technically should check if its already here because 
+                        // the original code uses sets
                         remote_cells.push((*remote_n_idx, j_cell_gid));
                     }
                 }
