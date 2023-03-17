@@ -1,4 +1,3 @@
-pub mod bulk_storage;
 pub mod collision_event;
 pub mod comm_object;
 pub mod constants;
