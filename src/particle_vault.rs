@@ -91,11 +91,9 @@ impl<T: CustomFloat> ParticleVault<T> {
             new.extend_from_slice(&v2_particles[..fill_size]);
             self.particles = new;
             vault2.clear();
-            (0..v2_particles.len() - fill_size)
-                .into_iter()
-                .for_each(|ii| {
-                    vault2.particles[ii] = v2_particles[fill_size + ii].clone();
-                });
+            (0..v2_particles.len() - fill_size).for_each(|ii| {
+                vault2.particles[ii] = v2_particles[fill_size + ii].clone();
+            });
         }
     }
 
