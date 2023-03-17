@@ -221,10 +221,7 @@ mod tests {
                         .insert(*cell_gid, cell_to_insert);
 
                     println!("remote domain: {remote_domain_gid}");
-                    println!(
-                        "cell (gid {cell_gid}): {:#?}",
-                        partition[part_idx].cell_info_map[cell_gid]
-                    );
+                    println!("cell (gid {cell_gid}): {cell_to_insert:#?}");
                 });
 
             println!("{:#?}", partition[part_idx]);
