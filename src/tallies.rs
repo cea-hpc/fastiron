@@ -150,11 +150,8 @@ pub struct ScalarFluxTask<T: CustomFloat> {
 impl<T: CustomFloat> ScalarFluxTask<T> {
     /// Constructor
     pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
-        let mut cell = Vec::with_capacity(domain.cell_state.len());
-
         // originally uses BulkStorage object for contiguous memory
-        (0..domain.cell_state.len()).for_each(|_| cell.push(vec![zero(); num_groups]));
-
+        let cell = vec![vec![zero::<T>(); num_groups]; domain.cell_state.len()];
         Self { cell }
     }
 
@@ -185,8 +182,7 @@ pub struct CellTallyDomain<T: CustomFloat> {
 impl<T: CustomFloat> CellTallyDomain<T> {
     /// Constructor
     pub fn new(domain: &MCDomain<T>, cell_tally_replications: usize) -> Self {
-        let mut task = Vec::with_capacity(cell_tally_replications);
-        (0..cell_tally_replications).for_each(|_| task.push(CellTallyTask::new(domain)));
+        let task = vec![CellTallyTask::new(domain); cell_tally_replications];
         Self { task }
     }
 }
@@ -200,8 +196,7 @@ pub struct ScalarFluxDomain<T: CustomFloat> {
 impl<T: CustomFloat> ScalarFluxDomain<T> {
     // Constructor
     pub fn new(domain: &MCDomain<T>, num_groups: usize, flux_replications: usize) -> Self {
-        let mut task = Vec::with_capacity(flux_replications);
-        (0..flux_replications).for_each(|_| task.push(ScalarFluxTask::new(domain, num_groups)));
+        let task = vec![ScalarFluxTask::new(domain, num_groups); flux_replications];
         Self { task }
     }
 }
