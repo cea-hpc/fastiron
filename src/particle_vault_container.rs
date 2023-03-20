@@ -217,7 +217,7 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
             fill_vault_idx += 1;
 
             // no next vault? create one and add it to the container
-            if fill_vault_idx >= self.processing_size() {
+            if fill_vault_idx >= self.processed_size() {
                 let mut vault: ParticleVault<T> = ParticleVault {
                     particles: Vec::new(),
                 };
@@ -248,7 +248,7 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
             *fill_vault_index += 1;
 
             // no next vault? create one and add it to the container
-            if !*fill_vault_index < self.processing_size() {
+            if *fill_vault_index >= self.processing_size() {
                 let mut vault: ParticleVault<T> = ParticleVault {
                     particles: Vec::new(),
                 };
