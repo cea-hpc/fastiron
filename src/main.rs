@@ -27,11 +27,7 @@ fn main() {
 
     mc_fast_timer::start(mcco, Section::Main);
 
-    for s in 0..n_steps {
-        println!();
-        println!();
-        println!();
-        println!("step: {s}");
+    for _ in 0..n_steps {
         //println!("------cycle_init");
         cycle_init(mcco, load_balance);
         //println!("------cycle_tracking");
