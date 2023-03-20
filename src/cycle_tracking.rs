@@ -104,18 +104,10 @@ pub fn cycle_tracking_function<T: CustomFloat>(
                 keep_tracking_next_cycle = keep_tracking;
             }
             MCSegmentOutcome::Census => {
-                //let processing_vault =
-                //    &mut mcco.particle_vault_container.processing_vaults[processing_vault_idx];
-                //let processed_vault =
-                //    &mut mcco.particle_vault_container.processed_vaults[processed_vault_idx];
-
-                // PARTICLE ARE INVALIDATED IN CYCLE TRACKING GUTS
-                // set the particle as processed, i.e. transfer it from processing to processed vault
-                //processed_vault.push_particle(particle.clone());
-                //processing_vault.invalidate_particle(particle_idx);
-
                 // atomic in original code
                 mcco.tallies.balance_task[tally_idx].census += 1;
+
+                // we're done tracking the particle FOR THIS STEP
                 keep_tracking = false;
                 keep_tracking_next_cycle = true;
             }

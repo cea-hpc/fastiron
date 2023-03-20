@@ -110,17 +110,21 @@ pub fn collision_event<T: CustomFloat>(
             &mut mc_particle.random_number_seed,
         );
 
+    let n_out = energy_out.len();
+
     // ===================
     // Tally the collision
     mcco.tallies.balance_task[tally_idx].collision += 1; // atomic in original code
     match mcco.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react].reaction_type {
-        ReactionType::Scatter => (),
-        ReactionType::Absorption => (),
-        ReactionType::Fission => (),
+        ReactionType::Scatter => mcco.tallies.balance_task[tally_idx].scatter += 1,
+        ReactionType::Absorption => mcco.tallies.balance_task[tally_idx].absorb += 1,
+        ReactionType::Fission => {
+            mcco.tallies.balance_task[tally_idx].fission += 1;
+            mcco.tallies.balance_task[tally_idx].produce += n_out as u64;
+        }
         ReactionType::Undefined => panic!(),
     }
 
-    let n_out = energy_out.len();
     // Early return
     if n_out == 0 {
         return false;
