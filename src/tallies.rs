@@ -325,23 +325,35 @@ impl<T: CustomFloat> Tallies<T> {
 
     /// Prints summarized data recorded by the tallies.
     pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
-        println!("---Tallies:: print_summary");
-        println!("{:?}", self.balance_task[0]);
-        let sum = self.scalar_flux_sum();
-        println!("Scalar Flux Sum: {sum}");
-        println!(
-            "Cycle Initialize: {}",
-            mc_fast_timer::get_last_cycle(mcco, Section::CycleInit)
+        if mcco.time_info.cycle == 0 {
+            // print header
+            print!("cycle     |      start       source           rr        split       absorb      scatter      fission ");
+            println!("     produce    collision       escape       census      num_seg   scalar_flux      cycleInit  cycleTracking  cycleFinalize");
+        }
+        let cy_init = mc_fast_timer::get_last_cycle(mcco, Section::CycleInit);
+        let cy_track = mc_fast_timer::get_last_cycle(mcco, Section::CycleTracking);
+        let cy_fin = mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize);
+        let sf_sum = self.scalar_flux_sum();
+        let bal = &self.balance_task[0];
+        println!("{:>9} | {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>14e} {:>14e} {:>14e}",
+            mcco.time_info.cycle,
+            bal.start,
+            bal.source,
+            bal.rr,
+            bal.split,
+            bal.absorb,
+            bal.scatter,
+            bal.fission,
+            bal.produce,
+            bal.collision,
+            bal.escape,
+            bal.census,
+            bal.num_segments,
+            sf_sum,
+            cy_init,
+            cy_track,
+            cy_fin,
         );
-        println!(
-            "Cycle Tracking: {}",
-            mc_fast_timer::get_last_cycle(mcco, Section::CycleTracking)
-        );
-        println!(
-            "Cycle Finalize: {}",
-            mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize)
-        );
-        println!();
     }
 
     /// Atomic add?

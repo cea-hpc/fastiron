@@ -32,7 +32,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
         particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
         particle.task = 0;
 
-        cycle_tracking_function(
+        let keep_tracking_next_cycle = cycle_tracking_function(
             mcco,
             &mut particle,
             particle_idx,
@@ -42,8 +42,13 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
 
         //mcco.particle_vault_container.processing_vaults[processing_vault_idx]
         //    .invalidate_particle(particle_idx);
-        mcco.particle_vault_container
-            .set_as_processed(processing_vault_idx, particle_idx);
+        if keep_tracking_next_cycle {
+            mcco.particle_vault_container
+                .set_as_processed(processing_vault_idx, particle_idx);
+        } else {
+            mcco.particle_vault_container.processing_vaults[processing_vault_idx]
+                .invalidate_particle(particle_idx);
+        }
         //println!("invalidated particle #{particle_idx}");
         *processed_num += 1;
     }
@@ -56,8 +61,9 @@ pub fn cycle_tracking_function<T: CustomFloat>(
     particle_idx: usize,
     processing_vault_idx: usize,
     //processed_vault_idx: usize,
-) {
+) -> bool {
     let mut keep_tracking: bool;
+    let mut keep_tracking_next_cycle: bool;
     let tally_idx: usize = particle_idx % mcco.tallies.num_balance_replications as usize;
     let flux_tally_idx: usize = particle_idx % mcco.tallies.num_flux_replications as usize;
     //let cell_tally_idx: usize = particle_idx % mcco.tallies.num_cell_tally_replications as usize;
@@ -72,7 +78,8 @@ pub fn cycle_tracking_function<T: CustomFloat>(
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                keep_tracking = collision_event(mcco, particle, tally_idx)
+                keep_tracking = collision_event(mcco, particle, tally_idx);
+                keep_tracking_next_cycle = keep_tracking;
             }
             MCSegmentOutcome::FacetCrossing => {
                 let facet_crossing_type =
@@ -92,22 +99,17 @@ pub fn cycle_tracking_function<T: CustomFloat>(
                         true
                     }
                     _ => false,
-                }
+                };
+
+                keep_tracking_next_cycle = keep_tracking;
             }
             MCSegmentOutcome::Census => {
-                //let processing_vault =
-                //    &mut mcco.particle_vault_container.processing_vaults[processing_vault_idx];
-                //let processed_vault =
-                //    &mut mcco.particle_vault_container.processed_vaults[processed_vault_idx];
-
-                // PARTICLE ARE INVALIDATED IN CYCLE TRACKING GUTS
-                // set the particle as processed, i.e. transfer it from processing to processed vault
-                //processed_vault.push_particle(particle.clone());
-                //processing_vault.invalidate_particle(particle_idx);
-
                 // atomic in original code
                 mcco.tallies.balance_task[tally_idx].census += 1;
-                keep_tracking = false
+
+                // we're done tracking the particle FOR THIS STEP
+                keep_tracking = false;
+                keep_tracking_next_cycle = true;
             }
             MCSegmentOutcome::Initialize => unreachable!(),
         }
@@ -116,4 +118,6 @@ pub fn cycle_tracking_function<T: CustomFloat>(
             break;
         }
     }
+
+    keep_tracking_next_cycle
 }
