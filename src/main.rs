@@ -94,7 +94,7 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
     mcco.particle_vault_container.collapse_processed();
     mcco.particle_vault_container.collapse_processing();
 
-    let tmp = mcco.particle_vault_container.processing_vaults.len() as u64;
+    let tmp = mcco.particle_vault_container.particles_processing_size() as u64;
     mcco.tallies.balance_task[0].start = tmp;
 
     mcco.particle_buffer.initialize(mcco.domain.len());
@@ -235,7 +235,8 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 pub fn cycle_finalize<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
-    mcco.tallies.balance_task[0].end = mcco.particle_vault_container.processed_vaults.len() as u64;
+    mcco.tallies.balance_task[0].end =
+        mcco.particle_vault_container.particles_processed_size() as u64;
 
     mcco.cycle_finalize();
     mcco.time_info.cycle += 1;

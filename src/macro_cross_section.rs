@@ -29,7 +29,7 @@ pub fn macroscopic_cross_section<T: CustomFloat>(
         return res;
     }
 
-    let isotope_gid = mcco.material_database.mat[domain_idx].iso[isotope_idx].gid;
+    let isotope_gid = mcco.material_database.mat[global_mat_idx].iso[isotope_idx].gid;
     let micro_cross_section: T =
         mcco.nuclear_data
             .get_reaction_cross_section(reaction_idx, isotope_gid, energy_group);
@@ -61,7 +61,7 @@ pub fn macroscopic_total_cross_section<T: CustomFloat>(
         return res;
     }
 
-    let isotope_gid = mcco.material_database.mat[domain_idx].iso[isotope_idx].gid;
+    let isotope_gid = mcco.material_database.mat[global_mat_idx].iso[isotope_idx].gid;
     let micro_cross_section: T = mcco
         .nuclear_data
         .get_total_cross_section(isotope_gid, energy_group);

@@ -323,46 +323,6 @@ impl<T: CustomFloat> Tallies<T> {
         });
     }
 
-    /// End-of-simulation routine that updates its own data and other structures'.
-    /// REPLACED BY EPONYMOUS FUNCTION OF MCCO
-    pub fn cycle_finalize(&mut self, mcco: &mut MonteCarlo<T>) {
-        self.sum_tasks();
-
-        self.print_summary(mcco);
-
-        self.balance_cumulative.add(&self.balance_task[0]);
-
-        let new_start: u64 = self.balance_task[0].end;
-        (0..self.balance_task.len()).for_each(|balance_idx| {
-            self.balance_task[balance_idx].reset();
-        });
-        self.balance_task[0].start = new_start;
-
-        (0..self.scalar_flux_domain.len()).for_each(|domain_idx| {
-            // Sum on replicated cell tallies and resets them
-            (1..self.num_cell_tally_replications).for_each(|rep_idx| {
-                let val = self.cell_tally_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
-                self.cell_tally_domain[domain_idx].task[0].add(&val);
-                self.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
-            });
-
-            // Sum on replciated scalar flux tallies and resets them
-            (1..self.num_flux_replications).for_each(|rep_idx| {
-                let val = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
-                self.scalar_flux_domain[domain_idx].task[0].add(&val);
-                self.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
-            });
-
-            if mcco.params.simulation_params.coral_benchmark {
-                self.fluence
-                    .compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
-            }
-            self.cell_tally_domain[domain_idx].task[0].reset();
-            self.scalar_flux_domain[domain_idx].task[0].reset();
-        });
-        self.spectrum.update_spectrum(mcco);
-    }
-
     /// Prints summarized data recorded by the tallies.
     pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
         println!("---Tallies:: print_summary");
