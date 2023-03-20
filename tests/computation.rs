@@ -1,8 +1,6 @@
 // Tests used to compare the results of certain computation heavy
 // functions with their result in the original code.
-// A nice proper way to do it would be to make external calls
-// to C++ functions and compare the results in the tests.
-// For now, printing will be just fine.
+// Results are hard coded.
 
 use fastiron::{
     collision_event::update_trajectory,
@@ -20,11 +18,8 @@ use num::Float;
 pub fn rng_spawned_number() {
     let mut seed: u64 = 90374384094798327;
     let res = spawn_rn_seed::<f64>(&mut seed);
-    println!();
-    println!("###########################");
-    println!("#   spawned number test   #");
-    println!("###########################");
-    println!("spawned number: {res}");
+
+    assert_eq!(res, 3246986314100353546);
 }
 
 #[test]
@@ -32,12 +27,9 @@ pub fn pseudo_hash() {
     let mut a: u32 = 123214124;
     let mut b: u32 = 968374242;
     pseudo_des(&mut a, &mut b);
-    println!();
-    println!("###########################");
-    println!("#     pseudo hash test    #");
-    println!("###########################");
-    println!("a: {a}");
-    println!("b: {b}");
+
+    assert_eq!(a, 702007026);
+    assert_eq!(b, 3221367323);
 }
 
 #[test]
@@ -49,11 +41,10 @@ pub fn sample_isotropic() {
     };
     let mut seed: u64 = 90374384094798327;
     dd.sample_isotropic(&mut seed);
-    println!();
-    println!("###########################");
-    println!("#  sample isotropic test  #");
-    println!("###########################");
-    println!("dd: {dd:#?}");
+
+    assert_eq!(dd.alpha, 0.9083218129645693);
+    assert_eq!(dd.beta, -0.3658911896631176);
+    assert_eq!(dd.gamma, 0.2026699815455325);
 }
 
 #[test]
@@ -64,11 +55,10 @@ pub fn rotate_vector() {
         gamma: 0.7821,
     };
     dd.rotate_3d_vector(1.0.sin(), 1.0.cos(), 2.0.sin(), 2.0.cos());
-    println!();
-    println!("###########################");
-    println!("#  rotate 3d vector test  #");
-    println!("###########################");
-    println!("dd: {dd:#?}");
+
+    assert_eq!(dd.alpha, -1.0369691350703922);
+    assert_eq!(dd.beta, 0.3496694784021821);
+    assert_eq!(dd.gamma, 0.6407833194623658);
 }
 
 #[test]
@@ -96,13 +86,10 @@ pub fn trajectory() {
     // update & print result
     update_trajectory(energy, angle, &mut pp);
 
-    println!();
-    println!("###########################");
-    println!("#  update trajectory test #");
-    println!("###########################");
-    println!("Energy: {energy}");
-    println!("Angle: {angle}");
-    println!("Particle: {pp:#?}");
+    assert!((pp.direction_cosine.alpha - 0.620283).abs() < 1.0e-6);
+    assert!((pp.direction_cosine.beta - 0.620283).abs() < 1.0e-6);
+    assert!((pp.direction_cosine.gamma - (-0.480102)).abs() < 1.0e-6);
+    assert!((pp.kinetic_energy - 0.398665).abs() < 1.0e-6);
 }
 
 #[test]
@@ -122,11 +109,11 @@ pub fn move_particle() {
 
     coord += (move_to - coord) * move_factor;
 
-    println!();
-    println!("###########################");
-    println!("#    move particle test   #");
-    println!("###########################");
-    println!("moved coord: {coord:#?}");
+    assert!(coord.is_almost_equal(&MCVector {
+        x: 1.92300000010385,
+        y: -2.44999999986545,
+        z: 5.01300000014445,
+    }));
 }
 
 #[test]
@@ -158,11 +145,7 @@ pub fn compute_volume() {
 
     let volume = tmp0.dot(&tmp1.cross(&tmp2));
 
-    println!();
-    println!("###########################");
-    println!("#   compute volume test   #");
-    println!("###########################");
-    println!("volume: {volume}");
+    assert_eq!(volume, -44.197674792000015);
 }
 
 #[test]
@@ -243,14 +226,10 @@ pub fn macros() {
         intersection_pt.y
     );
 
-    println!();
-    println!("###########################");
-    println!("#       macros test       #");
-    println!("###########################");
-    println!("belong_x: {belong_x:?}");
-    println!("belong_y: {belong_y:?}");
-    println!("belong_z: {belong_z:?}");
-    println!("cross0: {cross0}");
-    println!("cross1: {cross1}");
-    println!("cross2: {cross2}");
+    assert!(belong_x.0 | belong_x.1);
+    assert!(!(belong_y.0 | belong_y.1));
+    assert!(!(belong_z.0 | belong_z.1));
+    assert_eq!(cross0, -5.588295000000003);
+    assert_eq!(cross1, 2.3443820000000004);
+    assert_eq!(cross2, -10.116853000000003);
 }
