@@ -114,7 +114,6 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
         let current_n_particles = vault.particles_processing_size();
         let vault_size = vault.vault_size;
 
-        let l_weight_cutoff = low_weight_cutoff;
         let weight_cutoff = low_weight_cutoff * source_particle_weight;
 
         // march backwards through particles; might be unecessary since we use vectors?
@@ -130,9 +129,9 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
             if let Some(mut pp) = task_processing_vault[task_particle_idx].clone() {
                 if pp.weight < weight_cutoff {
                     let rand_n: T = rng_sample(&mut pp.random_number_seed);
-                    if rand_n < l_weight_cutoff {
+                    if rand_n < low_weight_cutoff {
                         // particle continues with an increased weight
-                        pp.weight /= l_weight_cutoff;
+                        pp.weight /= low_weight_cutoff;
                         task_processing_vault[task_particle_idx] = Some(pp);
                     } else {
                         // particle is killed
