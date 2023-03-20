@@ -39,6 +39,8 @@ pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance
             &mut mcco.tallies.balance_task[0],
         );
     }
+
+    mcco.particle_vault_container.collapse_processing();
 }
 
 fn population_control_guts<T: CustomFloat>(
