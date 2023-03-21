@@ -1,9 +1,6 @@
 use num::{zero, FromPrimitive};
 
-use crate::{
-    constants::{physical::TINY_FLOAT, CustomFloat},
-    montecarlo::MonteCarlo,
-};
+use crate::{constants::CustomFloat, montecarlo::MonteCarlo};
 
 /// Computes the reaction-specific number-density-weighted
 /// macroscopic cross section of a cell.
@@ -21,9 +18,7 @@ pub fn macroscopic_cross_section<T: CustomFloat>(
         mcco.material_database.mat[global_mat_idx].iso[isotope_idx].atom_fraction;
     let cell_number_density: T = mcco.domain[domain_idx].cell_state[cell_idx].cell_number_density;
 
-    let threshold: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
-    // comparison to 0 might be possible since it means it's not initialized & it's not a result of a computation?
-    if (atom_fraction < threshold) | (cell_number_density < threshold) {
+    if (atom_fraction == zero()) | (cell_number_density == zero()) {
         // one of the two is 0
         let res: T = FromPrimitive::from_f64(1e-20).unwrap();
         return res;
@@ -53,9 +48,7 @@ pub fn macroscopic_total_cross_section<T: CustomFloat>(
         mcco.material_database.mat[global_mat_idx].iso[isotope_idx].atom_fraction;
     let cell_number_density: T = mcco.domain[domain_idx].cell_state[cell_idx].cell_number_density;
 
-    let threshold: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
-    // comparison to 0 might be possible since it means it's not initialized & it's not a result of a computation?
-    if (atom_fraction < threshold) | (cell_number_density < threshold) {
+    if (atom_fraction == zero()) | (cell_number_density == zero()) {
         // one of the two is 0
         let res: T = FromPrimitive::from_f64(1e-20).unwrap();
         return res;

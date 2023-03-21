@@ -85,28 +85,21 @@ pub fn cycle_tracking_function<T: CustomFloat>(
                     facet_crossing_event(particle, mcco, particle_idx, processing_vault_idx);
 
                 keep_tracking = match facet_crossing_type {
-                    MCTallyEvent::FacetCrossingTransitExit => {
-                        keep_tracking_next_cycle = true;
-                        true
-                    }
+                    MCTallyEvent::FacetCrossingTransitExit => true,
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
                         mcco.tallies.balance_task[tally_idx].escape += 1;
                         particle.last_event = MCTallyEvent::FacetCrossingEscape;
-                        keep_tracking_next_cycle = false;
                         false
                     }
                     MCTallyEvent::FacetCrossingReflection => {
                         reflect_particle(mcco, particle);
-                        keep_tracking_next_cycle = true;
                         true
                     }
-                    _ => {
-                        // Transit to off-cluster domain
-                        keep_tracking_next_cycle = true;
-                        false
-                    }
+                    _ => false, // transit to off-cluster domain
                 };
+
+                keep_tracking_next_cycle = keep_tracking;
             }
             MCSegmentOutcome::Census => {
                 // atomic in original code

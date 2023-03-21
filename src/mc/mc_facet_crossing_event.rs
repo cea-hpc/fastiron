@@ -34,18 +34,6 @@ pub fn facet_crossing_event<T: CustomFloat>(
         MCSubfacetAdjacencyEvent::TransitOffProcessor => {
             // particle enters an adjacent cell that belongs to
             // a domain managed by another processor.
-            println!(
-                "facet_adjacency.adjacent.domain: {:?}",
-                facet_adjacency.adjacent.domain
-            );
-            println!(
-                "facet_adjacency.adjacent.cell: {:?}",
-                facet_adjacency.adjacent.cell
-            );
-            println!(
-                "facet_adjacency.adjacent.facet: {:?}",
-                facet_adjacency.adjacent.facet
-            );
             mc_particle.domain = facet_adjacency.adjacent.domain.unwrap();
             mc_particle.cell = facet_adjacency.adjacent.cell.unwrap();
             mc_particle.facet = facet_adjacency.adjacent.facet.unwrap();

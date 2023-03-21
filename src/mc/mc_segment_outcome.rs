@@ -57,12 +57,13 @@ pub fn outcome<T: CustomFloat>(
     );
 
     mc_particle.total_cross_section = macroscopic_total_xsection;
-    if macroscopic_total_xsection.abs() < tiny_f {
+    if macroscopic_total_xsection == zero() {
         mc_particle.mean_free_path = huge_f;
     } else {
         mc_particle.mean_free_path = one / macroscopic_total_xsection;
     }
 
+    // if zero
     if mc_particle.num_mean_free_paths.abs() < tiny_f {
         let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
         mc_particle.num_mean_free_paths = -one * rdm_number.ln();
