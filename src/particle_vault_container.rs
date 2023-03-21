@@ -268,6 +268,13 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
     /// Uses an atomic in original code
     pub fn add_extra_particle(&mut self, particle: MCParticle<T>) {
         let vault = self.extra_vault_index / self.vault_size;
+        if vault >= self.num_extra_vaults {
+            // no more vaults?
+            let mut vv: ParticleVault<T> = ParticleVault::default();
+            vv.reserve(self.vault_size);
+            self.num_extra_vaults += 1;
+            self.extra_vault.push(vv);
+        }
         self.extra_vault_index += 1;
         self.extra_vault[vault].push_particle(particle);
     }
