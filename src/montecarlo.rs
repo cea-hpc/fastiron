@@ -215,7 +215,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
             .map(|(energy_idx, count)| {
                 let c: T = FromPrimitive::from_u64(*count).unwrap();
                 total += c;
-                c * self.nuclear_data.energies[energy_idx]
+                c * self.nuclear_data.energies[energy_idx].log10()
             })
             .sum();
 
