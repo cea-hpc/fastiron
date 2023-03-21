@@ -3,7 +3,7 @@ Simulation:
    fMax: 0.1
    inputFile: parsing.inp
    boundaryCondition: reflect
-   loadBalance: 0
+   loadBalance: 1
    cycleTimers: 0
    debugThreads: 0
    mpiThreadMultiple: 0
