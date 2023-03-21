@@ -5,7 +5,7 @@ Simulation:
    boundaryCondition: octant
    loadBalance: 1
    cycleTimers: 0
-   debugThreads: 1
+   debugThreads: 0
    lx: 100
    ly: 100
    lz: 100
@@ -14,7 +14,7 @@ Simulation:
    nx: 10
    ny: 10
    nz: 10
-   seed: 1029384756
+   seed: 10293847561
    xDom: 0
    yDom: 0
    zDom: 0

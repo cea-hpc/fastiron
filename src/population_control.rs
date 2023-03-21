@@ -69,7 +69,6 @@ fn population_control_guts<T: CustomFloat>(
                 let task_processing_vault = vault.get_task_processing_vault(vault_idx);
                 if rand_n > split_rr_factor {
                     task_processing_vault.erase_swap_particles(task_particle_idx);
-                    println!("guts rr");
                     task_balance.rr += 1;
                 } else {
                     // update particle & overwrite old version
@@ -137,7 +136,6 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
                     } else {
                         // particle is killed
                         task_processing_vault.invalidate_particle(task_particle_idx);
-                        println!("low weight rr");
                         task_balance.rr += 1;
                     }
                 }

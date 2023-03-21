@@ -7,7 +7,7 @@ Simulation:
    lx: 10
    ly: 10
    lz: 10
-   nParticles: 9999
+   nParticles: 10000
    nSteps: 20
    nx: 10
    ny: 10

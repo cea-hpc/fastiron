@@ -5,7 +5,7 @@ Simulation:
    boundaryCondition: reflect
    loadBalance: 1
    cycleTimers: 0
-   debugThreads: 0
+   debugThreads: 1
    mpiThreadMultiple: 0
    nSteps: 10
    seed: 1029384756

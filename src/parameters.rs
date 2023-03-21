@@ -558,7 +558,7 @@ impl<T: CustomFloat> Parameters<T> {
         }
         macro_rules! fetch_bool {
             ($f: ident, $v: expr) => {
-                self.simulation_params.load_balance = match $v {
+                self.simulation_params.$f = match $v {
                     '0' => false,
                     '1' => true,
                     _ => return Err(InputError::BadSimulationBlock),
