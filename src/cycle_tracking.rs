@@ -4,7 +4,6 @@ use crate::{
     collision_event::collision_event,
     constants::CustomFloat,
     mc::{
-        mc_base_particle::Species,
         mc_facet_crossing_event::facet_crossing_event,
         mc_particle::MCParticle,
         mc_segment_outcome::{outcome, MCSegmentOutcome},
@@ -86,22 +85,28 @@ pub fn cycle_tracking_function<T: CustomFloat>(
                     facet_crossing_event(particle, mcco, particle_idx, processing_vault_idx);
 
                 keep_tracking = match facet_crossing_type {
-                    MCTallyEvent::FacetCrossingTransitExit => true,
+                    MCTallyEvent::FacetCrossingTransitExit => {
+                        keep_tracking_next_cycle = true;
+                        true
+                    }
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
                         mcco.tallies.balance_task[tally_idx].escape += 1;
                         particle.last_event = MCTallyEvent::FacetCrossingEscape;
-                        particle.species = Species::Unknown;
+                        keep_tracking_next_cycle = false;
                         false
                     }
                     MCTallyEvent::FacetCrossingReflection => {
                         reflect_particle(mcco, particle);
+                        keep_tracking_next_cycle = true;
                         true
                     }
-                    _ => false,
+                    _ => {
+                        // Transit to off-cluster domain
+                        keep_tracking_next_cycle = true;
+                        false
+                    }
                 };
-
-                keep_tracking_next_cycle = keep_tracking;
             }
             MCSegmentOutcome::Census => {
                 // atomic in original code

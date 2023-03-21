@@ -281,39 +281,24 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
 
     /// Cleans up the extra vaults by moving particles into the processing vaults.
     pub fn clean_extra_vaults(&mut self) {
+        //println!("cleaning extra vaults...");
         let n = self.particles_extra_size();
         if n == 0 {
             return;
         }
-        let num_extra = if n % self.vault_size == 0 {
-            n / self.vault_size
-        } else {
-            n / self.vault_size + 1
-        };
 
-        let mut extra_idx: usize = 0;
-        let mut processing_idx: usize = 0;
+        let extra = self.extra_vault.clone();
+        let mut fill_vault_idx = 0;
+        extra.iter().filter(|vv| vv.size() != 0).for_each(|vv| {
+            vv.particles
+                .iter()
+                .filter(|pp| pp.is_some())
+                .for_each(|pp| {
+                    self.add_processing_particle(pp.clone().unwrap(), &mut fill_vault_idx);
+                })
+        });
 
-        while extra_idx < num_extra {
-            if self.extra_vault[extra_idx].size() == 0 {
-                // current extra vault empty
-                extra_idx += 1;
-            } else if processing_idx == self.processing_size() {
-                // no more processing vaults
-                let mut vault: ParticleVault<T> = ParticleVault {
-                    particles: Vec::new(),
-                };
-                vault.reserve(self.vault_size);
-                self.processing_vaults.push(vault);
-            } else if self.processing_vaults[processing_idx].size() == self.vault_size {
-                // current processing vault full
-                processing_idx += 1;
-            } else {
-                // we move the particle
-                let fill_size = self.vault_size - self.processing_vaults[processing_idx].size();
-                self.processing_vaults[processing_idx]
-                    .collapse(fill_size, &mut self.extra_vault[extra_idx]);
-            }
-        }
+        self.extra_vault.iter_mut().for_each(|vv| vv.clear());
+        //println!("finished cleaning extra vaults");
     }
 }
