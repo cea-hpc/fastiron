@@ -108,6 +108,7 @@ pub fn collision_event<T: CustomFloat>(
         );
 
     let n_out = energy_out.len();
+    //println!("nout: {n_out}");
 
     // ===================
     // Tally the collision
@@ -129,7 +130,7 @@ pub fn collision_event<T: CustomFloat>(
 
     // additional created particle
     if n_out > 1 {
-        for secondary_idx in 1..energy_out.len() {
+        for secondary_idx in 1..n_out {
             let mut sec_particle = mc_particle.clone();
             sec_particle.random_number_seed =
                 spawn_rn_seed::<T>(&mut mc_particle.random_number_seed);

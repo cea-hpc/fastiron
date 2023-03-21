@@ -1,4 +1,4 @@
-use num::{one, FromPrimitive};
+use num::{one, zero, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
@@ -54,10 +54,7 @@ fn population_control_guts<T: CustomFloat>(
 
     // march backwards through particles; might be unecessary since we use vectors?
     (0..current_n_particles).rev().for_each(|particle_idx| {
-        //println!("particle_idx: {particle_idx}");
-        //println!("vault_size: {vault_size}");
         let vault_idx = particle_idx / vault_size;
-        //let task_processing_vault = vault.get_task_processing_vault(vault_idx);
         let task_particle_idx = particle_idx % vault_size;
 
         // since we cant pass around a mutable reference to the inside of an option,
@@ -110,7 +107,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
     vault: &mut ParticleVaultContainer<T>,
     task_balance: &mut Balance,
 ) {
-    if low_weight_cutoff > 0.0.into() {
+    if low_weight_cutoff > zero() {
         let current_n_particles = vault.particles_processing_size();
         let vault_size = vault.vault_size;
 

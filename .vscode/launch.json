@@ -40,7 +40,7 @@
             },
             "args": [
                 "-i",
-                "input_files/QS_originals/AllScattering/scatteringOnly.inp",
+                "input_files/QS_originals/NoFission/noFission.inp",
                 "-e",
                 "energy",
                 "-S",
