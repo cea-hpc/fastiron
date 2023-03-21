@@ -5,7 +5,7 @@ Simulation:
    boundaryCondition: octant
    loadBalance: 1
    cycleTimers: 0
-   debugThreads: 0
+   debugThreads: 1
    lx: 100
    ly: 100
    lz: 100
