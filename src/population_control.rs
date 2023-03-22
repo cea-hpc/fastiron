@@ -31,6 +31,8 @@ pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance
             / FromPrimitive::from_usize(global_n_particles).unwrap();
     }
 
+    println!("split rr factor: {split_rr_factor}");
+
     if split_rr_factor != one() {
         population_control_guts(
             split_rr_factor,
@@ -124,9 +126,9 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 
             let task_processing_vault = vault.get_task_processing_vault(vault_idx);
             if let Some(mut pp) = task_processing_vault[task_particle_idx].clone() {
-                if pp.weight < weight_cutoff {
+                if pp.weight <= weight_cutoff {
                     let rand_n: T = rng_sample(&mut pp.random_number_seed);
-                    if rand_n < low_weight_cutoff {
+                    if rand_n <= low_weight_cutoff {
                         // particle continues with an increased weight
                         pp.weight /= low_weight_cutoff;
                         task_processing_vault[task_particle_idx] = Some(pp);
