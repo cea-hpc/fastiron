@@ -17,7 +17,7 @@ use crate::{
 use super::mc_particle::MCParticle;
 
 /// Enum representing the outcome of the current segment.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MCSegmentOutcome {
     Initialize = -1,
     Collision = 0,
@@ -173,5 +173,25 @@ fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
         1 => MCSegmentOutcome::FacetCrossing,
         2 => MCSegmentOutcome::Census,
         _ => panic!(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use num::zero;
+
+    use super::*;
+
+    use crate::constants::physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT};
+
+    #[test]
+    fn find_min_dist() {
+        let mut distance: [f64; 3] = [zero(); 3];
+        distance[MCSegmentOutcome::Collision as usize] = HUGE_FLOAT;
+        distance[MCSegmentOutcome::FacetCrossing as usize] = SMALL_FLOAT;
+        distance[MCSegmentOutcome::Census as usize] = TINY_FLOAT;
+
+        let outcome = find_min(&distance);
+        assert_eq!(outcome, MCSegmentOutcome::Census);
     }
 }

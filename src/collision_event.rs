@@ -30,7 +30,7 @@ pub fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCP
     let phi = two * pi * rdm_number;
     let sin_phi: T = phi.sin();
     let cos_phi: T = phi.cos();
-    let speed: T = c * (one - nrm * nrm / ((energy + nrm) * (energy + nrm))).sqrt();
+    let speed: T = c * (one - ((nrm * nrm) / ((energy + nrm) * (energy + nrm)))).sqrt();
 
     // update
     particle.kinetic_energy = energy;

@@ -103,7 +103,7 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
                 let mut rand_n: T = rng_sample(seed);
                 energy_out.push(incident_energy * (one - rand_n * (one / material_mass)));
                 rand_n = rng_sample(seed);
-                angle_out.push(rand_n * (two) - one)
+                angle_out.push(rand_n * two - one);
             }
             ReactionType::Absorption => (),
             ReactionType::Fission => {
@@ -111,6 +111,7 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
                 // is quite unclear. There is an assert but it only prints
                 // a message, not stop the method
                 let num_particle_out = (self.nu_bar + rng_sample(seed)).to_usize().unwrap();
+                assert!(num_particle_out < 5);
                 energy_out.extend(vec![zero(); num_particle_out].iter());
                 angle_out.extend(vec![zero(); num_particle_out].iter());
                 (0..num_particle_out).for_each(|ii| {
