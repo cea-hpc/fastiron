@@ -8,7 +8,7 @@ Simulation:
    lx: 100
    ly: 100
    lz: 100
-   nParticles: 1000000
+   nParticles: 10000
    batchSize: 0
    nBatches: 10
    nSteps: 10
@@ -23,10 +23,8 @@ Simulation:
    eMin: 1e-08
    nGroups: 230
    lowWeightCutoff: 0.001
-   bTally: 1
-   fTally: 1
-   cTally: 1
    coralBenchmark: 0
+
 
 Geometry:
    material: sourceMaterial
@@ -99,5 +97,5 @@ CrossSection:
    C: 0
    D: 0
    E: 0.7
-
+   nuBar: 2.4
    

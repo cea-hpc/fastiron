@@ -67,7 +67,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         / (source_fraction * FromPrimitive::from_usize(n_particles).unwrap());
     assert_ne!(source_particle_weight, zero());
     mcco.source_particle_weight = source_particle_weight;
-
+    //println!("source particle weight: {source_particle_weight}");
     let vault_size = mcco.particle_vault_container.vault_size;
     let mut processing_idx = mcco.particle_vault_container.particles_processing_size() / vault_size;
 

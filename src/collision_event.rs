@@ -30,7 +30,7 @@ pub fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCP
     let phi = two * pi * rdm_number;
     let sin_phi: T = phi.sin();
     let cos_phi: T = phi.cos();
-    let speed: T = c * (one - nrm * nrm / ((energy + nrm) * (energy + nrm))).sqrt();
+    let speed: T = c * (one - ((nrm * nrm) / ((energy + nrm) * (energy + nrm)))).sqrt();
 
     // update
     particle.kinetic_energy = energy;
@@ -57,10 +57,8 @@ pub fn collision_event<T: CustomFloat>(
     // Pick an isotope & reaction
     let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
     let total_xsection: T = mc_particle.total_cross_section;
-    //println!("total xs: {total_xsection}");
 
     let mut current_xsection: T = total_xsection * rdm_number;
-    //println!("starting xs: {current_xsection}");
 
     let mut selected_iso: usize = usize::MAX; // sort of a magic value
     let mut selected_unique_n: usize = usize::MAX;
@@ -69,7 +67,6 @@ pub fn collision_event<T: CustomFloat>(
     let n_iso: usize = mcco.material_database.mat[mat_gidx].iso.len();
 
     loop {
-        //println!("infinite loop? current xs: {current_xsection}");
         for iso_idx in 0..n_iso {
             let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
             let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
@@ -111,6 +108,7 @@ pub fn collision_event<T: CustomFloat>(
         );
 
     let n_out = energy_out.len();
+    //println!("nout: {n_out}");
 
     // ===================
     // Tally the collision
@@ -130,8 +128,9 @@ pub fn collision_event<T: CustomFloat>(
         return false;
     }
 
+    // additional created particle
     if n_out > 1 {
-        for secondary_idx in 1..energy_out.len() {
+        for secondary_idx in 1..n_out {
             let mut sec_particle = mc_particle.clone();
             sec_particle.random_number_seed =
                 spawn_rn_seed::<T>(&mut mc_particle.random_number_seed);

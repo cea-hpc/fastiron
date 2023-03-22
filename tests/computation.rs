@@ -4,7 +4,7 @@
 
 use fastiron::{
     collision_event::update_trajectory,
-    constants::physical::SMALL_FLOAT,
+    constants::physical::{SMALL_FLOAT, TINY_FLOAT},
     direction_cosine::DirectionCosine,
     mc::{
         mc_particle::MCParticle,
@@ -89,7 +89,7 @@ pub fn trajectory() {
     assert!((pp.direction_cosine.alpha - 0.620283).abs() < 1.0e-6);
     assert!((pp.direction_cosine.beta - 0.620283).abs() < 1.0e-6);
     assert!((pp.direction_cosine.gamma - (-0.480102)).abs() < 1.0e-6);
-    assert!((pp.kinetic_energy - 0.398665).abs() < 1.0e-6);
+    assert!((pp.kinetic_energy - energy).abs() < TINY_FLOAT);
 }
 
 #[test]

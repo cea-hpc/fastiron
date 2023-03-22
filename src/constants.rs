@@ -1,3 +1,4 @@
+use std::iter::Sum;
 use std::str::FromStr;
 use std::{
     fmt::{Debug, Display, LowerExp},
@@ -8,7 +9,10 @@ use num::{Float, FromPrimitive};
 
 pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
 pub trait UtilsFloat: Default + Debug + Display + LowerExp {}
-pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat + FromStr + From<f32> {}
+pub trait CustomFloat:
+    Float + FromPrimitive + OpsFloat + UtilsFloat + FromStr + From<f32> + Sum
+{
+}
 
 impl OpsFloat for f32 {}
 impl UtilsFloat for f32 {}

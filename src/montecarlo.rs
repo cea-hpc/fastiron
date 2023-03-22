@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use num::zero;
+use num::{zero, FromPrimitive};
 
 use crate::constants::CustomFloat;
 use crate::material_database::MaterialDatabase;
@@ -204,5 +204,21 @@ impl<T: CustomFloat> MonteCarlo<T> {
             self.tallies.scalar_flux_domain[domain_idx].task[0].reset();
         });
         self.update_spectrum();
+
+        let mut total: T = zero();
+        let sum_loge: T = self
+            .tallies
+            .spectrum
+            .census_energy_spectrum
+            .iter()
+            .enumerate()
+            .map(|(energy_idx, count)| {
+                let c: T = FromPrimitive::from_u64(*count).unwrap();
+                total += c;
+                c * self.nuclear_data.energies[energy_idx].log10()
+            })
+            .sum();
+
+        println!("weighted total log energy: {}", sum_loge / total);
     }
 }

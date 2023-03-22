@@ -558,9 +558,9 @@ impl<T: CustomFloat> Parameters<T> {
         }
         macro_rules! fetch_bool {
             ($f: ident, $v: expr) => {
-                self.simulation_params.load_balance = match $v.as_ref() {
-                    "0" => false,
-                    "1" => true,
+                self.simulation_params.$f = match $v {
+                    '0' => false,
+                    '1' => true,
                     _ => return Err(InputError::BadSimulationBlock),
                 }
             };
@@ -572,12 +572,22 @@ impl<T: CustomFloat> Parameters<T> {
                 "energySpectrum" => self.simulation_params.energy_spectrum = val,
                 "crossSectionsOut" => self.simulation_params.cross_sections_out = val,
                 "boundaryCondition" => self.simulation_params.boundary_condition = val,
-
-                "loadBalance" => fetch_bool!(load_balance, val),
-                "cycleTimers" => fetch_bool!(cycle_timers, val),
-                "debugThreads" => fetch_bool!(debug_threads, val),
-                "coralBenchmark" => fetch_bool!(coral_benchmark, val),
-
+                "loadBalance" => {
+                    let chars: Vec<char> = val.chars().collect();
+                    fetch_bool!(load_balance, chars[0]);
+                }
+                "cycleTimers" => {
+                    let chars: Vec<char> = val.chars().collect();
+                    fetch_bool!(cycle_timers, chars[0]);
+                }
+                "debugThreads" => {
+                    let chars: Vec<char> = val.chars().collect();
+                    fetch_bool!(debug_threads, chars[0]);
+                }
+                "coralBenchmark" => {
+                    let chars: Vec<char> = val.chars().collect();
+                    fetch_bool!(coral_benchmark, chars[0]);
+                }
                 "nParticles" => fetch_data!(n_particles, val),
                 "batchSize" => fetch_data!(batch_size, val),
                 "nBatches" => fetch_data!(n_batches, val),

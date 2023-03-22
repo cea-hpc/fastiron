@@ -17,7 +17,7 @@ use crate::{
 use super::mc_particle::MCParticle;
 
 /// Enum representing the outcome of the current segment.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MCSegmentOutcome {
     Initialize = -1,
     Collision = 0,
@@ -57,13 +57,14 @@ pub fn outcome<T: CustomFloat>(
     );
 
     mc_particle.total_cross_section = macroscopic_total_xsection;
-    if macroscopic_total_xsection.abs() < tiny_f {
+    if macroscopic_total_xsection == zero() {
         mc_particle.mean_free_path = huge_f;
     } else {
         mc_particle.mean_free_path = one / macroscopic_total_xsection;
     }
 
-    if mc_particle.num_mean_free_paths.abs() < tiny_f {
+    // if zero
+    if mc_particle.num_mean_free_paths < tiny_f {
         let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
         mc_particle.num_mean_free_paths = -one * rdm_number.ln();
     }
@@ -129,7 +130,7 @@ pub fn outcome<T: CustomFloat>(
     }
 
     // skip tallies & early return if the path length is 0
-    if mc_particle.segment_path_length.abs() < tiny_f {
+    if mc_particle.segment_path_length < tiny_f {
         return segment_outcome;
     }
 
@@ -172,5 +173,25 @@ fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
         1 => MCSegmentOutcome::FacetCrossing,
         2 => MCSegmentOutcome::Census,
         _ => panic!(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use num::zero;
+
+    use super::*;
+
+    use crate::constants::physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT};
+
+    #[test]
+    fn find_min_dist() {
+        let mut distance: [f64; 3] = [zero(); 3];
+        distance[MCSegmentOutcome::Collision as usize] = HUGE_FLOAT;
+        distance[MCSegmentOutcome::FacetCrossing as usize] = SMALL_FLOAT;
+        distance[MCSegmentOutcome::Census as usize] = TINY_FLOAT;
+
+        let outcome = find_min(&distance);
+        assert_eq!(outcome, MCSegmentOutcome::Census);
     }
 }
