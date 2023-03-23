@@ -28,11 +28,8 @@ fn main() {
     mc_fast_timer::start(mcco, Section::Main);
 
     for _ in 0..n_steps {
-        //println!("------cycle_init");
         cycle_init(mcco, load_balance);
-        //println!("------cycle_tracking");
         cycle_tracking(mcco);
-        //println!("------cycle_finalize");
         cycle_finalize(mcco);
         if mcco.params.simulation_params.cycle_timers {
             mcco.fast_timer.last_cycle_report();
@@ -61,31 +58,8 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
 
     // mcco.tallies.cycle_initialize(mcco); // literally an empty function
 
-    if mcco.params.simulation_params.debug_threads {
-        println!(
-            "# processing particles: {}",
-            mcco.particle_vault_container.particles_processing_size()
-        );
-        println!(
-            "# processed particles: {}",
-            mcco.particle_vault_container.particles_processed_size()
-        );
-    }
-
     mcco.particle_vault_container
         .swap_processing_processed_vaults();
-
-    if mcco.params.simulation_params.debug_threads {
-        println!("swapped vault");
-        println!(
-            "# processing particles: {}",
-            mcco.particle_vault_container.particles_processing_size()
-        );
-        println!(
-            "# processed particles: {}",
-            mcco.particle_vault_container.particles_processed_size()
-        );
-    }
 
     mcco.particle_vault_container.collapse_processed();
     mcco.particle_vault_container.collapse_processing();
@@ -109,25 +83,22 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
     );
 
     mc_fast_timer::stop(mcco, Section::CycleInit);
-
-    if mcco.params.simulation_params.debug_threads {
-        println!(
-            "{} processing particles",
-            mcco.particle_vault_container.particles_processing_size()
-        );
-        println!(
-            "{} processed particles",
-            mcco.particle_vault_container.particles_processed_size()
-        );
-    }
+    /*
+    println!(
+        "{} processing particles",
+        mcco.particle_vault_container.particles_processing_size()
+    );
+    println!(
+        "{} processed particles",
+        mcco.particle_vault_container.particles_processed_size()
+    );
+    */
 }
 
 pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mc_fast_timer::start(mcco, Section::CycleTracking);
     let mut done = false;
     loop {
-        //let mut particle_count: u64 = 0;
-
         while !done {
             let mut fill_vault: usize = 0;
 
@@ -150,38 +121,24 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 }
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 
-                //let processed_vault_idx: usize = mcco
-                //    .particle_vault_container
-                //    .get_first_empty_processed_vault();
-
-                //println!("current processed vault #{processed_vault_idx}");
-
                 // number of VALID particles
                 let num_particles =
                     mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
-
-                //println!("{:#?}", mcco.particle_vault_container.processing_vaults[processing_vault_idx].particles);
 
                 if num_particles != 0 {
                     // iterate directly on particles??
                     let mut particle_idx: usize = 0;
                     let mut processed_particles: usize = 0;
                     while particle_idx < mcco.particle_vault_container.vault_size {
-                        //println!("processing particle #{particle_idx}");
                         cycle_tracking_guts(
                             mcco,
                             particle_idx,
                             &mut processed_particles,
                             processing_vault_idx,
-                            //processed_vault_idx,
                         );
-                        // incremented in cycle_tracking guts, only if the particle was not invalid
                         particle_idx += 1;
                     }
-                    //println!("vault #{processing_vault_idx} finished processing");
                 }
-
-                //particle_count += num_particles as u64;
 
                 mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
 
@@ -200,7 +157,6 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                         .buffer_particle(mcb_particle.unwrap(), send_q_t.neighbor);
                 }
 
-                //mcco.particle_vault_container.processing_vaults[processing_vault_idx].clear();
                 send_q.clear();
 
                 mcco.particle_vault_container.clean_extra_vaults();
@@ -238,6 +194,9 @@ pub fn cycle_finalize<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.time_info.cycle += 1;
 
     mc_fast_timer::stop(mcco, Section::CycleFinalize);
+
+    let count: u64 = mcco.tallies.spectrum.census_energy_spectrum.iter().sum();
+    println!("total # of registered particle in spectrum: {count}");
 
     mcco.fast_timer.clear_last_cycle_timers();
 }
