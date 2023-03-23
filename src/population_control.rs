@@ -101,9 +101,7 @@ fn population_control_guts<T: CustomFloat>(
                     vault.add_processing_particle(split_pp, &mut fill_vault_idx);
                 });
 
-                // add original back to the vault
-                // No intermediate variable for the reference to the task processing vault
-                // because we use a mut borrow in the interator above
+                // update original by overwriting it
                 vault.get_task_processing_vault(vault_idx)[task_particle_idx] = Some(pp);
             }
         }
