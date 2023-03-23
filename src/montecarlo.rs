@@ -150,16 +150,13 @@ impl<T: CustomFloat> MonteCarlo<T> {
 
         // Check energy levels on processing particles
         // Iterate on processing vaults
-        for vv in &self.particle_vault_container.processed_vaults {
+        for vv in &self.particle_vault_container.processing_vaults {
             update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
         }
         // Iterate on processed vaults
-        self.particle_vault_container
-            .processed_vaults
-            .iter()
-            .for_each(|vv| {
-                update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
-            });
+        for vv in &self.particle_vault_container.processed_vaults {
+            update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
+        }
     }
 
     pub fn cycle_finalize(&mut self) {
