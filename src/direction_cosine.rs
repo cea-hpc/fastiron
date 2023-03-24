@@ -5,6 +5,8 @@ use crate::{
     mc::mc_rng_state::rng_sample,
 };
 
+/// Structure used to model a direction in 3D space. Alpha, beta and
+/// gamma are Euler angles.
 #[derive(Debug, Clone, Default)]
 pub struct DirectionCosine<T: CustomFloat> {
     pub alpha: T,
@@ -21,8 +23,8 @@ impl<T: CustomFloat> DirectionCosine<T> {
 
         // sample gamma
         self.gamma = one - two * rng_sample(seed);
-
         let sine_gamma = (one - self.gamma * self.gamma).sqrt();
+
         // sample phi and set the other angles using it
         let phi = pi * (two * rng_sample(seed) - one);
 

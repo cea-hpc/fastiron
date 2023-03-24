@@ -14,12 +14,16 @@ use crate::{
     tallies::MCTallyEvent,
 };
 
-/// Main steps of the CycleTracking sections
+/// Main steps of the CycleTracking section.
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
     processing_vault_idx: usize,
 ) {
+    // A major change to be done is to do every computation using a reference to the particles
+    // instead of loading a copy & overwriting it; This would also mean propagating the
+    // "keep_tracking" result to the top level functions where it can be used to update the
+    // particle's status accordingly
     if let Some(mut particle) = load_particle(
         &mcco.particle_vault_container.processing_vaults[processing_vault_idx],
         particle_idx,
@@ -36,7 +40,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
             .put_particle(particle.clone(), particle_idx);
 
         // These functions operate using indexes, i.e. the version of the particle that is
-        // in the vault, not the copy we loaded & updated
+        // in the vault, not the copy we loaded & updated, hence the overwrite above
         if keep_tracking_next_cycle {
             mcco.particle_vault_container
                 .set_as_processed(processing_vault_idx, particle_idx);
@@ -47,7 +51,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     }
 }
 
-/// Computations of the CycleTracking sections
+/// Computations of the CycleTracking section
 pub fn cycle_tracking_function<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,

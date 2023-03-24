@@ -56,8 +56,6 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
 
     mcco.clear_cross_section_cache();
 
-    // mcco.tallies.cycle_initialize(mcco); // literally an empty function
-
     mcco.particle_vault_container
         .swap_processing_processed_vaults();
 

@@ -66,6 +66,7 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     }
 
     // These should be of capacity 0 by default, using directly the count is correct
+    // What did I mean by this ^
     mcco.nuclear_data.isotopes.reserve(n_isotopes);
     mcco.material_database.mat.reserve(n_materials);
 
@@ -90,7 +91,7 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 mp.scattering_cross_section_ratio,
                 mp.absorbtion_cross_section_ratio,
             );
-            // All isotopes are equally prevalent => each weight 1/n_isotopes
+            // All isotopes are equally prevalent => each weights 1/n_isotopes
             material.add_isotope(Isotope {
                 gid: isotope_gid,
                 atom_fraction: one::<T>() / FromPrimitive::from_usize(mp.n_isotopes).unwrap(),
@@ -136,22 +137,6 @@ fn consistency_check<T: CustomFloat>(
                             .facet[facet_idx_adj]
                             .subfacet;
 
-                        if params.simulation_params.debug_threads {
-                            // we'll use this as a general debug for now
-                            println!(
-                                "backside.adjacent.domain == domain_idx: {}",
-                                backside.adjacent.domain.unwrap() == domain_idx
-                            );
-                            println!(
-                                "backside.adjacent.cell == cell_idx: {}",
-                                backside.adjacent.cell.unwrap() == cell_idx
-                            );
-                            println!(
-                                "backside.adjacent.facet == facet_idx: {}",
-                                backside.adjacent.facet.unwrap() == facet_idx
-                            );
-                            println!();
-                        }
                         if !((backside.adjacent.domain.unwrap() == domain_idx)
                             | (backside.adjacent.cell.unwrap() == cell_idx)
                             | (backside.adjacent.facet.unwrap() == facet_idx))
@@ -173,9 +158,8 @@ fn initialize_centers_rand<T: CustomFloat>(
     grid: &GlobalFccGrid<T>,
     seed: &mut u64,
 ) -> Vec<MCVector<T>> {
-    // original function uses drand48 which sample a double in [0;1)
+    // original function uses drand48 which sample a double in [0; 1[
     // our rng_sample function does that
-    // TODO: handle limit case when the sampled float eq 1
     let nx: T = FromPrimitive::from_usize(grid.nx).unwrap();
     let ny: T = FromPrimitive::from_usize(grid.ny).unwrap();
     let nz: T = FromPrimitive::from_usize(grid.nz).unwrap();
@@ -293,7 +277,7 @@ fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
     let matdb = &mcco.material_database;
 
     let n_groups = params.simulation_params.n_groups;
-    // are we recomputing energies ?
+
     let mut energies: Vec<T> = Vec::with_capacity(n_groups);
     for ii in 0..n_groups {
         energies.push((nucdb.energies[ii] + nucdb.energies[ii + 1]) / (one::<T>() + one()));
@@ -334,7 +318,7 @@ fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
         xc_table.insert(mat_name, xc_vec);
     });
 
-    // build an output file; could write a markdown table?
+    // build an output file
     let file_name = params.simulation_params.cross_sections_out.to_owned() + ".dat";
     let mut file = File::create(file_name).unwrap();
     // header

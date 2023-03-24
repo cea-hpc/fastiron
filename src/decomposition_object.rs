@@ -6,6 +6,7 @@ pub struct DecompositionObject {
     pub index: Vec<usize>,
 }
 
+/// To be removed?
 impl DecompositionObject {
     /// Constructor
     pub fn new(my_rank: usize, n_ranks: usize, dom_per_rank: usize) -> Self {

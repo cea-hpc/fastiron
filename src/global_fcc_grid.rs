@@ -233,6 +233,10 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
     }
 }
 
+//=============
+// Unit tests
+//=============
+
 #[cfg(test)]
 mod tests {
     use super::GlobalFccGrid;
