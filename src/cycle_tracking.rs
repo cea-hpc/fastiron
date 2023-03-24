@@ -19,7 +19,6 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
     processing_vault_idx: usize,
-    //processed_vault_idx: usize,
 ) {
     if let Some(mut particle) = load_particle(
         &mcco.particle_vault_container.processing_vaults[processing_vault_idx],
@@ -32,6 +31,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
         let keep_tracking_next_cycle =
             cycle_tracking_function(mcco, &mut particle, particle_idx, processing_vault_idx);
 
+        // necessary overwrite
         mcco.particle_vault_container.processing_vaults[processing_vault_idx]
             .put_particle(particle.clone(), particle_idx);
 
@@ -53,7 +53,6 @@ pub fn cycle_tracking_function<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     particle_idx: usize,
     processing_vault_idx: usize,
-    //processed_vault_idx: usize,
 ) -> bool {
     let mut keep_tracking: bool;
     let mut keep_tracking_next_cycle: bool;
@@ -61,9 +60,9 @@ pub fn cycle_tracking_function<T: CustomFloat>(
     let flux_tally_idx: usize = particle_idx % mcco.tallies.num_flux_replications as usize;
 
     loop {
+        // compute event for segment & update # of segments
         let segment_outcome = outcome(mcco, particle, flux_tally_idx);
-        // atomic in original code
-        mcco.tallies.balance_task[tally_idx].num_segments += 1;
+        mcco.tallies.balance_task[tally_idx].num_segments += 1; // atomic in original code
 
         particle.num_segments += one();
 

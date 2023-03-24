@@ -1,6 +1,12 @@
 use num::{zero, FromPrimitive};
 
-use crate::{constants::CustomFloat, mc::mc_vector::MCVector};
+use crate::{
+    constants::{
+        mesh::{N_FACES, N_POINTS_INTERSEC},
+        CustomFloat,
+    },
+    mc::mc_vector::MCVector,
+};
 
 /// Custom alias for readability.
 pub type Tuple3 = (usize, usize, usize);
@@ -31,8 +37,8 @@ pub struct GlobalFccGrid<T: CustomFloat> {
     /// Size of a mesh cell along the z axis (cm)
     pub dz: T,
 
-    pub corner_offset: [Tuple4; 14],       // TODO: change to a CONST
-    pub face_offset: [(i32, i32, i32); 6], // TODO: change to a CONST
+    pub corner_offset: [Tuple4; N_POINTS_INTERSEC],
+    pub face_offset: [(i32, i32, i32); N_FACES],
 }
 
 impl<T: CustomFloat> GlobalFccGrid<T> {
@@ -42,7 +48,7 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
         let tmpy: T = FromPrimitive::from_usize(ny).unwrap();
         let tmpz: T = FromPrimitive::from_usize(nz).unwrap();
 
-        let corner_offset: [Tuple4; 14] = [
+        let corner_offset: [Tuple4; N_POINTS_INTERSEC] = [
             (0, 0, 0, 0),
             (1, 0, 0, 0),
             (0, 1, 0, 0),
@@ -59,7 +65,7 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
             (0, 0, 0, 3),
         ];
 
-        let face_offset: [(i32, i32, i32); 6] = [
+        let face_offset: [(i32, i32, i32); N_FACES] = [
             (1, 0, 0),
             (-1, 0, 0),
             (0, 1, 0),
@@ -142,13 +148,12 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
     }
 
     /// Returns the global identifiers of the nodes of the specified cell.
-    pub fn get_node_gids(&self, cell_gid: usize) -> [usize; 14] {
-        let mut node_gid: [usize; 14] = [0; 14];
+    pub fn get_node_gids(&self, cell_gid: usize) -> [usize; N_POINTS_INTERSEC] {
+        let mut node_gid: [usize; N_POINTS_INTERSEC] = [0; N_POINTS_INTERSEC];
 
         let tt: Tuple3 = self.cell_idx_to_tuple(cell_gid);
 
-        // TODO: change to a CONST
-        (0..14).for_each(|ii| {
+        (0..N_POINTS_INTERSEC).for_each(|ii| {
             let tmp: Tuple4 = (
                 tt.0 + self.corner_offset[ii].0,
                 tt.1 + self.corner_offset[ii].1,
@@ -162,12 +167,12 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
     }
 
     /// Returns the global identifiers of the faces of the specified cell.
-    pub fn get_face_nbr_gids(&self, cell_gid: usize) -> [usize; 6] {
-        let mut nbr_cell_gid: [usize; 6] = [0; 6];
+    pub fn get_face_nbr_gids(&self, cell_gid: usize) -> [usize; N_FACES] {
+        let mut nbr_cell_gid: [usize; N_FACES] = [0; N_FACES];
 
         let cell_tt = self.cell_idx_to_tuple(cell_gid);
-        // TODO: change to a CONST
-        (0..6).for_each(|ii| {
+
+        (0..N_FACES).for_each(|ii| {
             let face_nbr = (
                 cell_tt.0 as i32 + self.face_offset[ii].0,
                 cell_tt.1 as i32 + self.face_offset[ii].1,

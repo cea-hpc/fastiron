@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use num::{one, zero, FromPrimitive};
 
 use crate::{
-    constants::CustomFloat,
+    constants::{
+        mesh::{N_FACETS_OUT, N_POINTS_PER_FACET},
+        CustomFloat,
+    },
     decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
     material_database::MaterialDatabase,
@@ -27,7 +30,7 @@ struct FaceInfo {
     pub nbr_idx: Option<usize>,
 }
 
-const NODE_INDIRECT: [[usize; 3]; 24] = [
+const NODE_INDIRECT: [[usize; N_POINTS_PER_FACET]; N_FACETS_OUT] = [
     [1, 3, 8],
     [3, 7, 8],
     [7, 5, 8],
@@ -54,7 +57,7 @@ const NODE_INDIRECT: [[usize; 3]; 24] = [
     [1, 0, 13],
 ];
 
-const OPPOSING_FACET: [usize; 24] = [
+const OPPOSING_FACET: [usize; N_FACETS_OUT] = [
     7, 6, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 8, 11, 10, 9, 20, 23, 22, 21, 16, 19, 18, 17,
 ];
 

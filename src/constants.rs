@@ -46,3 +46,15 @@ pub mod physical {
     pub const SMALL_FLOAT: f64 = 1e-10;
     pub const HUGE_FLOAT: f64 = 1e75;
 }
+
+pub mod mesh {
+    /// Number of points per facet.
+    pub const N_POINTS_PER_FACET: usize = 3;
+    /// Number of facet of a cell facing outward i.e. constituting
+    /// a border with another cell.
+    pub const N_FACETS_OUT: usize = 24;
+    /// Number of points defining a cell.
+    pub const N_POINTS_INTERSEC: usize = 14;
+    /// Number of faces defining a cell.
+    pub const N_FACES: usize = 6;
+}

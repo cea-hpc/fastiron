@@ -15,6 +15,7 @@ pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance
     let local_n_particles: usize = mcco.particle_vault_container.particles_processing_size();
 
     if load_balance {
+        // Spread the target number of particle among the processors
         let tmp: T = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
             / FromPrimitive::from_usize(mcco.processor_info.num_processors).unwrap();
         target_n_particles = tmp.ceil().to_usize().unwrap();
@@ -24,6 +25,7 @@ pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance
 
     let mut split_rr_factor: T = one();
     if load_balance {
+        // Compute processor-specific split factor
         if local_n_particles != 0 {
             split_rr_factor = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
                 / FromPrimitive::from_usize(local_n_particles).unwrap();

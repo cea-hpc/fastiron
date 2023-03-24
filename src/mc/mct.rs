@@ -4,12 +4,12 @@ use num::{one, zero, FromPrimitive};
 
 use super::{
     mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
-    mc_facet_adjacency::N_POINTS_PER_FACET, mc_facet_geometry::MCGeneralPlane,
-    mc_location::MCLocation, mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle,
-    mc_rng_state::rng_sample, mc_vector::MCVector,
+    mc_facet_geometry::MCGeneralPlane, mc_location::MCLocation, mc_nearest_facet::MCNearestFacet,
+    mc_particle::MCParticle, mc_rng_state::rng_sample, mc_vector::MCVector,
 };
 use crate::{
     constants::{
+        mesh::{N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
         physical::{HUGE_FLOAT, SMALL_FLOAT},
         CustomFloat,
     },
@@ -118,14 +118,12 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
 pub fn cell_position_3dg<T: CustomFloat>(domain: &MCDomain<T>, cell_idx: usize) -> MCVector<T> {
     let mut coordinate: MCVector<T> = Default::default();
 
-    let n_points: usize = domain.mesh.cell_connectivity[cell_idx].point.len();
-
-    (0..n_points).for_each(|point_idx| {
+    (0..N_POINTS_INTERSEC).for_each(|point_idx| {
         let point = domain.mesh.cell_connectivity[cell_idx].point[point_idx];
         coordinate += domain.mesh.node[point];
     });
 
-    coordinate /= FromPrimitive::from_usize(n_points).unwrap();
+    coordinate /= FromPrimitive::from_usize(N_POINTS_INTERSEC).unwrap();
 
     coordinate
 }
@@ -180,10 +178,6 @@ fn mct_nf_3dg<T: CustomFloat>(
     let mut iteration: usize = 0;
     let mut move_factor: T = FromPrimitive::from_f64(0.5 * SMALL_FLOAT).unwrap();
 
-    let num_facets_per_cell: usize = domain.mesh.cell_connectivity[location.cell.unwrap()]
-        .facet
-        .len();
-
     loop {
         let tmp: T = FromPrimitive::from_f64(1e-16).unwrap();
         let plane_tolerance: T =
@@ -191,7 +185,7 @@ fn mct_nf_3dg<T: CustomFloat>(
 
         let mut distance_to_facet: [MCDistanceToFacet<T>; 24] = [MCDistanceToFacet::default(); 24]; // why 24? == numfacetpercell?
 
-        (0..num_facets_per_cell).for_each(|facet_idx| {
+        (0..N_FACETS_OUT).for_each(|facet_idx| {
             distance_to_facet[facet_idx].distance = huge_f;
 
             let plane = &domain.mesh.cell_geometry[location.cell.unwrap()][facet_idx];
@@ -230,7 +224,6 @@ fn mct_nf_3dg<T: CustomFloat>(
             &mut location,
             &mut iteration,
             &mut move_factor,
-            num_facets_per_cell,
             &distance_to_facet,
         );
 
@@ -268,7 +261,6 @@ fn mct_nf_3dg_move_particle<T: CustomFloat>(
 
 /// delete num_facets_per_cell ?
 fn mct_nf_compute_nearest<T: CustomFloat>(
-    num_facets_per_cell: usize,
     distance_to_facet: &[MCDistanceToFacet<T>],
 ) -> MCNearestFacet<T> {
     let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
@@ -279,7 +271,7 @@ fn mct_nf_compute_nearest<T: CustomFloat>(
     };
 
     // determine the nearest facet
-    (0..num_facets_per_cell).for_each(|facet_idx| {
+    (0..N_FACETS_OUT).for_each(|facet_idx| {
         if distance_to_facet[facet_idx].distance > zero() {
             if distance_to_facet[facet_idx].distance <= nearest_facet.distance_to_facet {
                 nearest_facet.distance_to_facet = distance_to_facet[facet_idx].distance;
@@ -307,10 +299,9 @@ fn mct_nf_find_nearest<T: CustomFloat>(
     location: &mut MCLocation,
     iteration: &mut usize,
     move_factor: &mut T,
-    num_facets_per_cell: usize,
     distance_to_facet: &[MCDistanceToFacet<T>],
 ) -> (MCNearestFacet<T>, bool) {
-    let nearest_facet = mct_nf_compute_nearest(num_facets_per_cell, distance_to_facet);
+    let nearest_facet = mct_nf_compute_nearest(distance_to_facet);
     let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
     let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
