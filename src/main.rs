@@ -82,16 +82,6 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
     );
 
     mc_fast_timer::stop(mcco, Section::CycleInit);
-    /*
-    println!(
-        "{} processing particles",
-        mcco.particle_vault_container.particles_processing_size()
-    );
-    println!(
-        "{} processed particles",
-        mcco.particle_vault_container.particles_processed_size()
-    );
-    */
 }
 
 pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
@@ -167,18 +157,10 @@ pub fn cycle_finalize<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.tallies.balance_task[0].end =
         mcco.particle_vault_container.particles_processed_size() as u64;
 
-    println!(
-        "processed particles: {}",
-        mcco.particle_vault_container.particles_processed_size()
-    );
-
     mcco.cycle_finalize();
     mcco.time_info.cycle += 1;
 
     mc_fast_timer::stop(mcco, Section::CycleFinalize);
-
-    //let count: u64 = mcco.tallies.spectrum.census_energy_spectrum.iter().sum();
-    //println!("total # of registered particle in spectrum: {count}");
 
     mcco.fast_timer.clear_last_cycle_timers();
 }
