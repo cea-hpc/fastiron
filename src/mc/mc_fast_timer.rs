@@ -66,10 +66,9 @@ pub struct MCFastTimerContainer {
 }
 
 impl MCFastTimerContainer {
-    pub fn cumulative_report(&self) {
-        // TODO: COMPLETE
+    pub fn cumulative_report(&self, num_segments: u64) {
         // Print header
-        println!("Timer Name                        Cumulative number of calls   Cumulative min (ms)    Cumulative avg (ms)    Cumulative max (ms)    Cumulative stddev (ms)    Cumulative efficiency rating (%)");
+        println!("Timer Name                        Cumulative number of calls   Cumulative min (µs)    Cumulative avg (µs)    Cumulative max (µs)    Cumulative stddev (µs)    Cumulative efficiency rating (%)");
         self.timers
             .iter()
             .enumerate()
@@ -95,6 +94,10 @@ impl MCFastTimerContainer {
                     0
                 );
             });
+        println!(
+            "Figure of merit: {:>.3e} [segments / cycle tracking time]",
+            num_segments as f64 / self.maxs[Section::CycleTracking as usize].as_micros() as f64
+        );
     }
 
     pub fn last_cycle_report(&self) {
