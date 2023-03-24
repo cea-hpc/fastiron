@@ -12,9 +12,8 @@ pub fn rng_sample<T: CustomFloat>(seed: &mut u64) -> T {
         .overflowing_add(3037000493u64)
         .0;
 
-    // Bijection between integers [0; 2^64] and decimal [0; 1]
-    //let f: f64 = 5.4210108624275222e-20*(*seed as f64);
-    let f: f64 = 5.421010862427522e-20 * (*seed as f64); // took out one decimal
+    // Bijection between integers [0; 2^64[ and decimal [0; 1[
+    let f: f64 = 5.421010862427522e-20 * (*seed as f64);
     FromPrimitive::from_f64(f).unwrap()
 }
 
