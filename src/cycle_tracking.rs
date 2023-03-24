@@ -18,7 +18,6 @@ use crate::{
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
-    processed_num: &mut usize,
     processing_vault_idx: usize,
     //processed_vault_idx: usize,
 ) {
@@ -46,7 +45,6 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
                 .invalidate_particle(particle_idx);
         }
         //println!("invalidated particle #{particle_idx}");
-        *processed_num += 1;
     }
 }
 

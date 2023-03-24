@@ -22,8 +22,7 @@ impl<T: CustomFloat> Default for ParticleVault<T> {
 impl<T: CustomFloat> ParticleVault<T> {
     /// Returns true if the vault is empty, false otherwise.
     pub fn empty(&self) -> bool {
-        todo!(); // this is incorrect; empty means full of None
-                 //self.particles.is_empty()
+        todo!();
     }
 
     /// Reserve the size for the container of particles.
@@ -32,7 +31,6 @@ impl<T: CustomFloat> ParticleVault<T> {
         // additional size as argument, not total size.
         // this works if reserve is only called at creation
         self.particles = vec![None; n];
-        //self.particles.reserve(n - self.size());
     }
 
     /// Returns the size of the vault, i.e. the number of VALID particle in the vault.

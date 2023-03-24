@@ -13,7 +13,6 @@ use fastiron::population_control;
 
 fn main() {
     let cli = Cli::parse();
-    //println!("Printing CLI args:\n{cli:#?}");
 
     let params = Parameters::get_parameters(cli).unwrap();
     println!("Printing Parameters:\n{params:#?}");
@@ -104,38 +103,16 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
             for processing_vault_idx in 0..mcco.particle_vault_container.processing_vaults.len() {
                 // Computing block
-
-                if mcco.params.simulation_params.debug_threads {
-                    println!("processing vault #{processing_vault_idx}");
-                    println!(
-                        "processing vault capacity: {}",
-                        mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-                            .particles
-                            .len()
-                    );
-                    println!(
-                        "processing vault size:     {}",
-                        mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-                            .size()
-                    );
-                }
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 
-                // number of VALID particles
+                // number of VALID particles in current vault
                 let num_particles =
                     mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
 
                 if num_particles != 0 {
-                    // iterate directly on particles??
                     let mut particle_idx: usize = 0;
-                    let mut processed_particles: usize = 0;
                     while particle_idx < mcco.particle_vault_container.vault_size {
-                        cycle_tracking_guts(
-                            mcco,
-                            particle_idx,
-                            &mut processed_particles,
-                            processing_vault_idx,
-                        );
+                        cycle_tracking_guts(mcco, particle_idx, processing_vault_idx);
                         particle_idx += 1;
                     }
                 }

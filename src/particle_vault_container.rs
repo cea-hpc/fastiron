@@ -243,7 +243,6 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
     ) {
         // find a vault with free space
         while self.processing_vaults[*fill_vault_index].size() >= self.vault_size {
-            //println!("No space in fill_vault; moving on next vault");
             // if no space, move to next vault
             *fill_vault_index += 1;
 
@@ -281,7 +280,6 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
 
     /// Cleans up the extra vaults by moving particles into the processing vaults.
     pub fn clean_extra_vaults(&mut self) {
-        //println!("cleaning extra vaults...");
         let n = self.particles_extra_size();
         if n == 0 {
             return;
@@ -299,6 +297,5 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
         });
 
         self.extra_vault.iter_mut().for_each(|vv| vv.clear());
-        //println!("finished cleaning extra vaults");
     }
 }
