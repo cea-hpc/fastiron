@@ -132,6 +132,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
         self.particle_buffer.clear()
     }
 
+    /// Update the enrgy spectrum by going over all the currently valid particles.
     pub fn update_spectrum(&mut self) {
         if self.tallies.spectrum.file_name.is_empty() {
             println!("No output name specified for energy");
@@ -139,7 +140,6 @@ impl<T: CustomFloat> MonteCarlo<T> {
         }
 
         let update_function = |vault: &ParticleVault<T>, spectrum: &mut [u64]| {
-            // We need to iterate on the index in order to access all particles, even invalid ones
             (0..vault.size()).for_each(|particle_idx| {
                 // load particle & update energy group
                 let mut pp = load_particle(vault, particle_idx, self.time_info.time_step).unwrap();
@@ -148,7 +148,6 @@ impl<T: CustomFloat> MonteCarlo<T> {
             });
         };
 
-        // Check energy levels on processing particles
         // Iterate on processing vaults
         for vv in &self.particle_vault_container.processing_vaults {
             update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
@@ -159,6 +158,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
         }
     }
 
+    /// Print stats of the current cycle and update the cumulative counters.
     pub fn cycle_finalize(&mut self) {
         self.tallies.sum_tasks();
 

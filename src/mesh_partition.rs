@@ -40,7 +40,6 @@ pub struct MeshPartition {
 
 impl MeshPartition {
     /// Constructor. The structure is NOT ready to be used directly.
-    /// Change so that it returns directly a complete object? Just call build in the constructor?
     pub fn new(domain_gid: usize, domain_index: usize, foreman: usize) -> Self {
         Self {
             domain_gid,
@@ -167,6 +166,10 @@ impl MeshPartition {
         });
     }
 }
+
+//=============
+// Unit tests
+//=============
 
 #[cfg(test)]
 mod tests {

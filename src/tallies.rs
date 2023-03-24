@@ -377,18 +377,20 @@ impl<T: CustomFloat> Tallies<T> {
     pub fn scalar_flux_sum(&self) -> T {
         let mut sum: T = zero();
 
-        // single threaded for now so this should cover all
-        // actual hell loop
         let n_domain = self.scalar_flux_domain.len();
+        // for all domains
         (0..n_domain).for_each(|domain_idx| {
+            // for each (replicated) tally
             (0..self.num_flux_replications).for_each(|rep_idx| {
                 let n_cells = self.scalar_flux_domain[domain_idx].task[rep_idx as usize]
                     .cell
                     .len();
+                // for each cell
                 (0..n_cells).for_each(|cell_idx| {
                     let n_groups = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
                         [cell_idx]
                         .len();
+                    // for each energy group
                     (0..n_groups).for_each(|group_idx| {
                         sum += self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
                             [cell_idx][group_idx];

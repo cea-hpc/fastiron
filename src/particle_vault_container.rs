@@ -212,7 +212,6 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
         let mut fill_vault_idx: usize = 0;
 
         while self.processed_vaults[fill_vault_idx].size() >= self.vault_size {
-            //println!("No space in fill_vault; moving on next vault");
             // if no space, move to next vault
             fill_vault_idx += 1;
 

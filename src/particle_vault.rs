@@ -6,30 +6,19 @@ use crate::{
 };
 
 /// Struture used to group particle in batches.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ParticleVault<T: CustomFloat> {
     pub particles: Vec<Option<MCBaseParticle<T>>>,
 }
 
-impl<T: CustomFloat> Default for ParticleVault<T> {
-    fn default() -> Self {
-        Self {
-            particles: Vec::new(),
-        }
-    }
-}
-
 impl<T: CustomFloat> ParticleVault<T> {
     /// Returns true if the vault is empty, false otherwise.
-    pub fn empty(&self) -> bool {
-        todo!();
+    pub fn is_empty(&self) -> bool {
+        self.size() == 0
     }
 
     /// Reserve the size for the container of particles.
     pub fn reserve(&mut self, n: usize) {
-        // The operation is needed as the reserve method on Vec takes an
-        // additional size as argument, not total size.
-        // this works if reserve is only called at creation
         self.particles = vec![None; n];
     }
 
@@ -104,7 +93,6 @@ impl<T: CustomFloat> ParticleVault<T> {
     /// The particle is pushed at the first empty space found, not necessarily after
     /// the last non-empty space.
     /// Fails if the vault has no empty space left (i.e. no None value).
-    /// Has an atomic increment in the original code.
     pub fn push_particle(&mut self, particle: MCParticle<T>) {
         let insert_idx = self
             .particles
@@ -197,9 +185,6 @@ impl<T: CustomFloat> ParticleVault<T> {
     }
 
     /// Invalidate the particle at the specified index.
-    /// Is this really correct? The function is used at the end of each
-    /// time iteration, meaning the particle may continue to travel
-    /// at next iter
     pub fn invalidate_particle(&mut self, index: usize) {
         self.particles[index] = None; // will panic if out of bounds
     }
@@ -210,7 +195,6 @@ impl<T: CustomFloat> ParticleVault<T> {
     /// TMP: is the swap really necessary since we don't use pointer to index?
     pub fn erase_swap_particles(&mut self, index: usize) {
         let n = self.particles.len();
-        //self.particles[index] = self.particles.pop().unwrap() // does this work?
         if let Some(last_pp_idx) = self.particles.iter().rev().position(|elem| elem.is_some()) {
             self.particles[index] = self.particles[n - 1 - last_pp_idx].clone();
             self.particles[n - 1 - last_pp_idx] = None;
@@ -238,6 +222,10 @@ impl<T: CustomFloat> core::ops::IndexMut<usize> for ParticleVault<T> {
         &mut self.particles[index]
     }
 }
+
+//=============
+// Unit tests
+//=============
 
 #[cfg(test)]
 mod tests {
