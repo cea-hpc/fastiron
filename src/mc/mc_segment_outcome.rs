@@ -9,12 +9,13 @@ use crate::{
         CustomFloat,
     },
     macro_cross_section::weighted_macroscopic_cross_section,
-    mc::{mc_nearest_facet::MCNearestFacet, mc_rng_state::rng_sample, mct::nearest_facet},
+    mc::{
+        mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_rng_state::rng_sample,
+        mct::nearest_facet,
+    },
     montecarlo::MonteCarlo,
     tallies::MCTallyEvent,
 };
-
-use super::mc_particle::MCParticle;
 
 /// Enum representing the outcome of the current segment.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -37,7 +38,7 @@ pub fn outcome<T: CustomFloat>(
     let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
     let small_f: T = FromPrimitive::from_f64(SMALL_FLOAT).unwrap();
     let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
-    let mut distance = [huge_f; N_EVENTS];
+    let mut distance: [T; N_EVENTS] = [huge_f; N_EVENTS];
 
     let particle_speed = mc_particle.velocity.length();
 
@@ -182,11 +183,9 @@ fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
 
 #[cfg(test)]
 mod tests {
-    use num::zero;
-
     use super::*;
-
     use crate::constants::physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT};
+    use num::zero;
 
     #[test]
     fn find_min_dist() {

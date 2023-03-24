@@ -7,6 +7,7 @@ pub struct CommObject {
     pub gid_to_idx: Vec<usize>,
 }
 
+/// To be removed?
 impl CommObject {
     /// Constructor.
     pub fn new(partition: &[MeshPartition]) -> Self {

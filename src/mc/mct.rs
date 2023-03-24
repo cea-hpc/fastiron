@@ -44,8 +44,6 @@ pub fn nearest_facet<T: CustomFloat>(
 }
 
 /// Generates a random coordinate inside a polyhedral cell.
-/// May be possible to remove the MonteCarlo argument by directly
-/// passing a a reference to the domain since its read only.
 pub fn generate_coordinate_3dg<T: CustomFloat>(
     seed: &mut u64,
     domain: &MCDomain<T>,

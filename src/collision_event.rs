@@ -45,7 +45,7 @@ pub fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCP
 }
 
 /// Computes and transform accordingly a [MCParticle] object that
-/// undergo a collision. Returns true if the particle will continue
+/// undergo a collision. Returns true if the particle will continue.
 pub fn collision_event<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     mc_particle: &mut MCParticle<T>,
@@ -55,12 +55,14 @@ pub fn collision_event<T: CustomFloat>(
 
     // ==========================
     // Pick an isotope & reaction
+
     let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
     let total_xsection: T = mc_particle.total_cross_section;
 
     let mut current_xsection: T = total_xsection * rdm_number;
 
-    let mut selected_iso: usize = usize::MAX; // sort of a magic value
+    // sort of a magic value but using an option seems to be overkill
+    let mut selected_iso: usize = usize::MAX;
     let mut selected_unique_n: usize = usize::MAX;
     let mut selected_react: usize = usize::MAX;
 
@@ -98,6 +100,7 @@ pub fn collision_event<T: CustomFloat>(
 
     // ================
     // Do the collision
+
     let mat_mass = mcco.material_database.mat[mat_gidx].mass;
     let (energy_out, angle_out) = mcco.nuclear_data.isotopes[selected_unique_n][0].reactions
         [selected_react]
@@ -106,12 +109,13 @@ pub fn collision_event<T: CustomFloat>(
             mat_mass,
             &mut mc_particle.random_number_seed,
         );
-
+    // number of particles resulting from the collision, including the original
+    // e.g. zero means the original particle was absorbed or invalidated in some way
     let n_out = energy_out.len();
-    //println!("nout: {n_out}");
 
     // ===================
     // Tally the collision
+
     mcco.tallies.balance_task[tally_idx].collision += 1; // atomic in original code
     match mcco.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react].reaction_type {
         ReactionType::Scatter => mcco.tallies.balance_task[tally_idx].scatter += 1,
@@ -173,7 +177,7 @@ mod tests {
     #[test]
     fn trajectory() {
         let mut pp: MCParticle<f64> = MCParticle::default();
-        // sets parameters
+        // init data
         let vv: MCVector<f64> = MCVector {
             x: 1.0,
             y: 1.0,
