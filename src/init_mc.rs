@@ -294,7 +294,10 @@ fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
 
     let n_groups = params.simulation_params.n_groups;
     // are we recomputing energies ?
-    let energies = nucdb.energies.clone();
+    let mut energies: Vec<T> = Vec::with_capacity(n_groups);
+    for ii in 0..n_groups {
+        energies.push((nucdb.energies[ii] + nucdb.energies[ii + 1]) / (one::<T>() + one()));
+    }
 
     // compute
     let mut xc_table: HashMap<String, Vec<XSData<T>>> = Default::default();

@@ -64,7 +64,7 @@ pub fn outcome<T: CustomFloat>(
     }
 
     // if zero
-    if mc_particle.num_mean_free_paths < tiny_f {
+    if mc_particle.num_mean_free_paths == zero() {
         let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
         mc_particle.num_mean_free_paths = -one * rdm_number.ln();
     }
@@ -130,7 +130,7 @@ pub fn outcome<T: CustomFloat>(
     }
 
     // skip tallies & early return if the path length is 0
-    if mc_particle.segment_path_length < tiny_f {
+    if mc_particle.segment_path_length == zero() {
         return segment_outcome;
     }
 

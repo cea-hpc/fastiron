@@ -15,7 +15,9 @@ pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance
     let local_n_particles: usize = mcco.particle_vault_container.particles_processing_size();
 
     if load_balance {
-        target_n_particles /= mcco.processor_info.num_processors;
+        let tmp: T = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
+            / FromPrimitive::from_usize(mcco.processor_info.num_processors).unwrap();
+        target_n_particles = tmp.ceil().to_usize().unwrap();
     } else {
         global_n_particles = local_n_particles;
     }
@@ -30,8 +32,6 @@ pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance
         split_rr_factor = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
             / FromPrimitive::from_usize(global_n_particles).unwrap();
     }
-
-    println!("split rr factor: {split_rr_factor}");
 
     if split_rr_factor != one() {
         population_control_guts(
@@ -54,6 +54,8 @@ fn population_control_guts<T: CustomFloat>(
     let vault_size = vault.vault_size;
     let mut fill_vault_idx = current_n_particles / vault_size;
 
+    let mut count: usize = 0;
+
     // march backwards through particles; might be unecessary since we use vectors?
     (0..current_n_particles).rev().for_each(|particle_idx| {
         let vault_idx = particle_idx / vault_size;
@@ -63,8 +65,11 @@ fn population_control_guts<T: CustomFloat>(
         // we clone the particle and overwrite it.
         if let Some(mut pp) = vault.get_task_processing_vault(vault_idx)[task_particle_idx].clone()
         {
+            count += 1; // count only valid particles
             let rand_n: T = rng_sample(&mut pp.random_number_seed);
+
             if split_rr_factor < one() {
+                // too many particles; roll for a kill
                 let task_processing_vault = vault.get_task_processing_vault(vault_idx);
                 if rand_n > split_rr_factor {
                     task_processing_vault.erase_swap_particles(task_particle_idx);
@@ -75,6 +80,7 @@ fn population_control_guts<T: CustomFloat>(
                     task_processing_vault[task_particle_idx] = Some(pp);
                 }
             } else if split_rr_factor > one() {
+                // not enough particles; create new ones by splitting
                 let mut split_factor = split_rr_factor.floor();
                 if rand_n > split_rr_factor - split_factor {
                     split_factor -= one();
@@ -92,13 +98,13 @@ fn population_control_guts<T: CustomFloat>(
                     vault.add_processing_particle(split_pp, &mut fill_vault_idx);
                 });
 
-                // add original back to the vault
-                // No intermediate variable for the reference to the task processing vault
-                // because we use a mut borrow in the interator above
+                // update original by overwriting it
                 vault.get_task_processing_vault(vault_idx)[task_particle_idx] = Some(pp);
             }
         }
     });
+    // did we really march through all particles?
+    assert_eq!(count, current_n_particles);
 }
 
 /// Play russian-roulette with low-weight particles relative
@@ -118,11 +124,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
         // march backwards through particles; might be unecessary since we use vectors?
         (0..current_n_particles).rev().for_each(|particle_idx| {
             let vault_idx = particle_idx / vault_size;
-            let task_particle_idx = if vault_idx == 0 {
-                particle_idx
-            } else {
-                particle_idx % vault_idx
-            };
+            let task_particle_idx = particle_idx % vault_size;
 
             let task_processing_vault = vault.get_task_processing_vault(vault_idx);
             if let Some(mut pp) = task_processing_vault[task_particle_idx].clone() {

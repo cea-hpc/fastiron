@@ -94,8 +94,8 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
         seed: &mut u64,
         //max_production_size: usize,
     ) -> (Vec<T>, Vec<T>) {
-        let one: T = FromPrimitive::from_f32(1.0).unwrap();
-        let two: T = one + one;
+        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
         let mut energy_out: Vec<T> = Vec::new();
         let mut angle_out: Vec<T> = Vec::new();
         match self.reaction_type {

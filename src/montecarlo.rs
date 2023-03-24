@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use num::{zero, FromPrimitive};
+use num::zero;
 
 use crate::constants::CustomFloat;
 use crate::material_database::MaterialDatabase;
@@ -150,16 +150,13 @@ impl<T: CustomFloat> MonteCarlo<T> {
 
         // Check energy levels on processing particles
         // Iterate on processing vaults
-        for vv in &self.particle_vault_container.processed_vaults {
+        for vv in &self.particle_vault_container.processing_vaults {
             update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
         }
         // Iterate on processed vaults
-        self.particle_vault_container
-            .processed_vaults
-            .iter()
-            .for_each(|vv| {
-                update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
-            });
+        for vv in &self.particle_vault_container.processed_vaults {
+            update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
+        }
     }
 
     pub fn cycle_finalize(&mut self) {
@@ -204,21 +201,5 @@ impl<T: CustomFloat> MonteCarlo<T> {
             self.tallies.scalar_flux_domain[domain_idx].task[0].reset();
         });
         self.update_spectrum();
-
-        let mut total: T = zero();
-        let sum_loge: T = self
-            .tallies
-            .spectrum
-            .census_energy_spectrum
-            .iter()
-            .enumerate()
-            .map(|(energy_idx, count)| {
-                let c: T = FromPrimitive::from_u64(*count).unwrap();
-                total += c;
-                c * self.nuclear_data.energies[energy_idx].log10()
-            })
-            .sum();
-
-        println!("weighted total log energy: {}", sum_loge / total);
     }
 }

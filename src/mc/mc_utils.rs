@@ -1,4 +1,4 @@
-use num::{zero, FromPrimitive};
+use num::{one, zero, FromPrimitive};
 
 use crate::{
     constants::{
@@ -138,7 +138,9 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                         particle.task = 0; // used task_idx in original code but it stayed const
                         particle.weight = source_particle_weight;
 
-                        let rand_f = rng_sample(&mut particle.random_number_seed);
+                        let mut rand_f: T = rng_sample(&mut particle.random_number_seed);
+                        particle.num_mean_free_paths = -one::<T>() * rand_f.ln();
+                        rand_f = rng_sample(&mut particle.random_number_seed);
                         particle.time_to_census = time_step * rand_f;
 
                         let base_particle: MCBaseParticle<T> = MCBaseParticle::new(&particle);
@@ -162,7 +164,19 @@ fn speed_from_energy<T: CustomFloat>(energy: T) -> T {
     let speed_of_light: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
     speed_of_light
-        * (energy * (energy * two * (rest_mass_energy))
+        * (energy * (energy + two * (rest_mass_energy))
             / ((energy + rest_mass_energy) * (energy + rest_mass_energy)))
             .sqrt()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_speed_from_e() {
+        let energy = 15.032;
+        let speed = speed_from_energy(energy);
+        assert_eq!(speed, 5299286790.50638);
+    }
 }

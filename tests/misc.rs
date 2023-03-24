@@ -1,7 +1,9 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hint::black_box};
+
+use num::{Float, ToPrimitive};
 
 #[test]
-pub fn map_behavior() {
+fn map_behavior() {
     let mut map: HashMap<usize, usize> = Default::default();
     let mut complementary_map: HashMap<usize, usize> = Default::default();
     (0..10).for_each(|jj| {
@@ -25,15 +27,27 @@ pub fn map_behavior() {
 }
 
 #[test]
-pub fn filter_and_count() {
+fn filter_and_count() {
     let list = [None, None, Some(123), Some(91), None];
     let n_some = list.iter().filter(|elem| elem.is_some()).count();
     assert_eq!(n_some, 2);
 }
 
 #[test]
-pub fn position() {
+fn position() {
     let arr: [Option<usize>; 6] = [None, None, Some(0), None, Some(1), None];
     let idx = arr.iter().rev().position(|elem| elem.is_some()).unwrap();
     assert_eq!(4, 6 - 1 - idx); // reverse the index
+}
+
+#[test]
+fn float_point_error() {
+    for _ in 0..10000 {
+        let split_rr_factor = 2.9123;
+        let mut split_factor = split_rr_factor.floor();
+        split_factor -= 1.0;
+        black_box(split_factor);
+        let n = split_factor.to_usize().unwrap();
+        assert_eq!(n, 1);
+    }
 }

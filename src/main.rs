@@ -13,7 +13,6 @@ use fastiron::population_control;
 
 fn main() {
     let cli = Cli::parse();
-    //println!("Printing CLI args:\n{cli:#?}");
 
     let params = Parameters::get_parameters(cli).unwrap();
     println!("Printing Parameters:\n{params:#?}");
@@ -28,11 +27,8 @@ fn main() {
     mc_fast_timer::start(mcco, Section::Main);
 
     for _ in 0..n_steps {
-        //println!("------cycle_init");
         cycle_init(mcco, load_balance);
-        //println!("------cycle_tracking");
         cycle_tracking(mcco);
-        //println!("------cycle_finalize");
         cycle_finalize(mcco);
         if mcco.params.simulation_params.cycle_timers {
             mcco.fast_timer.last_cycle_report();
@@ -49,7 +45,8 @@ fn main() {
 pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.fast_timer.update_main_stats();
 
-    mcco.fast_timer.cumulative_report();
+    mcco.fast_timer
+        .cumulative_report(mcco.tallies.balance_cumulative.num_segments);
 
     mcco.tallies.spectrum.print_spectrum(mcco);
 }
@@ -61,31 +58,8 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
 
     // mcco.tallies.cycle_initialize(mcco); // literally an empty function
 
-    if mcco.params.simulation_params.debug_threads {
-        println!(
-            "# processing particles: {}",
-            mcco.particle_vault_container.particles_processing_size()
-        );
-        println!(
-            "# processed particles: {}",
-            mcco.particle_vault_container.particles_processed_size()
-        );
-    }
-
     mcco.particle_vault_container
         .swap_processing_processed_vaults();
-
-    if mcco.params.simulation_params.debug_threads {
-        println!("swapped vault");
-        println!(
-            "# processing particles: {}",
-            mcco.particle_vault_container.particles_processing_size()
-        );
-        println!(
-            "# processed particles: {}",
-            mcco.particle_vault_container.particles_processed_size()
-        );
-    }
 
     mcco.particle_vault_container.collapse_processed();
     mcco.particle_vault_container.collapse_processing();
@@ -109,79 +83,30 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
     );
 
     mc_fast_timer::stop(mcco, Section::CycleInit);
-
-    if mcco.params.simulation_params.debug_threads {
-        println!(
-            "{} processing particles",
-            mcco.particle_vault_container.particles_processing_size()
-        );
-        println!(
-            "{} processed particles",
-            mcco.particle_vault_container.particles_processed_size()
-        );
-    }
 }
 
 pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mc_fast_timer::start(mcco, Section::CycleTracking);
     let mut done = false;
     loop {
-        //let mut particle_count: u64 = 0;
-
         while !done {
             let mut fill_vault: usize = 0;
 
             for processing_vault_idx in 0..mcco.particle_vault_container.processing_vaults.len() {
                 // Computing block
-
-                if mcco.params.simulation_params.debug_threads {
-                    println!("processing vault #{processing_vault_idx}");
-                    println!(
-                        "processing vault capacity: {}",
-                        mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-                            .particles
-                            .len()
-                    );
-                    println!(
-                        "processing vault size:     {}",
-                        mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-                            .size()
-                    );
-                }
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
 
-                //let processed_vault_idx: usize = mcco
-                //    .particle_vault_container
-                //    .get_first_empty_processed_vault();
-
-                //println!("current processed vault #{processed_vault_idx}");
-
-                // number of VALID particles
+                // number of VALID particles in current vault
                 let num_particles =
                     mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
 
-                //println!("{:#?}", mcco.particle_vault_container.processing_vaults[processing_vault_idx].particles);
-
                 if num_particles != 0 {
-                    // iterate directly on particles??
                     let mut particle_idx: usize = 0;
-                    let mut processed_particles: usize = 0;
                     while particle_idx < mcco.particle_vault_container.vault_size {
-                        //println!("processing particle #{particle_idx}");
-                        cycle_tracking_guts(
-                            mcco,
-                            particle_idx,
-                            &mut processed_particles,
-                            processing_vault_idx,
-                            //processed_vault_idx,
-                        );
-                        // incremented in cycle_tracking guts, only if the particle was not invalid
+                        cycle_tracking_guts(mcco, particle_idx, processing_vault_idx);
                         particle_idx += 1;
                     }
-                    //println!("vault #{processing_vault_idx} finished processing");
                 }
-
-                //particle_count += num_particles as u64;
 
                 mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
 
@@ -200,7 +125,6 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                         .buffer_particle(mcb_particle.unwrap(), send_q_t.neighbor);
                 }
 
-                //mcco.particle_vault_container.processing_vaults[processing_vault_idx].clear();
                 send_q.clear();
 
                 mcco.particle_vault_container.clean_extra_vaults();
