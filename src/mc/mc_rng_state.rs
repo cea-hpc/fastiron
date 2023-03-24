@@ -74,3 +74,30 @@ fn rebuild_u64(front: u32, back: u32) -> u64 {
         frt[0], frt[1], frt[2], frt[3], bck[0], bck[1], bck[2], bck[3],
     ])
 }
+
+//=============
+// Unit tests
+//=============
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rng_spawned_number() {
+        let mut seed: u64 = 90374384094798327;
+        let res = spawn_rn_seed::<f64>(&mut seed);
+
+        assert_eq!(res, 3246986314100353546);
+    }
+
+    #[test]
+    fn pseudo_hash() {
+        let mut a: u32 = 123214124;
+        let mut b: u32 = 968374242;
+        pseudo_des(&mut a, &mut b);
+
+        assert_eq!(a, 702007026);
+        assert_eq!(b, 3221367323);
+    }
+}

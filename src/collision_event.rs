@@ -157,3 +157,47 @@ pub fn collision_event<T: CustomFloat>(
 
     n_out == 1
 }
+
+//=============
+// Unit tests
+//=============
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        constants::physical::TINY_FLOAT, direction_cosine::DirectionCosine, mc::mc_vector::MCVector,
+    };
+    use num::Float;
+
+    #[test]
+    fn trajectory() {
+        let mut pp: MCParticle<f64> = MCParticle::default();
+        // sets parameters
+        let vv: MCVector<f64> = MCVector {
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        };
+        let d_cos: DirectionCosine<f64> = DirectionCosine {
+            alpha: 1.0 / 3.0.sqrt(),
+            beta: 1.0 / 3.0.sqrt(),
+            gamma: 1.0 / 3.0.sqrt(),
+        };
+        let e: f64 = 1.0;
+        pp.velocity = vv;
+        pp.direction_cosine = d_cos;
+        pp.kinetic_energy = e;
+        let mut seed: u64 = 90374384094798327;
+        let energy = rng_sample(&mut seed);
+        let angle = rng_sample(&mut seed);
+
+        // update & print result
+        update_trajectory(energy, angle, &mut pp);
+
+        assert!((pp.direction_cosine.alpha - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction_cosine.beta - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction_cosine.gamma - (-0.480102)).abs() < 1.0e-6);
+        assert!((pp.kinetic_energy - energy).abs() < TINY_FLOAT);
+    }
+}

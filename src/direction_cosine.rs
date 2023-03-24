@@ -68,3 +68,42 @@ impl<T: CustomFloat> DirectionCosine<T> {
             -sin_theta_zero * (sine_theta * cosine_phi) + zero() + cos_theta_zero * cosine_theta;
     }
 }
+
+//=============
+// Unit tests
+//=============
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use num::Float;
+
+    #[test]
+    fn sample_isotropic() {
+        let mut dd: DirectionCosine<f64> = DirectionCosine {
+            alpha: 0.2140,
+            beta: 0.8621,
+            gamma: 0.7821,
+        };
+        let mut seed: u64 = 90374384094798327;
+        dd.sample_isotropic(&mut seed);
+
+        assert_eq!(dd.alpha, 0.9083218129645693);
+        assert_eq!(dd.beta, -0.3658911896631176);
+        assert_eq!(dd.gamma, 0.2026699815455325);
+    }
+
+    #[test]
+    fn rotate_vector() {
+        let mut dd: DirectionCosine<f64> = DirectionCosine {
+            alpha: 0.2140,
+            beta: 0.8621,
+            gamma: 0.7821,
+        };
+        dd.rotate_3d_vector(1.0.sin(), 1.0.cos(), 2.0.sin(), 2.0.cos());
+
+        assert_eq!(dd.alpha, -1.0369691350703922);
+        assert_eq!(dd.beta, 0.3496694784021821);
+        assert_eq!(dd.gamma, 0.6407833194623658);
+    }
+}

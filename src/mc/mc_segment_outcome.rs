@@ -176,6 +176,10 @@ fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
     }
 }
 
+//=============
+// Unit tests
+//=============
+
 #[cfg(test)]
 mod tests {
     use num::zero;

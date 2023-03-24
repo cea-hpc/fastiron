@@ -433,6 +433,10 @@ fn get_boundary_conditions<T: CustomFloat>(
     }
 }
 
+//=============
+// Unit tests
+//=============
+
 #[cfg(test)]
 mod tests {
     use super::*;
