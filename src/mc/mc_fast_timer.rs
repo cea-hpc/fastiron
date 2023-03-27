@@ -70,6 +70,7 @@ pub struct MCFastTimerContainer {
 impl MCFastTimerContainer {
     pub fn cumulative_report(&self, num_segments: u64) {
         // Print header
+        println!("[Timer Report]");
         println!("Timer Name                       | Total number of calls      Shortest cycle (µs)    Average per cycle (µs)     Longest cycle (µs)    Total in section (µs)    Efficiency rating (%)");
         self.timers
             .iter()
@@ -161,6 +162,7 @@ impl MCFastTimerContainer {
         self.avgs[idx] = duration;
         self.mins[idx] = duration;
         self.maxs[idx] = duration;
+        self.tots[idx] = duration;
     }
 }
 

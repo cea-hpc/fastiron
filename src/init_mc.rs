@@ -16,7 +16,6 @@ use num::{one, zero, Float, FromPrimitive};
 
 /// Creates a [MonteCarlo] object using the specified parameters.
 pub fn init_mc<T: CustomFloat>(params: Parameters<T>) -> MonteCarlo<T> {
-    println!("---init_mc");
     let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
 
     init_proc_info(&mut mcco);
@@ -182,7 +181,7 @@ fn initialize_centers_rand<T: CustomFloat>(
 
 fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
-    println!("n_energy_groups: {}", params.simulation_params.n_groups);
+
     let nx: usize = params.simulation_params.nx;
     let ny: usize = params.simulation_params.ny;
     let nz: usize = params.simulation_params.nz;

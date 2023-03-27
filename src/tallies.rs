@@ -327,6 +327,7 @@ impl<T: CustomFloat> Tallies<T> {
     pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
         if mcco.time_info.cycle == 0 {
             // print header
+            println!("[Tally Summary]");
             print!("cycle     |      start       source           rr        split       absorb      scatter      fission ");
             println!("     produce    collision       escape       census      num_seg    scalar_flux      cycleInit  cycleTracking  cycleFinalize");
         }
