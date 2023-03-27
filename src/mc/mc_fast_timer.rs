@@ -67,7 +67,7 @@ pub struct MCFastTimerContainer {
 }
 
 impl MCFastTimerContainer {
-    pub fn cumulative_report(&self, num_segments: u64) {
+    pub fn cumulative_report(&self, num_segments: u64, n_steps: usize) {
         // Print header
         println!("Timer Name                        Cumulative number of calls    Cumulative min (µs)    Cumulative avg (µs)    Cumulative max (µs)    Cumulative efficiency rating (%)");
         self.timers
@@ -94,9 +94,11 @@ impl MCFastTimerContainer {
                         / (self.maxs[timer_idx].as_secs_f64() + 1.0e-80),
                 );
             });
+        let estimate_total_tracking_time =
+            self.avgs[Section::CycleTracking as usize].as_secs_f64() * n_steps as f64;
         println!(
             "Figure of merit: {:>.3e} [segments / cycle tracking time]",
-            (num_segments as f64) / (self.maxs[Section::CycleTracking as usize].as_secs_f64())
+            (num_segments as f64) / (estimate_total_tracking_time)
         );
     }
 
