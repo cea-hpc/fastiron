@@ -3,15 +3,10 @@ use num::{zero, FromPrimitive};
 use crate::{
     constants::{
         mesh::{N_FACES, N_POINTS_INTERSEC},
-        CustomFloat,
+        CustomFloat, Tuple3, Tuple4,
     },
     mc::mc_vector::MCVector,
 };
-
-/// Custom alias for readability.
-pub type Tuple3 = (usize, usize, usize);
-/// Custom alias for readability.
-pub type Tuple4 = (usize, usize, usize, usize);
 
 /// Structure representing the spatial grid of the problem.
 #[derive(Debug)]

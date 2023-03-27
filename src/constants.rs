@@ -7,6 +7,19 @@ use std::{
 
 use num::{Float, FromPrimitive};
 
+//=======================
+// custom traits & types
+//=======================
+
+// some alias for readability
+
+/// Custom alias for readability.
+pub type Tuple3 = (usize, usize, usize);
+/// Custom alias for readability.
+pub type Tuple4 = (usize, usize, usize, usize);
+
+// generic float type
+
 pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
 pub trait UtilsFloat: Default + Debug + Display + LowerExp {}
 pub trait CustomFloat:
@@ -21,6 +34,10 @@ impl CustomFloat for f32 {}
 impl OpsFloat for f64 {}
 impl UtilsFloat for f64 {}
 impl CustomFloat for f64 {}
+
+//===================
+// constants modules
+//===================
 
 /// Modules containing all simulation-related constants.
 pub mod sim {

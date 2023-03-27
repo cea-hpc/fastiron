@@ -2,9 +2,9 @@ use std::{collections::HashMap, fmt::Debug, fs::File, io::Write};
 
 use crate::{
     comm_object::CommObject,
-    constants::{physical::TINY_FLOAT, CustomFloat},
+    constants::{physical::TINY_FLOAT, CustomFloat, Tuple3},
     decomposition_object::DecompositionObject,
-    global_fcc_grid::{GlobalFccGrid, Tuple3},
+    global_fcc_grid::GlobalFccGrid,
     material_database::{Isotope, Material},
     mc::{mc_domain::MCDomain, mc_rng_state::rng_sample, mc_vector::MCVector},
     mesh_partition::MeshPartition,

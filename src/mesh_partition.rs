@@ -1,8 +1,8 @@
 use std::collections::{HashMap, VecDeque};
 
 use crate::{
-    constants::CustomFloat,
-    global_fcc_grid::{GlobalFccGrid, Tuple3},
+    constants::{CustomFloat, Tuple3},
+    global_fcc_grid::GlobalFccGrid,
     grid_assignment_object::GridAssignmentObject,
     mc::mc_vector::MCVector,
 };
