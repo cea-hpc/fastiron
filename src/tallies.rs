@@ -94,7 +94,7 @@ impl Balance {
         *self = Self::default(); // is the old value correctly dropped or just shadowed?
     }
 
-    /// Add another [Balance]'s value to its own. Replace by an overload?
+    /// Add another [Balance]'s value to its own.
     pub fn add(&mut self, bal: &Balance) {
         self.absorb += bal.absorb;
         self.census += bal.census;

@@ -48,16 +48,16 @@ pub fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCP
 /// undergo a collision. Returns true if the particle will continue.
 pub fn collision_event<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
-    mc_particle: &mut MCParticle<T>,
+    particle: &mut MCParticle<T>,
     tally_idx: usize,
 ) -> bool {
-    let mat_gidx = mcco.domain[mc_particle.domain].cell_state[mc_particle.cell].material;
+    let mat_gidx = mcco.domain[particle.domain].cell_state[particle.cell].material;
 
     // ==========================
     // Pick an isotope & reaction
 
-    let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
-    let total_xsection: T = mc_particle.total_cross_section;
+    let rdm_number: T = rng_sample(&mut particle.random_number_seed);
+    let total_xsection: T = particle.total_cross_section;
 
     let mut current_xsection: T = total_xsection * rdm_number;
 
@@ -76,10 +76,10 @@ pub fn collision_event<T: CustomFloat>(
                 current_xsection -= macroscopic_cross_section(
                     mcco,
                     reaction_idx,
-                    mc_particle.domain,
-                    mc_particle.cell,
+                    particle.domain,
+                    particle.cell,
                     iso_idx,
-                    mc_particle.energy_group,
+                    particle.energy_group,
                 );
                 if current_xsection.is_sign_negative() {
                     selected_iso = iso_idx;
@@ -105,9 +105,9 @@ pub fn collision_event<T: CustomFloat>(
     let (energy_out, angle_out) = mcco.nuclear_data.isotopes[selected_unique_n][0].reactions
         [selected_react]
         .sample_collision(
-            mc_particle.kinetic_energy,
+            particle.kinetic_energy,
             mat_mass,
-            &mut mc_particle.random_number_seed,
+            &mut particle.random_number_seed,
         );
     // number of particles resulting from the collision, including the original
     // e.g. zero means the original particle was absorbed or invalidated in some way
@@ -135,9 +135,8 @@ pub fn collision_event<T: CustomFloat>(
     // additional created particle
     if n_out > 1 {
         for secondary_idx in 1..n_out {
-            let mut sec_particle = mc_particle.clone();
-            sec_particle.random_number_seed =
-                spawn_rn_seed::<T>(&mut mc_particle.random_number_seed);
+            let mut sec_particle = particle.clone();
+            sec_particle.random_number_seed = spawn_rn_seed::<T>(&mut particle.random_number_seed);
             sec_particle.identifier = sec_particle.random_number_seed;
             update_trajectory(
                 energy_out[secondary_idx],
@@ -149,14 +148,12 @@ pub fn collision_event<T: CustomFloat>(
         }
     }
 
-    update_trajectory(energy_out[0], angle_out[0], mc_particle);
-    mc_particle.energy_group = mcco
-        .nuclear_data
-        .get_energy_groups(mc_particle.kinetic_energy);
+    update_trajectory(energy_out[0], angle_out[0], particle);
+    particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
 
     if n_out > 1 {
         mcco.particle_vault_container
-            .add_extra_particle(mc_particle.clone());
+            .add_extra_particle(particle.clone());
     }
 
     n_out == 1

@@ -21,16 +21,16 @@ use crate::{
 /// Computes which facet of the specified cell is nearest
 /// to the specified coordinates.
 pub fn nearest_facet<T: CustomFloat>(
-    mc_particle: &mut MCParticle<T>,
+    particle: &mut MCParticle<T>,
     mcco: &MonteCarlo<T>,
 ) -> MCNearestFacet<T> {
-    let location = mc_particle.get_location();
+    let location = particle.get_location();
     if location.domain.is_none() | location.cell.is_none() {
         panic!()
     }
     let domain = &mcco.domain[location.domain.unwrap()];
 
-    let mut nearest_facet = mct_nf_3dg(mc_particle, domain);
+    let mut nearest_facet = mct_nf_3dg(particle, domain);
 
     if nearest_facet.distance_to_facet < zero() {
         nearest_facet.distance_to_facet = zero();

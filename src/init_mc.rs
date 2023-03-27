@@ -124,7 +124,7 @@ fn consistency_check<T: CustomFloat>(
                         );
                     }
                     let adjacent = ff.subfacet.adjacent;
-                    // These can be none e.g. if the current cell is on the border of the problem
+                    // These can hold none as a correct value e.g. if the current cell is on the border of the problem
                     if adjacent.domain.is_some()
                         & adjacent.cell.is_some()
                         & adjacent.facet.is_some()
