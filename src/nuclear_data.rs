@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use num::{zero, FromPrimitive};
 
-use crate::{constants::CustomFloat, mc::mc_rng_state::rng_sample};
+use crate::{constants::CustomFloat, mc::mc_rng_state::rng_sample, parameters::MaterialParameters};
 
 /// Enum representing a reaction type. Named `Enum` in
 /// the original code.
@@ -196,19 +198,22 @@ impl<T: CustomFloat> NuclearData<T> {
     }
 
     /// Adds an isotope to the internal list.
-    #[allow(clippy::too_many_arguments)]
     pub fn add_isotope(
         &mut self,
-        n_reactions: usize,
-        fission_function: &Polynomial<T>,
-        scatter_function: &Polynomial<T>,
-        absorption_function: &Polynomial<T>,
+        cross_section: &HashMap<String, Polynomial<T>>,
+        mp: &MaterialParameters<T>,
         nu_bar: T,
-        total_cross_section: T,
-        fission_weight: T,
-        scatter_weight: T,
-        absorption_weight: T,
     ) -> usize {
+        // for readability purposes
+        let n_reactions: usize = mp.n_reactions;
+        let fission_function: &Polynomial<T> = &cross_section[&mp.fission_cross_section];
+        let scatter_function: &Polynomial<T> = &cross_section[&mp.scattering_cross_section];
+        let absorption_function: &Polynomial<T> = &cross_section[&mp.absorption_cross_section];
+        let total_cross_section: T = mp.total_cross_section;
+        let fission_weight: T = mp.fission_cross_section_ratio;
+        let scatter_weight: T = mp.scattering_cross_section_ratio;
+        let absorption_weight: T = mp.absorbtion_cross_section_ratio;
+
         self.isotopes.push(vec![NuclearDataSpecies::default()]);
         let total_weight = fission_weight + scatter_weight + absorption_weight;
 

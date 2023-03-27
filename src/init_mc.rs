@@ -80,15 +80,9 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
         (0..mp.n_isotopes).for_each(|_| {
             let isotope_gid = mcco.nuclear_data.add_isotope(
-                mp.n_reactions,
-                &cross_section[&mp.fission_cross_section],
-                &cross_section[&mp.scattering_cross_section],
-                &cross_section[&mp.absorption_cross_section],
+                &cross_section,
+                mp,
                 params.cross_section_params[&mp.fission_cross_section].nu_bar,
-                mp.total_cross_section,
-                mp.fission_cross_section_ratio,
-                mp.scattering_cross_section_ratio,
-                mp.absorbtion_cross_section_ratio,
             );
             // All isotopes are equally prevalent => each weights 1/n_isotopes
             material.add_isotope(Isotope {
