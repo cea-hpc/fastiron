@@ -22,11 +22,13 @@ impl OpsFloat for f64 {}
 impl UtilsFloat for f64 {}
 impl CustomFloat for f64 {}
 
+/// Modules containing all simulation-related constants.
 pub mod sim {
     /// Number of timers, i.e. numbers of section we keep track of.
     pub const N_TIMERS: usize = 6;
 }
 
+/// Module containing all physics-related constants.
 pub mod physical {
     // The below lines of comments are taken directly from Quicksilver
     // ---
@@ -51,8 +53,10 @@ pub mod physical {
     pub const HUGE_FLOAT: f64 = 1e75;
 }
 
+/// Modules containing all mesh and geometry related constants. The used mesh
+/// is made of cells (hexahedron), each divided in 12 sub-cells (tetrahedron).
 pub mod mesh {
-    /// Number of points per facet.
+    /// Number of points per tetrahedron facet.
     pub const N_POINTS_PER_FACET: usize = 3;
     /// Number of facets of a cell facing outward i.e. constituting
     /// a border with another cell.
