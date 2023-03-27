@@ -92,7 +92,6 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
         incident_energy: T,
         material_mass: T,
         seed: &mut u64,
-        //max_production_size: usize,
     ) -> (Vec<T>, Vec<T>) {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
@@ -100,27 +99,24 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
         let mut angle_out: Vec<T> = Vec::new();
         match self.reaction_type {
             ReactionType::Scatter => {
-                let mut rand_n: T = rng_sample(seed);
-                energy_out.push(incident_energy * (one - rand_n * (one / material_mass)));
-                rand_n = rng_sample(seed);
-                angle_out.push(rand_n * two - one);
+                let mut rand_f: T = rng_sample(seed);
+                energy_out.push(incident_energy * (one - rand_f * (one / material_mass)));
+                rand_f = rng_sample(seed);
+                angle_out.push(rand_f * two - one);
             }
             ReactionType::Absorption => (),
             ReactionType::Fission => {
-                // the expected behavior of this part in the original code
-                // is quite unclear. There is an assert but it only prints
-                // a message, not stop the method
                 let num_particle_out = (self.nu_bar + rng_sample(seed)).to_usize().unwrap();
                 assert!(num_particle_out < 5);
                 energy_out.extend(vec![zero(); num_particle_out].iter());
                 angle_out.extend(vec![zero(); num_particle_out].iter());
                 (0..num_particle_out).for_each(|ii| {
-                    let mut rand_n: T = rng_sample(seed);
-                    rand_n = (rand_n + one) / two;
+                    let mut rand_f: T = rng_sample(seed);
+                    rand_f = (rand_f + one) / two;
                     let twenty: T = FromPrimitive::from_f32(20.0).unwrap();
-                    energy_out[ii] = twenty * rand_n * rand_n;
-                    rand_n = rng_sample(seed);
-                    angle_out[ii] = rand_n * two - one;
+                    energy_out[ii] = twenty * rand_f * rand_f;
+                    rand_f = rng_sample(seed);
+                    angle_out[ii] = rand_f * two - one;
                 })
             }
             ReactionType::Undefined => {
@@ -158,12 +154,12 @@ impl<T: CustomFloat> NuclearDataSpecies<T> {
     }
 }
 
-/// Structure used to store cross sections for a given isotope?
+/// Structure used to store cross sections for a given isotope.
 pub type NuclearDataIsotope<T> = Vec<NuclearDataSpecies<T>>;
 
 /// Top level structure used to handle all things related to
 /// nuclear data.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct NuclearData<T: CustomFloat> {
     /// Total number of energy groups?
     pub num_energy_groups: usize,
@@ -240,11 +236,7 @@ impl<T: CustomFloat> NuclearData<T> {
         let absorption_xsection: T = (total_cross_section * absorption_weight) / (f * total_weight);
 
         let n = self.isotopes.len();
-        //if n == 0 {
-        //    self.isotopes.push(vec![NuclearDataSpecies::default()])
-        //} else {
         self.isotopes[n - 1][0].reactions.reserve(n_reactions);
-        //}
 
         (0..n_reactions).for_each(|ii| match ii % 3 {
             0 => self.isotopes[n - 1][0].add_reaction(
@@ -275,7 +267,6 @@ impl<T: CustomFloat> NuclearData<T> {
 
     /// Returns the energy group a specific energy belongs to.
     pub fn get_energy_groups(&self, energy: T) -> usize {
-        //println!("kin energy: {energy}");
         let num_energies = self.energies.len();
 
         // extreme low
@@ -329,15 +320,5 @@ impl<T: CustomFloat> NuclearData<T> {
         group: usize,
     ) -> T {
         self.isotopes[isotope_index][0].reactions[react_index].get_cross_section(group)
-    }
-}
-
-impl<T: CustomFloat> Default for NuclearData<T> {
-    fn default() -> Self {
-        Self {
-            num_energy_groups: 0,
-            isotopes: Vec::new(),
-            energies: Vec::new(),
-        }
     }
 }

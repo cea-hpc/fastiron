@@ -33,7 +33,7 @@ pub enum Shape {
 
 impl<T: CustomFloat> Parameters<T> {
     /// Use the cli arguments to initialize parameters of the simulation, complete the
-    /// structure and return it. The function will fail if
+    /// structure and return it. The function will fail if:
     /// - it cannot read or find the specified input_file (if specified)
     /// - the resulting [Parameters] object is compromised
     pub fn get_parameters(cli: io_utils::Cli) -> Result<Self, Vec<io_utils::InputError>> {
@@ -411,9 +411,6 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub ny: usize,
     pub nz: usize,
     pub seed: u64,
-    //x_dom: u32,
-    //y_dom: u32,
-    //z_dom: u32,
     pub dt: T,
     pub f_max: T,
     pub lx: T,

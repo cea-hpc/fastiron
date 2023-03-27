@@ -2,98 +2,10 @@
 // functions with their result in the original code.
 // Results are hard coded.
 
-use fastiron::{
-    collision_event::update_trajectory,
-    constants::physical::{SMALL_FLOAT, TINY_FLOAT},
-    direction_cosine::DirectionCosine,
-    mc::{
-        mc_particle::MCParticle,
-        mc_rng_state::{pseudo_des, rng_sample, spawn_rn_seed},
-        mc_vector::MCVector,
-    },
-};
-use num::Float;
+use fastiron::{constants::physical::SMALL_FLOAT, mc::mc_vector::MCVector};
 
 #[test]
-pub fn rng_spawned_number() {
-    let mut seed: u64 = 90374384094798327;
-    let res = spawn_rn_seed::<f64>(&mut seed);
-
-    assert_eq!(res, 3246986314100353546);
-}
-
-#[test]
-pub fn pseudo_hash() {
-    let mut a: u32 = 123214124;
-    let mut b: u32 = 968374242;
-    pseudo_des(&mut a, &mut b);
-
-    assert_eq!(a, 702007026);
-    assert_eq!(b, 3221367323);
-}
-
-#[test]
-pub fn sample_isotropic() {
-    let mut dd: DirectionCosine<f64> = DirectionCosine {
-        alpha: 0.2140,
-        beta: 0.8621,
-        gamma: 0.7821,
-    };
-    let mut seed: u64 = 90374384094798327;
-    dd.sample_isotropic(&mut seed);
-
-    assert_eq!(dd.alpha, 0.9083218129645693);
-    assert_eq!(dd.beta, -0.3658911896631176);
-    assert_eq!(dd.gamma, 0.2026699815455325);
-}
-
-#[test]
-pub fn rotate_vector() {
-    let mut dd: DirectionCosine<f64> = DirectionCosine {
-        alpha: 0.2140,
-        beta: 0.8621,
-        gamma: 0.7821,
-    };
-    dd.rotate_3d_vector(1.0.sin(), 1.0.cos(), 2.0.sin(), 2.0.cos());
-
-    assert_eq!(dd.alpha, -1.0369691350703922);
-    assert_eq!(dd.beta, 0.3496694784021821);
-    assert_eq!(dd.gamma, 0.6407833194623658);
-}
-
-#[test]
-pub fn trajectory() {
-    let mut pp: MCParticle<f64> = MCParticle::default();
-    // sets parameters
-    let vv: MCVector<f64> = MCVector {
-        x: 1.0,
-        y: 1.0,
-        z: 1.0,
-    };
-    let d_cos: DirectionCosine<f64> = DirectionCosine {
-        alpha: 1.0 / 3.0.sqrt(),
-        beta: 1.0 / 3.0.sqrt(),
-        gamma: 1.0 / 3.0.sqrt(),
-    };
-    let e: f64 = 1.0;
-    pp.velocity = vv;
-    pp.direction_cosine = d_cos;
-    pp.kinetic_energy = e;
-    let mut seed: u64 = 90374384094798327;
-    let energy = rng_sample(&mut seed);
-    let angle = rng_sample(&mut seed);
-
-    // update & print result
-    update_trajectory(energy, angle, &mut pp);
-
-    assert!((pp.direction_cosine.alpha - 0.620283).abs() < 1.0e-6);
-    assert!((pp.direction_cosine.beta - 0.620283).abs() < 1.0e-6);
-    assert!((pp.direction_cosine.gamma - (-0.480102)).abs() < 1.0e-6);
-    assert!((pp.kinetic_energy - energy).abs() < TINY_FLOAT);
-}
-
-#[test]
-pub fn move_particle() {
+fn move_particle() {
     // copy pasting the core of the function to avoid the init of whole structures
     let move_factor: f64 = 0.5 * SMALL_FLOAT;
     let mut coord: MCVector<f64> = MCVector {
@@ -117,7 +29,7 @@ pub fn move_particle() {
 }
 
 #[test]
-pub fn compute_volume() {
+fn compute_volume() {
     let v0: MCVector<f64> = MCVector {
         x: 1.923,
         y: -2.45,
@@ -149,7 +61,7 @@ pub fn compute_volume() {
 }
 
 #[test]
-pub fn macros() {
+fn macros() {
     // init
     let v0: MCVector<f64> = MCVector {
         x: 1.923,

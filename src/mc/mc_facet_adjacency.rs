@@ -1,6 +1,6 @@
-use super::mc_location::MCLocation;
+use crate::constants::mesh::{N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET};
 
-pub const N_POINTS_PER_FACET: usize = 3;
+use super::mc_location::MCLocation;
 
 /// Enum used to categorize the event a particle
 /// undergo when reaching a given facet.
@@ -46,6 +46,6 @@ impl Default for MCFacetAdjacency {
 /// Structure encompassing all adjacent facet to a cell.
 #[derive(Debug, Default)]
 pub struct MCFacetAdjacencyCell {
-    pub facet: [MCFacetAdjacency; 24], // need to find the correct way we get 24 to rewrite it with const
-    pub point: [usize; 14],            // same with 14
+    pub facet: [MCFacetAdjacency; N_FACETS_OUT], // need to find the correct way we get 24 to rewrite it with const
+    pub point: [usize; N_POINTS_INTERSEC],       // same with 14
 }

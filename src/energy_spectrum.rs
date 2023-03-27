@@ -32,12 +32,22 @@ impl EnergySpectrum {
         path.push_str(".dat");
         let mut file = File::create(path).unwrap();
 
-        writeln!(file, "energy level index | energy level | count").unwrap();
+        writeln!(
+            file,
+            "energy level index |         energy level |         count"
+        )
+        .unwrap();
+
+        writeln!(
+            file,
+            "-------------------|----------------------|--------------"
+        )
+        .unwrap();
 
         (0..levels).for_each(|ii| {
             writeln!(
                 file,
-                "{}     {}     {}",
+                "{:>18} | {:>20.15} | {:>13}",
                 ii, mcco.nuclear_data.energies[ii], self.census_energy_spectrum[ii]
             )
             .unwrap();

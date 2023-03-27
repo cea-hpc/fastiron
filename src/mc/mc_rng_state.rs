@@ -12,9 +12,8 @@ pub fn rng_sample<T: CustomFloat>(seed: &mut u64) -> T {
         .overflowing_add(3037000493u64)
         .0;
 
-    // Bijection between integers [0; 2^64] and decimal [0; 1]
-    //let f: f64 = 5.4210108624275222e-20*(*seed as f64);
-    let f: f64 = 5.421010862427522e-20 * (*seed as f64); // took out one decimal
+    // Bijection between integers [0; 2^64[ and decimal [0; 1[
+    let f: f64 = 5.421010862427522e-20 * (*seed as f64);
     FromPrimitive::from_f64(f).unwrap()
 }
 
@@ -42,7 +41,7 @@ fn breakup_u64(n: u64) -> (u32, u32) {
     (u32::from_be_bytes(tmp1), u32::from_be_bytes(tmp2))
 }
 
-pub fn pseudo_des(lword: &mut u32, irword: &mut u32) {
+fn pseudo_des(lword: &mut u32, irword: &mut u32) {
     let n_iter: usize = 2;
     let c1: [u32; 4] = [0xbaa96887, 0x1e17d32c, 0x03bcdc3c, 0x0f33d1b2];
     let c2: [u32; 4] = [0x4b0f3b58, 0xe874f0c3, 0x6955c5a6, 0x55a7ca46];
@@ -74,4 +73,31 @@ fn rebuild_u64(front: u32, back: u32) -> u64 {
     u64::from_be_bytes([
         frt[0], frt[1], frt[2], frt[3], bck[0], bck[1], bck[2], bck[3],
     ])
+}
+
+//=============
+// Unit tests
+//=============
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rng_spawned_number() {
+        let mut seed: u64 = 90374384094798327;
+        let res = spawn_rn_seed::<f64>(&mut seed);
+
+        assert_eq!(res, 3246986314100353546);
+    }
+
+    #[test]
+    fn pseudo_hash() {
+        let mut a: u32 = 123214124;
+        let mut b: u32 = 968374242;
+        pseudo_des(&mut a, &mut b);
+
+        assert_eq!(a, 702007026);
+        assert_eq!(b, 3221367323);
+    }
 }

@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use num::{one, zero, FromPrimitive};
 
 use crate::{
-    constants::CustomFloat,
+    constants::{
+        mesh::{N_FACES, N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
+        CustomFloat,
+    },
     decomposition_object::DecompositionObject,
     global_fcc_grid::GlobalFccGrid,
     material_database::MaterialDatabase,
@@ -27,7 +30,7 @@ struct FaceInfo {
     pub nbr_idx: Option<usize>,
 }
 
-const NODE_INDIRECT: [[usize; 3]; 24] = [
+const NODE_INDIRECT: [[usize; N_POINTS_PER_FACET]; N_FACETS_OUT] = [
     [1, 3, 8],
     [3, 7, 8],
     [7, 5, 8],
@@ -54,7 +57,7 @@ const NODE_INDIRECT: [[usize; 3]; 24] = [
     [1, 0, 13],
 ];
 
-const OPPOSING_FACET: [usize; 24] = [
+const OPPOSING_FACET: [usize; N_FACETS_OUT] = [
     7, 6, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 8, 11, 10, 9, 20, 23, 22, 21, 16, 19, 18, 17,
 ];
 
@@ -111,10 +114,9 @@ impl<T: CustomFloat> MCMeshDomain<T> {
         // cell_geometry
         let mut cell_geometry: Vec<MCFacetGeometryCell<T>> =
             vec![MCFacetGeometryCell::default(); cell_connectivity.len()];
+        // fill with correct value
         (0..cell_connectivity.len()).for_each(|cell_idx| {
-            let n_facets = cell_connectivity[cell_idx].facet.len(); // TODO: remove and use const; same in array def
-            cell_geometry[cell_idx] = vec![MCGeneralPlane::default(); n_facets]; // replace MCFacetGeometryCell vec by array?
-            (0..n_facets).for_each(|facet_idx| {
+            (0..N_FACETS_OUT).for_each(|facet_idx| {
                 let r0: MCVector<T> =
                     node[cell_connectivity[cell_idx].facet[facet_idx].point[0].unwrap()];
                 let r1: MCVector<T> =
@@ -232,7 +234,7 @@ impl<T: CustomFloat> MCDomain<T> {
         let node = &self.mesh.node;
         let mut center: MCVector<T> = MCVector::default();
 
-        (0..cell.point.len()).for_each(|ii| {
+        (0..N_POINTS_INTERSEC).for_each(|ii| {
             center += node[cell.point[ii]];
         });
         center /= FromPrimitive::from_usize(cell.point.len()).unwrap();
@@ -247,7 +249,7 @@ impl<T: CustomFloat> MCDomain<T> {
 
         let mut volume: T = zero();
 
-        (0..cell.facet.len()).for_each(|facet_idx| {
+        (0..N_FACETS_OUT).for_each(|facet_idx| {
             let corners = &cell.facet[facet_idx].point;
             let aa: MCVector<T> = node[corners[0].unwrap()] - center;
             let bb: MCVector<T> = node[corners[1].unwrap()] - center;
@@ -338,15 +340,15 @@ fn build_cells<T: CustomFloat>(
             let mut new_cell = MCFacetAdjacencyCell::default();
 
             // nodes
-            let node_gid = grid.get_node_gids(*cell_gid);
-            (0..new_cell.point.len()).for_each(|ii| {
+            let node_gid: [usize; N_POINTS_INTERSEC] = grid.get_node_gids(*cell_gid);
+            (0..N_POINTS_INTERSEC).for_each(|ii| {
                 new_cell.point[ii] = node_idx_map[&node_gid[ii]];
             });
 
             // faces
-            let face_nbr = grid.get_face_nbr_gids(*cell_gid);
-            let mut face_info = vec![FaceInfo::default(); 6];
-            (0..face_nbr.len()).for_each(|ii| {
+            let face_nbr: [usize; N_FACES] = grid.get_face_nbr_gids(*cell_gid);
+            let mut face_info = vec![FaceInfo::default(); N_FACES];
+            (0..N_FACES).for_each(|ii| {
                 // faces
                 let face_cell_info = partition.cell_info_map[&face_nbr[ii]];
                 face_info[ii].cell_info = face_cell_info;
@@ -366,7 +368,7 @@ fn build_cells<T: CustomFloat>(
                 cell: cell_info.cell_index,
                 facet: None,
             };
-            (0..new_cell.facet.len()).for_each(|ii| {
+            (0..N_FACETS_OUT).for_each(|ii| {
                 location.facet = Some(ii);
                 make_facet(
                     &mut new_cell.facet[ii],
@@ -430,6 +432,10 @@ fn get_boundary_conditions<T: CustomFloat>(
         _ => unreachable!(),
     }
 }
+
+//=============
+// Unit tests
+//=============
 
 #[cfg(test)]
 mod tests {

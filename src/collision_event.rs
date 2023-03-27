@@ -45,22 +45,24 @@ pub fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCP
 }
 
 /// Computes and transform accordingly a [MCParticle] object that
-/// undergo a collision. Returns true if the particle will continue
+/// undergo a collision. Returns true if the particle will continue.
 pub fn collision_event<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
-    mc_particle: &mut MCParticle<T>,
+    particle: &mut MCParticle<T>,
     tally_idx: usize,
 ) -> bool {
-    let mat_gidx = mcco.domain[mc_particle.domain].cell_state[mc_particle.cell].material;
+    let mat_gidx = mcco.domain[particle.domain].cell_state[particle.cell].material;
 
     // ==========================
     // Pick an isotope & reaction
-    let rdm_number: T = rng_sample(&mut mc_particle.random_number_seed);
-    let total_xsection: T = mc_particle.total_cross_section;
+
+    let rdm_number: T = rng_sample(&mut particle.random_number_seed);
+    let total_xsection: T = particle.total_cross_section;
 
     let mut current_xsection: T = total_xsection * rdm_number;
 
-    let mut selected_iso: usize = usize::MAX; // sort of a magic value
+    // sort of a magic value but using an option seems to be overkill
+    let mut selected_iso: usize = usize::MAX;
     let mut selected_unique_n: usize = usize::MAX;
     let mut selected_react: usize = usize::MAX;
 
@@ -74,10 +76,10 @@ pub fn collision_event<T: CustomFloat>(
                 current_xsection -= macroscopic_cross_section(
                     mcco,
                     reaction_idx,
-                    mc_particle.domain,
-                    mc_particle.cell,
+                    particle.domain,
+                    particle.cell,
                     iso_idx,
-                    mc_particle.energy_group,
+                    particle.energy_group,
                 );
                 if current_xsection.is_sign_negative() {
                     selected_iso = iso_idx;
@@ -98,20 +100,22 @@ pub fn collision_event<T: CustomFloat>(
 
     // ================
     // Do the collision
+
     let mat_mass = mcco.material_database.mat[mat_gidx].mass;
     let (energy_out, angle_out) = mcco.nuclear_data.isotopes[selected_unique_n][0].reactions
         [selected_react]
         .sample_collision(
-            mc_particle.kinetic_energy,
+            particle.kinetic_energy,
             mat_mass,
-            &mut mc_particle.random_number_seed,
+            &mut particle.random_number_seed,
         );
-
+    // number of particles resulting from the collision, including the original
+    // e.g. zero means the original particle was absorbed or invalidated in some way
     let n_out = energy_out.len();
-    //println!("nout: {n_out}");
 
     // ===================
     // Tally the collision
+
     mcco.tallies.balance_task[tally_idx].collision += 1; // atomic in original code
     match mcco.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react].reaction_type {
         ReactionType::Scatter => mcco.tallies.balance_task[tally_idx].scatter += 1,
@@ -131,9 +135,8 @@ pub fn collision_event<T: CustomFloat>(
     // additional created particle
     if n_out > 1 {
         for secondary_idx in 1..n_out {
-            let mut sec_particle = mc_particle.clone();
-            sec_particle.random_number_seed =
-                spawn_rn_seed::<T>(&mut mc_particle.random_number_seed);
+            let mut sec_particle = particle.clone();
+            sec_particle.random_number_seed = spawn_rn_seed::<T>(&mut particle.random_number_seed);
             sec_particle.identifier = sec_particle.random_number_seed;
             update_trajectory(
                 energy_out[secondary_idx],
@@ -145,15 +148,57 @@ pub fn collision_event<T: CustomFloat>(
         }
     }
 
-    update_trajectory(energy_out[0], angle_out[0], mc_particle);
-    mc_particle.energy_group = mcco
-        .nuclear_data
-        .get_energy_groups(mc_particle.kinetic_energy);
+    update_trajectory(energy_out[0], angle_out[0], particle);
+    particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
 
     if n_out > 1 {
         mcco.particle_vault_container
-            .add_extra_particle(mc_particle.clone());
+            .add_extra_particle(particle.clone());
     }
 
     n_out == 1
+}
+
+//=============
+// Unit tests
+//=============
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        constants::physical::TINY_FLOAT, direction_cosine::DirectionCosine, mc::mc_vector::MCVector,
+    };
+    use num::Float;
+
+    #[test]
+    fn trajectory() {
+        let mut pp: MCParticle<f64> = MCParticle::default();
+        // init data
+        let vv: MCVector<f64> = MCVector {
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        };
+        let d_cos: DirectionCosine<f64> = DirectionCosine {
+            alpha: 1.0 / 3.0.sqrt(),
+            beta: 1.0 / 3.0.sqrt(),
+            gamma: 1.0 / 3.0.sqrt(),
+        };
+        let e: f64 = 1.0;
+        pp.velocity = vv;
+        pp.direction_cosine = d_cos;
+        pp.kinetic_energy = e;
+        let mut seed: u64 = 90374384094798327;
+        let energy = rng_sample(&mut seed);
+        let angle = rng_sample(&mut seed);
+
+        // update & print result
+        update_trajectory(energy, angle, &mut pp);
+
+        assert!((pp.direction_cosine.alpha - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction_cosine.beta - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction_cosine.gamma - (-0.480102)).abs() < 1.0e-6);
+        assert!((pp.kinetic_energy - energy).abs() < TINY_FLOAT);
+    }
 }

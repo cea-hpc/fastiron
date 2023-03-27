@@ -22,15 +22,13 @@ pub fn load_particle<T: CustomFloat>(
     particle_idx: usize,
     ts: T,
 ) -> Option<MCParticle<T>> {
-    //println!("{:#?}", particle_vault.particles);
-    // can probably use a map here
     if let Some(mut particle) = particle_vault.get_base_particle(particle_idx) {
         // update time to census
         let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
-        //println!("loaded particle #{particle_idx}");
         if particle.time_to_census <= tiny_f {
             particle.time_to_census += ts;
         }
+
         // set age
         if particle.age < zero() {
             particle.age = zero();
@@ -43,7 +41,6 @@ pub fn load_particle<T: CustomFloat>(
 
 /// Simulates the sources according to the problem's parameters.
 pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
-    //println!("---source_now");
     let time_step = mcco.time_info.time_step;
 
     let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];
@@ -62,27 +59,26 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     });
 
     let n_particles = mcco.params.simulation_params.n_particles as usize;
+
     let source_fraction: T = FromPrimitive::from_f64(0.1).unwrap();
+
     let source_particle_weight: T = total_weight_particles
         / (source_fraction * FromPrimitive::from_usize(n_particles).unwrap());
     assert_ne!(source_particle_weight, zero());
+
     mcco.source_particle_weight = source_particle_weight;
-    //println!("source particle weight: {source_particle_weight}");
+
     let vault_size = mcco.particle_vault_container.vault_size;
     let mut processing_idx = mcco.particle_vault_container.particles_processing_size() / vault_size;
-
-    //println!("n_domains: {}", mcco.domain.len());
 
     // on each domain
     mcco.domain
         .iter_mut()
         .enumerate()
         .for_each(|(domain_idx, dom)| {
-            // we'll update the tally separately and merge data after
+            // update the tally separately and merge data after
             // this allows for a read-only iterator
             let mut cell_source_tally: Vec<usize> = vec![0; dom.cell_state.len()];
-
-            //println!("{} cells in domain {}", dom.cell_state.len(), domain_idx);
 
             // on each cell
             dom.cell_state
@@ -92,16 +88,15 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                     let cell_weight_particle: T =
                         cell.volume * source_rate[cell.material] * time_step;
 
-                    // floor/ceil it before cast ?
+                    // create cell_n_particles and add them to the vaults
                     let cell_n_particles: usize = (cell_weight_particle / source_particle_weight)
                         .floor()
                         .to_usize()
                         .unwrap();
                     cell_source_tally[cell_idx] = cell.source_tally;
-                    // create cell_n_particles and add them to the vaults
-                    //println!("creating {cell_n_particles} particles in cell {cell_idx}");
                     (0..cell_n_particles).for_each(|_ii| {
                         let mut particle: MCParticle<T> = MCParticle::default();
+
                         // atomic in original code
                         let mut rand_n_seed = cell_source_tally[cell_idx] as u64;
                         cell_source_tally[cell_idx] += 1;
@@ -146,7 +141,6 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                         let base_particle: MCBaseParticle<T> = MCBaseParticle::new(&particle);
                         mcco.particle_vault_container
                             .add_processing_particle(base_particle, &mut processing_idx);
-                        //println!("added particle; total # in cell: {ii}");
 
                         // atomic in original code
                         mcco.tallies.balance_task[particle.task].source += 1;
@@ -168,6 +162,10 @@ fn speed_from_energy<T: CustomFloat>(energy: T) -> T {
             / ((energy + rest_mass_energy) * (energy + rest_mass_energy)))
             .sqrt()
 }
+
+//=============
+// Unit tests
+//=============
 
 #[cfg(test)]
 mod tests {

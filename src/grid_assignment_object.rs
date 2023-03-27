@@ -123,7 +123,6 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
                     center_min.map(|m| m.min(*center_idx));
                 }
                 if r2 < r2_min {
-                    // replace another threshold test?
                     r2_min = r2;
                     center_min = Some(*center_idx);
                 }
@@ -249,6 +248,10 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
         }
     }
 }
+
+//=============
+// Unit tests
+//=============
 
 #[cfg(test)]
 mod tests {

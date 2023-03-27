@@ -56,8 +56,6 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
 
     mcco.clear_cross_section_cache();
 
-    // mcco.tallies.cycle_initialize(mcco); // literally an empty function
-
     mcco.particle_vault_container
         .swap_processing_processed_vaults();
 
@@ -73,11 +71,9 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
 
     population_control::population_control(mcco, load_balance);
 
-    let lwc = mcco.params.simulation_params.low_weight_cutoff;
-    let spw = mcco.source_particle_weight;
     population_control::roulette_low_weight_particles(
-        lwc,
-        spw,
+        mcco.params.simulation_params.low_weight_cutoff,
+        mcco.source_particle_weight,
         &mut mcco.particle_vault_container,
         &mut mcco.tallies.balance_task[0],
     );
@@ -111,7 +107,7 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
 
                 // Inter-domain communication block
-                mc_fast_timer::start(mcco, Section::CycleTrackingMPI);
+                mc_fast_timer::start(mcco, Section::CycleTrackingComm);
 
                 let send_q = &mut mcco.particle_vault_container.send_queue;
 
@@ -130,16 +126,16 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 mcco.particle_vault_container.clean_extra_vaults();
                 mcco.read_buffers(&mut fill_vault);
 
-                mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);
+                mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
             }
 
-            mc_fast_timer::start(mcco, Section::CycleTrackingMPI);
+            mc_fast_timer::start(mcco, Section::CycleTrackingComm);
 
             mcco.particle_vault_container.collapse_processing();
             mcco.particle_vault_container.collapse_processed();
             done = mcco.particle_buffer.test_done_new(mcco);
 
-            mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);
+            mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
         }
 
         done = mcco.particle_buffer.test_done_new(mcco);

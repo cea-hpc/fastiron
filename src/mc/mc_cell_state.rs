@@ -1,10 +1,8 @@
-use num::zero;
-
 use crate::constants::CustomFloat;
 
 /// Structure used to represent a cell's state, i.e.
 /// properties relevant to the simulation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct MCCellState<T: CustomFloat> {
     /// Global id of the material
     pub material: usize,
@@ -18,17 +16,4 @@ pub struct MCCellState<T: CustomFloat> {
     pub id: usize,
     /// Tally counting for the cell
     pub source_tally: usize,
-}
-
-impl<T: CustomFloat> Default for MCCellState<T> {
-    fn default() -> Self {
-        Self {
-            material: 0,
-            total: Vec::new(),
-            volume: zero(),
-            cell_number_density: zero(),
-            id: 0,
-            source_tally: 0,
-        }
-    }
 }

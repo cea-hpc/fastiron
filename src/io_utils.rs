@@ -118,19 +118,6 @@ pub struct Cli {
     #[arg(short = 's', long = "seed", num_args(1), allow_negative_numbers(false))]
     pub seed: Option<u64>, //maybe allow negative values ? need to test QS behavior
 
-    /*
-    /// number of MPI ranks along x
-    #[arg(short='I', long="x-dom", num_args(1), allow_negative_numbers(false))]
-    pub x_dom: Option<u32>,
-
-    /// number of MPI ranks along y
-    #[arg(short='J', long="y-dom", num_args(1), allow_negative_numbers(false))]
-    pub y_dom: Option<u32>,
-
-    /// number of MPI ranks along z
-    #[arg(short='K', long="z-dom", num_args(1), allow_negative_numbers(false))]
-    pub z_dom: Option<u32>,
-    */
     /// number of balance tally replications
     #[arg(
         short = 'B',

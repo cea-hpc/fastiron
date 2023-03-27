@@ -22,7 +22,16 @@ impl OpsFloat for f64 {}
 impl UtilsFloat for f64 {}
 impl CustomFloat for f64 {}
 
+/// Modules containing all simulation-related constants.
+pub mod sim {
+    /// Number of timers, i.e. numbers of section we keep track of.
+    pub const N_TIMERS: usize = 6;
+}
+
+/// Module containing all physics-related constants.
 pub mod physical {
+    // The below lines of comments are taken directly from Quicksilver
+    // ---
     // The values of all physical constants are taken from:
     // 2006 CODATA which is located on the web at
     // http://physics.nist.gov/cuu/Constants/codata.pdf
@@ -39,10 +48,21 @@ pub mod physical {
     pub const PI: f64 = std::f64::consts::PI;
     pub const LIGHT_SPEED: f64 = 2.99792458e+10; // cm/s
 
-    // adjustment needed ?
-    // There are constant with Rust's primitive type (e.g. fXX::EPSILON)
-    // but the error propagation makes them irrelevant to our simulation
     pub const TINY_FLOAT: f64 = 1e-13;
     pub const SMALL_FLOAT: f64 = 1e-10;
     pub const HUGE_FLOAT: f64 = 1e75;
+}
+
+/// Modules containing all mesh and geometry related constants. The used mesh
+/// is made of cells (hexahedron), each divided in 12 sub-cells (tetrahedron).
+pub mod mesh {
+    /// Number of points per tetrahedron facet.
+    pub const N_POINTS_PER_FACET: usize = 3;
+    /// Number of facets of a cell facing outward i.e. constituting
+    /// a border with another cell.
+    pub const N_FACETS_OUT: usize = 24;
+    /// Number of points defining a cell.
+    pub const N_POINTS_INTERSEC: usize = 14;
+    /// Number of faces defining a cell.
+    pub const N_FACES: usize = 6;
 }

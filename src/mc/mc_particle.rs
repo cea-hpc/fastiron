@@ -29,7 +29,7 @@ pub struct MCParticle<T: CustomFloat> {
     pub total_cross_section: T,
     /// Age
     pub age: T,
-    /// Number of mean free paths to a collision (should be an integer?)
+    /// Number of mean free paths to a collision
     pub num_mean_free_paths: T,
     /// Distance to a collision
     pub mean_free_path: T,
@@ -37,7 +37,7 @@ pub struct MCParticle<T: CustomFloat> {
     pub segment_path_length: T,
     /// Random number seed for the rng for this particle
     pub random_number_seed: u64,
-    /// Unique ID used to identify and track individual particles (should be usize?)
+    /// Unique ID used to identify and track individual particles
     pub identifier: u64,
     /// Last event this particle underwent
     pub last_event: MCTallyEvent,
@@ -45,19 +45,19 @@ pub struct MCParticle<T: CustomFloat> {
     pub num_collisions: u32,
     /// Number of segments the particle travelled?
     pub num_segments: T,
-    /// Task working on (should be usize?)
+    /// Task working on
     pub task: usize,
     /// Species of the particle
     pub species: Species,
-    /// Breed of the particle, i.e. how it was produced (should be usize?)
+    /// Breed of the particle, i.e. how it was produced
     pub breed: u32,
-    //// Current energy group the particle belong to (should be usize?)
+    /// Current energy group the particle belong to
     pub energy_group: usize,
-    /// Current domain in the spatial grid (should be usize?)
+    /// Current domain in the spatial grid
     pub domain: usize,
-    /// Current cell in the current domain (should be usize?)
+    /// Current cell in the current domain
     pub cell: usize,
-    /// Facet to be crossed? (should be usize?)
+    /// Nearest facet
     pub facet: usize,
     /// When crossing a facet, keep the surface normal dot product
     pub normal_dot: T,
@@ -112,10 +112,10 @@ impl<T: CustomFloat> MCParticle<T> {
 
     /// Update the particle's field to model its movement along the specified
     /// direction and distance
-    pub fn move_particle(&mut self, direction_cosine: &DirectionCosine<T>, distance: T) {
-        self.coordinate.x += direction_cosine.alpha * distance;
-        self.coordinate.y += direction_cosine.beta * distance;
-        self.coordinate.z += direction_cosine.gamma * distance;
+    pub fn move_particle(&mut self, distance: T) {
+        self.coordinate.x += self.direction_cosine.alpha * distance;
+        self.coordinate.y += self.direction_cosine.beta * distance;
+        self.coordinate.z += self.direction_cosine.gamma * distance;
     }
 }
 

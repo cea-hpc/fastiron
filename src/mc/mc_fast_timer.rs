@@ -3,7 +3,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{constants::CustomFloat, montecarlo::MonteCarlo};
+use crate::{
+    constants::{sim::N_TIMERS, CustomFloat},
+    montecarlo::MonteCarlo,
+};
 
 /// Enum used to identify sections and their corresponding
 /// timers.
@@ -13,8 +16,7 @@ pub enum Section {
     CycleInit,
     CycleTracking,
     CycleTrackingKernel,
-    CycleTrackingMPI,
-    CycleTrackingTestDone,
+    CycleTrackingComm,
     CycleFinalize,
 }
 
@@ -25,8 +27,7 @@ impl Display for Section {
             Section::CycleInit => write!(f, "Section::CycleInit            "),
             Section::CycleTracking => write!(f, "Section::CycleTracking        "),
             Section::CycleTrackingKernel => write!(f, "Section::CycleTrackingKernel  "),
-            Section::CycleTrackingMPI => write!(f, "Section::CycleTrackingMPI     "),
-            Section::CycleTrackingTestDone => write!(f, "Section::CycleTrackingTestDone"),
+            Section::CycleTrackingComm => write!(f, "Section::CycleTrackingComm    "),
             Section::CycleFinalize => write!(f, "Section::CycleFinalize        "),
         }
     }
@@ -58,17 +59,19 @@ impl Default for MCFastTimer {
 /// the simulation for performance testing.
 #[derive(Debug)]
 pub struct MCFastTimerContainer {
-    pub timers: [MCFastTimer; 7],
-    pub avgs: [Duration; 7],
+    pub timers: [MCFastTimer; N_TIMERS],
     pub n_avg: u32,
-    pub maxs: [Duration; 7],
-    pub mins: [Duration; 7],
+    pub avgs: [Duration; N_TIMERS],
+    pub maxs: [Duration; N_TIMERS],
+    pub mins: [Duration; N_TIMERS],
+    pub tots: [Duration; N_TIMERS],
 }
 
 impl MCFastTimerContainer {
     pub fn cumulative_report(&self, num_segments: u64) {
         // Print header
-        println!("Timer Name                        Cumulative number of calls   Cumulative min (µs)    Cumulative avg (µs)    Cumulative max (µs)    Cumulative stddev (µs)    Cumulative efficiency rating (%)");
+        println!("[Timer Report]");
+        println!("Timer Name                       | Total number of calls      Shortest cycle (µs)    Average per cycle (µs)     Longest cycle (µs)    Total in section (µs)    Efficiency rating (%)");
         self.timers
             .iter()
             .enumerate()
@@ -78,25 +81,25 @@ impl MCFastTimerContainer {
                     1 => Section::CycleInit,
                     2 => Section::CycleTracking,
                     3 => Section::CycleTrackingKernel,
-                    4 => Section::CycleTrackingMPI,
-                    5 => Section::CycleTrackingTestDone,
-                    6 => Section::CycleFinalize,
+                    4 => Section::CycleTrackingComm,
+                    5 => Section::CycleFinalize,
                     _ => unreachable!(),
                 };
                 println!(
-                    "{}    {:>26}    {:>19e}    {:>19e}    {:>19e}    {:>22e}    {:>32}",
+                    "{}   | {:>21}    {:>16e}    {:>22e}     {:>18e}    {:>21e}    {:>22.1}",
                     section,
                     timer.num_calls,
                     self.mins[timer_idx].as_micros(),
                     self.avgs[timer_idx].as_micros(),
                     self.maxs[timer_idx].as_micros(),
-                    0,
-                    0
+                    self.tots[timer_idx].as_micros(),
+                    (100.0 * self.avgs[timer_idx].as_secs_f64())
+                        / (self.maxs[timer_idx].as_secs_f64() + 1.0e-80),
                 );
             });
         println!(
             "Figure of merit: {:>.3e} [segments / cycle tracking time]",
-            num_segments as f64 / self.maxs[Section::CycleTracking as usize].as_micros() as f64
+            (num_segments as f64) / (self.tots[Section::CycleTracking as usize].as_secs_f64())
         );
     }
 
@@ -113,8 +116,7 @@ impl MCFastTimerContainer {
                     1 => Section::CycleInit,
                     2 => Section::CycleTracking,
                     3 => Section::CycleTrackingKernel,
-                    4 => Section::CycleTrackingMPI,
-                    5 => Section::CycleTrackingTestDone,
+                    4 => Section::CycleTrackingComm,
                     6 => Section::CycleFinalize,
                     _ => unreachable!(),
                 };
@@ -134,7 +136,8 @@ impl MCFastTimerContainer {
                 if timer_idx == Section::Main as usize {
                     return;
                 }
-                // update cumulative value for report
+                // update internal values for report
+                self.tots[timer_idx] += timer.end_clock.duration_since(timer.start_clock);
                 if self.mins[timer_idx] > timer.end_clock.duration_since(timer.start_clock) {
                     self.mins[timer_idx] = timer.end_clock.duration_since(timer.start_clock);
                 } else if self.maxs[timer_idx] < timer.end_clock.duration_since(timer.start_clock) {
@@ -159,6 +162,7 @@ impl MCFastTimerContainer {
         self.avgs[idx] = duration;
         self.mins[idx] = duration;
         self.maxs[idx] = duration;
+        self.tots[idx] = duration;
     }
 }
 
@@ -166,10 +170,11 @@ impl Default for MCFastTimerContainer {
     fn default() -> Self {
         Self {
             timers: Default::default(),
-            avgs: [Duration::ZERO; 7],
+            avgs: [Duration::ZERO; N_TIMERS],
             n_avg: 0,
-            maxs: [Duration::ZERO; 7],
-            mins: [Duration::MAX; 7],
+            maxs: [Duration::ZERO; N_TIMERS],
+            mins: [Duration::MAX; N_TIMERS],
+            tots: [Duration::ZERO; N_TIMERS],
         }
     }
 }

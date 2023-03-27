@@ -1,7 +1,5 @@
 use std::fmt::Error;
 
-use num::zero;
-
 use crate::{constants::CustomFloat, tallies::MCTallyEvent};
 
 use super::{mc_location::MCLocation, mc_particle::MCParticle, mc_vector::MCVector};
@@ -15,7 +13,7 @@ pub enum Species {
 
 /// Structure used to represent a base particle, i.e. a fresh
 /// particle with no direction.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct MCBaseParticle<T: CustomFloat> {
     /// Current position
     pub coordinate: MCVector<T>,
@@ -29,27 +27,27 @@ pub struct MCBaseParticle<T: CustomFloat> {
     pub time_to_census: T,
     /// Age
     pub age: T,
-    /// Number of mean free paths to a collision (should be an integer?)
+    /// Number of mean free paths to a collision
     pub num_mean_free_paths: T,
-    /// Number of segments the particle travelled?
+    /// Number of segments the particle travelled
     pub num_segments: T,
 
     /// Random number seed for the rng for this particle
     pub random_number_seed: u64,
-    /// Unique ID used to identify and track individual particles (should be usize?)
+    /// Unique ID used to identify and track individual particles
     pub identifier: u64,
 
     /// Last event this particle underwent
     pub last_event: MCTallyEvent,
-    /// Number of collisions the particle underwent?
+    /// Number of collisions the particle underwent
     pub num_collisions: u32,
-    /// Breed of the particle, i.e. how it was produced (should be usize?)
+    /// Breed of the particle, i.e. how it was produced
     pub breed: u32,
     /// Species of the particle
     pub species: Species,
-    /// Current domain in the spatial grid (should be usize?)
+    /// Current domain in the spatial grid
     pub domain: usize,
-    /// Current cell in the current domain (should be usize?)
+    /// Current cell in the current domain
     pub cell: usize,
 }
 
@@ -99,28 +97,5 @@ impl<T: CustomFloat> MCBaseParticle<T> {
     /// Returns true if the particle is valid, false otherwise.
     pub fn is_valid(&self) -> bool {
         self.species != Species::Unknown
-    }
-}
-
-impl<T: CustomFloat> Default for MCBaseParticle<T> {
-    fn default() -> Self {
-        MCBaseParticle {
-            coordinate: Default::default(),
-            velocity: Default::default(),
-            kinetic_energy: zero(),
-            weight: zero(),
-            time_to_census: zero(),
-            age: zero(),
-            num_mean_free_paths: zero(),
-            num_segments: zero(),
-            random_number_seed: 0,
-            identifier: 0,
-            last_event: Default::default(),
-            num_collisions: 0,
-            breed: 0,
-            species: Default::default(),
-            domain: 0,
-            cell: 0,
-        }
     }
 }

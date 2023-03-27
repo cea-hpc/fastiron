@@ -1,6 +1,6 @@
 use num::FromPrimitive;
 
-use crate::constants::{physical::TINY_FLOAT, CustomFloat};
+use crate::constants::{mesh::N_FACETS_OUT, physical::TINY_FLOAT, CustomFloat};
 
 use super::mc_vector::MCVector;
 
@@ -42,4 +42,4 @@ impl<T: CustomFloat> MCGeneralPlane<T> {
 }
 
 /// List of planes associated with the facet of a cell.
-pub type MCFacetGeometryCell<T> = Vec<MCGeneralPlane<T>>;
+pub type MCFacetGeometryCell<T> = [MCGeneralPlane<T>; N_FACETS_OUT];

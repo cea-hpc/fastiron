@@ -1,23 +1,14 @@
-use num::{zero, FromPrimitive};
+use num::FromPrimitive;
 
 use crate::constants::CustomFloat;
 
 /// Structure used to represent an isotope.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Isotope<T: CustomFloat> {
     /// Global identifier of the isotope in NuclearData.
     pub gid: usize,
     /// Atomic fraction.
     pub atom_fraction: T,
-}
-
-impl<T: CustomFloat> Default for Isotope<T> {
-    fn default() -> Self {
-        Self {
-            gid: 0,
-            atom_fraction: zero(),
-        }
-    }
 }
 
 /// Structure used to store a material's information
@@ -28,7 +19,7 @@ pub struct Material<T: CustomFloat> {
     /// Mass of the material (kg).
     pub mass: T,
     /// List of present isotopes.
-    pub iso: Vec<Isotope<T>>, // originally a qs_vector
+    pub iso: Vec<Isotope<T>>,
 }
 
 impl<T: CustomFloat> Material<T> {
@@ -58,11 +49,10 @@ impl<T: CustomFloat> Default for Material<T> {
 }
 
 /// Top level structure used to store each material's information.
-/// change to an alias?
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MaterialDatabase<T: CustomFloat> {
     /// List of materials.
-    pub mat: Vec<Material<T>>, // originally a qs_vector
+    pub mat: Vec<Material<T>>,
 }
 
 impl<T: CustomFloat> MaterialDatabase<T> {
@@ -76,11 +66,5 @@ impl<T: CustomFloat> MaterialDatabase<T> {
     /// will be "visible".
     pub fn find_material(&self, name: &str) -> Option<usize> {
         self.mat.iter().position(|m| m.name == name)
-    }
-}
-
-impl<T: CustomFloat> Default for MaterialDatabase<T> {
-    fn default() -> Self {
-        Self { mat: Vec::new() }
     }
 }

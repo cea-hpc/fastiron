@@ -1,11 +1,11 @@
 use std::fmt::Debug;
 
-use num::{zero, FromPrimitive};
+use num::FromPrimitive;
 
 use crate::constants::{physical::TINY_FLOAT, CustomFloat};
 
 /// Custom type for vector representation.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct MCVector<T: CustomFloat> {
     pub x: T,
     pub y: T,
@@ -15,7 +15,6 @@ pub struct MCVector<T: CustomFloat> {
 impl<T: CustomFloat> MCVector<T> {
     /// Returns true if the vector is almost the zero element. This method is
     /// necessary because of floating-point errors.
-    /// NEED TO FIND A WAY TO HARDCODE THE THRESHOLD WITH THE T GENERIC TYPE
     pub fn is_almost_zero(&self) -> bool {
         let threshold: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
         (self.x.abs() < threshold) & (self.y.abs() < threshold) & (self.z.abs() < threshold)
@@ -55,21 +54,6 @@ impl<T: CustomFloat> MCVector<T> {
         }
     }
 }
-
-impl<T: CustomFloat> Default for MCVector<T> {
-    fn default() -> Self {
-        MCVector {
-            x: zero(),
-            y: zero(),
-            z: zero(),
-        }
-    }
-}
-
-// Standard operations implems
-// Might need to redefine other functions in the above
-// impl block as these ops consume the object in Rust
-// but not in C++
 
 impl<T: CustomFloat> core::ops::Add<MCVector<T>> for MCVector<T> {
     type Output = MCVector<T>;
