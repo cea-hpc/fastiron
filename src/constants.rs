@@ -22,6 +22,11 @@ impl OpsFloat for f64 {}
 impl UtilsFloat for f64 {}
 impl CustomFloat for f64 {}
 
+pub mod sim {
+    /// Number of timers, i.e. numbers of section we keep track of.
+    pub const N_TIMERS: usize = 6;
+}
+
 pub mod physical {
     // The below lines of comments are taken directly from Quicksilver
     // ---

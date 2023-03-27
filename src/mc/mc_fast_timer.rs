@@ -3,7 +3,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{constants::CustomFloat, montecarlo::MonteCarlo};
+use crate::{
+    constants::{sim::N_TIMERS, CustomFloat},
+    montecarlo::MonteCarlo,
+};
 
 /// Enum used to identify sections and their corresponding
 /// timers.
@@ -13,8 +16,7 @@ pub enum Section {
     CycleInit,
     CycleTracking,
     CycleTrackingKernel,
-    CycleTrackingMPI,
-    CycleTrackingTestDone,
+    CycleTrackingComm,
     CycleFinalize,
 }
 
@@ -25,8 +27,7 @@ impl Display for Section {
             Section::CycleInit => write!(f, "Section::CycleInit            "),
             Section::CycleTracking => write!(f, "Section::CycleTracking        "),
             Section::CycleTrackingKernel => write!(f, "Section::CycleTrackingKernel  "),
-            Section::CycleTrackingMPI => write!(f, "Section::CycleTrackingMPI     "),
-            Section::CycleTrackingTestDone => write!(f, "Section::CycleTrackingTestDone"),
+            Section::CycleTrackingComm => write!(f, "Section::CycleTrackingComm    "),
             Section::CycleFinalize => write!(f, "Section::CycleFinalize        "),
         }
     }
@@ -58,11 +59,11 @@ impl Default for MCFastTimer {
 /// the simulation for performance testing.
 #[derive(Debug)]
 pub struct MCFastTimerContainer {
-    pub timers: [MCFastTimer; 7],
-    pub avgs: [Duration; 7],
+    pub timers: [MCFastTimer; N_TIMERS],
+    pub avgs: [Duration; N_TIMERS],
     pub n_avg: u32,
-    pub maxs: [Duration; 7],
-    pub mins: [Duration; 7],
+    pub maxs: [Duration; N_TIMERS],
+    pub mins: [Duration; N_TIMERS],
 }
 
 impl MCFastTimerContainer {
@@ -78,9 +79,8 @@ impl MCFastTimerContainer {
                     1 => Section::CycleInit,
                     2 => Section::CycleTracking,
                     3 => Section::CycleTrackingKernel,
-                    4 => Section::CycleTrackingMPI,
-                    5 => Section::CycleTrackingTestDone,
-                    6 => Section::CycleFinalize,
+                    4 => Section::CycleTrackingComm,
+                    5 => Section::CycleFinalize,
                     _ => unreachable!(),
                 };
                 println!(
@@ -112,8 +112,7 @@ impl MCFastTimerContainer {
                     1 => Section::CycleInit,
                     2 => Section::CycleTracking,
                     3 => Section::CycleTrackingKernel,
-                    4 => Section::CycleTrackingMPI,
-                    5 => Section::CycleTrackingTestDone,
+                    4 => Section::CycleTrackingComm,
                     6 => Section::CycleFinalize,
                     _ => unreachable!(),
                 };
@@ -165,10 +164,10 @@ impl Default for MCFastTimerContainer {
     fn default() -> Self {
         Self {
             timers: Default::default(),
-            avgs: [Duration::ZERO; 7],
+            avgs: [Duration::ZERO; N_TIMERS],
             n_avg: 0,
-            maxs: [Duration::ZERO; 7],
-            mins: [Duration::MAX; 7],
+            maxs: [Duration::ZERO; N_TIMERS],
+            mins: [Duration::MAX; N_TIMERS],
         }
     }
 }

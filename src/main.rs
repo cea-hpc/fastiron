@@ -109,7 +109,7 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
 
                 // Inter-domain communication block
-                mc_fast_timer::start(mcco, Section::CycleTrackingMPI);
+                mc_fast_timer::start(mcco, Section::CycleTrackingComm);
 
                 let send_q = &mut mcco.particle_vault_container.send_queue;
 
@@ -128,16 +128,16 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 mcco.particle_vault_container.clean_extra_vaults();
                 mcco.read_buffers(&mut fill_vault);
 
-                mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);
+                mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
             }
 
-            mc_fast_timer::start(mcco, Section::CycleTrackingMPI);
+            mc_fast_timer::start(mcco, Section::CycleTrackingComm);
 
             mcco.particle_vault_container.collapse_processing();
             mcco.particle_vault_container.collapse_processed();
             done = mcco.particle_buffer.test_done_new(mcco);
 
-            mc_fast_timer::stop(mcco, Section::CycleTrackingMPI);
+            mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
         }
 
         done = mcco.particle_buffer.test_done_new(mcco);
