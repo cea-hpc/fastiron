@@ -84,13 +84,14 @@ impl MCFastTimerContainer {
                     _ => unreachable!(),
                 };
                 println!(
-                    "{}    {:>26}    {:>19e}    {:>19e}    {:>19e}    {:>32}",
+                    "{}    {:>26}    {:>19e}    {:>19e}    {:>19e}    {:>32.1}",
                     section,
                     timer.num_calls,
                     self.mins[timer_idx].as_micros(),
                     self.avgs[timer_idx].as_micros(),
                     self.maxs[timer_idx].as_micros(),
-                    0
+                    (100.0 * self.avgs[timer_idx].as_secs_f64())
+                        / (self.maxs[timer_idx].as_secs_f64() + 1.0e-80),
                 );
             });
         println!(
