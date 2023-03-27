@@ -1,7 +1,7 @@
 #[derive(Debug, Default)]
 pub enum ExecPolicy {
     #[default]
-    Default,
+    Sequential,
 }
 
 #[derive(Debug)]

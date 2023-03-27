@@ -41,7 +41,7 @@ fn breakup_u64(n: u64) -> (u32, u32) {
     (u32::from_be_bytes(tmp1), u32::from_be_bytes(tmp2))
 }
 
-pub fn pseudo_des(lword: &mut u32, irword: &mut u32) {
+fn pseudo_des(lword: &mut u32, irword: &mut u32) {
     let n_iter: usize = 2;
     let c1: [u32; 4] = [0xbaa96887, 0x1e17d32c, 0x03bcdc3c, 0x0f33d1b2];
     let c2: [u32; 4] = [0x4b0f3b58, 0xe874f0c3, 0x6955c5a6, 0x55a7ca46];
