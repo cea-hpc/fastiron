@@ -1,7 +1,5 @@
 use std::fmt::Error;
 
-use num::zero;
-
 use crate::{constants::CustomFloat, tallies::MCTallyEvent};
 
 use super::{mc_location::MCLocation, mc_particle::MCParticle, mc_vector::MCVector};
@@ -15,7 +13,7 @@ pub enum Species {
 
 /// Structure used to represent a base particle, i.e. a fresh
 /// particle with no direction.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct MCBaseParticle<T: CustomFloat> {
     /// Current position
     pub coordinate: MCVector<T>,
@@ -99,28 +97,5 @@ impl<T: CustomFloat> MCBaseParticle<T> {
     /// Returns true if the particle is valid, false otherwise.
     pub fn is_valid(&self) -> bool {
         self.species != Species::Unknown
-    }
-}
-
-impl<T: CustomFloat> Default for MCBaseParticle<T> {
-    fn default() -> Self {
-        MCBaseParticle {
-            coordinate: Default::default(),
-            velocity: Default::default(),
-            kinetic_energy: zero(),
-            weight: zero(),
-            time_to_census: zero(),
-            age: zero(),
-            num_mean_free_paths: zero(),
-            num_segments: zero(),
-            random_number_seed: 0,
-            identifier: 0,
-            last_event: Default::default(),
-            num_collisions: 0,
-            breed: 0,
-            species: Default::default(),
-            domain: 0,
-            cell: 0,
-        }
     }
 }

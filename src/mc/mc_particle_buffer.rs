@@ -7,7 +7,7 @@ use super::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 /// Structure used as a buffer for particles crossing into different domains.
 /// "Useless" in single threaded mode, but will be useful if parallelizing
 /// on space division. Should probably be deleted asap.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MCParticleBuffer<T: CustomFloat> {
     /// One buffer per domain: buffers.len()==mcco.domain.len().
     /// The indexing is coherent (buffer of domain[N] == buffers[N])
@@ -71,13 +71,5 @@ impl<T: CustomFloat> MCParticleBuffer<T> {
     /// Clear the buffers
     pub fn clear(&mut self) {
         self.buffers.iter_mut().for_each(|b| b.clear());
-    }
-}
-
-impl<T: CustomFloat> Default for MCParticleBuffer<T> {
-    fn default() -> Self {
-        Self {
-            buffers: Vec::new(),
-        }
     }
 }
