@@ -68,12 +68,12 @@ fn population_control_guts<T: CustomFloat>(
         if let Some(mut pp) = vault.get_task_processing_vault(vault_idx)[task_particle_idx].clone()
         {
             count += 1; // count only valid particles
-            let rand_n: T = rng_sample(&mut pp.random_number_seed);
+            let rand_f: T = rng_sample(&mut pp.random_number_seed);
 
             if split_rr_factor < one() {
                 // too many particles; roll for a kill
                 let task_processing_vault = vault.get_task_processing_vault(vault_idx);
-                if rand_n > split_rr_factor {
+                if rand_f > split_rr_factor {
                     task_processing_vault.erase_swap_particles(task_particle_idx);
                     task_balance.rr += 1;
                 } else {
@@ -84,7 +84,7 @@ fn population_control_guts<T: CustomFloat>(
             } else if split_rr_factor > one() {
                 // not enough particles; create new ones by splitting
                 let mut split_factor = split_rr_factor.floor();
-                if rand_n > split_rr_factor - split_factor {
+                if rand_f > split_rr_factor - split_factor {
                     split_factor -= one();
                 }
                 pp.weight /= split_rr_factor;
@@ -131,8 +131,8 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
             let task_processing_vault = vault.get_task_processing_vault(vault_idx);
             if let Some(mut pp) = task_processing_vault[task_particle_idx].clone() {
                 if pp.weight <= weight_cutoff {
-                    let rand_n: T = rng_sample(&mut pp.random_number_seed);
-                    if rand_n <= low_weight_cutoff {
+                    let rand_f: T = rng_sample(&mut pp.random_number_seed);
+                    if rand_f <= low_weight_cutoff {
                         // particle continues with an increased weight
                         pp.weight /= low_weight_cutoff;
                         task_processing_vault[task_particle_idx] = Some(pp);

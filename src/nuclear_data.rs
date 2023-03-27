@@ -99,10 +99,10 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
         let mut angle_out: Vec<T> = Vec::new();
         match self.reaction_type {
             ReactionType::Scatter => {
-                let mut rand_n: T = rng_sample(seed);
-                energy_out.push(incident_energy * (one - rand_n * (one / material_mass)));
-                rand_n = rng_sample(seed);
-                angle_out.push(rand_n * two - one);
+                let mut rand_f: T = rng_sample(seed);
+                energy_out.push(incident_energy * (one - rand_f * (one / material_mass)));
+                rand_f = rng_sample(seed);
+                angle_out.push(rand_f * two - one);
             }
             ReactionType::Absorption => (),
             ReactionType::Fission => {
@@ -111,12 +111,12 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
                 energy_out.extend(vec![zero(); num_particle_out].iter());
                 angle_out.extend(vec![zero(); num_particle_out].iter());
                 (0..num_particle_out).for_each(|ii| {
-                    let mut rand_n: T = rng_sample(seed);
-                    rand_n = (rand_n + one) / two;
+                    let mut rand_f: T = rng_sample(seed);
+                    rand_f = (rand_f + one) / two;
                     let twenty: T = FromPrimitive::from_f32(20.0).unwrap();
-                    energy_out[ii] = twenty * rand_n * rand_n;
-                    rand_n = rng_sample(seed);
-                    angle_out[ii] = rand_n * two - one;
+                    energy_out[ii] = twenty * rand_f * rand_f;
+                    rand_f = rng_sample(seed);
+                    angle_out[ii] = rand_f * two - one;
                 })
             }
             ReactionType::Undefined => {
