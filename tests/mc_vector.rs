@@ -187,7 +187,7 @@ fn floating_point_error() {
 // Methods
 
 #[test]
-pub fn length() {
+fn length() {
     // trivial case
     let mut uu = MCVector {
         x: 1.0,
@@ -203,7 +203,7 @@ pub fn length() {
 }
 
 #[test]
-pub fn distance() {
+fn distance() {
     let uu = MCVector {
         x: 1.0,
         y: 1.0,
@@ -218,7 +218,7 @@ pub fn distance() {
 }
 
 #[test]
-pub fn dot_product() {
+fn dot_product() {
     let uu = MCVector {
         x: 1.0,
         y: 1.0,
@@ -233,7 +233,7 @@ pub fn dot_product() {
 }
 
 #[test]
-pub fn cross_product() {
+fn cross_product() {
     let uu = MCVector {
         x: 1.0,
         y: 1.0,

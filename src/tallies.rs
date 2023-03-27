@@ -328,7 +328,7 @@ impl<T: CustomFloat> Tallies<T> {
         if mcco.time_info.cycle == 0 {
             // print header
             print!("cycle     |      start       source           rr        split       absorb      scatter      fission ");
-            println!("     produce    collision       escape       census      num_seg   scalar_flux      cycleInit  cycleTracking  cycleFinalize");
+            println!("     produce    collision       escape       census      num_seg    scalar_flux      cycleInit  cycleTracking  cycleFinalize");
         }
         let cy_init = mc_fast_timer::get_last_cycle(mcco, Section::CycleInit);
         let cy_track = mc_fast_timer::get_last_cycle(mcco, Section::CycleTracking);

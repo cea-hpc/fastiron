@@ -71,7 +71,7 @@ fn neighbor_size() {
 }
 
 #[test]
-pub fn push_get_clear() {
+fn push_get_clear() {
     let t0 = SendQueueTuple {
         neighbor: 0,
         particle_index: 0,

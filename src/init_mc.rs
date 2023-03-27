@@ -322,18 +322,18 @@ fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
     let file_name = params.simulation_params.cross_sections_out.to_owned() + ".dat";
     let mut file = File::create(file_name).unwrap();
     // header
-    write!(file, "group    energy    ").unwrap();
+    write!(file, "group |           energy |  ").unwrap();
     xc_table.iter().for_each(|(mat_name, _)| {
         write!(
             file,
-            "{mat_name}_absorb    {mat_name}_fission    {mat_name}_scatter    "
+            "{mat_name}_absorb |  {mat_name}_fission |  {mat_name}_scatter"
         )
         .unwrap();
     });
     writeln!(file).unwrap();
     // data
     (0..n_groups).for_each(|ii| {
-        write!(file, "{}    {:e}    ", ii, energies[ii]).unwrap();
+        write!(file, "{:>5} |  {:>15.12} |   ", ii, energies[ii]).unwrap();
         xc_table.values_mut().for_each(|xc_vec| {
             if xc_vec[ii].abs < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
                 xc_vec[ii].abs = zero();
@@ -346,7 +346,7 @@ fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
             }
             write!(
                 file,
-                "{}    {}    {}    ",
+                "{} |  {:>22} |  {:>22}",
                 xc_vec[ii].abs, xc_vec[ii].fis, xc_vec[ii].sca
             )
             .unwrap();
