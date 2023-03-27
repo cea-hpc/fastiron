@@ -6,7 +6,6 @@ pub mod cycle_tracking;
 pub mod decomposition_object;
 pub mod direction_cosine;
 pub mod energy_spectrum;
-pub mod facet_pair;
 pub mod global_fcc_grid;
 pub mod grid_assignment_object;
 pub mod init_mc;
