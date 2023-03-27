@@ -136,8 +136,7 @@ pub fn outcome<T: CustomFloat>(
     }
 
     // move particle to the end of the segment
-    let d_cos = mc_particle.direction_cosine.clone();
-    mc_particle.move_particle(&d_cos, mc_particle.segment_path_length);
+    mc_particle.move_particle(mc_particle.segment_path_length);
 
     // decrement time to census & increment age
     let segment_path_time = mc_particle.segment_path_length / particle_speed;
