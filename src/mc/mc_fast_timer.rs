@@ -60,16 +60,17 @@ impl Default for MCFastTimer {
 #[derive(Debug)]
 pub struct MCFastTimerContainer {
     pub timers: [MCFastTimer; N_TIMERS],
-    pub avgs: [Duration; N_TIMERS],
     pub n_avg: u32,
+    pub avgs: [Duration; N_TIMERS],
     pub maxs: [Duration; N_TIMERS],
     pub mins: [Duration; N_TIMERS],
+    pub tots: [Duration; N_TIMERS],
 }
 
 impl MCFastTimerContainer {
-    pub fn cumulative_report(&self, num_segments: u64, n_steps: usize) {
+    pub fn cumulative_report(&self, num_segments: u64) {
         // Print header
-        println!("Timer Name                        Cumulative number of calls    Cumulative min (µs)    Cumulative avg (µs)    Cumulative max (µs)    Cumulative efficiency rating (%)");
+        println!("Timer Name                       | Total number of calls      Shortest cycle (µs)    Average per cycle (µs)     Longest cycle (µs)    Total in section (µs)    Efficiency rating (%)");
         self.timers
             .iter()
             .enumerate()
@@ -84,21 +85,20 @@ impl MCFastTimerContainer {
                     _ => unreachable!(),
                 };
                 println!(
-                    "{}    {:>26}    {:>19e}    {:>19e}    {:>19e}    {:>32.1}",
+                    "{}   | {:>21}    {:>16e}    {:>22e}     {:>18e}    {:>21e}    {:>22.1}",
                     section,
                     timer.num_calls,
                     self.mins[timer_idx].as_micros(),
                     self.avgs[timer_idx].as_micros(),
                     self.maxs[timer_idx].as_micros(),
+                    self.tots[timer_idx].as_micros(),
                     (100.0 * self.avgs[timer_idx].as_secs_f64())
                         / (self.maxs[timer_idx].as_secs_f64() + 1.0e-80),
                 );
             });
-        let estimate_total_tracking_time =
-            self.avgs[Section::CycleTracking as usize].as_secs_f64() * n_steps as f64;
         println!(
             "Figure of merit: {:>.3e} [segments / cycle tracking time]",
-            (num_segments as f64) / (estimate_total_tracking_time)
+            (num_segments as f64) / (self.tots[Section::CycleTracking as usize].as_secs_f64())
         );
     }
 
@@ -135,7 +135,8 @@ impl MCFastTimerContainer {
                 if timer_idx == Section::Main as usize {
                     return;
                 }
-                // update cumulative value for report
+                // update internal values for report
+                self.tots[timer_idx] += timer.end_clock.duration_since(timer.start_clock);
                 if self.mins[timer_idx] > timer.end_clock.duration_since(timer.start_clock) {
                     self.mins[timer_idx] = timer.end_clock.duration_since(timer.start_clock);
                 } else if self.maxs[timer_idx] < timer.end_clock.duration_since(timer.start_clock) {
@@ -171,6 +172,7 @@ impl Default for MCFastTimerContainer {
             n_avg: 0,
             maxs: [Duration::ZERO; N_TIMERS],
             mins: [Duration::MAX; N_TIMERS],
+            tots: [Duration::ZERO; N_TIMERS],
         }
     }
 }

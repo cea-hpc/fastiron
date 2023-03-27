@@ -45,10 +45,8 @@ fn main() {
 pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.fast_timer.update_main_stats();
 
-    mcco.fast_timer.cumulative_report(
-        mcco.tallies.balance_cumulative.num_segments,
-        mcco.params.simulation_params.n_steps,
-    );
+    mcco.fast_timer
+        .cumulative_report(mcco.tallies.balance_cumulative.num_segments);
 
     mcco.tallies.spectrum.print_spectrum(mcco);
 }
