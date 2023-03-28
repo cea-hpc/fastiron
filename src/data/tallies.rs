@@ -12,21 +12,16 @@ use crate::{
 use super::energy_spectrum::EnergySpectrum;
 
 /// Enum representing a tally event.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum MCTallyEvent {
     Collision,
     FacetCrossingTransitExit,
+    #[default]
     Census,
     FacetCrossingTrackingError,
     FacetCrossingEscape,
     FacetCrossingReflection,
     FacetCrossingCommunication,
-}
-
-impl Default for MCTallyEvent {
-    fn default() -> Self {
-        Self::Census
-    }
 }
 
 /// May need to change it to a full-fledged structure later.

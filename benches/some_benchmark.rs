@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use fastiron::mc::mc_vector::MCVector;
+use fastiron::data::mc_vector::MCVector;
 
 // Define the routines that are tested
 

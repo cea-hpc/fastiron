@@ -221,8 +221,8 @@ mod tests {
             println!();
         });
 
-        // TODO: these tests are wrong, only the belonging and neighboring cells are initialized
-        // TODO: is there away to test this or remove non neighboring cells?
+        // NOTE: only the belonging and neighboring cells are initialized
+        // NOTE: is there a way to test this or remove non neighboring cells? is it worth it?
         // for this simple case, non neighboring cell are gid 0 in domain 1 and
         // gid 7 in domain 0
         partition.iter().for_each(|part| {

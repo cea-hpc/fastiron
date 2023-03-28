@@ -189,8 +189,7 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let ly: T = params.simulation_params.ly;
     let lz: T = params.simulation_params.lz;
 
-    // fixed value for now, this is mpi related so it should be deleted
-    // these values may be somewhat equivalent to no MPI usage?
+    // these values may be somewhat equivalent to no MPI usage
     let n_ranks: usize = 1;
     let n_domains_per_rank = 4; // why 4 in original code?
     let my_rank = 0;
@@ -199,8 +198,8 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let my_domain_gids = ddc.assigned_gids.clone();
     let global_grid: GlobalFccGrid<T> = GlobalFccGrid::new(nx, ny, nz, lx, ly, lz);
 
+    // initialize centers randomly
     let n_centers: usize = n_domains_per_rank * n_ranks;
-    // we fixed *_dom = 0, so for now we always initialize centers randomly
     let mut s = params.simulation_params.seed + 1; // use a seed dependant on sim seed
     let domain_centers = initialize_centers_rand(n_centers, &global_grid, &mut s);
 
@@ -212,6 +211,9 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
     let mut comm: CommObject = CommObject::new(&partition);
     // indexing should be coherent since we cloned partition in comm's construction
+    // this loop has to be done using indexes because of the way we init the mesh
+    // the main init function is used on the current indexed partition but others
+    // may be accessed to process neighboring cells, so no borrow allowed
     (0..comm.partition.len()).for_each(|mesh_p_idx| {
         let remote_cells =
             comm.partition[mesh_p_idx].build_mesh_partition(&global_grid, &domain_centers);

@@ -175,11 +175,6 @@ impl<T: CustomFloat> ParticleVault<T> {
 
     /// Put a particle into the vault, at a specific index.
     pub fn put_particle(&mut self, particle: MCParticle<T>, index: usize) {
-        /*
-        if self.particles[index].is_some() {
-            println!("WARNING: overwriting particle at index {index}");
-        }
-        */
         self.particles[index] = Some(MCBaseParticle::new(&particle)); // will panic if out of bounds
     }
 

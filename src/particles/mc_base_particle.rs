@@ -1,5 +1,3 @@
-use std::fmt::Error;
-
 use crate::{
     constants::CustomFloat,
     data::{mc_vector::MCVector, tallies::MCTallyEvent},
@@ -73,16 +71,6 @@ impl<T: CustomFloat> MCBaseParticle<T> {
         }
     }
 
-    /// Invalidate a Particle; This is done by setting its type as UNKNOWN;
-    /// The function will fail if it is already set as UNKNOWN.
-    pub fn invalidate(&mut self) -> Result<(), Error> {
-        if self.is_valid() {
-            self.species = Species::Unknown;
-            return Ok(());
-        }
-        Err(Error)
-    }
-
     /// Return the current particle's location.
     pub fn get_location(&self) -> MCLocation {
         MCLocation {
@@ -90,10 +78,5 @@ impl<T: CustomFloat> MCBaseParticle<T> {
             cell: Some(self.cell),
             facet: Some(0),
         }
-    }
-
-    /// Returns true if the particle is valid, false otherwise.
-    pub fn is_valid(&self) -> bool {
-        self.species != Species::Unknown
     }
 }

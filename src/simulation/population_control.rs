@@ -185,8 +185,8 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
     mcco.source_particle_weight = source_particle_weight;
 
-    let vault_size = mcco.particle_vault_container.vault_size;
-    let mut processing_idx = mcco.particle_vault_container.particles_processing_size() / vault_size;
+    // let vault_size = mcco.particle_vault_container.vault_size;
+    let mut processing_idx = 0; // mcco.particle_vault_container.particles_processing_size() / vault_size;
 
     // on each domain
     mcco.domain

@@ -46,7 +46,6 @@ fn pseudo_des(lword: &mut u32, irword: &mut u32) {
     let c1: [u32; 4] = [0xbaa96887, 0x1e17d32c, 0x03bcdc3c, 0x0f33d1b2];
     let c2: [u32; 4] = [0x4b0f3b58, 0xe874f0c3, 0x6955c5a6, 0x55a7ca46];
 
-    // need to test if the results are the same in the original code
     for idx in 0..n_iter {
         let iswap: u32 = *irword;
         let mut ia = iswap ^ c1[idx];
