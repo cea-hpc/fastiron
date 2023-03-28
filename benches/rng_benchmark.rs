@@ -1,17 +1,21 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use fastiron::utils::mc_rng_state::rng_sample;
+use rand::prelude::*;
 
 // Define the routines that are tested
 
 fn custom_sample(times: usize) {
+    let mut seed: u64 = 9017476812930;
     (0..times).for_each(|_| {
-        let res = 0;
+        let res: f64 = rng_sample(&mut seed);
         black_box(res);
     });
 }
 
 fn rand_sample(times: usize) {
+    let mut rng: StdRng = rand::SeedableRng::seed_from_u64(9017476812930);
     (0..times).for_each(|_| {
-        let res = 0;
+        let res: f64 = rng.gen();
         black_box(res);
     });
 }
@@ -35,6 +39,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         &n_iter,
         |b, &n| b.iter(|| rand_sample(n)),
     );
+    group.finish();
 }
 
 criterion_group!(benches, criterion_benchmark);

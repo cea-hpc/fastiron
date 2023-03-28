@@ -10,10 +10,15 @@ about = "[This is an about text]"
 clap = {version="4.1.4", features=["cargo", "derive"]}
 serde_yaml = {version="0.9.17", features=[]}
 num = {version="0.4.0"}
+rand = {version="0.8.5"}
 
 [dev-dependencies]
 criterion = {version="0.3.4", features=["html_reports"]}
 
 [[bench]]
 name = "some_benchmark"
+harness = false
+
+[[bench]]
+name = "rng_benchmark"
 harness = false
