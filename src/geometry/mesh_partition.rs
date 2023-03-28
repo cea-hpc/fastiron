@@ -2,10 +2,10 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::{
     constants::{CustomFloat, Tuple3},
-    global_fcc_grid::GlobalFccGrid,
-    grid_assignment_object::GridAssignmentObject,
-    mc::mc_vector::MCVector,
+    data::mc_vector::MCVector,
 };
+
+use super::{global_fcc_grid::GlobalFccGrid, grid_assignment_object::GridAssignmentObject};
 
 pub type MapType = HashMap<usize, CellInfo>;
 
@@ -173,7 +173,8 @@ impl MeshPartition {
 
 #[cfg(test)]
 mod tests {
-    use crate::{global_fcc_grid::GlobalFccGrid, mc::mc_vector::MCVector};
+
+    use crate::{data::mc_vector::MCVector, geometry::global_fcc_grid::GlobalFccGrid};
 
     use super::MeshPartition;
 

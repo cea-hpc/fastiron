@@ -5,15 +5,14 @@ use crate::{
         physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY},
         CustomFloat,
     },
-    mc::{
-        mc_base_particle::MCBaseParticle,
-        mc_particle::MCParticle,
-        mc_rng_state::{rng_sample, spawn_rn_seed},
-    },
+    data::tallies::Balance,
     montecarlo::MonteCarlo,
-    particle_vault_container::ParticleVaultContainer,
+    particles::{
+        mc_base_particle::MCBaseParticle, mc_particle::MCParticle,
+        particle_vault_container::ParticleVaultContainer,
+    },
     simulation::mct::generate_coordinate_3dg,
-    tallies::Balance,
+    utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
 /// Routine used to monitor and regulate population level.

@@ -8,14 +8,15 @@ use crate::{
         physical::{HUGE_FLOAT, SMALL_FLOAT},
         CustomFloat,
     },
-    direction_cosine::DirectionCosine,
-    mc::{
+    data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
+    geometry::{
         mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
         mc_facet_geometry::MCGeneralPlane, mc_location::MCLocation,
-        mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_rng_state::rng_sample,
-        mc_vector::MCVector,
+        mc_nearest_facet::MCNearestFacet,
     },
     montecarlo::MonteCarlo,
+    particles::mc_particle::MCParticle,
+    utils::mc_rng_state::rng_sample,
 };
 
 /// Computes which facet of the specified cell is nearest

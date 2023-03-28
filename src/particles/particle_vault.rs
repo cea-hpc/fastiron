@@ -1,9 +1,8 @@
 use std::fmt::Debug;
 
-use crate::{
-    constants::CustomFloat,
-    mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
-};
+use crate::constants::CustomFloat;
+
+use super::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 
 /// Struture used to group particle in batches.
 #[derive(Debug, Clone, Default)]

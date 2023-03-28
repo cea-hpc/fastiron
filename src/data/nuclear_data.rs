@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use num::{zero, FromPrimitive};
 
-use crate::{constants::CustomFloat, mc::mc_rng_state::rng_sample, parameters::MaterialParameters};
+use crate::{
+    constants::CustomFloat, parameters::MaterialParameters, utils::mc_rng_state::rng_sample,
+};
 
 /// Enum representing a reaction type. Named `Enum` in
 /// the original code.

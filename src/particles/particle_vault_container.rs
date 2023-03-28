@@ -1,10 +1,9 @@
 use std::fmt::Debug;
 
-use crate::{
-    constants::CustomFloat,
-    mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
-    particle_vault::ParticleVault,
-    send_queue::SendQueue,
+use crate::{constants::CustomFloat, data::send_queue::SendQueue};
+
+use super::{
+    mc_base_particle::MCBaseParticle, mc_particle::MCParticle, particle_vault::ParticleVault,
 };
 
 /// Container for ParticleVaults.

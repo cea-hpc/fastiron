@@ -2,13 +2,13 @@ use std::fmt::Display;
 
 use num::zero;
 
-use crate::{constants::CustomFloat, direction_cosine::DirectionCosine, tallies::MCTallyEvent};
-
-use super::{
-    mc_base_particle::{MCBaseParticle, Species},
-    mc_location::MCLocation,
-    mc_vector::MCVector,
+use crate::{
+    constants::CustomFloat,
+    data::{direction_cosine::DirectionCosine, mc_vector::MCVector, tallies::MCTallyEvent},
+    geometry::mc_location::MCLocation,
 };
+
+use super::mc_base_particle::{MCBaseParticle, Species};
 
 /// Structure used to represent a particle.
 #[derive(Debug, Default, Clone)]

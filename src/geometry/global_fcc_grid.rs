@@ -5,7 +5,7 @@ use crate::{
         mesh::{CORNER_OFFSET, FACE_OFFSET, N_FACES, N_POINTS_INTERSEC},
         CustomFloat, Tuple3, Tuple4,
     },
-    mc::mc_vector::MCVector,
+    data::mc_vector::MCVector,
 };
 
 /// Structure representing the spatial grid of the problem.

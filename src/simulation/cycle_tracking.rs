@@ -2,10 +2,10 @@ use num::one;
 
 use crate::{
     constants::CustomFloat,
-    mc::{load_particle::load_particle, mc_particle::MCParticle},
+    data::tallies::MCTallyEvent,
     montecarlo::MonteCarlo,
+    particles::{load_particle::load_particle, mc_particle::MCParticle},
     simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
-    tallies::MCTallyEvent,
 };
 
 use super::{

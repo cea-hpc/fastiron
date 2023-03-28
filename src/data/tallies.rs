@@ -4,13 +4,12 @@ use num::zero;
 
 use crate::{
     constants::CustomFloat,
-    energy_spectrum::EnergySpectrum,
-    mc::{
-        mc_domain::MCDomain,
-        mc_fast_timer::{self, Section},
-    },
+    geometry::mc_domain::MCDomain,
     montecarlo::MonteCarlo,
+    utils::mc_fast_timer::{self, Section},
 };
+
+use super::energy_spectrum::EnergySpectrum;
 
 /// Enum representing a tally event.
 #[derive(Debug, Clone, Copy, PartialEq)]

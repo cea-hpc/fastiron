@@ -1,8 +1,12 @@
 use std::fmt::Error;
 
-use crate::{constants::CustomFloat, tallies::MCTallyEvent};
+use crate::{
+    constants::CustomFloat,
+    data::{mc_vector::MCVector, tallies::MCTallyEvent},
+    geometry::mc_location::MCLocation,
+};
 
-use super::{mc_location::MCLocation, mc_particle::MCParticle, mc_vector::MCVector};
+use super::mc_particle::MCParticle;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Species {

@@ -1,11 +1,8 @@
 use num::{zero, FromPrimitive};
 
-use crate::{
-    constants::{physical::TINY_FLOAT, CustomFloat},
-    particle_vault::ParticleVault,
-};
+use crate::constants::{physical::TINY_FLOAT, CustomFloat};
 
-use super::mc_particle::MCParticle;
+use super::{mc_particle::MCParticle, particle_vault::ParticleVault};
 
 /// Copies a single particle from the particle-vault data and returns it.
 pub fn load_particle<T: CustomFloat>(

@@ -4,7 +4,7 @@ use num::{zero, FromPrimitive};
 
 use crate::{
     constants::{physical::TINY_FLOAT, CustomFloat, Tuple3},
-    mc::mc_vector::MCVector,
+    data::mc_vector::MCVector,
 };
 
 /// Internal structure of [GridAssignmentObject].

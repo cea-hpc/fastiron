@@ -1,14 +1,13 @@
 use clap::Parser;
-
 use fastiron::constants::CustomFloat;
-use fastiron::coral_benchmark_correctness;
 use fastiron::init_mc::init_mc;
-use fastiron::io_utils::Cli;
-use fastiron::mc::mc_fast_timer::{self, Section};
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::Parameters;
 use fastiron::simulation::cycle_tracking::cycle_tracking_guts;
 use fastiron::simulation::population_control;
+use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
+use fastiron::utils::io_utils::Cli;
+use fastiron::utils::mc_fast_timer::{self, Section};
 
 fn main() {
     let cli = Cli::parse();
@@ -38,7 +37,7 @@ fn main() {
 
     game_over(mcco);
 
-    coral_benchmark_correctness::coral_benchmark_correctness(mcco);
+    coral_benchmark_correctness(mcco);
 }
 
 pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {

@@ -1,8 +1,7 @@
 use crate::{
-    constants::CustomFloat,
-    mc::{mc_facet_adjacency::MCSubfacetAdjacencyEvent, mc_particle::MCParticle},
-    montecarlo::MonteCarlo,
-    tallies::MCTallyEvent,
+    constants::CustomFloat, data::tallies::MCTallyEvent,
+    geometry::mc_facet_adjacency::MCSubfacetAdjacencyEvent, montecarlo::MonteCarlo,
+    particles::mc_particle::MCParticle,
 };
 
 /// Computes and transform accordingly a [MCParticle] object crossing a facet.

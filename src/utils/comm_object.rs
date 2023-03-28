@@ -1,4 +1,4 @@
-use crate::mesh_partition::MeshPartition;
+use crate::geometry::mesh_partition::MeshPartition;
 
 /// Structure used to hold a global mapping of [MeshPartition] objects
 #[derive(Debug)]
