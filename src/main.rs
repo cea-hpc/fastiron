@@ -5,7 +5,6 @@ use fastiron::coral_benchmark_correctness;
 use fastiron::init_mc::init_mc;
 use fastiron::io_utils::Cli;
 use fastiron::mc::mc_fast_timer::{self, Section};
-use fastiron::mc::mc_utils;
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::Parameters;
 use fastiron::simulation::cycle_tracking::cycle_tracking_guts;
@@ -67,7 +66,7 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
 
     mcco.particle_buffer.initialize(mcco.domain.len());
 
-    mc_utils::source_now(mcco);
+    population_control::source_now(mcco);
 
     population_control::population_control(mcco, load_balance);
 

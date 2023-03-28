@@ -2,7 +2,7 @@ use num::one;
 
 use crate::{
     constants::CustomFloat,
-    mc::{mc_particle::MCParticle, mc_utils::load_particle},
+    mc::{load_particle::load_particle, mc_particle::MCParticle},
     montecarlo::MonteCarlo,
     simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
     tallies::MCTallyEvent,

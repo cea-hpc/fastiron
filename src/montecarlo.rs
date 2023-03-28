@@ -4,9 +4,9 @@ use num::zero;
 
 use crate::constants::CustomFloat;
 use crate::material_database::MaterialDatabase;
+use crate::mc::load_particle::load_particle;
 use crate::mc::mc_base_particle::MCBaseParticle;
 use crate::mc::mc_fast_timer::{self, MCFastTimerContainer, Section};
-use crate::mc::mc_utils::load_particle;
 use crate::mc::{
     mc_domain::MCDomain, mc_particle_buffer::MCParticleBuffer, mc_processor_info::MCProcessorInfo,
     mc_time_info::MCTimeInfo,
