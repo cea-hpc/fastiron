@@ -12,6 +12,7 @@ use crate::{
     material_database::MaterialDatabase,
     mesh_partition::{CellInfo, MeshPartition},
     parameters::{GeometryParameters, Parameters, Shape},
+    simulation::mct::cell_position_3dg,
 };
 
 use super::{
@@ -20,7 +21,6 @@ use super::{
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
     mc_location::MCLocation,
     mc_vector::MCVector,
-    mct::cell_position_3dg,
 };
 
 #[derive(Debug, Clone, Copy, Default)]

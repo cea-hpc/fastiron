@@ -5,13 +5,13 @@ use crate::{
         physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
         CustomFloat,
     },
-    macro_cross_section::macroscopic_cross_section,
     mc::{
         mc_particle::MCParticle,
         mc_rng_state::{rng_sample, spawn_rn_seed},
     },
     montecarlo::MonteCarlo,
     nuclear_data::ReactionType,
+    simulation::macro_cross_section::macroscopic_cross_section,
 };
 
 /// Update the a particle's energy and trajectory after a collision.

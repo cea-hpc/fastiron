@@ -8,12 +8,9 @@ use crate::{
         physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
         CustomFloat,
     },
-    macro_cross_section::weighted_macroscopic_cross_section,
-    mc::{
-        mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_rng_state::rng_sample,
-        mct::nearest_facet,
-    },
+    mc::{mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_rng_state::rng_sample},
     montecarlo::MonteCarlo,
+    simulation::{macro_cross_section::weighted_macroscopic_cross_section, mct::nearest_facet},
     tallies::MCTallyEvent,
 };
 

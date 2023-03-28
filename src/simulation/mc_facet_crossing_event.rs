@@ -1,6 +1,9 @@
-use crate::{constants::CustomFloat, montecarlo::MonteCarlo, tallies::MCTallyEvent};
-
-use super::{mc_facet_adjacency::MCSubfacetAdjacencyEvent, mc_particle::MCParticle};
+use crate::{
+    constants::CustomFloat,
+    mc::{mc_facet_adjacency::MCSubfacetAdjacencyEvent, mc_particle::MCParticle},
+    montecarlo::MonteCarlo,
+    tallies::MCTallyEvent,
+};
 
 /// Computes and transform accordingly a [MCParticle] object crossing a facet.
 pub fn facet_crossing_event<T: CustomFloat>(

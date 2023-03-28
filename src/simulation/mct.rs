@@ -2,11 +2,6 @@ use core::panic;
 
 use num::{one, zero, FromPrimitive};
 
-use super::{
-    mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
-    mc_facet_geometry::MCGeneralPlane, mc_location::MCLocation, mc_nearest_facet::MCNearestFacet,
-    mc_particle::MCParticle, mc_rng_state::rng_sample, mc_vector::MCVector,
-};
 use crate::{
     constants::{
         mesh::{N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
@@ -14,6 +9,12 @@ use crate::{
         CustomFloat,
     },
     direction_cosine::DirectionCosine,
+    mc::{
+        mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
+        mc_facet_geometry::MCGeneralPlane, mc_location::MCLocation,
+        mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_rng_state::rng_sample,
+        mc_vector::MCVector,
+    },
     montecarlo::MonteCarlo,
 };
 

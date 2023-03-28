@@ -2,14 +2,14 @@ use clap::Parser;
 
 use fastiron::constants::CustomFloat;
 use fastiron::coral_benchmark_correctness;
-use fastiron::cycle_tracking::cycle_tracking_guts;
 use fastiron::init_mc::init_mc;
 use fastiron::io_utils::Cli;
 use fastiron::mc::mc_fast_timer::{self, Section};
 use fastiron::mc::mc_utils;
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::Parameters;
-use fastiron::population_control;
+use fastiron::simulation::cycle_tracking::cycle_tracking_guts;
+use fastiron::simulation::population_control;
 
 fn main() {
     let cli = Cli::parse();

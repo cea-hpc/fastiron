@@ -7,13 +7,13 @@ use crate::{
     },
     montecarlo::MonteCarlo,
     particle_vault::ParticleVault,
+    simulation::mct::generate_coordinate_3dg,
 };
 
 use super::{
     mc_base_particle::MCBaseParticle,
     mc_particle::MCParticle,
     mc_rng_state::{rng_sample, spawn_rn_seed},
-    mct::generate_coordinate_3dg,
 };
 
 /// Copies a single particle from the particle-vault data and returns it.

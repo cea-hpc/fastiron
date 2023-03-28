@@ -1,17 +1,16 @@
 use num::one;
 
 use crate::{
-    collision_event::collision_event,
     constants::CustomFloat,
-    mc::{
-        mc_facet_crossing_event::facet_crossing_event,
-        mc_particle::MCParticle,
-        mc_segment_outcome::{outcome, MCSegmentOutcome},
-        mc_utils::load_particle,
-        mct::reflect_particle,
-    },
+    mc::{mc_particle::MCParticle, mc_utils::load_particle},
     montecarlo::MonteCarlo,
+    simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
     tallies::MCTallyEvent,
+};
+
+use super::{
+    collision_event::collision_event,
+    mc_segment_outcome::{outcome, MCSegmentOutcome},
 };
 
 /// Main steps of the CycleTracking section.
