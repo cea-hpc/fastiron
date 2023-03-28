@@ -7,20 +7,19 @@ use crate::{
         mesh::{N_FACES, N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
         CustomFloat,
     },
-    decomposition_object::DecompositionObject,
-    global_fcc_grid::GlobalFccGrid,
-    material_database::MaterialDatabase,
-    mesh_partition::{CellInfo, MeshPartition},
+    data::{material_database::MaterialDatabase, mc_vector::MCVector},
     parameters::{GeometryParameters, Parameters, Shape},
+    simulation::mct::cell_position_3dg,
+    utils::decomposition_object::DecompositionObject,
 };
 
 use super::{
+    global_fcc_grid::GlobalFccGrid,
     mc_cell_state::MCCellState,
     mc_facet_adjacency::{MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent},
     mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
     mc_location::MCLocation,
-    mc_vector::MCVector,
-    mct::cell_position_3dg,
+    mesh_partition::{CellInfo, MeshPartition},
 };
 
 #[derive(Debug, Clone, Copy, Default)]

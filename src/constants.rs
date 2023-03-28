@@ -7,6 +7,19 @@ use std::{
 
 use num::{Float, FromPrimitive};
 
+//=======================
+// custom traits & types
+//=======================
+
+// some alias for readability
+
+/// Custom alias for readability.
+pub type Tuple3 = (usize, usize, usize);
+/// Custom alias for readability.
+pub type Tuple4 = (usize, usize, usize, usize);
+
+// generic float type
+
 pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
 pub trait UtilsFloat: Default + Debug + Display + LowerExp {}
 pub trait CustomFloat:
@@ -22,10 +35,16 @@ impl OpsFloat for f64 {}
 impl UtilsFloat for f64 {}
 impl CustomFloat for f64 {}
 
+//===================
+// constants modules
+//===================
+
 /// Modules containing all simulation-related constants.
 pub mod sim {
     /// Number of timers, i.e. numbers of section we keep track of.
     pub const N_TIMERS: usize = 6;
+    /// Number of particle species.
+    pub const N_SPECIES: usize = 1;
 }
 
 /// Module containing all physics-related constants.
@@ -56,6 +75,8 @@ pub mod physical {
 /// Modules containing all mesh and geometry related constants. The used mesh
 /// is made of cells (hexahedron), each divided in 12 sub-cells (tetrahedron).
 pub mod mesh {
+    use super::Tuple4;
+
     /// Number of points per tetrahedron facet.
     pub const N_POINTS_PER_FACET: usize = 3;
     /// Number of facets of a cell facing outward i.e. constituting
@@ -63,6 +84,32 @@ pub mod mesh {
     pub const N_FACETS_OUT: usize = 24;
     /// Number of points defining a cell.
     pub const N_POINTS_INTERSEC: usize = 14;
+    /// Offsets of the intersection points of a cell.
+    pub const CORNER_OFFSET: [Tuple4; N_POINTS_INTERSEC] = [
+        (0, 0, 0, 0),
+        (1, 0, 0, 0),
+        (0, 1, 0, 0),
+        (1, 1, 0, 0),
+        (0, 0, 1, 0),
+        (1, 0, 1, 0),
+        (0, 1, 1, 0),
+        (1, 1, 1, 0),
+        (1, 0, 0, 1),
+        (0, 0, 0, 1),
+        (0, 1, 0, 2),
+        (0, 0, 0, 2),
+        (0, 0, 1, 3),
+        (0, 0, 0, 3),
+    ];
     /// Number of faces defining a cell.
     pub const N_FACES: usize = 6;
+    /// Offsets of the faces of a cell
+    pub const FACE_OFFSET: [(i32, i32, i32); N_FACES] = [
+        (1, 0, 0),
+        (-1, 0, 0),
+        (0, 1, 0),
+        (0, -1, 0),
+        (0, 0, 1),
+        (0, 0, -1),
+    ];
 }

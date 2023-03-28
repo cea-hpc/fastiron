@@ -1,6 +1,6 @@
 use fastiron::{
-    io_utils::{parse_input_file, Cli, InputError},
     parameters::{GeometryParameters, ParameterError, Parameters, Shape, SimulationParameters},
+    utils::io_utils::{parse_input_file, Cli, InputError},
 };
 
 #[test]

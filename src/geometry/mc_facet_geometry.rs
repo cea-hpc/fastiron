@@ -1,8 +1,9 @@
 use num::FromPrimitive;
 
-use crate::constants::{mesh::N_FACETS_OUT, physical::TINY_FLOAT, CustomFloat};
-
-use super::mc_vector::MCVector;
+use crate::{
+    constants::{mesh::N_FACETS_OUT, physical::TINY_FLOAT, CustomFloat},
+    data::mc_vector::MCVector,
+};
 
 /// Structure representing a plane of equation `A*x + B*y + C*z + D = 0`
 /// (A,B,C) is normalized.

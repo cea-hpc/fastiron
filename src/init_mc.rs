@@ -1,16 +1,21 @@
 use std::{collections::HashMap, fmt::Debug, fs::File, io::Write};
 
 use crate::{
-    comm_object::CommObject,
-    constants::{physical::TINY_FLOAT, CustomFloat},
-    decomposition_object::DecompositionObject,
-    global_fcc_grid::{GlobalFccGrid, Tuple3},
-    material_database::{Isotope, Material},
-    mc::{mc_domain::MCDomain, mc_rng_state::rng_sample, mc_vector::MCVector},
-    mesh_partition::MeshPartition,
+    constants::{physical::TINY_FLOAT, CustomFloat, Tuple3},
+    data::{
+        material_database::{Isotope, Material},
+        mc_vector::MCVector,
+        nuclear_data::{NuclearData, Polynomial, ReactionType},
+    },
+    geometry::{
+        global_fcc_grid::GlobalFccGrid, mc_domain::MCDomain, mesh_partition::MeshPartition,
+    },
     montecarlo::MonteCarlo,
-    nuclear_data::{NuclearData, Polynomial, ReactionType},
     parameters::Parameters,
+    utils::{
+        comm_object::CommObject, decomposition_object::DecompositionObject,
+        mc_rng_state::rng_sample,
+    },
 };
 use num::{one, zero, Float, FromPrimitive};
 
@@ -80,15 +85,9 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
         (0..mp.n_isotopes).for_each(|_| {
             let isotope_gid = mcco.nuclear_data.add_isotope(
-                mp.n_reactions,
-                &cross_section[&mp.fission_cross_section],
-                &cross_section[&mp.scattering_cross_section],
-                &cross_section[&mp.absorption_cross_section],
+                &cross_section,
+                mp,
                 params.cross_section_params[&mp.fission_cross_section].nu_bar,
-                mp.total_cross_section,
-                mp.fission_cross_section_ratio,
-                mp.scattering_cross_section_ratio,
-                mp.absorbtion_cross_section_ratio,
             );
             // All isotopes are equally prevalent => each weights 1/n_isotopes
             material.add_isotope(Isotope {
@@ -190,8 +189,7 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let ly: T = params.simulation_params.ly;
     let lz: T = params.simulation_params.lz;
 
-    // fixed value for now, this is mpi related so it should be deleted
-    // these values may be somewhat equivalent to no MPI usage?
+    // these values may be somewhat equivalent to no MPI usage
     let n_ranks: usize = 1;
     let n_domains_per_rank = 4; // why 4 in original code?
     let my_rank = 0;
@@ -200,8 +198,8 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let my_domain_gids = ddc.assigned_gids.clone();
     let global_grid: GlobalFccGrid<T> = GlobalFccGrid::new(nx, ny, nz, lx, ly, lz);
 
+    // initialize centers randomly
     let n_centers: usize = n_domains_per_rank * n_ranks;
-    // we fixed *_dom = 0, so for now we always initialize centers randomly
     let mut s = params.simulation_params.seed + 1; // use a seed dependant on sim seed
     let domain_centers = initialize_centers_rand(n_centers, &global_grid, &mut s);
 
@@ -213,6 +211,9 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
     let mut comm: CommObject = CommObject::new(&partition);
     // indexing should be coherent since we cloned partition in comm's construction
+    // this loop has to be done using indexes because of the way we init the mesh
+    // the main init function is used on the current indexed partition but others
+    // may be accessed to process neighboring cells, so no borrow allowed
     (0..comm.partition.len()).for_each(|mesh_p_idx| {
         let remote_cells =
             comm.partition[mesh_p_idx].build_mesh_partition(&global_grid, &domain_centers);

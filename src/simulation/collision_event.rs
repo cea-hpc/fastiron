@@ -5,13 +5,11 @@ use crate::{
         physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
         CustomFloat,
     },
-    macro_cross_section::macroscopic_cross_section,
-    mc::{
-        mc_particle::MCParticle,
-        mc_rng_state::{rng_sample, spawn_rn_seed},
-    },
+    data::nuclear_data::ReactionType,
     montecarlo::MonteCarlo,
-    nuclear_data::ReactionType,
+    particles::mc_particle::MCParticle,
+    simulation::macro_cross_section::macroscopic_cross_section,
+    utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
 /// Update the a particle's energy and trajectory after a collision.
@@ -167,7 +165,8 @@ pub fn collision_event<T: CustomFloat>(
 mod tests {
     use super::*;
     use crate::{
-        constants::physical::TINY_FLOAT, direction_cosine::DirectionCosine, mc::mc_vector::MCVector,
+        constants::physical::TINY_FLOAT,
+        data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
     };
     use num::Float;
 

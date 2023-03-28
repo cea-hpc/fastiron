@@ -1,11 +1,11 @@
 use std::collections::{HashMap, VecDeque};
 
 use crate::{
-    constants::CustomFloat,
-    global_fcc_grid::{GlobalFccGrid, Tuple3},
-    grid_assignment_object::GridAssignmentObject,
-    mc::mc_vector::MCVector,
+    constants::{CustomFloat, Tuple3},
+    data::mc_vector::MCVector,
 };
+
+use super::{global_fcc_grid::GlobalFccGrid, grid_assignment_object::GridAssignmentObject};
 
 pub type MapType = HashMap<usize, CellInfo>;
 
@@ -173,7 +173,8 @@ impl MeshPartition {
 
 #[cfg(test)]
 mod tests {
-    use crate::{global_fcc_grid::GlobalFccGrid, mc::mc_vector::MCVector};
+
+    use crate::{data::mc_vector::MCVector, geometry::global_fcc_grid::GlobalFccGrid};
 
     use super::MeshPartition;
 
@@ -220,8 +221,8 @@ mod tests {
             println!();
         });
 
-        // TODO: these tests are wrong, only the belonging and neighboring cells are initialized
-        // TODO: is there away to test this or remove non neighboring cells?
+        // NOTE: only the belonging and neighboring cells are initialized
+        // NOTE: is there a way to test this or remove non neighboring cells? is it worth it?
         // for this simple case, non neighboring cell are gid 0 in domain 1 and
         // gid 7 in domain 0
         partition.iter().for_each(|part| {

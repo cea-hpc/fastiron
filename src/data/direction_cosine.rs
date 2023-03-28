@@ -2,7 +2,7 @@ use num::{zero, FromPrimitive};
 
 use crate::{
     constants::{physical::PI, CustomFloat},
-    mc::mc_rng_state::rng_sample,
+    utils::mc_rng_state::rng_sample,
 };
 
 /// Structure used to model a direction in 3D space. Alpha, beta and

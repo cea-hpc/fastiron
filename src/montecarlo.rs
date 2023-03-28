@@ -3,19 +3,19 @@ use std::fmt::Debug;
 use num::zero;
 
 use crate::constants::CustomFloat;
-use crate::material_database::MaterialDatabase;
-use crate::mc::mc_base_particle::MCBaseParticle;
-use crate::mc::mc_fast_timer::{self, MCFastTimerContainer, Section};
-use crate::mc::mc_utils::load_particle;
-use crate::mc::{
-    mc_domain::MCDomain, mc_particle_buffer::MCParticleBuffer, mc_processor_info::MCProcessorInfo,
-    mc_time_info::MCTimeInfo,
-};
-use crate::nuclear_data::NuclearData;
+use crate::data::material_database::MaterialDatabase;
+use crate::data::nuclear_data::NuclearData;
+use crate::data::tallies::Tallies;
+use crate::geometry::mc_domain::MCDomain;
 use crate::parameters::Parameters;
-use crate::particle_vault::ParticleVault;
-use crate::particle_vault_container::ParticleVaultContainer;
-use crate::tallies::Tallies;
+use crate::particles::load_particle::load_particle;
+use crate::particles::mc_base_particle::MCBaseParticle;
+use crate::particles::mc_particle_buffer::MCParticleBuffer;
+use crate::particles::particle_vault::ParticleVault;
+use crate::particles::particle_vault_container::ParticleVaultContainer;
+use crate::utils::mc_fast_timer::{self, MCFastTimerContainer, Section};
+use crate::utils::mc_processor_info::MCProcessorInfo;
+use crate::utils::mc_time_info::MCTimeInfo;
 
 /// Super-structure used to contain all the problem's objects and data.
 #[derive(Debug)]

@@ -1,4 +1,4 @@
-use fastiron::send_queue::{SendQueue, SendQueueTuple};
+use fastiron::data::send_queue::{SendQueue, SendQueueTuple};
 
 #[test]
 fn reserve() {

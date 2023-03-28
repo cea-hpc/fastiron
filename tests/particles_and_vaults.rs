@@ -1,6 +1,5 @@
-use fastiron::{
-    mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
-    particle_vault::ParticleVault,
+use fastiron::particles::{
+    mc_base_particle::MCBaseParticle, mc_particle::MCParticle, particle_vault::ParticleVault,
 };
 
 #[test]

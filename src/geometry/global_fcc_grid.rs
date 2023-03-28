@@ -2,16 +2,11 @@ use num::{zero, FromPrimitive};
 
 use crate::{
     constants::{
-        mesh::{N_FACES, N_POINTS_INTERSEC},
-        CustomFloat,
+        mesh::{CORNER_OFFSET, FACE_OFFSET, N_FACES, N_POINTS_INTERSEC},
+        CustomFloat, Tuple3, Tuple4,
     },
-    mc::mc_vector::MCVector,
+    data::mc_vector::MCVector,
 };
-
-/// Custom alias for readability.
-pub type Tuple3 = (usize, usize, usize);
-/// Custom alias for readability.
-pub type Tuple4 = (usize, usize, usize, usize);
 
 /// Structure representing the spatial grid of the problem.
 #[derive(Debug)]
@@ -36,9 +31,6 @@ pub struct GlobalFccGrid<T: CustomFloat> {
     pub dy: T,
     /// Size of a mesh cell along the z axis (cm)
     pub dz: T,
-
-    pub corner_offset: [Tuple4; N_POINTS_INTERSEC],
-    pub face_offset: [(i32, i32, i32); N_FACES],
 }
 
 impl<T: CustomFloat> GlobalFccGrid<T> {
@@ -47,32 +39,6 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
         let tmpx: T = FromPrimitive::from_usize(nx).unwrap();
         let tmpy: T = FromPrimitive::from_usize(ny).unwrap();
         let tmpz: T = FromPrimitive::from_usize(nz).unwrap();
-
-        let corner_offset: [Tuple4; N_POINTS_INTERSEC] = [
-            (0, 0, 0, 0),
-            (1, 0, 0, 0),
-            (0, 1, 0, 0),
-            (1, 1, 0, 0),
-            (0, 0, 1, 0),
-            (1, 0, 1, 0),
-            (0, 1, 1, 0),
-            (1, 1, 1, 0),
-            (1, 0, 0, 1),
-            (0, 0, 0, 1),
-            (0, 1, 0, 2),
-            (0, 0, 0, 2),
-            (0, 0, 1, 3),
-            (0, 0, 0, 3),
-        ];
-
-        let face_offset: [(i32, i32, i32); N_FACES] = [
-            (1, 0, 0),
-            (-1, 0, 0),
-            (0, 1, 0),
-            (0, -1, 0),
-            (0, 0, 1),
-            (0, 0, -1),
-        ];
 
         Self {
             nx,
@@ -84,8 +50,6 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
             dx: lx / tmpx,
             dy: ly / tmpy,
             dz: lz / tmpz,
-            corner_offset,
-            face_offset,
         }
     }
 
@@ -155,10 +119,10 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
 
         (0..N_POINTS_INTERSEC).for_each(|ii| {
             let tmp: Tuple4 = (
-                tt.0 + self.corner_offset[ii].0,
-                tt.1 + self.corner_offset[ii].1,
-                tt.2 + self.corner_offset[ii].2,
-                self.corner_offset[ii].3,
+                tt.0 + CORNER_OFFSET[ii].0,
+                tt.1 + CORNER_OFFSET[ii].1,
+                tt.2 + CORNER_OFFSET[ii].2,
+                CORNER_OFFSET[ii].3,
             );
             node_gid[ii] = self.node_tuple_to_idx(&tmp);
         });
@@ -174,9 +138,9 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
 
         (0..N_FACES).for_each(|ii| {
             let face_nbr = (
-                cell_tt.0 as i32 + self.face_offset[ii].0,
-                cell_tt.1 as i32 + self.face_offset[ii].1,
-                cell_tt.2 as i32 + self.face_offset[ii].2,
+                cell_tt.0 as i32 + FACE_OFFSET[ii].0,
+                cell_tt.1 as i32 + FACE_OFFSET[ii].1,
+                cell_tt.2 as i32 + FACE_OFFSET[ii].2,
             );
             let snaped_face_nbr = self.snap_turtle(face_nbr);
             nbr_cell_gid[ii] = self.cell_tuple_to_idx(&snaped_face_nbr);

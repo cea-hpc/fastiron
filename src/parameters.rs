@@ -1,7 +1,8 @@
-use crate::constants::CustomFloat;
+use crate::{
+    constants::CustomFloat,
+    utils::io_utils::{parse_input_file, Cli, InputError},
+};
 use std::collections::HashMap;
-
-use crate::io_utils::{self, InputError};
 
 /// Alias between Block and [HashMap<String,String>]. This allows for
 /// better readability.
@@ -36,7 +37,7 @@ impl<T: CustomFloat> Parameters<T> {
     /// structure and return it. The function will fail if:
     /// - it cannot read or find the specified input_file (if specified)
     /// - the resulting [Parameters] object is compromised
-    pub fn get_parameters(cli: io_utils::Cli) -> Result<Self, Vec<io_utils::InputError>> {
+    pub fn get_parameters(cli: Cli) -> Result<Self, Vec<InputError>> {
         // structs init
         let mut params = Self {
             simulation_params: SimulationParameters::from_cli(&cli),
@@ -46,7 +47,7 @@ impl<T: CustomFloat> Parameters<T> {
         };
 
         if let Some(filename) = cli.input_file {
-            io_utils::parse_input_file(filename, &mut params)?
+            parse_input_file(filename, &mut params)?
         };
         if let Some(filename) = cli.energy_spectrum {
             params.simulation_params.energy_spectrum = filename
@@ -432,7 +433,7 @@ impl<T: CustomFloat> SimulationParameters<T> {
     ///
     /// ```rust
     /// use clap::Parser;
-    /// use fastiron::io_utils::Cli;
+    /// use fastiron::utils::io_utils::Cli;
     /// use fastiron::parameters::SimulationParameters;
     ///
     ///
@@ -443,7 +444,7 @@ impl<T: CustomFloat> SimulationParameters<T> {
     /// println!("{:#?}", simulation_params);
     ///
     /// ```
-    pub fn from_cli(cli: &io_utils::Cli) -> Self {
+    pub fn from_cli(cli: &Cli) -> Self {
         let mut simulation_params = Self::default();
 
         // use the cli to override defaults

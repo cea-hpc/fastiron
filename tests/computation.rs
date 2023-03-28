@@ -2,7 +2,7 @@
 // functions with their result in the original code.
 // Results are hard coded.
 
-use fastiron::{constants::physical::SMALL_FLOAT, mc::mc_vector::MCVector};
+use fastiron::{constants::physical::SMALL_FLOAT, data::mc_vector::MCVector};
 
 #[test]
 fn move_particle() {

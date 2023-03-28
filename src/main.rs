@@ -1,15 +1,13 @@
 use clap::Parser;
-
 use fastiron::constants::CustomFloat;
-use fastiron::coral_benchmark_correctness;
-use fastiron::cycle_tracking::cycle_tracking_guts;
 use fastiron::init_mc::init_mc;
-use fastiron::io_utils::Cli;
-use fastiron::mc::mc_fast_timer::{self, Section};
-use fastiron::mc::mc_utils;
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::Parameters;
-use fastiron::population_control;
+use fastiron::simulation::cycle_tracking::cycle_tracking_guts;
+use fastiron::simulation::population_control;
+use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
+use fastiron::utils::io_utils::Cli;
+use fastiron::utils::mc_fast_timer::{self, Section};
 
 fn main() {
     let cli = Cli::parse();
@@ -39,7 +37,7 @@ fn main() {
 
     game_over(mcco);
 
-    coral_benchmark_correctness::coral_benchmark_correctness(mcco);
+    coral_benchmark_correctness(mcco);
 }
 
 pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
@@ -67,7 +65,7 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
 
     mcco.particle_buffer.initialize(mcco.domain.len());
 
-    mc_utils::source_now(mcco);
+    population_control::source_now(mcco);
 
     population_control::population_control(mcco, load_balance);
 

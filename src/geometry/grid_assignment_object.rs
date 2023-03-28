@@ -3,9 +3,8 @@ use std::collections::VecDeque;
 use num::{zero, FromPrimitive};
 
 use crate::{
-    constants::{physical::TINY_FLOAT, CustomFloat},
-    global_fcc_grid::Tuple3,
-    mc::mc_vector::MCVector,
+    constants::{physical::TINY_FLOAT, CustomFloat, Tuple3},
+    data::mc_vector::MCVector,
 };
 
 /// Internal structure of [GridAssignmentObject].

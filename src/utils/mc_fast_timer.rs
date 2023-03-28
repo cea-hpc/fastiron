@@ -104,27 +104,7 @@ impl MCFastTimerContainer {
     }
 
     pub fn last_cycle_report(&self) {
-        // TODO: COMPLETE
-        // Print header
-        println!("Timer Name                        Last cycle number of calls   Last cycle min (ms)    Last cycle avg (ms)    Last cycle max (ms)    Last cycle stddev (ms)    Last cycle efficiency rating");
-        self.timers
-            .iter()
-            .enumerate()
-            .for_each(|(timer_idx, timer)| {
-                let section = match timer_idx {
-                    0 => Section::Main,
-                    1 => Section::CycleInit,
-                    2 => Section::CycleTracking,
-                    3 => Section::CycleTrackingKernel,
-                    4 => Section::CycleTrackingComm,
-                    6 => Section::CycleFinalize,
-                    _ => unreachable!(),
-                };
-                println!(
-                    "{}    {}    {}    {}    {}    {}    {}",
-                    section, timer.num_calls, 0, 0, 0, 0, 0
-                );
-            });
+        todo!()
     }
 
     pub fn clear_last_cycle_timers(&mut self) {

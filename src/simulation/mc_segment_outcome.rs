@@ -8,13 +8,12 @@ use crate::{
         physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
         CustomFloat,
     },
-    macro_cross_section::weighted_macroscopic_cross_section,
-    mc::{
-        mc_nearest_facet::MCNearestFacet, mc_particle::MCParticle, mc_rng_state::rng_sample,
-        mct::nearest_facet,
-    },
+    data::tallies::MCTallyEvent,
+    geometry::mc_nearest_facet::MCNearestFacet,
     montecarlo::MonteCarlo,
-    tallies::MCTallyEvent,
+    particles::mc_particle::MCParticle,
+    simulation::{macro_cross_section::weighted_macroscopic_cross_section, mct::nearest_facet},
+    utils::mc_rng_state::rng_sample,
 };
 
 /// Enum representing the outcome of the current segment.

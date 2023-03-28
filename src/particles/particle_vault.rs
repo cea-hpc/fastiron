@@ -1,9 +1,8 @@
 use std::fmt::Debug;
 
-use crate::{
-    constants::CustomFloat,
-    mc::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
-};
+use crate::constants::CustomFloat;
+
+use super::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 
 /// Struture used to group particle in batches.
 #[derive(Debug, Clone, Default)]
@@ -176,11 +175,6 @@ impl<T: CustomFloat> ParticleVault<T> {
 
     /// Put a particle into the vault, at a specific index.
     pub fn put_particle(&mut self, particle: MCParticle<T>, index: usize) {
-        /*
-        if self.particles[index].is_some() {
-            println!("WARNING: overwriting particle at index {index}");
-        }
-        */
         self.particles[index] = Some(MCBaseParticle::new(&particle)); // will panic if out of bounds
     }
 

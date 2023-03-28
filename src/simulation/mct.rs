@@ -2,20 +2,21 @@ use core::panic;
 
 use num::{one, zero, FromPrimitive};
 
-use super::{
-    mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
-    mc_facet_geometry::MCGeneralPlane, mc_location::MCLocation, mc_nearest_facet::MCNearestFacet,
-    mc_particle::MCParticle, mc_rng_state::rng_sample, mc_vector::MCVector,
-};
 use crate::{
     constants::{
         mesh::{N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
         physical::{HUGE_FLOAT, SMALL_FLOAT},
         CustomFloat,
     },
-    direction_cosine::DirectionCosine,
-    mc::mc_base_particle::Species,
+    data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
+    geometry::{
+        mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
+        mc_facet_geometry::MCGeneralPlane, mc_location::MCLocation,
+        mc_nearest_facet::MCNearestFacet,
+    },
     montecarlo::MonteCarlo,
+    particles::mc_particle::MCParticle,
+    utils::mc_rng_state::rng_sample,
 };
 
 /// Computes which facet of the specified cell is nearest
@@ -312,26 +313,24 @@ fn mct_nf_find_nearest<T: CustomFloat>(
 
     let mut retry = false;
 
-    if particle.species != Species::Unknown {
-        // take an option as arg and check if is_some ?
-        if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
-            | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
-        {
-            mct_nf_3dg_move_particle(domain, location, coord, *move_factor);
-            *iteration += 1;
-            *move_factor *= two;
+    // take an option as arg and check if is_some ?
+    if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
+        | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
+    {
+        mct_nf_3dg_move_particle(domain, location, coord, *move_factor);
+        *iteration += 1;
+        *move_factor *= two;
 
-            if *move_factor > threshold {
-                *move_factor = threshold;
-            }
-
-            if *iteration == MAX_ITERATION {
-                retry = false;
-            } else {
-                retry = true;
-            }
-            location.facet = None;
+        if *move_factor > threshold {
+            *move_factor = threshold;
         }
+
+        if *iteration == MAX_ITERATION {
+            retry = false;
+        } else {
+            retry = true;
+        }
+        location.facet = None;
     }
     (nearest_facet, retry)
 }

@@ -36,9 +36,6 @@ impl<T: CustomFloat> MCParticleBuffer<T> {
         let buffer_empty = self.is_empty();
         let sendq_empty = mcco.particle_vault_container.send_queue.size() == 0;
         let processing_empty = mcco.particle_vault_container.particles_processing_size() == 0;
-        //println!("is buffer empty: {buffer_empty}");
-        //println!("is sendq empty: {sendq_empty}");
-        //println!("is processing vault empty: {processing_empty}");
 
         buffer_empty & sendq_empty & processing_empty
     }
@@ -49,23 +46,6 @@ impl<T: CustomFloat> MCParticleBuffer<T> {
     /// SendQueueTuple.
     pub fn buffer_particle(&mut self, base_particle: MCBaseParticle<T>, buffer_idx: usize) {
         self.buffers[buffer_idx].push(MCParticle::new(&base_particle));
-    }
-
-    /// Read the buffers and unpack the particles in the given vault.
-    /// Since we are not parallelizing over a spatial division, this
-    /// function just unpacks everything.
-    /// REPLACED BY EPONYMOUS FUNCTIONS OF MCCO
-    pub fn read_buffers(&mut self, fill_vault: &mut usize, mcco: &mut MonteCarlo<T>) {
-        // If we were parallelizing, we would add a condition for
-        // unpacking like (current thread nbr == buffer nbr)
-        // instead of just iterating over all buffers.
-        self.buffers.iter().for_each(|b| {
-            b.iter().for_each(|particle| {
-                mcco.particle_vault_container
-                    .add_processing_particle(MCBaseParticle::new(particle), fill_vault)
-            })
-        });
-        self.clear()
     }
 
     /// Clear the buffers
