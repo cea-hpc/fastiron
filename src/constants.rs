@@ -43,6 +43,8 @@ impl CustomFloat for f64 {}
 pub mod sim {
     /// Number of timers, i.e. numbers of section we keep track of.
     pub const N_TIMERS: usize = 6;
+    /// Number of particle species.
+    pub const N_SPECIES: usize = 1;
 }
 
 /// Module containing all physics-related constants.

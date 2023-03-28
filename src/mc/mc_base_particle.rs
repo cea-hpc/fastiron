@@ -7,8 +7,8 @@ use super::{mc_location::MCLocation, mc_particle::MCParticle, mc_vector::MCVecto
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Species {
     #[default]
-    Unknown,
-    Known, // \o/
+    Unknown = -1,
+    Known = 0, // \o/
 }
 
 /// Structure used to represent a base particle, i.e. a fresh
@@ -39,10 +39,6 @@ pub struct MCBaseParticle<T: CustomFloat> {
 
     /// Last event this particle underwent
     pub last_event: MCTallyEvent,
-    /// Number of collisions the particle underwent
-    pub num_collisions: u32,
-    /// Breed of the particle, i.e. how it was produced
-    pub breed: u32,
     /// Species of the particle
     pub species: Species,
     /// Current domain in the spatial grid
@@ -67,8 +63,6 @@ impl<T: CustomFloat> MCBaseParticle<T> {
             random_number_seed: particle.random_number_seed,
             identifier: particle.identifier,
             last_event: particle.last_event,
-            num_collisions: particle.num_collisions,
-            breed: particle.breed,
             species: particle.species,
             domain: particle.domain,
             cell: particle.cell,

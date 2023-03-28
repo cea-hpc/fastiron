@@ -14,7 +14,6 @@ use crate::{
         CustomFloat,
     },
     direction_cosine::DirectionCosine,
-    mc::mc_base_particle::Species,
     montecarlo::MonteCarlo,
 };
 
@@ -312,26 +311,24 @@ fn mct_nf_find_nearest<T: CustomFloat>(
 
     let mut retry = false;
 
-    if particle.species != Species::Unknown {
-        // take an option as arg and check if is_some ?
-        if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
-            | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
-        {
-            mct_nf_3dg_move_particle(domain, location, coord, *move_factor);
-            *iteration += 1;
-            *move_factor *= two;
+    // take an option as arg and check if is_some ?
+    if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
+        | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
+    {
+        mct_nf_3dg_move_particle(domain, location, coord, *move_factor);
+        *iteration += 1;
+        *move_factor *= two;
 
-            if *move_factor > threshold {
-                *move_factor = threshold;
-            }
-
-            if *iteration == MAX_ITERATION {
-                retry = false;
-            } else {
-                retry = true;
-            }
-            location.facet = None;
+        if *move_factor > threshold {
+            *move_factor = threshold;
         }
+
+        if *iteration == MAX_ITERATION {
+            retry = false;
+        } else {
+            retry = true;
+        }
+        location.facet = None;
     }
     (nearest_facet, retry)
 }

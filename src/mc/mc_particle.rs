@@ -41,16 +41,12 @@ pub struct MCParticle<T: CustomFloat> {
     pub identifier: u64,
     /// Last event this particle underwent
     pub last_event: MCTallyEvent,
-    /// Number of collisions the particle underwent?
-    pub num_collisions: u32,
     /// Number of segments the particle travelled?
     pub num_segments: T,
     /// Task working on
     pub task: usize,
     /// Species of the particle
     pub species: Species,
-    /// Breed of the particle, i.e. how it was produced
-    pub breed: u32,
     /// Current energy group the particle belong to
     pub energy_group: usize,
     /// Current domain in the spatial grid
@@ -88,11 +84,9 @@ impl<T: CustomFloat> MCParticle<T> {
             random_number_seed: from_particle.random_number_seed,
             identifier: from_particle.identifier,
             last_event: from_particle.last_event,
-            num_collisions: from_particle.num_collisions,
             num_segments: from_particle.num_segments,
             task: 0,
             species: from_particle.species,
-            breed: from_particle.breed,
             energy_group: 0,
             domain: from_particle.domain,
             cell: from_particle.cell,
@@ -148,11 +142,9 @@ impl<T: CustomFloat> Display for MCParticle<T> {
         writeln!(f, "random number seed: {}", self.random_number_seed)?;
         writeln!(f, "identifier: {}", self.identifier)?;
         writeln!(f, "last event: {:?}", self.last_event)?;
-        writeln!(f, "num collisions: {}", self.num_collisions)?;
         writeln!(f, "num segments: {}", self.num_segments)?;
         writeln!(f, "task: {}", self.task)?;
         writeln!(f, "species: {:?}", self.species)?;
-        writeln!(f, "breed: {}", self.breed)?;
         writeln!(f, "energy group: {}", self.energy_group)?;
         writeln!(f, "domain: {}", self.domain)?;
         writeln!(f, "cell: {}", self.cell)?;
