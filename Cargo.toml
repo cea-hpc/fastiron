@@ -16,9 +16,5 @@ rand = {version="0.8.5", features=["small_rng"]}
 criterion = {version="0.3.4", features=["html_reports"]}
 
 [[bench]]
-name = "some_benchmark"
-harness = false
-
-[[bench]]
 name = "rng_benchmark"
 harness = false
