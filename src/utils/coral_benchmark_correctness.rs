@@ -66,7 +66,7 @@ fn balance_ratio_test<T: CustomFloat>(params: &Parameters<T>, tallies: &Tallies<
         | (fsn2abs > tolerance)
         | (fsn2sct > tolerance));
     if pass {
-        println!("PASS:: Ratios are maintained with {percent_tolerance}% tolerance");
+        println!("PASS:: Ratios are maintained within {percent_tolerance}%");
     } else {
         println!("FAIL:: Ratios are not maintained with {percent_tolerance}% tolerance");
         println!("Total absorb: {absorb}");
@@ -85,13 +85,43 @@ fn balance_ratio_test<T: CustomFloat>(params: &Parameters<T>, tallies: &Tallies<
 /// and collision events.
 fn balance_event_test<T: CustomFloat>(tallies: &Tallies<T>) {
     println!("Testing balance between number of facet crossings and reactions...");
+
+    let balance_tally = &tallies.balance_cumulative;
+    let facet_crossing: T = FromPrimitive::from_u64(
+        balance_tally.num_segments - balance_tally.collision - balance_tally.census,
+    )
+    .unwrap();
+    let collision: T = FromPrimitive::from_u64(balance_tally.collision).unwrap();
+
+    let ratio: T = (facet_crossing / collision - one()).abs();
+    let percent_tolerance: T = one();
+
+    let pass: bool = ratio <= percent_tolerance / (FromPrimitive::from_f64(100.0).unwrap());
+    if pass {
+        println!("PASS:: Ratio maintained within {percent_tolerance}%");
+    } else {
+        println!("FAIL:: Ratio not maintained within {percent_tolerance}%");
+        println!("facet crossing to collision: {ratio}");
+    }
 }
 
 /// Test for lost particles during the simulation.
 /// This test should always succeed unless test for
 /// done was broken, or we are running with 1 MPI rank
 /// and so never preform this test duing test_for_done
-fn missing_particle_test<T: CustomFloat>(tallies: &Tallies<T>) {}
+fn missing_particle_test<T: CustomFloat>(tallies: &Tallies<T>) {
+    println!("Testing for lost / unaccounted for particles in this simulation...");
+
+    let bt = &tallies.balance_cumulative;
+    let gains: u64 = bt.start + bt.source + bt.produce + bt.split;
+    let losses: u64 = bt.absorb + bt.census + bt.escape + bt.rr + bt.fission;
+
+    if gains == losses {
+        println!("PASS:: No particles lost during run");
+    } else {
+        println!("FAIL:: Particles lost during run");
+    }
+}
 
 /// Test that the scalar flux is homogenous across cells for the problem.
 /// This test really requires alot of particles or cycles or both
