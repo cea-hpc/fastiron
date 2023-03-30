@@ -1,10 +1,13 @@
-use fastiron::data::send_queue::{SendQueue, SendQueueTuple};
+use fastiron::{
+    data::send_queue::{SendQueue, SendQueueTuple},
+    particles::mc_particle::MCParticle,
+};
 
 #[test]
 fn reserve() {
-    let tt = SendQueueTuple {
+    let tt: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 0,
-        particle_index: 0,
+        particle: MCParticle::default(),
     };
     let mut queue = SendQueue { data: vec![tt; 10] };
 
@@ -15,45 +18,45 @@ fn reserve() {
 
 #[test]
 fn neighbor_size() {
-    let t0 = SendQueueTuple {
+    let t0: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 0,
-        particle_index: 0,
+        particle: MCParticle::default(),
     };
-    let t1 = SendQueueTuple {
+    let t1: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 1,
-        particle_index: 1,
+        particle: MCParticle::default(),
     };
-    let t2 = SendQueueTuple {
+    let t2: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 1,
-        particle_index: 2,
+        particle: MCParticle::default(),
     };
-    let t3 = SendQueueTuple {
+    let t3: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 4,
-        particle_index: 3,
+        particle: MCParticle::default(),
     };
-    let t4 = SendQueueTuple {
+    let t4: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 3,
-        particle_index: 4,
+        particle: MCParticle::default(),
     };
-    let t5 = SendQueueTuple {
+    let t5: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 6,
-        particle_index: 5,
+        particle: MCParticle::default(),
     };
-    let t6 = SendQueueTuple {
+    let t6: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 1,
-        particle_index: 6,
+        particle: MCParticle::default(),
     };
-    let t7 = SendQueueTuple {
+    let t7: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 3,
-        particle_index: 7,
+        particle: MCParticle::default(),
     };
-    let t8 = SendQueueTuple {
+    let t8: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 0,
-        particle_index: 8,
+        particle: MCParticle::default(),
     };
-    let t9 = SendQueueTuple {
+    let t9: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 5,
-        particle_index: 9,
+        particle: MCParticle::default(),
     };
 
     let queue = SendQueue {
@@ -72,31 +75,31 @@ fn neighbor_size() {
 
 #[test]
 fn push_get_clear() {
-    let t0 = SendQueueTuple {
+    let t0: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 0,
-        particle_index: 0,
+        particle: MCParticle::default(),
     };
-    let t1 = SendQueueTuple {
+    let t1: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 1,
-        particle_index: 1,
+        particle: MCParticle::default(),
     };
-    let t2 = SendQueueTuple {
+    let t2: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 1,
-        particle_index: 2,
+        particle: MCParticle::default(),
     };
-    let t3 = SendQueueTuple {
+    let t3: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 4,
-        particle_index: 3,
+        particle: MCParticle::default(),
     };
-    let t4 = SendQueueTuple {
+    let t4: SendQueueTuple<f64> = SendQueueTuple {
         neighbor: 3,
-        particle_index: 4,
+        particle: MCParticle::default(),
     };
 
     let mut queue = SendQueue {
         data: vec![t0, t1, t2, t3],
     };
-    queue.push(3, 4);
+    queue.push(3, &MCParticle::default());
 
     assert_eq!(queue.size(), 5);
     assert_eq!(queue.data[queue.size() - 1], t4);

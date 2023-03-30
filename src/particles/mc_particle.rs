@@ -152,3 +152,10 @@ impl<T: CustomFloat> Display for MCParticle<T> {
         writeln!(f, "normal dot: {}", self.normal_dot)
     }
 }
+
+impl<T: CustomFloat> PartialEq for MCParticle<T> {
+    fn eq(&self, other: &Self) -> bool {
+        // is this enough?
+        self.identifier == other.identifier
+    }
+}

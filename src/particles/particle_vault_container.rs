@@ -18,7 +18,7 @@ pub struct ParticleVaultContainer<T: CustomFloat> {
     pub extra_vault_index: usize,
     /// Stores particle index and neighbor index for any particles that hit
     /// TransitOffProcessor (See MCSubfacetAdjacencyEvent)
-    pub send_queue: SendQueue,
+    pub send_queue: SendQueue<T>,
     /// List of active particle vaults.
     pub processing_vaults: Vec<ParticleVault<T>>,
     /// List of census-ed particle vaults.
@@ -97,7 +97,7 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
     }
 
     /// Returns a reference to the internal [SendQueue] object.
-    pub fn get_send_queue(&mut self) -> &mut SendQueue {
+    pub fn get_send_queue(&mut self) -> &mut SendQueue<T> {
         &mut self.send_queue
     }
 
