@@ -1,4 +1,4 @@
-use num::{one, FromPrimitive};
+use num::{one, zero, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
@@ -126,4 +126,28 @@ fn missing_particle_test<T: CustomFloat>(tallies: &Tallies<T>) {
 /// Test that the scalar flux is homogenous across cells for the problem.
 /// This test really requires alot of particles or cycles or both
 /// This solution should converge to a homogenous solution
-fn fluence_test<T: CustomFloat>(tallies: &Tallies<T>) {}
+fn fluence_test<T: CustomFloat>(tallies: &Tallies<T>) {
+    println!("Testing fluence for homogeneity across the cells");
+    let mut max_diff: T = zero();
+    tallies.fluence.domain.iter().for_each(|dom| {
+        let mut local_sum: T = zero();
+        dom.cell.iter().for_each(|val| local_sum += *val);
+
+        let average: T = local_sum / FromPrimitive::from_usize(dom.size()).unwrap();
+        dom.cell.iter().for_each(|cell_value| {
+            let percent_diff: T = (*cell_value - average).abs()
+                / ((*cell_value + average) / FromPrimitive::from_f64(2.0).unwrap())
+                * FromPrimitive::from_f64(100.0).unwrap();
+            max_diff = max_diff.max(percent_diff);
+        });
+    });
+    let percent_tolerance: T = FromPrimitive::from_f64(6.0).unwrap();
+    let pass = max_diff <= percent_tolerance;
+    if pass {
+        println!("PASS:: Fluence is homogeneous across cells within {percent_tolerance}%");
+    } else {
+        println!("FAIL:: Fluence is not homogeneous across cells within {percent_tolerance}%");
+        println!("Current max difference: {max_diff}%");
+        println!("Try running more particles / cycles to check if the max difference % goes down");
+    }
+}
