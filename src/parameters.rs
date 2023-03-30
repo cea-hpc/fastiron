@@ -24,6 +24,14 @@ pub enum ParameterError {
     MissingCrossSection(String),
 }
 
+#[derive(Debug, Default, PartialEq)]
+pub enum BenchType {
+    #[default]
+    Standard,
+    Coral1,
+    Coral2,
+}
+
 /// Enum used to describe a geometry's shape.
 #[derive(Debug, PartialEq)]
 pub enum Shape {
@@ -424,7 +432,7 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub balance_tally_replications: u32,
     pub flux_tally_replications: u32,
     pub cell_tally_replications: u32,
-    pub coral_benchmark: bool,
+    pub coral_benchmark: BenchType,
 }
 
 impl<T: CustomFloat> SimulationParameters<T> {
@@ -520,7 +528,7 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             balance_tally_replications: 1,
             flux_tally_replications: 1,
             cell_tally_replications: 1,
-            coral_benchmark: false,
+            coral_benchmark: BenchType::Standard,
         }
     }
 }
@@ -584,7 +592,12 @@ impl<T: CustomFloat> Parameters<T> {
                 }
                 "coralBenchmark" => {
                     let chars: Vec<char> = val.chars().collect();
-                    fetch_bool!(coral_benchmark, chars[0]);
+                    self.simulation_params.coral_benchmark = match chars[0] {
+                        '0' => BenchType::Standard,
+                        '1' => BenchType::Coral1,
+                        '2' => BenchType::Coral2,
+                        _ => return Err(InputError::BadSimulationBlock),
+                    }
                 }
                 "nParticles" => fetch_data!(n_particles, val),
                 "batchSize" => fetch_data!(batch_size, val),
