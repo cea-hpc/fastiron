@@ -50,7 +50,7 @@ pub fn facet_crossing_event<T: CustomFloat>(
                 .put_particle(particle.clone(), particle_idx);
 
             mcco.particle_vault_container
-                .get_send_queue()
+                .send_queue
                 .push(neighbor_rank, particle);
         }
         MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),

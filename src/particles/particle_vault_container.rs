@@ -96,9 +96,16 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
         }
     }
 
-    /// Returns a reference to the internal [SendQueue] object.
-    pub fn get_send_queue(&mut self) -> &mut SendQueue<T> {
-        &mut self.send_queue
+    /// Process the data of the queue.
+    pub fn read_send_queue(&mut self) {
+        // .clone() is an ugly solution; might move sendQ out of the container
+        self.send_queue.data.clone().iter().for_each(|sq_tuple| {
+            // add the particles to extra vault; processing vaults are borrowed
+            // by the iterator
+            // this would be the "send" part (tx)
+            self.add_extra_particle(sq_tuple.particle.clone());
+        });
+        self.send_queue.clear();
     }
 
     /// Counts the total number of particles in processing vaults
