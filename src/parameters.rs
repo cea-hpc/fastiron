@@ -616,9 +616,11 @@ impl<T: CustomFloat> Parameters<T> {
                 "eMax" => fetch_data!(e_max, val),
                 "nGroups" => fetch_data!(n_groups, val),
                 "lowWeightCutoff" => fetch_data!(low_weight_cutoff, val),
-                "balanceTallyReplications" => fetch_data!(balance_tally_replications, val),
-                "fluxTallyReplications" => fetch_data!(flux_tally_replications, val),
-                "cellTallyReplications" => fetch_data!(cell_tally_replications, val),
+                "balanceTallyReplications" | "bTally" => {
+                    fetch_data!(balance_tally_replications, val)
+                }
+                "fluxTallyReplications" | "fTally" => fetch_data!(flux_tally_replications, val),
+                "cellTallyReplications" | "cTally" => fetch_data!(cell_tally_replications, val),
 
                 "xDom" | "yDom" | "zDom" => (),
                 "mpiThreadMultiple" => (),
