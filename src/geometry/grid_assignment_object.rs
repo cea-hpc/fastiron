@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use num::{zero, FromPrimitive};
 
 use crate::{
-    constants::{physical::TINY_FLOAT, CustomFloat, Tuple3},
+    constants::{CustomFloat, Tuple3},
     data::mc_vector::MCVector,
 };
 
@@ -102,7 +102,6 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
     /// Returns the closest center to a given coordinate.
     pub fn nearest_center(&mut self, rr: MCVector<T>) -> usize {
         let mut r2_min: T = FromPrimitive::from_f64(1e300).unwrap();
-        let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
         let mut center_min: Option<usize> = None;
 
         self.add_tuple_to_queue(self.which_cell_tuple(rr));
@@ -117,8 +116,7 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
             for center_idx in &self.grid[cell_idx].my_centers {
                 let center_r = self.centers[*center_idx];
                 let r2: T = (rr - center_r).dot(&(rr - center_r));
-                if (r2 - r2_min).abs() < tiny_f {
-                    // r2 == r2_min
+                if r2 == r2_min {
                     center_min.map(|m| m.min(*center_idx));
                 }
                 if r2 < r2_min {

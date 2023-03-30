@@ -35,7 +35,7 @@ impl<T: CustomFloat> Fluence<T> {
         let n_cells = scalar_flux_domain.task[0].cell.len();
         while self.domain.len() <= domain_idx {
             let new_domain: FluenceDomain<T> = FluenceDomain {
-                cell: Vec::with_capacity(n_cells),
+                cell: vec![zero(); n_cells],
             };
             self.domain.push(new_domain);
         }
