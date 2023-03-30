@@ -85,7 +85,7 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     loop {
         while !done {
             let mut fill_vault: usize = 0;
-
+            // for all processing vaults
             for processing_vault_idx in 0..mcco.particle_vault_container.processing_vaults.len() {
                 // Computing block
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
@@ -94,6 +94,7 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 let num_particles =
                     mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
 
+                // for all particles
                 if num_particles != 0 {
                     let mut particle_idx: usize = 0;
                     while particle_idx < mcco.particle_vault_container.vault_size {
@@ -109,12 +110,18 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
                 let send_q = &mut mcco.particle_vault_container.send_queue;
 
+                // for all elements in queue
+                // all this code is essentially useless in a shared memory context
+                // this kind of structure would be useful with a parallel model using
+                // message channel rx/tx
                 for idx in 0..send_q.size() {
                     let send_q_t = send_q.data[idx].clone();
+                    // + this code is incorrect; the indexed particle would be set as None by now;
+                    // => SendQueue will take full particles instead of just indexes & buffer can be deleted
                     let mcb_particle = mcco.particle_vault_container.processing_vaults
                         [processing_vault_idx]
                         .get_base_particle(idx);
-
+                    // this would be the "send" part (tx)
                     mcco.particle_buffer
                         .buffer_particle(mcb_particle.unwrap(), send_q_t.neighbor);
                 }
@@ -122,6 +129,7 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 send_q.clear();
 
                 mcco.particle_vault_container.clean_extra_vaults();
+                // this would be the "receive" part (rx)
                 mcco.read_buffers(&mut fill_vault);
 
                 mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
