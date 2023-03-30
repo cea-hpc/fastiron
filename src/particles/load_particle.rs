@@ -1,6 +1,6 @@
-use num::{zero, FromPrimitive};
+use num::zero;
 
-use crate::constants::{physical::TINY_FLOAT, CustomFloat};
+use crate::constants::CustomFloat;
 
 use super::{mc_particle::MCParticle, particle_vault::ParticleVault};
 
@@ -12,8 +12,7 @@ pub fn load_particle<T: CustomFloat>(
 ) -> Option<MCParticle<T>> {
     if let Some(mut particle) = particle_vault.get_base_particle(particle_idx) {
         // update time to census
-        let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
-        if particle.time_to_census <= tiny_f {
+        if particle.time_to_census <= zero() {
             particle.time_to_census += ts;
         }
 

@@ -1,7 +1,7 @@
-use num::FromPrimitive;
+use num::{zero, FromPrimitive};
 
 use crate::{
-    constants::{mesh::N_FACETS_OUT, physical::TINY_FLOAT, CustomFloat},
+    constants::{mesh::N_FACETS_OUT, CustomFloat},
     data::mc_vector::MCVector,
 };
 
@@ -18,7 +18,6 @@ pub struct MCGeneralPlane<T: CustomFloat> {
 impl<T: CustomFloat> MCGeneralPlane<T> {
     pub fn new(r0: &MCVector<T>, r1: &MCVector<T>, r2: &MCVector<T>) -> Self {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
-        let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
 
         let mut a = ((r1.y - r0.y) * (r2.z - r0.z)) - ((r1.z - r0.z) * (r2.y - r0.y));
         let mut b = ((r1.z - r0.z) * (r2.x - r0.x)) - ((r1.x - r0.x) * (r2.z - r0.z));
@@ -28,7 +27,7 @@ impl<T: CustomFloat> MCGeneralPlane<T> {
         let mut magnitude: T = (a * a + b * b + c * c).sqrt();
 
         // if magnitude == 0
-        if magnitude < tiny_f {
+        if magnitude == zero() {
             a = one;
             magnitude = one;
         }

@@ -35,7 +35,7 @@ impl<T: CustomFloat> Fluence<T> {
         let n_cells = scalar_flux_domain.task[0].cell.len();
         while self.domain.len() <= domain_idx {
             let new_domain: FluenceDomain<T> = FluenceDomain {
-                cell: Vec::with_capacity(n_cells),
+                cell: vec![zero(); n_cells],
             };
             self.domain.push(new_domain);
         }
@@ -322,15 +322,15 @@ impl<T: CustomFloat> Tallies<T> {
         if mcco.time_info.cycle == 0 {
             // print header
             println!("[Tally Summary]");
-            print!("cycle     |      start       source           rr        split       absorb      scatter      fission ");
-            println!("     produce    collision       escape       census      num_seg    scalar_flux      cycleInit  cycleTracking  cycleFinalize");
+            print!("cycle   |    start     source         rr        split       absorb      scatter      fission ");
+            println!("     produce    collision       escape       census      num_seg   scalar_flux   cycleInit (s)  cycleTracking (s)  cycleFinalize (s)");
         }
         let cy_init = mc_fast_timer::get_last_cycle(mcco, Section::CycleInit);
         let cy_track = mc_fast_timer::get_last_cycle(mcco, Section::CycleTracking);
         let cy_fin = mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize);
         let sf_sum = self.scalar_flux_sum();
         let bal = &self.balance_task[0];
-        println!("{:>9} | {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>14e} {:>14e} {:>14e}",
+        println!("{:>7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>11e} {:>18e} {:>18e}",
             mcco.time_info.cycle,
             bal.start,
             bal.source,

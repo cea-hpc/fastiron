@@ -7,7 +7,7 @@ use crate::data::material_database::MaterialDatabase;
 use crate::data::nuclear_data::NuclearData;
 use crate::data::tallies::Tallies;
 use crate::geometry::mc_domain::MCDomain;
-use crate::parameters::Parameters;
+use crate::parameters::{BenchType, Parameters};
 use crate::particles::load_particle::load_particle;
 use crate::particles::mc_base_particle::MCBaseParticle;
 use crate::particles::mc_particle_buffer::MCParticleBuffer;
@@ -192,7 +192,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
                 self.tallies.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
             });
 
-            if self.params.simulation_params.coral_benchmark {
+            if self.params.simulation_params.coral_benchmark != BenchType::Standard {
                 self.tallies
                     .fluence
                     .compute(domain_idx, &self.tallies.scalar_flux_domain[domain_idx]);
