@@ -108,9 +108,14 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 mc_fast_timer::start(mcco, Section::CycleTrackingComm);
 
                 // this replace the "send" part (tx)
+                // in a shared memory context, we add the particles to extra vaults
                 mcco.particle_vault_container.read_send_queue();
 
                 // this would be the "receive" part (rx)
+                // in a shared memory context, we transfer the particles
+                // from extra vaults to processing vaults
+                // this probably will have to be done only after iterating over
+                // all processing vaults because of the borrow system
                 mcco.particle_vault_container.clean_extra_vaults();
 
                 mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
@@ -120,6 +125,7 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
             mcco.particle_vault_container.collapse_processing();
             mcco.particle_vault_container.collapse_processed();
+            // clean extra here
             done = mcco.particle_buffer.test_done_new(mcco);
 
             mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
