@@ -30,8 +30,11 @@ Section::CycleFinalize           |                    20             1.478e3    
 
 The performance scaling of the naive version being very poor, the simulation wasn't completed all 
 the way through. The flamegraph was done using data gathered in the first 3 and 6 cycles of the 
-simulation. It is interesting to note that the time spent in the `cycle_tracking` function grows 
-as the simulation progresses, as showed by the tallies summary : 
+simulation. 
+
+It is interesting to note that the time spent in the `cycle_tracking` function grows 
+as the simulation progresses, as showed by the tallies summary. There is no such 
+behavior in Quicksilver.
 
 ```
 cycle   |    start     source         rr        split       absorb      scatter      fission      produce    collision       escape       census      num_seg   scalar_flux   cycleInit (s)  cycleTracking (s)  cycleFinalize (s)
