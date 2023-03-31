@@ -2,9 +2,9 @@
 /target
 
 # overall files
-*.o
 *.dat
 *.data
+*.old
 
 # location-specific files
-./*.svg
+/*.svg
