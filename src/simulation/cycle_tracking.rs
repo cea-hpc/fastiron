@@ -31,8 +31,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
         particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
         particle.task = 0;
 
-        let keep_tracking_next_cycle =
-            cycle_tracking_function(mcco, &mut particle, particle_idx, processing_vault_idx);
+        let keep_tracking_next_cycle = cycle_tracking_function(mcco, &mut particle, particle_idx);
 
         // necessary overwrite
         mcco.particle_vault_container.processing_vaults[processing_vault_idx]
@@ -55,7 +54,6 @@ pub fn cycle_tracking_function<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
     particle_idx: usize,
-    processing_vault_idx: usize,
 ) -> bool {
     let mut keep_tracking: bool;
     let mut keep_tracking_next_cycle: bool;
@@ -75,8 +73,7 @@ pub fn cycle_tracking_function<T: CustomFloat>(
                 keep_tracking_next_cycle = keep_tracking;
             }
             MCSegmentOutcome::FacetCrossing => {
-                let facet_crossing_type =
-                    facet_crossing_event(particle, mcco, particle_idx, processing_vault_idx);
+                let facet_crossing_type = facet_crossing_event(particle, mcco);
 
                 keep_tracking = match facet_crossing_type {
                     MCTallyEvent::FacetCrossingTransitExit => true,

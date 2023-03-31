@@ -8,8 +8,6 @@ use crate::{
 pub fn facet_crossing_event<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     mcco: &mut MonteCarlo<T>,
-    particle_idx: usize,
-    processing_vault_idx: usize,
 ) -> MCTallyEvent {
     let location = particle.get_location();
     let facet_adjacency = &mcco.domain[location.domain.unwrap()].mesh.cell_connectivity
@@ -44,10 +42,6 @@ pub fn facet_crossing_event<T: CustomFloat>(
             let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
                 .mesh
                 .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
-            // this is basically an overwrite of the particle, meaning this can be
-            // ignored if the whole cycle tracking functions use a direct reference to the particle
-            mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-                .put_particle(particle.clone(), particle_idx);
 
             mcco.particle_vault_container
                 .send_queue
