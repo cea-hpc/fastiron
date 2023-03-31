@@ -1,3 +1,10 @@
+# folders
 /target
-*.o
+
+# overall files
 *.dat
+*.data
+*.old
+
+# location-specific files
+/*.svg
