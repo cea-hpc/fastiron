@@ -18,7 +18,7 @@ pub enum InputError {
     BadBlockType,
 }
 
-/// Structure used to parse command line arguments using [clap].
+/// Fastiron, a Rust port of the Quicksilver proxy-app
 #[derive(Debug, Parser)]
 #[command(author, version, about, arg_required_else_help(true))]
 pub struct Cli {
