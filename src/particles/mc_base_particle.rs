@@ -8,8 +8,8 @@ use super::mc_particle::MCParticle;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Species {
-    #[default]
     Unknown = -1,
+    #[default]
     Known = 0, // \o/
 }
 
