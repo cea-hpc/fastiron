@@ -9,8 +9,6 @@ use crate::data::tallies::Tallies;
 use crate::geometry::mc_domain::MCDomain;
 use crate::parameters::{BenchType, Parameters};
 use crate::particles::load_particle::load_particle;
-use crate::particles::mc_base_particle::MCBaseParticle;
-use crate::particles::mc_particle_buffer::MCParticleBuffer;
 use crate::particles::particle_vault::ParticleVault;
 use crate::particles::particle_vault_container::ParticleVaultContainer;
 use crate::utils::mc_fast_timer::{self, MCFastTimerContainer, Section};
@@ -38,8 +36,6 @@ pub struct MonteCarlo<T: CustomFloat> {
     pub fast_timer: MCFastTimerContainer,
     /// Object storing data related to the processor and execution mode
     pub processor_info: MCProcessorInfo,
-    /// Buffer used for potential spatial multithreading
-    pub particle_buffer: MCParticleBuffer<T>,
     /// Weight of the particles at creation in a source zone
     pub source_particle_weight: T,
 }
@@ -110,7 +106,6 @@ impl<T: CustomFloat> MonteCarlo<T> {
             time_info,
             fast_timer,
             processor_info,
-            particle_buffer: Default::default(),
             source_particle_weight: zero(),
         }
     }
@@ -120,16 +115,6 @@ impl<T: CustomFloat> MonteCarlo<T> {
         self.domain.iter_mut().for_each(|dd| {
             dd.clear_cross_section_cache();
         })
-    }
-
-    pub fn read_buffers(&mut self, fill_vault: &mut usize) {
-        self.particle_buffer.buffers.iter().for_each(|b| {
-            b.iter().for_each(|particle| {
-                self.particle_vault_container
-                    .add_processing_particle(MCBaseParticle::new(particle), fill_vault)
-            })
-        });
-        self.particle_buffer.clear()
     }
 
     /// Update the enrgy spectrum by going over all the currently valid particles.

@@ -303,4 +303,10 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
 
         self.extra_vault.iter_mut().for_each(|vv| vv.clear());
     }
+
+    pub fn test_done_new(&self) -> bool {
+        let sendq_empty = self.send_queue.data.is_empty();
+        let processing_empty = self.particles_processing_size() == 0;
+        sendq_empty & processing_empty
+    }
 }
