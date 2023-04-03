@@ -22,11 +22,29 @@ impl<T: CustomFloat> ParticleContainer<T> {
     ///   to the extra storage
     /// - In a message-passing context, this would include sending and receiving
     ///   particles
-    pub fn process_sq(&mut self) {}
+    pub fn process_sq(&mut self) {
+        self.send_queue.data.iter().for_each(|sq_tuple| {
+            // Neighbor index would be used here to get the correct sender
+            // match sq_tuple.neighbor {...}
+            self.extra_particles.push(sq_tuple.particle.clone());
+        });
+        self.send_queue.clear();
+        // Here we would add the receiver part
+        // while rx.try_recv().is_ok() {...}
+    }
 
     /// Adds back to the processing storage the extra particles.
-    pub fn clean_extra_vaults(&mut self) {}
+    pub fn clean_extra_vaults(&mut self) {
+        self.processing_particles.append(&mut self.extra_particles);
+    }
 
-    /// Checks if there are no more particles to process.
-    pub fn test_done_new(&self) {}
+    /// Checks if there are no more particles to process, i.e:
+    /// - extra storage is empty
+    /// - processing storage is empty
+    /// - send queue is empty
+    pub fn test_done_new(&self) -> bool {
+        self.extra_particles.is_empty()
+            & self.processing_particles.is_empty()
+            & self.send_queue.data.is_empty()
+    }
 }
