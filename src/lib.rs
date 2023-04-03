@@ -9,13 +9,14 @@
 //!
 //! After cloning the [repository][2], fastiron can be executed like any other Rust
 //! program using cargo. Run the following:
-//! ```console
+//! ```shell
 //! $ cargo build --release
 //! $ cargo run --bin=fastiron
 //! ```
+//!
 //! And see the CLI's usage:
-//! ```console
-//! $ cargo run --bin=fastiron --release
+//! ```shell
+//! $ cargo run --bin=fastiron
 //!
 //! Fastiron, a Rust port of the Quicksilver proxy-app
 //!
@@ -73,8 +74,23 @@
 //!
 //! ```
 //!
-//!
 //! # Example
+//!
+//! You can run one of the examples available using its input file. Note that the
+//! parameters specified in the file take priority over the one specified as arguments:
+//!
+//! ```shell
+//! $ cargo run --bin=fastiron --release -- -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -e energy -S section -n 10000
+//! ```
+//!
+//! Fastiron will print the parameters and run the simulation. Two reports will
+//! be printed at run-time and, if file names are specified, two files will be
+//! created. These four outputs contain data such as event counts, timers value,
+//! or final state of the system. To see more about these reports:
+//! - link to tallies print summary
+//! - link to cycle timers report
+//! - link to energy spectrum
+//! - link to cross section?
 //!
 //! # Useful Links
 //!
