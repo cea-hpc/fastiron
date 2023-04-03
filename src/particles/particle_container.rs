@@ -1,16 +1,16 @@
 use crate::{constants::CustomFloat, data::send_queue::SendQueue};
 
-use super::mc_particle::MCParticle;
+use super::mc_base_particle::MCBaseParticle;
 
 /// Structure used as a container for all particles.
 pub struct ParticleContainer<T: CustomFloat> {
     /// Container for particles that have yet to be processed.
-    pub processing_particles: Vec<MCParticle<T>>,
+    pub processing_particles: Vec<MCBaseParticle<T>>,
     /// Container for already processed particles.
-    pub processed_particles: Vec<MCParticle<T>>,
+    pub processed_particles: Vec<MCBaseParticle<T>>,
     /// Container for extra particles. This is used for fission-induced
     /// particles and incoming off-processor particles.
-    pub extra_particles: Vec<MCParticle<T>>,
+    pub extra_particles: Vec<MCBaseParticle<T>>,
     /// Queue used to save particles and neighbor index for any particles
     /// that hit TransitOffProcessor (See MCSubfacetAdjacencyEvent)
     pub send_queue: SendQueue<T>,
@@ -26,7 +26,8 @@ impl<T: CustomFloat> ParticleContainer<T> {
         self.send_queue.data.iter().for_each(|sq_tuple| {
             // Neighbor index would be used here to get the correct sender
             // match sq_tuple.neighbor {...}
-            self.extra_particles.push(sq_tuple.particle.clone());
+            self.extra_particles
+                .push(MCBaseParticle::new(&sq_tuple.particle));
         });
         self.send_queue.clear();
         // Here we would add the receiver part
