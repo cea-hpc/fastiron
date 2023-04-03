@@ -1,5 +1,6 @@
 use std::{fs::File, io::Read};
 
+use crate::constants::CustomFloat;
 use clap::Parser;
 
 use crate::parameters::{
@@ -7,7 +8,7 @@ use crate::parameters::{
 };
 
 /// Enum used to categorize error related to the input of the program.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum InputError {
     BadInputFile,
     BadSimulationBlock,
@@ -35,11 +36,11 @@ pub struct Cli {
 
     /// time step in seconds
     #[arg(short = 'D', long = "dt", num_args(1), allow_negative_numbers(false))]
-    pub dt: Option<f64>,
+    pub dt: Option<f32>,
 
     /// max random mesh node displacement
     #[arg(short = 'f', long = "f-max", num_args(1))]
-    pub f_max: Option<f64>,
+    pub f_max: Option<f32>,
 
     /// enable load balancing if present
     #[arg(short = 'l', long = "load-balance", num_args(0))]
@@ -49,18 +50,21 @@ pub struct Cli {
     #[arg(short = 'c', long = "cycle-timers", num_args(0))]
     pub cycle_timers: bool,
 
-    // TO ADD: debug thread level?
+    /// enable thread debugging if present
+    #[arg(short = 't', long = "debug-threads", num_args(0))]
+    pub debug_threads: bool,
+
     /// x-size of simulation in cm
     #[arg(short = 'X', long = "lx", num_args(1), allow_negative_numbers(false))]
-    pub lx: Option<f64>,
+    pub lx: Option<f32>,
 
     /// y-size of simulation in cm
     #[arg(short = 'Y', long = "ly", num_args(1), allow_negative_numbers(false))]
-    pub ly: Option<f64>,
+    pub ly: Option<f32>,
 
     /// z-size of simulation in cm
     #[arg(short = 'Z', long = "lz", num_args(1), allow_negative_numbers(false))]
-    pub lz: Option<f64>,
+    pub lz: Option<f32>,
 
     /// total number of particules
     #[arg(
@@ -96,37 +100,24 @@ pub struct Cli {
         num_args(1),
         allow_negative_numbers(false)
     )]
-    pub n_steps: Option<u32>,
+    pub n_steps: Option<usize>,
 
     /// number of mesh elements along x
     #[arg(short = 'x', long = "nx", num_args(1), allow_negative_numbers(false))]
-    pub nx: Option<u32>,
+    pub nx: Option<usize>,
 
     /// number of mesh elements along y
     #[arg(short = 'y', long = "ny", num_args(1), allow_negative_numbers(false))]
-    pub ny: Option<u32>,
+    pub ny: Option<usize>,
 
     /// number of mesh elements along z
     #[arg(short = 'z', long = "nz", num_args(1), allow_negative_numbers(false))]
-    pub nz: Option<u32>,
+    pub nz: Option<usize>,
 
     /// random number seed
     #[arg(short = 's', long = "seed", num_args(1), allow_negative_numbers(false))]
-    pub seed: Option<u32>, //maybe allow negative values ? need to test QS behavior
+    pub seed: Option<u64>, //maybe allow negative values ? need to test QS behavior
 
-    /*
-    /// number of MPI ranks along x
-    #[arg(short='I', long="x-dom", num_args(1), allow_negative_numbers(false))]
-    pub x_dom: Option<u32>,
-
-    /// number of MPI ranks along y
-    #[arg(short='J', long="y-dom", num_args(1), allow_negative_numbers(false))]
-    pub y_dom: Option<u32>,
-
-    /// number of MPI ranks along z
-    #[arg(short='K', long="z-dom", num_args(1), allow_negative_numbers(false))]
-    pub z_dom: Option<u32>,
-    */
     /// number of balance tally replications
     #[arg(
         short = 'B',
@@ -159,43 +150,60 @@ pub struct Cli {
 /// provided input file. The file is first separated into blocks
 /// with the rsplit call. The blocks are then used to complete the
 /// parameter structure passed as argument.
-pub fn parse_input_file(filename: String, params: &mut Parameters) -> Result<(), InputError> {
+pub fn parse_input_file<T: CustomFloat>(
+    filename: String,
+    params: &mut Parameters<T>,
+) -> Result<(), Vec<InputError>> {
     let mut content = String::new();
 
     let mut file = match File::open(filename) {
         Ok(file) => file,
-        Err(_) => return Err(InputError::BadInputFile),
+        Err(_) => return Err(vec![InputError::BadInputFile]),
     };
 
     file.read_to_string(&mut content).unwrap();
 
-    content.rsplit("\n\n").for_each(|raw_block| {
-        if let Some(val) = raw_block.find('\n') {
-            let some_struct: Block = serde_yaml::from_str(&raw_block[val + 1..]).unwrap();
-            //println!("{:#?}", some_struct); // uncomment if a parsing issue occur.
-            match &raw_block[0..val] {
-                "Simulation:" => match params.update_simulation_parameters(some_struct) {
-                    Ok(()) => (),
-                    Err(e) => println!("Error: {e:?}, continuing to parse"),
-                },
-                "Geometry:" => match GeometryParameters::from_block(some_struct) {
-                    Ok(some_geometry) => params.add_geometry_parameter(some_geometry),
-                    Err(e) => println!("Error: {e:?}, continuing to parse"),
-                },
-                "Material:" => match MaterialParameters::from_block(some_struct) {
-                    Ok(some_material) => params.add_material_parameter(some_material),
-                    Err(e) => println!("Error: {e:?}, continuing to parse"),
-                },
-                "CrossSection:" => match CrossSectionParameters::from_block(some_struct) {
-                    Ok(some_cross_section) => {
-                        params.add_cross_section_parameter(some_cross_section)
-                    }
-                    Err(e) => println!("Error: {e:?}, continuing to parse"),
-                },
-                _ => println!("Error: {:?}, continuing to parse", InputError::BadBlockType),
-            }
-        };
-    });
+    let res: Vec<Result<(), InputError>> = content
+        .rsplit("\n\n")
+        .map(|raw_block| {
+            if let Some(val) = raw_block.find('\n') {
+                let some_struct: Block = serde_yaml::from_str(&raw_block[val + 1..]).unwrap();
+                //println!("{:#?}", some_struct); // uncomment if a parsing issue occur.
 
-    Ok(())
+                match &raw_block[0..val] {
+                    "Simulation:" => params.update_simulation_parameters(some_struct),
+                    "Geometry:" => match GeometryParameters::from_block(some_struct) {
+                        Ok(some_geometry) => {
+                            params.add_geometry_parameter(some_geometry);
+                            return Ok(());
+                        }
+                        Err(e) => Err(e),
+                    },
+                    "Material:" => match MaterialParameters::from_block(some_struct) {
+                        Ok(some_material) => {
+                            params.add_material_parameter(some_material);
+                            return Ok(());
+                        }
+                        Err(e) => Err(e),
+                    },
+                    "CrossSection:" => match CrossSectionParameters::from_block(some_struct) {
+                        Ok(some_cross_section) => {
+                            params.add_cross_section_parameter(some_cross_section);
+                            return Ok(());
+                        }
+                        Err(e) => Err(e),
+                    },
+                    _ => Err(InputError::BadBlockType),
+                }?;
+            }
+            Ok(())
+        })
+        .collect();
+
+    let errors: Vec<InputError> = res.iter().filter_map(|r| r.clone().err()).collect();
+
+    if errors.is_empty() {
+        return Ok(());
+    }
+    Err(errors)
 }

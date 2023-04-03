@@ -28,6 +28,7 @@ Simulation:
    cTally: 1
    coralBenchmark: 0
 
+
 Geometry:
    material: sourceMaterial
    shape: brick
@@ -80,8 +81,8 @@ CrossSection:
    B: 0
    C: 0
    D: -0.8446
-   D: -0.5243
-   E: -2.22
+   E: -0.5243
+   nuBar: -2.22
 
 CrossSection:
    name: fission
@@ -99,5 +100,5 @@ CrossSection:
    C: 0
    D: 0
    E: 0.7
-
+   nuBar: 2.4
    

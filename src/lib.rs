@@ -1,2 +1,9 @@
-pub mod io_utils;
+pub mod constants;
+pub mod data;
+pub mod geometry;
+pub mod init_mc;
+pub mod montecarlo;
 pub mod parameters;
+pub mod particles;
+pub mod simulation;
+pub mod utils;
