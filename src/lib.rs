@@ -9,7 +9,8 @@
 //!
 //! # Example
 //!
-//! # Useful links
+//! # Useful Links
+//!
 //! - Fastiron [GitHub repository][2]
 //! - Quicksilver [GitHub repository][1]
 //!
