@@ -301,7 +301,7 @@ impl<T: CustomFloat> Default for CrossSectionParameters<T> {
     }
 }
 
-/// Structure encompassing all simulation parameters.
+/// Structure holding all simulation parameters.
 ///
 /// In the program's execution flow, it is first initialized using
 /// the CLI arguments, then optionally updated with a specified input file.
@@ -457,7 +457,7 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
     }
 }
 
-/// Strucure encompassing all the problem's parameters.
+/// Structure holding all the problem's parameters.
 #[derive(Debug, Default)]
 pub struct Parameters<T: CustomFloat> {
     /// Object used to store simulation parameters
@@ -691,6 +691,7 @@ impl<T: CustomFloat> Parameters<T> {
         self.material_params
             .insert(some_material.name.to_owned(), some_material);
     }
+    /// Add a new [CrossSectionParameters] object to the internal map.
     pub fn add_cross_section_parameter(&mut self, cross_section: CrossSectionParameters<T>) {
         self.cross_section_params
             .insert(cross_section.name.to_owned(), cross_section);
