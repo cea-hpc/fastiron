@@ -29,7 +29,7 @@ use crate::{
 /// The function uses the particle's direction to compute which facet is currently
 /// the closest to the particle as well as the distance to this facet. The result is
 /// used in order to assess which event the particle will undergo next, in this
-/// case, a facet crossing. See [MCNearestFacet] for more.
+/// case, a facet crossing. See [MCNearestFacet] for more information.
 pub fn nearest_facet<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     mcco: &MonteCarlo<T>,
