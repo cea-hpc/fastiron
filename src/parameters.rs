@@ -171,7 +171,7 @@ impl<T: CustomFloat> MaterialParameters<T> {
     /// argument. Any field not specified in the block will have its default
     /// value as defined in the [Default] implementation. May return an error
     /// if the block isn't a proper Material block, i.e.:
-    /// - There is an unknown field
+    /// - There is an unknown field.
     /// - A value associated to a valid field is invalid
     /// In that case, the [MaterialParameters] object is scrapped instead of being
     /// returned as incomplete or potentially erroneous.
@@ -229,14 +229,24 @@ impl<T: CustomFloat> Default for MaterialParameters<T> {
 
 /// Structure used to describe a cross section, i.e. a probability density
 /// representation.
+///
+/// The probability density functions are represented using degree 4 polynomial
+/// functions.
 #[derive(Debug)]
 pub struct CrossSectionParameters<T: CustomFloat> {
+    /// Name of the cross section.
     pub name: String,
+    /// Leading coefficient of the polynomial function.
     pub aa: T,
+    /// Degree 3 coefficient of the polynomial function.
     pub bb: T,
+    /// Degree 2 coefficient of the polynomial function.
     pub cc: T,
+    /// Degree 1 coefficient of the polynomial function.
     pub dd: T,
+    /// Degree 0 coefficient of the polynomial function.
     pub ee: T,
+    /// Normalization value?
     pub nu_bar: T,
 }
 
@@ -245,7 +255,7 @@ impl<T: CustomFloat> CrossSectionParameters<T> {
     /// argument. Any field not specified in the block will have its default
     /// value as defined in the [Default] implementation. May return an error
     /// if the block isn't a proper CrossSection block, i.e.:
-    /// - There is an unknown field
+    /// - There is an unknown field.
     /// - A value associated to a valid field is invalid
     /// In that case, the [CrossSectionParameters] object is scrapped instead of
     /// being returned as incomplete or potentially erroneous.
@@ -281,10 +291,10 @@ impl<T: CustomFloat> Default for CrossSectionParameters<T> {
     fn default() -> Self {
         Self {
             name: Default::default(),
-            aa: T::zero(),
-            bb: T::zero(),
-            cc: T::zero(),
-            dd: T::zero(),
+            aa: Default::default(),
+            bb: Default::default(),
+            cc: Default::default(),
+            dd: Default::default(),
             ee: T::one(),
             nu_bar: T::from_f32(2.4).unwrap(),
         }
