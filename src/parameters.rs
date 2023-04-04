@@ -1,60 +1,90 @@
+//!
+//! The module holds all parameters related structure used during the
+//! simulation. Input reading is located in the [`crate::utils`] module,
+//! while parsing is done here.
+
 use crate::{
     constants::CustomFloat,
     utils::io_utils::{parse_input_file, Cli, InputError},
 };
 use std::collections::HashMap;
 
-/// Alias between Block and [HashMap<String,String>]. This allows for
-/// better readability.
+/// Alias for a `<String, String>` [`HashMap`]. See here for detailed
+/// structure of input blocks.
+///
+/// TODO: Add a breakdown of the input structure
 pub type Block = HashMap<String, String>;
 
-/// Enum used to categorize inconsistencies within parameters.
-/// - NoGeometry: there are no specified geometries
-/// - UndefinedGeometry: a [GeometryParameters] object has an undefined [Shape]
-/// - MissingMaterial: there is a missing reference to a material; the string
-/// contains the name of the aforementioned material
-/// - MissingCrossSection: there is a missing reference to a cross section;
-/// the string contains the name of the aforementionned cross section and
-/// the material refering to it
+/// Enum used to categorize inconsistencies within parameters
 #[derive(Debug, PartialEq)]
 pub enum ParameterError {
+    /// There are no specified geometries in the problem.
     NoGeometry,
+    /// A [GeometryParameters] object has an undefined [Shape].
     UndefinedGeometry,
+    /// There is a missing reference to a material; The string
+    /// contains the name of the aforementioned material.
     MissingMaterial(String),
+    /// There is a missing reference to a cross section; The string
+    /// contains the name of the aforementionned cross section and
+    /// the material refering to it.
     MissingCrossSection(String),
 }
 
+/// Enum used to run additional tests according to the input benchmark
 #[derive(Debug, Default, PartialEq)]
 pub enum BenchType {
+    /// No additional tests are executed. This is the default mode.
     #[default]
     Standard,
+    /// First configuration for the additionnal tests.
     Coral1,
+    /// Second configuration for the additionnal tests.
     Coral2,
 }
 
-/// Enum used to describe a geometry's shape.
-#[derive(Debug, PartialEq)]
+/// Enum used to describe a geometry's shape
+#[derive(Debug, Default, PartialEq)]
 pub enum Shape {
+    /// Default value. Will result in errors if any geometries still
+    /// hold this value at the end of initialization.
+    #[default]
     Undefined,
+    /// Brick-shaped geometry, i.e. a rectangular cuboid.
     Brick,
+    /// Sphere-shaped geometry.
     Sphere,
 }
 
 /// Structure used to describe a geometry, i.e. a physical space of a
 /// certain shape and certain material.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct GeometryParameters<T: CustomFloat> {
+    /// Name of the material.
     pub material_name: String,
+    /// Shape of the material. Note that this value defines which other fields are used:
+    /// - A sphere-shaped geometry will only use radius and coordinates of the center.
+    /// - A brick-shaped geometry will only use bounds on the axes.
     pub shape: Shape,
+    /// Radius of a shere-shaped geometry.
     pub radius: T,
+    /// x-coordinate of the center of a sphere-shaped geometry.
     pub x_center: T,
+    /// y-coordinate of the center of a sphere-shaped geometry.
     pub y_center: T,
+    /// z-coordinate of the center of a sphere-shaped geometry.
     pub z_center: T,
+    /// Lower bound on the x-axis of a brick-shaped geometry.
     pub x_min: T,
+    /// Lower bound on the y-axis of a brick-shaped geometry.
     pub y_min: T,
+    /// Lower bound on the z-axis of a brick-shaped geometry.
     pub z_min: T,
+    /// Upper bound on the x-axis of a brick-shaped geometry.
     pub x_max: T,
+    /// Upper bound on the y-axis of a brick-shaped geometry.
     pub y_max: T,
+    /// Upper bound on the z-axis of a brick-shaped geometry.
     pub z_max: T,
 }
 
@@ -103,25 +133,6 @@ impl<T: CustomFloat> GeometryParameters<T> {
         }
 
         Ok(geometry_params)
-    }
-}
-
-impl<T: CustomFloat> Default for GeometryParameters<T> {
-    fn default() -> Self {
-        Self {
-            material_name: Default::default(),
-            shape: Shape::Undefined,
-            radius: T::zero(),
-            x_center: T::zero(),
-            y_center: T::zero(),
-            z_center: T::zero(),
-            x_min: T::zero(),
-            y_min: T::zero(),
-            z_min: T::zero(),
-            x_max: T::zero(),
-            y_max: T::zero(),
-            z_max: T::zero(),
-        }
     }
 }
 

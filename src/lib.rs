@@ -110,7 +110,7 @@ pub mod geometry;
 pub mod init_mc;
 /// Super-structure used to store the problem's data
 pub mod montecarlo;
-/// Parameters-managing structure
+/// Parameters-related code
 pub mod parameters;
 /// Particle-related code
 pub mod particles;
