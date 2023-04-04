@@ -1,3 +1,6 @@
+//!
+//! This module contains the core functions that make up the simulation loop.
+
 pub mod collision_event;
 pub mod cycle_tracking;
 pub mod macro_cross_section;

@@ -100,7 +100,6 @@
 //! [1]: https://github.com/LLNL/Quicksilver
 //! [2]: https://github.com/cea-hpc/fastiron
 
-/// Hardcoded constants used by the simulation
 pub mod constants;
 /// Data structures
 pub mod data;
@@ -108,9 +107,7 @@ pub mod data;
 pub mod geometry;
 /// Initialization code for the problem
 pub mod init_mc;
-/// Super-structure used to store the problem's data
 pub mod montecarlo;
-/// Parameters-related code
 pub mod parameters;
 /// Particle-related code
 pub mod particles;

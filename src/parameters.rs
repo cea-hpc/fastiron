@@ -1,3 +1,4 @@
+//! Parameters-related code
 //!
 //! The module holds all parameters related structure used during the
 //! simulation. Input reading is located in the [`crate::utils`] module,

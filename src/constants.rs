@@ -1,3 +1,4 @@
+//! Hardcoded constants used by the simulation
 //!
 //! Constants are sorted in sub-modules according to their nature.
 //! Are also included aliases, as well as the custom trait used to
