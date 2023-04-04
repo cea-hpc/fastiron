@@ -1,6 +1,6 @@
 use num::{zero, FromPrimitive};
 
-use crate::constants::{physical::HUGE_FLOAT, CustomFloat};
+use crate::constants::{sim::HUGE_FLOAT, CustomFloat};
 
 /// Structure used to represent the nearest facet to a point,
 /// holding relevant data for computation.

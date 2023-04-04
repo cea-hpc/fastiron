@@ -5,7 +5,7 @@ use num::{zero, FromPrimitive};
 
 use crate::{
     constants::{
-        physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
+        sim::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
         CustomFloat,
     },
     data::tallies::MCTallyEvent,
@@ -182,7 +182,7 @@ fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::constants::physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT};
+    use crate::constants::sim::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT};
     use num::zero;
 
     #[test]

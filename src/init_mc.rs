@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Debug, fs::File, io::Write};
 
 use crate::{
-    constants::{physical::TINY_FLOAT, CustomFloat, Tuple3},
+    constants::{sim::TINY_FLOAT, CustomFloat, Tuple3},
     data::{
         material_database::{Isotope, Material},
         mc_vector::MCVector,

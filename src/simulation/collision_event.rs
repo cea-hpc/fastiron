@@ -165,7 +165,7 @@ pub fn collision_event<T: CustomFloat>(
 mod tests {
     use super::*;
     use crate::{
-        constants::physical::TINY_FLOAT,
+        constants::sim::TINY_FLOAT,
         data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
     };
     use num::Float;

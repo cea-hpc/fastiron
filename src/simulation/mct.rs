@@ -5,7 +5,7 @@ use num::{one, zero, FromPrimitive};
 use crate::{
     constants::{
         mesh::{N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
-        physical::{HUGE_FLOAT, SMALL_FLOAT},
+        sim::{HUGE_FLOAT, SMALL_FLOAT},
         CustomFloat,
     },
     data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
