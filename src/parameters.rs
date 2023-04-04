@@ -301,38 +301,68 @@ impl<T: CustomFloat> Default for CrossSectionParameters<T> {
     }
 }
 
-/// Structure encompassing all simulation parameters. In the program's
-/// execution flow, it is first initialized using the CLI arguments,
-/// then optionally updated with a specified input file.
+/// Structure encompassing all simulation parameters.
+///
+/// In the program's execution flow, it is first initialized using
+/// the CLI arguments, then optionally updated with a specified input file.
 #[derive(Debug)]
 pub struct SimulationParameters<T: CustomFloat> {
+    /// Path to the input file, it can be relative or absolute.
     pub input_file: String,
+    /// Name of the output file the energy spectrum may be saved to.
     pub energy_spectrum: String,
+    /// Name of the output file the cross sections may be saved to.
     pub cross_sections_out: String,
+    /// Boundary conditions of the problem. Mesh is initialized according to this value.
     pub boundary_condition: String,
+    /// Switch to enable or disable load balancing during execution.
     pub load_balance: bool,
+    /// Switch to enable cyclic timer reports. **May be removed**.
     pub cycle_timers: bool,
+    /// Switch used to print debug information. **May be removed or repurposed**.
     pub debug_threads: bool,
+    /// Target number of particle for the simulation. Population will be controled
+    /// according to this value.
     pub n_particles: u64,
+    /// Size of the batches of particles. **May be removed**.
     pub batch_size: u64,
+    /// Number of batches. **May be removed**.
     pub n_batches: u64,
+    /// Number of steps simulated by the program.
     pub n_steps: usize,
+    /// Number of cells along the x axis.
     pub nx: usize,
+    /// Number of cells along the y axis.
     pub ny: usize,
+    /// Number of cells along the z axis.
     pub nz: usize,
+    /// Random number seed for the PRNG used by the simulation.
     pub seed: u64,
+    /// Value of the time step in seconds.
     pub dt: T,
+    /// Unused? **May be removed**.
     pub f_max: T,
+    /// Size of the simulation along the x axis.
     pub lx: T,
+    /// Size of the simulation along the y axis.
     pub ly: T,
+    /// Size of the simulation along the z axis.
     pub lz: T,
+    /// Energy value of the lowest energy group.
     pub e_min: T,
+    /// Energy value of the highest energy group.
     pub e_max: T,
+    /// Number of energy groups to build a spectrum.
     pub n_groups: usize,
+    /// Low statistical weight cutoff used for population control.
     pub low_weight_cutoff: T,
+    /// Number of balance tallies for parallel processing. `1` means no replication.
     pub balance_tally_replications: u32,
+    /// Number of flux tallies for parallel processing. `1` means no replication.
     pub flux_tally_replications: u32,
+    /// Number of cell tallies for parallel processing. `1` means no replication.
     pub cell_tally_replications: u32,
+    /// Benchmark type of the input problem. See [BenchType] for more information.
     pub coral_benchmark: BenchType,
 }
 
@@ -349,9 +379,8 @@ impl<T: CustomFloat> SimulationParameters<T> {
     /// let cli = Cli::parse_from("./fastiron -i somefile -c -l".split(' '));
     /// let simulation_params = SimulationParameters::<f64>::from_cli(&cli);
     /// // compare the structures...
-    /// println!("{:#?}", cli);
-    /// println!("{:#?}", simulation_params);
-    ///
+    /// assert_eq!(cli.input_file.unwrap(), simulation_params.input_file);
+    /// assert!(simulation_params.load_balance);
     /// ```
     pub fn from_cli(cli: &Cli) -> Self {
         let mut simulation_params = Self::default();
@@ -385,9 +414,6 @@ impl<T: CustomFloat> SimulationParameters<T> {
         fetch_from_cli!(ny);
         fetch_from_cli!(nz);
         fetch_from_cli!(seed);
-        //fetch_from_cli!(x_dom);
-        //fetch_from_cli!(y_dom);
-        //fetch_from_cli!(z_dom);
         fetch_from_cli!(balance_tally_replications);
         fetch_from_cli!(flux_tally_replications);
         fetch_from_cli!(cell_tally_replications);
@@ -414,9 +440,6 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             ny: 10,
             nz: 10,
             seed: 1029384756,
-            //x_dom: 0,
-            //y_dom: 0,
-            //z_dom: 0,
             dt: T::from_f64(1e-8).unwrap(),
             f_max: T::from_f64(0.1).unwrap(),
             lx: T::from_f64(100.0).unwrap(),
