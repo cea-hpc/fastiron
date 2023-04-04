@@ -111,7 +111,6 @@ pub mod montecarlo;
 pub mod parameters;
 /// Particle-related code
 pub mod particles;
-/// Computation & simulation-related code
 pub mod simulation;
 /// Utilities used both to setup and run the simulation.
 pub mod utils;

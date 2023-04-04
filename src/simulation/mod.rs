@@ -1,3 +1,4 @@
+//! Computation & simulation-related code
 //!
 //! This module contains the core functions that make up the simulation loop.
 

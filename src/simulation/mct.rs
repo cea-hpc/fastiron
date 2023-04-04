@@ -1,3 +1,7 @@
+//! Code for spatial computations of the simulation
+//!
+//! This module contains function used to compute and manipulate data related
+//! to a particle's coordinate and direction in the problem.
 use core::panic;
 
 use num::{one, zero, FromPrimitive};
@@ -19,8 +23,13 @@ use crate::{
     utils::mc_rng_state::rng_sample,
 };
 
-/// Computes which facet of the specified cell is nearest
-/// to the specified coordinates.
+/// Computes which facet of the specified cell is nearest to the specified
+/// coordinates.
+///
+/// The function uses the particle's direction to compute which facet is currently
+/// the closest to the particle as well as the distance to this facet. The result is
+/// used in order to assess which event the particle will undergo next, in this
+/// case, a facet crossing. See [MCNearestFacet] for more.
 pub fn nearest_facet<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     mcco: &MonteCarlo<T>,
@@ -54,6 +63,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
     let six: T = FromPrimitive::from_f64(6.0).unwrap();
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
 
+    // TODO: is there a case when its 0 or can we replace it with N_FACETS_OUT?
     let num_facets: usize = domain.mesh.cell_connectivity[cell_idx].facet.len();
     if num_facets == 0 {
         return coordinate;
@@ -72,6 +82,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
 
     // find the facet to sample from
     while current_volume < which_volume {
+        // TODO: is there a case when its 0 or can we replace it with N_FACETS_OUT?
         if facet_idx == num_facets {
             break;
         }
@@ -113,7 +124,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
     coordinate
 }
 
-/// Returns a coordinate that represents the "center" of the cell
+/// Returns a coordinate that represents the "center" of the cell.
 pub fn cell_position_3dg<T: CustomFloat>(domain: &MCDomain<T>, cell_idx: usize) -> MCVector<T> {
     let mut coordinate: MCVector<T> = Default::default();
 
@@ -128,6 +139,10 @@ pub fn cell_position_3dg<T: CustomFloat>(domain: &MCDomain<T>, cell_idx: usize) 
 }
 
 /// Reflects a particle off a reflection-type boundary.
+///
+/// This function is called when a particle undergo a reflectionevent at the
+/// boundary of the problem. Note that the reflection does not result in a
+/// loss of energy.
 pub fn reflect_particle<T: CustomFloat>(mcco: &MonteCarlo<T>, particle: &mut MCParticle<T>) {
     let mut new_d_cos = particle.direction_cosine.clone();
     let location = particle.get_location();
