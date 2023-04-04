@@ -60,7 +60,7 @@ pub enum Shape {
 /// certain shape and certain material.
 #[derive(Debug, Default)]
 pub struct GeometryParameters<T: CustomFloat> {
-    /// Name of the material.
+    /// Name of the material the geometry is made of.
     pub material_name: String,
     /// Shape of the material. Note that this value defines which other fields are used:
     /// - A sphere-shaped geometry will only use radius and coordinates of the center.
@@ -140,17 +140,29 @@ impl<T: CustomFloat> GeometryParameters<T> {
 /// properties.
 #[derive(Debug)]
 pub struct MaterialParameters<T: CustomFloat> {
+    /// Name of the material.
     pub name: String,
+    /// Mass of the material in grams.
     pub mass: T,
+    /// Total value of the cross section.
     pub total_cross_section: T,
+    /// Number of isotopes.
     pub n_isotopes: usize,
+    /// Number of reactions.
     pub n_reactions: usize,
+    /// Rate of particle sourcing.
     pub source_rate: T,
+    /// Scattering reaction cross section name.
     pub scattering_cross_section: String,
+    /// Absorption reaction cross section name.
     pub absorption_cross_section: String,
+    /// Fission reaction cross section name.
     pub fission_cross_section: String,
+    /// Scattering reaction cross section ratio i.e. its relative weight.
     pub scattering_cross_section_ratio: T,
+    /// Absorption reaction cross section ratio i.e. its relative weight.
     pub absorbtion_cross_section_ratio: T,
+    /// Fission reaction cross section ratio i.e. its relative weight.
     pub fission_cross_section_ratio: T,
 }
 
@@ -204,7 +216,7 @@ impl<T: CustomFloat> Default for MaterialParameters<T> {
             total_cross_section: T::one(),
             n_isotopes: 10,
             n_reactions: 9,
-            source_rate: T::zero(),
+            source_rate: Default::default(),
             scattering_cross_section: Default::default(),
             absorption_cross_section: Default::default(),
             fission_cross_section: Default::default(),
