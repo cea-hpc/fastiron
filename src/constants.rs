@@ -129,7 +129,7 @@ pub mod mesh {
     ];
     /// Number of faces defining a cell.
     pub const N_FACES: usize = 6;
-    /// Offsets of the faces of a cell
+    /// Offsets of the faces of a cell.
     pub const FACE_OFFSET: [(i32, i32, i32); N_FACES] = [
         (1, 0, 0),
         (-1, 0, 0),
