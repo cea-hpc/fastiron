@@ -101,7 +101,6 @@
 //! [2]: https://github.com/cea-hpc/fastiron
 
 pub mod constants;
-/// Data structures
 pub mod data;
 /// Mesh & modelling-related structures
 pub mod geometry;
