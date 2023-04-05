@@ -1,9 +1,17 @@
+//! Code for cross-section computation a.k.a probability density computation
+//!
+//! This module contains function used to compute cross-section data from known
+//! physical quantities of the material and reacting isotope.
+
 use num::{zero, FromPrimitive};
 
 use crate::{constants::CustomFloat, montecarlo::MonteCarlo};
 
 /// Computes the reaction-specific number-density-weighted
-/// macroscopic cross section of a cell.
+/// macroscopic cross section in the cell.
+///
+/// Note that this function is isotope-specific; However the proxy-app
+/// only accounts for simulation of a single isotope type.
 pub fn macroscopic_cross_section<T: CustomFloat>(
     mcco: &MonteCarlo<T>,
     reaction_idx: usize,
@@ -33,9 +41,11 @@ pub fn macroscopic_cross_section<T: CustomFloat>(
 }
 
 /// Computes the total number-density-weighted macroscopic
-/// cross section of a cell. This additional method replaces
-/// the use of a magic value (-1) for `reaction_idx`.
-pub fn macroscopic_total_cross_section<T: CustomFloat>(
+/// cross section in the cell.
+///
+/// Note that this function is isotope-specific; However the proxy-app
+/// only accounts for simulation of a single isotope type.
+fn macroscopic_total_cross_section<T: CustomFloat>(
     mcco: &MonteCarlo<T>,
     domain_idx: usize,
     cell_idx: usize,
@@ -63,7 +73,10 @@ pub fn macroscopic_total_cross_section<T: CustomFloat>(
 }
 
 /// Computes the number-density-weighted macroscopic cross section
-/// of the collection of isotopes in a cell.
+/// of a collection of isotopes in the cell.
+///
+/// Note that there is not really any weighting, this comes from the original
+/// choice of Quicksilver to leave material weighting out of the proxy-app.
 pub fn weighted_macroscopic_cross_section<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     domain_idx: usize,
