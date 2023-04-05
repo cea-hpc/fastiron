@@ -300,16 +300,13 @@ fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
                     // for each energy group
                     (0..n_groups).for_each(|group_idx| match reaction.reaction_type {
                         ReactionType::Scatter => {
-                            xc_vec[group_idx].sca +=
-                                reaction.get_cross_section(group_idx) / n_isotopes;
+                            xc_vec[group_idx].sca += reaction.cross_section[group_idx] / n_isotopes;
                         }
                         ReactionType::Absorption => {
-                            xc_vec[group_idx].abs +=
-                                reaction.get_cross_section(group_idx) / n_isotopes;
+                            xc_vec[group_idx].abs += reaction.cross_section[group_idx] / n_isotopes;
                         }
                         ReactionType::Fission => {
-                            xc_vec[group_idx].fis +=
-                                reaction.get_cross_section(group_idx) / n_isotopes;
+                            xc_vec[group_idx].fis += reaction.cross_section[group_idx] / n_isotopes;
                         }
                         ReactionType::Undefined => unreachable!(),
                     });
