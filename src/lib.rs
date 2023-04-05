@@ -102,7 +102,6 @@
 
 pub mod constants;
 pub mod data;
-/// Mesh & modelling-related structures
 pub mod geometry;
 /// Initialization code for the problem
 pub mod init_mc;

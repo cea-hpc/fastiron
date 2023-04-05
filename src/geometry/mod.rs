@@ -1,3 +1,8 @@
+//! Mesh & modelling-related structures$
+//!
+//! This module contains code related to the mesh structure used to simulate the problem.
+//! This includes the mesh itself as well as objects
+
 pub mod global_fcc_grid;
 pub mod grid_assignment_object;
 pub mod mc_cell_state;
