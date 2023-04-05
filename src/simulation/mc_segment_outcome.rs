@@ -169,14 +169,10 @@ pub fn outcome<T: CustomFloat>(
         particle.time_to_census = zero();
     }
 
-    // update tallies
-    mcco.tallies.tally_scalar_flux(
-        particle.segment_path_length * particle.weight,
-        particle.domain,
-        flux_tally_idx,
-        particle.cell,
-        particle.energy_group,
-    );
+    // update scalar flux tally
+    // atomic in original code
+    mcco.tallies.scalar_flux_domain[particle.domain].task[flux_tally_idx].cell[particle.cell]
+        [particle.energy_group] += particle.segment_path_length * particle.weight;
 
     segment_outcome
 }
