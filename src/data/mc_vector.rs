@@ -13,13 +13,16 @@ use crate::constants::{sim::TINY_FLOAT, CustomFloat};
 /// # Examples
 ///
 /// ```rust
+/// use fastiron::data::mc_vector::MCVector;
+///
 /// let v = MCVector {x: 1.0, y: 1.0, z: 1.0};
-/// let w = MCVector {x: 2.0, y: 2.0, z: 2.0};
+/// let mut w = MCVector {x: 2.0, y: 2.0, z: 2.0};
 ///
 /// // v + w == (3.0, 3.0, 3.0)
 /// assert_eq!(v + w, MCVector {x: 3.0, y: 3.0, z: 3.0});
 /// // w/2 == v
-/// assert!(w/2.0.is_almost_equal(&v));
+/// w /= 2.0;
+/// assert!(w.is_almost_equal(&v));
 ///
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
