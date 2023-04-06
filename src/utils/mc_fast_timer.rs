@@ -1,3 +1,7 @@
+//! Code used for built-in timers & execution speed gauging
+//!
+//!
+
 use std::{
     fmt::Display,
     time::{Duration, Instant},
@@ -12,11 +16,17 @@ use crate::{
 /// timers.
 #[derive(Debug)]
 pub enum Section {
+    /// Full execution time.
     Main = 0,
+    /// `cycle_init()` execution time.
     CycleInit,
+    /// `cycle_tracking()` execution time.
     CycleTracking,
+    /// Tracking loop of `cycle_tracking()` execution time.
     CycleTrackingKernel,
+    /// Communication phase of `cycle_tracking()` execution time.
     CycleTrackingComm,
+    /// `cycle_finalize()` execution time.
     CycleFinalize,
 }
 
@@ -36,10 +46,17 @@ impl Display for Section {
 /// Structure used to represent a single timer.
 #[derive(Debug)]
 pub struct MCFastTimer {
+    /// Clock value at the start of the timer.
     pub start_clock: Instant,
+    /// Clock value at the start of the timer.
     pub end_clock: Instant,
+    /// Value of the last duration in microseconds. **May change this to hold a
+    /// [Duration]` directly.
     pub last_cycle_clock: u128,
+    /// Value of the total duration in microseconds. **May change this to hold a
+    /// [Duration]` directly.
     pub cumulative_clock: u128,
+    /// Number of call to the timer i.e. number of measurement taken.
     pub num_calls: u64,
 }
 
@@ -55,23 +72,37 @@ impl Default for MCFastTimer {
     }
 }
 
-/// Structure used as a container for the 7 timers used through
+/// Structure used as a container for the 6 timers used through
 /// the simulation for performance testing.
+///
+/// See [Section] for more information about the different timers.
 #[derive(Debug)]
 pub struct MCFastTimerContainer {
+    /// Timer container.
     pub timers: [MCFastTimer; N_TIMERS],
+    /// Current number of value used for average computation. Used to
+    /// compute the new average after recording an additional value.
     pub n_avg: u32,
+    /// Average duration of each timer.
     pub avgs: [Duration; N_TIMERS],
+    /// Longest duration of each timer.
     pub maxs: [Duration; N_TIMERS],
+    /// Shortest duration of each timer.
     pub mins: [Duration; N_TIMERS],
+    /// Total duration of each timer. This is the value that should be compared to
+    /// Quicksilver's cumulative report despite what its header says.
     pub tots: [Duration; N_TIMERS],
 }
 
 impl MCFastTimerContainer {
+    /// Prints the cumulative report at the end of execution. The values of the  
+    /// total column should be compared to Quicksilver's cumulative report despite
+    /// what its header says.
     pub fn cumulative_report(&self, num_segments: u64) {
         // Print header
         println!("[Timer Report]");
         println!("Timer Name                       | Total number of calls      Shortest cycle (µs)    Average per cycle (µs)     Longest cycle (µs)    Total in section (µs)    Efficiency rating (%)");
+        // print data
         self.timers
             .iter()
             .enumerate()
@@ -103,10 +134,12 @@ impl MCFastTimerContainer {
         );
     }
 
+    /// Not functionnal. **May be removed**.
     pub fn last_cycle_report(&self) {
         todo!()
     }
 
+    /// Update statistics and clear the timers for the next cycle.
     pub fn clear_last_cycle_timers(&mut self) {
         self.n_avg += 1;
         self.timers
@@ -134,6 +167,7 @@ impl MCFastTimerContainer {
             });
     }
 
+    /// Update the statistics of the main timer.
     pub fn update_main_stats(&mut self) {
         let idx = Section::Main as usize;
         let duration = self.timers[idx]
@@ -159,11 +193,13 @@ impl Default for MCFastTimerContainer {
     }
 }
 
+/// Start the specified timer.
 pub fn start<T: CustomFloat>(mcco: &mut MonteCarlo<T>, section: Section) {
     let index = section as usize;
     mcco.fast_timer.timers[index].start_clock = Instant::now();
 }
 
+/// Stop the specified timer and record internally the duration sicne start.
 pub fn stop<T: CustomFloat>(mcco: &mut MonteCarlo<T>, section: Section) {
     let index = section as usize;
     mcco.fast_timer.timers[index].end_clock = Instant::now();
@@ -178,6 +214,7 @@ pub fn stop<T: CustomFloat>(mcco: &mut MonteCarlo<T>, section: Section) {
     mcco.fast_timer.timers[index].num_calls += 1;
 }
 
+/// Returns the duration of the last cycle of the specified timer.
 pub fn get_last_cycle<T: CustomFloat>(mcco: &MonteCarlo<T>, section: Section) -> f64 {
     let index = section as usize;
     mcco.fast_timer.timers[index].last_cycle_clock as f64 / 1000000.0

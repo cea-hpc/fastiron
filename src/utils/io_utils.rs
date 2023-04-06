@@ -1,3 +1,7 @@
+//! Code used to manage I/O
+//!
+//! This module contains code used for the CLI and parsing input files.
+
 use std::{fs::File, io::Read};
 
 use crate::constants::CustomFloat;
