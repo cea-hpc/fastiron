@@ -1,3 +1,9 @@
+//! Super-structure used to store the problem's data
+//!
+//! This module contains the code of the super-structure holding all the
+//! problem's data. The content of module [`crate::init_mc`] may be moved
+//! here in the future.
+
 use std::fmt::Debug;
 
 use num::zero;
@@ -20,32 +26,32 @@ use crate::utils::mc_time_info::MCTimeInfo;
 /// Super-structure used to contain all the problem's objects and data.
 #[derive(Debug)]
 pub struct MonteCarlo<T: CustomFloat> {
-    /// List of spatial domains
+    /// List of spatial domains.
     pub domain: Vec<MCDomain<T>>,
-    /// Parameters of the problem
+    /// Parameters of the problem.
     pub params: Parameters<T>,
-    /// Object storing all data related to particles
+    /// Object storing all data related to particles.
     pub nuclear_data: NuclearData<T>,
-    /// Container for all the particle vaults used during simulation
+    /// Container for all the particle vaults used during simulation.
     pub particle_vault_container: ParticleVaultContainer<T>,
-    /// Object storing all data related to materials
+    /// Object storing all data related to materials.
     pub material_database: MaterialDatabase<T>,
-    /// Object storing all tallies of the simulation
+    /// Object storing all tallies of the simulation.
     pub tallies: Tallies<T>,
-    /// Object storing data related to the advancement of the simulation
+    /// Object storing data related to the advancement of the simulation.
     pub time_info: MCTimeInfo<T>,
-    /// Container for the timers used for performance measurements
+    /// Container for the timers used for performance measurements.
     pub fast_timer: MCFastTimerContainer,
-    /// Object storing data related to the processor and execution mode
+    /// Object storing data related to the processor and execution mode.
     pub processor_info: MCProcessorInfo,
-    /// Buffer used for potential spatial multithreading
+    /// Buffer used for potential spatial multithreading.
     pub particle_buffer: MCParticleBuffer<T>,
-    /// Weight of the particles at creation in a source zone
+    /// Weight of the particles at creation in a source zone.
     pub source_particle_weight: T,
 }
 
 impl<T: CustomFloat> MonteCarlo<T> {
-    /// Constructor
+    /// Constructor.
     pub fn new(params: Parameters<T>) -> Self {
         let tallies: Tallies<T> = Tallies::new(
             params.simulation_params.balance_tally_replications,
@@ -122,6 +128,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
         })
     }
 
+    /// **May be removed**.
     pub fn read_buffers(&mut self, fill_vault: &mut usize) {
         self.particle_buffer.buffers.iter().for_each(|b| {
             b.iter().for_each(|particle| {
@@ -132,7 +139,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
         self.particle_buffer.clear()
     }
 
-    /// Update the enrgy spectrum by going over all the currently valid particles.
+    /// Update the energy spectrum by going over all the currently valid particles.
     pub fn update_spectrum(&mut self) {
         if self.tallies.spectrum.file_name.is_empty() {
             println!("No output name specified for energy");

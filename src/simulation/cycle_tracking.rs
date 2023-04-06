@@ -1,3 +1,8 @@
+//! Core of the particle tracking algorithm used by the simulation
+//!
+//! This module contains the function individually tracking particles during the
+//! main simulation section.
+
 use num::one;
 
 use crate::{
@@ -13,7 +18,11 @@ use super::{
     mc_segment_outcome::{outcome, MCSegmentOutcome},
 };
 
-/// Main steps of the CycleTracking section.
+/// Main steps of the `CycleTracking` section.
+///
+/// The particle at the specified index is loaded, tracked and updated accordingly.
+/// Depeding on the outcome of the tracking, it is either set as processed or
+/// invalidated.
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle_idx: usize,
@@ -50,8 +59,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     }
 }
 
-/// Computations of the CycleTracking section
-pub fn cycle_tracking_function<T: CustomFloat>(
+fn cycle_tracking_function<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
     particle_idx: usize,

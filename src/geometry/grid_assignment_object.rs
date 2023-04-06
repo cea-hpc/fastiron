@@ -1,3 +1,9 @@
+//! Code used to locate vectors in the grid
+//!
+//! This module contains the structure used to locate vectors in the
+//! mesh's grid, i.e. locate particles in the problem and operates on them
+//! accordingly to the properties of the space (cell) they belong to.
+
 use std::collections::VecDeque;
 
 use num::{zero, FromPrimitive};
@@ -7,28 +13,26 @@ use crate::{
     data::mc_vector::MCVector,
 };
 
-/// Internal structure of [GridAssignmentObject].
-/// Represents a cell.
 #[derive(Debug, Clone, Default)] // default value of bool is false
-pub struct GridCell {
+struct GridCell {
     pub burned: bool,
     pub my_centers: Vec<usize>,
 }
 
-/// Structure used to "locate" vectors in the grid.
+/// Structure used to locate vectors, i.e. coordinates, in the grid.
 #[derive(Debug)]
 pub struct GridAssignmentObject<T: CustomFloat> {
-    /// Number of cells along the x axis
+    /// Number of cells along the x axis.
     pub nx: usize,
-    /// Number of cells along the y axis
+    /// Number of cells along the y axis.
     pub ny: usize,
-    /// Number of cells along the z axis
+    /// Number of cells along the z axis.
     pub nz: usize,
-    /// Size of a mesh cell along the x axis (cm)
+    /// Size of a mesh cell along the x axis (cm).
     pub dx: T,
-    /// Size of a mesh cell along the y axis (cm)
+    /// Size of a mesh cell along the y axis (cm).
     pub dy: T,
-    /// Size of a mesh cell along the z axis (cm)
+    /// Size of a mesh cell along the z axis (cm).
     pub dz: T,
 
     /// List of corners.
@@ -38,9 +42,9 @@ pub struct GridAssignmentObject<T: CustomFloat> {
 
     /// List of cells.
     grid: Vec<GridCell>,
-    /// Internal queue used when browsing through the cells
+    /// Internal queue used when browsing through the cells.
     flood_queue: VecDeque<usize>,
-    /// Internal queue used when browsing through the cells
+    /// Internal queue used when browsing through the cells.
     wet_list: VecDeque<usize>,
 }
 
@@ -99,7 +103,11 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
         gao
     }
 
-    /// Returns the closest center to a given coordinate.
+    /// Returns the closest center to a given coordinate. This is done by browsing
+    /// through the cell, doing a tweaked breadth-first search on the graph. The
+    /// algorithm is essentially the same, with just one additionnal condition
+    /// to keep searching "towards" a given direction: for the minimal distance
+    /// to diminish.
     pub fn nearest_center(&mut self, rr: MCVector<T>) -> usize {
         let mut r2_min: T = FromPrimitive::from_f64(1e300).unwrap();
         let mut center_min: Option<usize> = None;

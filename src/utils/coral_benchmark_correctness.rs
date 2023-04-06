@@ -1,3 +1,9 @@
+//! Code used to run additionnal tests when becnhmarking
+//!
+//! This code is only called if the running examples are specific benchmarks.
+//! If there is a need for additional checks on data yielded by a _homemade_
+//! example, this is where to start.
+
 use num::{one, zero, FromPrimitive};
 
 use crate::{
@@ -6,7 +12,7 @@ use crate::{
     parameters::{BenchType, Parameters},
 };
 
-/// Adjust some data for the coral benchmark if it's running.
+/// Runs additionnal tests according to the [BenchType].
 pub fn coral_benchmark_correctness<T: CustomFloat>(params: &Parameters<T>, tallies: &Tallies<T>) {
     if params.simulation_params.coral_benchmark == BenchType::Standard {
         return;
@@ -22,9 +28,10 @@ pub fn coral_benchmark_correctness<T: CustomFloat>(params: &Parameters<T>, talli
 }
 
 /// Test Balance Tallies for relative correctness.
-/// Expected ratios of absorbs,fisisons, scatters are maintained
+///
+/// Expected ratios of absorbs, fissions, scatters are maintained
 /// withing some tolerance, based on input expectation.
-fn balance_ratio_test<T: CustomFloat>(params: &Parameters<T>, tallies: &Tallies<T>) {
+pub fn balance_ratio_test<T: CustomFloat>(params: &Parameters<T>, tallies: &Tallies<T>) {
     println!("Testing if ratios for absorbtion, fission & scattering are maintained...");
 
     let balance_tally = &tallies.balance_cumulative;
@@ -83,7 +90,7 @@ fn balance_ratio_test<T: CustomFloat>(params: &Parameters<T>, tallies: &Tallies<
 
 /// Test Balance Tallies for equality in number of facet crossing
 /// and collision events.
-fn balance_event_test<T: CustomFloat>(tallies: &Tallies<T>) {
+pub fn balance_event_test<T: CustomFloat>(tallies: &Tallies<T>) {
     println!("Testing balance between number of facet crossings and reactions...");
 
     let balance_tally = &tallies.balance_cumulative;
@@ -106,10 +113,11 @@ fn balance_event_test<T: CustomFloat>(tallies: &Tallies<T>) {
 }
 
 /// Test for lost particles during the simulation.
+///
 /// This test should always succeed unless test for
 /// done was broken, or we are running with 1 MPI rank
 /// and so never preform this test duing test_for_done
-fn missing_particle_test<T: CustomFloat>(tallies: &Tallies<T>) {
+pub fn missing_particle_test<T: CustomFloat>(tallies: &Tallies<T>) {
     println!("Testing for lost / unaccounted for particles in this simulation...");
 
     let bt = &tallies.balance_cumulative;
@@ -124,9 +132,10 @@ fn missing_particle_test<T: CustomFloat>(tallies: &Tallies<T>) {
 }
 
 /// Test that the scalar flux is homogenous across cells for the problem.
+///
 /// This test really requires alot of particles or cycles or both
 /// This solution should converge to a homogenous solution
-fn fluence_test<T: CustomFloat>(tallies: &Tallies<T>) {
+pub fn fluence_test<T: CustomFloat>(tallies: &Tallies<T>) {
     println!("Testing fluence for homogeneity across the cells");
     let mut max_diff: T = zero();
     tallies.fluence.domain.iter().for_each(|dom| {

@@ -1,3 +1,9 @@
+//! Code regulating the number of particles in the simulation
+//!
+//! This module contains the three main functions used to regulate the number
+//! of particles in the simulation as well as two internal functions used by
+//! those.
+
 use num::{one, zero, FromPrimitive};
 
 use crate::{
@@ -16,6 +22,13 @@ use crate::{
 };
 
 /// Routine used to monitor and regulate population level.
+///
+/// If load balancing is enabled, the spawned particle will be spread
+/// throughout the processors. Using the current number of particle and
+/// the target number of particles, the function computes a split factor.
+/// If the split factor is strictly below one, there are too many particles,
+/// if it is striclty superior to one, there are too little. Particles are
+/// then either randomly killed or spawned to get to the desired number.
 pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) {
     let mut target_n_particles: usize = mcco.params.simulation_params.n_particles as usize;
     let mut global_n_particles: usize = 0;
@@ -119,6 +132,9 @@ fn population_control_guts<T: CustomFloat>(
 
 /// Play russian-roulette with low-weight particles relative
 /// to the source particle weight.
+///
+/// This function regulates the number of low (statistica) weight particle to
+/// prevent clusters of low energy particle from falsifying the results.
 pub fn roulette_low_weight_particles<T: CustomFloat>(
     low_weight_cutoff: T,
     source_particle_weight: T,
@@ -157,6 +173,11 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 }
 
 /// Simulates the sources according to the problem's parameters.
+///
+/// This function spawns particle is source regions. Each time this function
+/// is called (once per cycle), 10% of the target number of particles are
+/// spawned. _Where_ they are spawned depends on both deterministic factors and
+/// randomness.
 pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let time_step = mcco.time_info.time_step;
 

@@ -1,12 +1,26 @@
-/// Object used to allocate domains to rank. Somewhat useless currently.
+//! Code originally used to allocate domains to MPI ranks
+//!
+//! **May be removed or reworked to make use of the neighboring system for
+//! threading**.
+
+/// Object used to record which domains belongs to which rank.
+///
+/// # How it works
+///
+/// Indexing between `rank` and `index` fields is coherent meaning that all
+/// the domains indexing is held by these two vectors: the global identifier of
+/// a given domain can computed using the rank it belongs to and its local index.
+/// Global identifiers of the assigned domains are computed this way.
 #[derive(Debug)]
 pub struct DecompositionObject {
+    /// Global identifiers of the assigned domains.
     pub assigned_gids: Vec<usize>,
+    /// Ranks of all the domains
     pub rank: Vec<usize>,
+    /// Local indexes of the all domains.
     pub index: Vec<usize>,
 }
 
-/// To be removed?
 impl DecompositionObject {
     /// Constructor
     pub fn new(my_rank: usize, n_ranks: usize, dom_per_rank: usize) -> Self {

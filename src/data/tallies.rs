@@ -1,3 +1,11 @@
+//! Code for simulation-related statistics
+//!
+//! This module contains all code used to record and count events happening
+//! during the simulation. The cyclic summary is printed using the recorded data.
+//!
+//! Note that this module isn't used to compute time-related data, this is done in
+//! the [utils::mc_fast_timer][crate::utils::mc_fast_timer] module.
+
 use std::fmt::Debug;
 
 use num::zero;
@@ -14,17 +22,32 @@ use super::energy_spectrum::EnergySpectrum;
 /// Enum representing a tally event.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum MCTallyEvent {
+    /// Value for a collision event.
     Collision,
+    /// Value for a facet crossing event resulting in a cell exit.
     FacetCrossingTransitExit,
+    /// Value for a census event.
     #[default]
     Census,
+    /// Value for a facet crossing event resulting in an error.
     FacetCrossingTrackingError,
+    /// Value for a facet crossing event resulting in an escape from the problem.
     FacetCrossingEscape,
+    /// Value for a facet crossing event resulting in a reflection on the facet.
     FacetCrossingReflection,
+    /// Value for a facet crossing event resulting in a cell exit to an
+    /// off-processor cell.
     FacetCrossingCommunication,
 }
 
-/// May need to change it to a full-fledged structure later.
+//========
+// Fluence
+//========
+
+/// Structure used to compute fluence.
+///
+/// The data of each cell is grouped by domains using the [FluenceDomain]
+/// sub-structure.
 #[derive(Debug, Default)]
 pub struct Fluence<T: CustomFloat> {
     pub domain: Vec<FluenceDomain<T>>,
@@ -51,39 +74,67 @@ impl<T: CustomFloat> Fluence<T> {
     }
 }
 
-/// Structure used to regulate the number of event in the simulation.
+/// Domain-sorted fluence-data-holding sub-structure.
+#[derive(Debug, Default)]
+pub struct FluenceDomain<T: CustomFloat> {
+    pub cell: Vec<T>,
+}
+
+impl<T: CustomFloat> FluenceDomain<T> {
+    pub fn add_cell(&mut self, index: usize, val: T) {
+        self.cell[index] += val;
+    }
+
+    pub fn get_cell(&self, index: usize) -> T {
+        self.cell[index]
+    }
+
+    pub fn size(&self) -> usize {
+        self.cell.len()
+    }
+}
+
+//========
+// Balance
+//========
+
+/// Structure used to keep track of the number of event in the simulation.
+///
+/// During the simulation, each time an event of interest occurs, the counters
+/// are incremented accordingly. In a parallel context, this structure should be
+/// operated on using atomic operations.
 #[derive(Debug, Default, Clone)]
 pub struct Balance {
-    /// Number of particles absorbed
+    /// Number of particles absorbed.
     pub absorb: u64,
-    /// Number of particles that enter census
+    /// Number of particles that enter census.
     pub census: u64,
-    /// Number of particles that escape
+    /// Number of particles that escape.
     pub escape: u64,
-    /// Number of collisions
+    /// Number of collisions.
     pub collision: u64,
-    /// Number of particles at end of cycle
+    /// Number of particles at end of cycle.
     pub end: u64,
-    /// Number of fission events
+    /// Number of fission events.
     pub fission: u64,
-    /// Number of particles created by collisions
+    /// Number of particles created by collisions.
     pub produce: u64,
-    /// Number of scatters
+    /// Number of scatters.
     pub scatter: u64,
-    /// Number of particles at beginning of cycle
+    /// Number of particles at beginning of cycle.
     pub start: u64,
-    /// Number of particles sourced in
+    /// Number of particles sourced in.
     pub source: u64,
-    /// Number of particles Russian Rouletted in population control
+    /// Number of particles Russian Rouletted in population control.
     pub rr: u64,
-    /// Number of particles split in population control
+    /// Number of particles split in population control.
     pub split: u64,
-    /// Number of segements
+    /// Number of segements.
     pub num_segments: u64,
 }
 
 impl Balance {
-    /// Reset fields to their default value i.e. 0.
+    /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
         *self = Self::default(); // is the old value correctly dropped or just shadowed?
     }
@@ -106,57 +157,37 @@ impl Balance {
     }
 }
 
-/// May need to change it to a full-fledged structure later.
+//=================
+// Scalar flux data
+//=================
+
+/// Cell-specific scalar flux data.
+///
+/// Each element of the vector is corresponds to a cell's data.
 type ScalarFluxCell<T> = Vec<T>;
 
-/// ?
-#[derive(Debug, Default, Clone)]
-pub struct CellTallyTask<T: CustomFloat> {
-    pub cell: Vec<T>,
-}
-
-impl<T: CustomFloat> CellTallyTask<T> {
-    /// Constructor
-    pub fn new(domain: &MCDomain<T>) -> Self {
-        Self {
-            cell: vec![zero(); domain.cell_state.len()],
-        }
-    }
-
-    /// Reset fields to their default value i.e. 0.
-    pub fn reset(&mut self) {
-        self.cell = vec![zero(); self.cell.len()]; // no effect on allocated capacity
-    }
-
-    /// Add another [CellTallyTask]'s value to its own. Replace by an overload?
-    pub fn add(&mut self, cell_tally_task: &CellTallyTask<T>) {
-        //assert_eq!(self.cell.len(), cell_tally_task.cell.len());
-        (0..self.cell.len()).for_each(|ii| self.cell[ii] += cell_tally_task.cell[ii]);
-    }
-}
-
-/// ?
+/// Task-sorted _scalar-flux-data-holding_ sub-structure.
 #[derive(Debug, Clone)]
 pub struct ScalarFluxTask<T: CustomFloat> {
     pub cell: Vec<ScalarFluxCell<T>>,
 }
 
 impl<T: CustomFloat> ScalarFluxTask<T> {
-    /// Constructor
+    /// Constructor.
     pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
         let cell = vec![vec![zero::<T>(); num_groups]; domain.cell_state.len()];
         Self { cell }
     }
 
-    /// Reset fields to their default value i.e. 0.
+    /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
         self.cell.iter_mut().for_each(|sf_cell| {
             sf_cell.fill(zero());
         });
     }
 
-    /// Add another [ScalarFluxTask]'s value to its own. Replace by an overload?
+    /// Add another [ScalarFluxTask]'s value to its own.
     pub fn add(&mut self, scalar_flux_task: &ScalarFluxTask<T>) {
         let n_groups = self.cell[0].len();
         (0..self.cell.len()).for_each(|cell_idx| {
@@ -167,65 +198,88 @@ impl<T: CustomFloat> ScalarFluxTask<T> {
     }
 }
 
-/// ?
-#[derive(Debug)]
-pub struct CellTallyDomain<T: CustomFloat> {
-    pub task: Vec<CellTallyTask<T>>,
-}
-
-impl<T: CustomFloat> CellTallyDomain<T> {
-    /// Constructor
-    pub fn new(domain: &MCDomain<T>, cell_tally_replications: usize) -> Self {
-        let task = vec![CellTallyTask::new(domain); cell_tally_replications];
-        Self { task }
-    }
-}
-
-/// ?
+/// Domain-sorted _scalar-flux-data-holding_ sub-structure.
 #[derive(Debug)]
 pub struct ScalarFluxDomain<T: CustomFloat> {
     pub task: Vec<ScalarFluxTask<T>>,
 }
 
 impl<T: CustomFloat> ScalarFluxDomain<T> {
-    // Constructor
+    // Constructor.
     pub fn new(domain: &MCDomain<T>, num_groups: usize, flux_replications: usize) -> Self {
         let task = vec![ScalarFluxTask::new(domain, num_groups); flux_replications];
         Self { task }
     }
 }
 
-/// ?
-#[derive(Debug, Default)]
-pub struct FluenceDomain<T: CustomFloat> {
+//================
+// Cell tally data
+//================
+
+/// Task-specific _cell-tallied-data-holding_ sub-structure.
+#[derive(Debug, Default, Clone)]
+pub struct CellTallyTask<T: CustomFloat> {
     pub cell: Vec<T>,
 }
 
-impl<T: CustomFloat> FluenceDomain<T> {
-    pub fn add_cell(&mut self, index: usize, val: T) {
-        self.cell[index] += val;
+impl<T: CustomFloat> CellTallyTask<T> {
+    /// Constructor.
+    pub fn new(domain: &MCDomain<T>) -> Self {
+        Self {
+            cell: vec![zero(); domain.cell_state.len()],
+        }
     }
 
-    pub fn get_cell(&self, index: usize) -> T {
-        self.cell[index]
+    /// Reset fields to their default value i.e. 0.
+    pub fn reset(&mut self) {
+        self.cell = vec![zero(); self.cell.len()];
     }
 
-    pub fn size(&self) -> usize {
-        self.cell.len()
+    /// Add another [CellTallyTask]'s value to its own.
+    pub fn add(&mut self, cell_tally_task: &CellTallyTask<T>) {
+        //assert_eq!(self.cell.len(), cell_tally_task.cell.len());
+        (0..self.cell.len()).for_each(|ii| self.cell[ii] += cell_tally_task.cell[ii]);
     }
 }
 
-/// Structure used as tallies.
+/// Domain-sorted _cell-tallied-data-holding_ sub-structure.
+#[derive(Debug)]
+pub struct CellTallyDomain<T: CustomFloat> {
+    pub task: Vec<CellTallyTask<T>>,
+}
+
+impl<T: CustomFloat> CellTallyDomain<T> {
+    /// Constructor.
+    pub fn new(domain: &MCDomain<T>, cell_tally_replications: usize) -> Self {
+        let task = vec![CellTallyTask::new(domain); cell_tally_replications];
+        Self { task }
+    }
+}
+
+//========
+// Tallies
+//========
+
+/// Super-structure holding all recorded data besides time statistics.
 #[derive(Debug)]
 pub struct Tallies<T: CustomFloat> {
+    /// Balance used for cumulative and centralized statistics.
     pub balance_cumulative: Balance,
+    /// Task-specific cyclic balances.
     pub balance_task: Vec<Balance>,
+    /// Top-level structure holding scalar flux data.
     pub scalar_flux_domain: Vec<ScalarFluxDomain<T>>,
+    /// Top-level structure holding cell tallied data.
     pub cell_tally_domain: Vec<CellTallyDomain<T>>,
+    /// Top-level structure used to compute fluence data.
     pub fluence: Fluence<T>,
+    /// Energy spectrum of the problem.
     pub spectrum: EnergySpectrum,
+    /// Number of balance tallies for parallel processing. `1` means no replication.
     pub num_balance_replications: u32,
+    /// Number of flux tallies for parallel processing. `1` means no replication.
     pub num_flux_replications: u32,
+    /// Number of cell tallies for parallel processing. `1` means no replication.
     pub num_cell_tally_replications: u32,
 }
 
@@ -240,11 +294,11 @@ impl<T: CustomFloat> Tallies<T> {
     ) -> Self {
         let spectrum = EnergySpectrum::new(spectrum_name, spectrum_size);
         Self {
-            balance_cumulative: Balance::default(),
-            balance_task: Vec::new(),
-            scalar_flux_domain: Vec::new(),
-            cell_tally_domain: Vec::new(),
-            fluence: Fluence { domain: Vec::new() },
+            balance_cumulative: Default::default(),
+            balance_task: Default::default(),
+            scalar_flux_domain: Default::default(),
+            cell_tally_domain: Default::default(),
+            fluence: Default::default(),
             spectrum,
             num_balance_replications: bal_rep,
             num_flux_replications: flux_rep,
@@ -351,24 +405,7 @@ impl<T: CustomFloat> Tallies<T> {
         );
     }
 
-    /// Atomic add?
-    pub fn tally_scalar_flux(
-        &mut self,
-        value: T,
-        domain: usize,
-        task: usize,
-        cell: usize,
-        group: usize,
-    ) {
-        self.scalar_flux_domain[domain].task[task].cell[cell][group] += value;
-    }
-
-    /// Atomic add?
-    pub fn tally_cell_value(&mut self, value: T, domain: usize, task: usize, cell: usize) {
-        self.cell_tally_domain[domain].task[task].cell[cell] += value;
-    }
-
-    /// Sums above all ?
+    /// Computes the global scalar flux value in the problem.
     pub fn scalar_flux_sum(&self) -> T {
         let mut sum: T = zero();
 

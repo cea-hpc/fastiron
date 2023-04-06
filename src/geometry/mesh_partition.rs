@@ -1,3 +1,7 @@
+//! Code used to build and model the mesh of the problem
+//!
+//!
+
 use std::collections::{HashMap, VecDeque};
 
 use crate::{
@@ -7,7 +11,7 @@ use crate::{
 
 use super::{global_fcc_grid::GlobalFccGrid, grid_assignment_object::GridAssignmentObject};
 
-pub type MapType = HashMap<usize, CellInfo>;
+type MapType = HashMap<usize, CellInfo>;
 
 /// Structure used to hold cell information.
 #[derive(Debug, Clone, Copy, Default)]
@@ -23,23 +27,24 @@ pub struct CellInfo {
 }
 
 /// Structure used to represent the mesh partition of the space.
-/// Holds the different cells' information.
+///
+/// Holds all the different cells' information.
 #[derive(Debug, Clone)]
 pub struct MeshPartition {
-    /// Domain global identifier
+    /// Domain global identifier.
     pub domain_gid: usize,
-    /// Domain index
+    /// Domain index.
     pub domain_index: usize,
-    /// Foreman identifier
+    /// Foreman identifier.
     pub foreman: usize,
-    /// Map linking cell global identifier to thair [CellInfo] structure
+    /// Map linking cell global identifier to their [CellInfo] structure
     pub cell_info_map: MapType,
-    /// List of domain identifiers.
+    /// List of neighboring domain identifiers. **Should be replaced by a set**.
     pub nbr_domains: Vec<usize>,
 }
 
 impl MeshPartition {
-    /// Constructor. The structure is NOT ready to be used directly.
+    /// Constructor. The structure is **not** ready to be used directly.
     pub fn new(domain_gid: usize, domain_index: usize, foreman: usize) -> Self {
         Self {
             domain_gid,
@@ -49,7 +54,8 @@ impl MeshPartition {
             nbr_domains: Default::default(),
         }
     }
-    /// Builds the mesh partition.
+    /// Builds the mesh partition. This method needs to be called after the
+    /// constructor.
     pub fn build_mesh_partition<T: CustomFloat>(
         &mut self,
         grid: &GlobalFccGrid<T>,

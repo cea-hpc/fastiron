@@ -1,3 +1,5 @@
+//! Code used to model facets' spatial positions
+
 use num::{zero, FromPrimitive};
 
 use crate::{
@@ -5,17 +7,24 @@ use crate::{
     data::mc_vector::MCVector,
 };
 
-/// Structure representing a plane of equation `A*x + B*y + C*z + D = 0`
-/// (A,B,C) is normalized.
+/// Structure representing a plane of equation `a*x + b*y + c*z + d = 0`
+///
+/// (a, b, c) is the surface normal.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct MCGeneralPlane<T: CustomFloat> {
+    /// x axis coefficient.
     pub a: T,
+    /// y axis coefficient.
     pub b: T,
+    /// z axis coefficient.
     pub c: T,
+    /// offset coefficient.
     pub d: T,
 }
 
 impl<T: CustomFloat> MCGeneralPlane<T> {
+    /// Constructor. This creates an object corresponding to the plane formed by the
+    /// three points passed as arguments.
     pub fn new(r0: &MCVector<T>, r1: &MCVector<T>, r2: &MCVector<T>) -> Self {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
 
@@ -41,5 +50,5 @@ impl<T: CustomFloat> MCGeneralPlane<T> {
     }
 }
 
-/// List of planes associated with the facet of a cell.
+/// List of planes associated with the outward-facing facets of a cell.
 pub type MCFacetGeometryCell<T> = [MCGeneralPlane<T>; N_FACETS_OUT];

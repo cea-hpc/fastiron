@@ -1,9 +1,13 @@
+//! Code for a PRNG
+//!
+//! This module contains code used to generate pseudo random numbers.
+
 use num::FromPrimitive;
 
 use crate::constants::CustomFloat;
 
 /// Returns the pseudo-random number produced by a call to a random
-/// number generator. The returned number is a decimal in segment [0;1]
+/// number generator. The returned number is a decimal in segment \[0;1\[
 pub fn rng_sample<T: CustomFloat>(seed: &mut u64) -> T {
     // Reset the state from previous value
     *seed = 2862933555777941757u64
@@ -13,6 +17,7 @@ pub fn rng_sample<T: CustomFloat>(seed: &mut u64) -> T {
         .0;
 
     // Bijection between integers [0; 2^64[ and decimal [0; 1[
+    // The weird magic value here is 1/2^64
     let f: f64 = 5.421010862427522e-20 * (*seed as f64);
     FromPrimitive::from_f64(f).unwrap()
 }

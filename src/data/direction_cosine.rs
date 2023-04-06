@@ -1,3 +1,7 @@
+//! 3D direction modelling
+//!
+//! This module contains the structure used to model a direction in a 3D space.
+
 use num::{zero, FromPrimitive};
 
 use crate::{
@@ -5,12 +9,17 @@ use crate::{
     utils::mc_rng_state::rng_sample,
 };
 
-/// Structure used to model a direction in 3D space. Alpha, beta and
-/// gamma are Euler angles.
+/// Structure used to model a direction.
+///
+/// Alpha, beta and gamma are just a normalized (x, y, z) vector, not Euler
+/// angles.
 #[derive(Debug, Clone, Default)]
 pub struct DirectionCosine<T: CustomFloat> {
+    /// Normalized x coordinate.
     pub alpha: T,
+    /// Normalized y coordinate.
     pub beta: T,
+    /// Normalized z coordinate.
     pub gamma: T,
 }
 
@@ -35,8 +44,8 @@ impl<T: CustomFloat> DirectionCosine<T> {
     /// Rotates a 3D vector that is defined by the angles Theta and Phi
     /// in a local coordinate frame about a polar angle and azimuthal angle
     /// described by the direction cosine. Hence, caller passes in
-    /// sin_Theta and cos_Theta referenced from the local z-axis and sin_Phi
-    /// and cos_Phi referenced from the local x-axis to describe the vector V
+    /// `sin_Theta` and `cos_Theta` referenced from the local z-axis and `sin_Phi`
+    /// and `cos_Phi` referenced from the local x-axis to describe the vector V
     /// to be rotated. The direction cosine describes global theta and phi
     /// angles that the vector V is to be rotated about.
     /// `cos_theta_zero`/`sin_theta_zero` and `cos_phi_zero`/`sin_phi_zero`
