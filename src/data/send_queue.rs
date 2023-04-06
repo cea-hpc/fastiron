@@ -1,19 +1,21 @@
+use crate::{constants::CustomFloat, particles::mc_particle::MCParticle};
+
 /// Structure to record which particles need to be sent to
 /// which neighbor process during tracking.
 #[derive(Debug, Clone, PartialEq)]
-pub struct SendQueueTuple {
+pub struct SendQueueTuple<T: CustomFloat> {
     pub neighbor: usize,
-    pub particle_index: usize,
+    pub particle: MCParticle<T>,
 }
 
 /// Structure used to store particle index and neighbor index
 /// for particles that hit TransitOffProcessor (See MCSubfacetAdjacencyEvent).
 #[derive(Debug, Clone)]
-pub struct SendQueue {
-    pub data: Vec<SendQueueTuple>,
+pub struct SendQueue<T: CustomFloat> {
+    pub data: Vec<SendQueueTuple<T>>,
 }
 
-impl SendQueue {
+impl<T: CustomFloat> SendQueue<T> {
     /// Get the total size of the SendQueue.
     pub fn size(&self) -> usize {
         self.data.len()
@@ -38,10 +40,10 @@ impl SendQueue {
     }
 
     /// Add items to the SendQueue.
-    pub fn push(&mut self, neighbor: usize, vault_index: usize) {
+    pub fn push(&mut self, neighbor: usize, pp: &MCParticle<T>) {
         self.data.push(SendQueueTuple {
             neighbor,
-            particle_index: vault_index,
+            particle: pp.clone(),
         });
     }
 

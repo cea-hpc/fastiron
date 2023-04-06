@@ -18,7 +18,7 @@ pub struct ParticleVaultContainer<T: CustomFloat> {
     pub extra_vault_index: usize,
     /// Stores particle index and neighbor index for any particles that hit
     /// TransitOffProcessor (See MCSubfacetAdjacencyEvent)
-    pub send_queue: SendQueue,
+    pub send_queue: SendQueue<T>,
     /// List of active particle vaults.
     pub processing_vaults: Vec<ParticleVault<T>>,
     /// List of census-ed particle vaults.
@@ -96,9 +96,16 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
         }
     }
 
-    /// Returns a reference to the internal [SendQueue] object.
-    pub fn get_send_queue(&mut self) -> &mut SendQueue {
-        &mut self.send_queue
+    /// Process the data of the queue.
+    pub fn read_send_queue(&mut self) {
+        // .clone() is an ugly solution; might move sendQ out of the container
+        self.send_queue.data.clone().iter().for_each(|sq_tuple| {
+            // add the particles to extra vault; processing vaults are borrowed
+            // by the iterator
+            // this would be the "send" part (tx)
+            self.add_extra_particle(sq_tuple.particle.clone());
+        });
+        self.send_queue.clear();
     }
 
     /// Counts the total number of particles in processing vaults
@@ -295,5 +302,11 @@ impl<T: CustomFloat> ParticleVaultContainer<T> {
         });
 
         self.extra_vault.iter_mut().for_each(|vv| vv.clear());
+    }
+
+    pub fn test_done_new(&self) -> bool {
+        let sendq_empty = self.send_queue.data.is_empty();
+        let processing_empty = self.particles_processing_size() == 0;
+        sendq_empty & processing_empty
     }
 }
