@@ -1,28 +1,52 @@
-Fastiron
-========
+# [fastiron]
 
-Introduction
-------------
+## Introduction
 
-Some introduction
+[fastiron] is a port of the [Quicksilver][quicksilver] mini app in Rust. It mimics Monte-Carlo particle transport
+simulation codes to study their behavior on various hardware architectures.
 
-Building Fastiron
------------------
+Currently, [fastiron] aims at studying shared-memory parallelism and does not implement any distributed parallelism.
 
-Some tutorial
+## Building Fastiron
 
-Running Fastiron
-----------------
+[fastiron] is a classical Rust program and can be built using `cargo`. Just clone the repository and run `cargo`:
 
-Another Tutorial
+```shell
+cargo build --release
+```
 
-References
-----------
+## Running Fastiron
 
-1. Some
-2. references
+[fastiron] mimics the original [Quicksilver][quicksilver] executable: they share command line arguments and parameter
+files.
 
-License
--------
+```shell
+cargo run --bin=fastiron -- -i input_files/QS_originals/AllEscape/allEscape.inp -e energy -S section -n 10000
+```
 
-Some policy
+## Contributing
+
+Contributions are welcome and accepted as pull requests on [GitHub][fastiron].
+
+## License
+
+Licensed under either of
+
+* Apache License, Version 2.0
+  ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+* MIT license
+  ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+The [SPDX](https://spdx.dev) license identifier for this project is `MIT OR Apache-2.0`.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+
+
+[fastiron]: https://github.com/cea-hpc/fastiron
+
+[quicksilver]: https://github.com/LLNL/Quicksilver
+
