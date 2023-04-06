@@ -1,3 +1,5 @@
+//! Utilities used both to setup and run the simulation.
+
 pub mod comm_object;
 pub mod coral_benchmark_correctness;
 pub mod decomposition_object;
