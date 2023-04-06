@@ -1,3 +1,8 @@
+//! Code used to fetch and hold execution information
+//!
+//! This module is currently useless but will be built on when introducing
+//! parallelism to the program.
+
 #[derive(Debug, Default)]
 pub enum ExecPolicy {
     #[default]

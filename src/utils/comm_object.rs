@@ -1,3 +1,5 @@
+//! Code used for coordinated initialization of domains & meshes
+
 use crate::geometry::mesh_partition::MeshPartition;
 
 /// Structure used to hold a global mapping of [MeshPartition] objects
@@ -7,7 +9,6 @@ pub struct CommObject {
     pub gid_to_idx: Vec<usize>,
 }
 
-/// To be removed?
 impl CommObject {
     /// Constructor.
     pub fn new(partition: &[MeshPartition]) -> Self {

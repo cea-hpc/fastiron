@@ -1,14 +1,37 @@
+//! 3D vectors
+//!
+//! This modules contains a custom type for 3D vectors.
+
 use std::fmt::Debug;
 
 use num::FromPrimitive;
 
-use crate::constants::{physical::TINY_FLOAT, CustomFloat};
+use crate::constants::{sim::TINY_FLOAT, CustomFloat};
 
 /// Custom type for vector representation.
+///
+/// # Examples
+///
+/// ```rust
+/// use fastiron::data::mc_vector::MCVector;
+///
+/// let v = MCVector {x: 1.0, y: 1.0, z: 1.0};
+/// let mut w = MCVector {x: 2.0, y: 2.0, z: 2.0};
+///
+/// // v + w == (3.0, 3.0, 3.0)
+/// assert_eq!(v + w, MCVector {x: 3.0, y: 3.0, z: 3.0});
+/// // w/2 == v
+/// w /= 2.0;
+/// assert!(w.is_almost_equal(&v));
+///
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct MCVector<T: CustomFloat> {
+    /// x axis coordinate.
     pub x: T,
+    /// y axis coordinate.
     pub y: T,
+    /// z axis coordinate.
     pub z: T,
 }
 
@@ -54,6 +77,8 @@ impl<T: CustomFloat> MCVector<T> {
         }
     }
 }
+
+// Operators
 
 impl<T: CustomFloat> core::ops::Add<MCVector<T>> for MCVector<T> {
     type Output = MCVector<T>;

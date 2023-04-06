@@ -1,3 +1,8 @@
+//! Event-specific code for particles crossing a cell's facet
+//!
+//! This module contains code that updates a particle according to the facet
+//! it is crossing. See [MCSubfacetAdjacencyEvent] for more information.
+
 use crate::{
     constants::CustomFloat, data::tallies::MCTallyEvent,
     geometry::mc_facet_adjacency::MCSubfacetAdjacencyEvent, montecarlo::MonteCarlo,
@@ -5,6 +10,11 @@ use crate::{
 };
 
 /// Computes and transform accordingly a [MCParticle] object crossing a facet.
+///
+/// This functions update a particle's locational data according to one of the
+/// four defined adjacency events ([MCSubfacetAdjacencyEvent]). Note that in a
+/// sequential or a memory-shared parallelism context, there are no off-processor
+/// transit.
 pub fn facet_crossing_event<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     mcco: &mut MonteCarlo<T>,

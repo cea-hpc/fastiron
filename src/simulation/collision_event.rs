@@ -1,3 +1,9 @@
+//! Event-specific code for particles colliding
+//!
+//! This module contains code that process particles undergoing a collision
+//! from beginning to end. Note that _collision_ refers to reaction with the
+//! particle's environment, not in-between particles.
+
 use num::FromPrimitive;
 
 use crate::{
@@ -12,8 +18,7 @@ use crate::{
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
-/// Update the a particle's energy and trajectory after a collision.
-pub fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParticle<T>) {
+fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParticle<T>) {
     // constants
     let pi: T = FromPrimitive::from_f64(PI).unwrap();
     let c: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
@@ -42,8 +47,16 @@ pub fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCP
     particle.num_mean_free_paths = -one * rdm_number.ln();
 }
 
-/// Computes and transform accordingly a [MCParticle] object that
-/// undergo a collision. Returns true if the particle will continue.
+/// Transforms a given particle according to an internally drawn type of collision.
+///
+/// The function calls method from [`super::macro_cross_section`] module to pick
+/// the reaction the particle will undergo (See [`ReactionType`]). The particle is then updated and the
+/// collision tallied. Finally, particles are created / invalidated accordingly to
+/// the picked reaction:
+///
+/// - Absorption reaction: the particle is invalidated.
+/// - Fission reaction: offspring particles are created from the colliding one.
+/// - Scattering reaction: no additional modifications occur.
 pub fn collision_event<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
@@ -125,6 +138,9 @@ pub fn collision_event<T: CustomFloat>(
         ReactionType::Undefined => panic!(),
     }
 
+    // ================
+    // Particle updates
+
     // Early return
     if n_out == 0 {
         return false;
@@ -165,7 +181,7 @@ pub fn collision_event<T: CustomFloat>(
 mod tests {
     use super::*;
     use crate::{
-        constants::physical::TINY_FLOAT,
+        constants::sim::TINY_FLOAT,
         data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
     };
     use num::Float;

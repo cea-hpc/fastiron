@@ -1,24 +1,30 @@
+//! Material-related data and modelling
+//!
+//! This module contains code used to store material-related data. It is mainly used when
+//! initializing the simulation, in order to build the environment of the problem.
+
 use num::FromPrimitive;
 
 use crate::constants::CustomFloat;
 
-/// Structure used to represent an isotope.
+/// Structure used to represent an isotope of a material.
 #[derive(Debug, Default)]
 pub struct Isotope<T: CustomFloat> {
     /// Global identifier of the isotope in NuclearData.
     pub gid: usize,
-    /// Atomic fraction.
+    /// Atomic fraction of the isotope in the material. Not to be confused with
+    /// the related quantity _atomic ratio_.
     pub atom_fraction: T,
 }
 
-/// Structure used to store a material's information
+/// Structure used to store a material's information.
 #[derive(Debug)]
 pub struct Material<T: CustomFloat> {
-    /// Name of the material
+    /// Name of the material.
     pub name: String,
-    /// Mass of the material (kg).
+    /// Mass of the material in grams.
     pub mass: T,
-    /// List of present isotopes.
+    /// List of the isotopes making up the material.
     pub iso: Vec<Isotope<T>>,
 }
 

@@ -8,7 +8,7 @@ Simulation:
    lx: 100
    ly: 100
    lz: 100
-   nParticles: 10000
+   nParticles: 1000000
    batchSize: 0
    nBatches: 10
    nSteps: 10
@@ -23,6 +23,9 @@ Simulation:
    eMin: 1e-08
    nGroups: 230
    lowWeightCutoff: 0.001
+   bTally: 1
+   fTally: 1
+   cTally: 1
    coralBenchmark: 0
 
 

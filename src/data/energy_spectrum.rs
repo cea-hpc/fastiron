@@ -1,3 +1,8 @@
+//! Discrete energy spectrum
+//!
+//! This module contains the structure used to store and build a discrete
+//! energy spectrum from the problem's population.
+
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::Write;
@@ -8,13 +13,22 @@ use crate::montecarlo::MonteCarlo;
 /// Structure used to represent the energy spectrum
 /// of the problem, i.e. the distribution of particles
 /// among energy levels.
+///
+/// The spectrum is simply done by sorting particles into energy groups and
+/// counting the number of particles in each group. Note that the entire range of
+/// values is separated in segments using a logarithmic scale.\
+/// The spectrum is printed as a MarkDown table if an output name file is specified
+/// at launch.
 #[derive(Debug)]
 pub struct EnergySpectrum {
+    /// Name of the output file.
     pub file_name: String,
+    /// Population of the energy groups i.e. count of particle in each one.
     pub census_energy_spectrum: Vec<u64>,
 }
 
 impl EnergySpectrum {
+    /// Constructor.
     pub fn new(name: String, size: usize) -> Self {
         Self {
             file_name: name,
@@ -22,7 +36,8 @@ impl EnergySpectrum {
         }
     }
 
-    /// Print the spectrum.
+    /// Print the spectrum. This function does nothing if no output file were
+    /// specififed at launch.
     pub fn print_spectrum<T: CustomFloat>(&self, mcco: &MonteCarlo<T>) {
         if self.file_name.is_empty() {
             return;
