@@ -1,3 +1,14 @@
+//! Code for segment outcome computation, i.e. whichever event the particle
+//! undergoes next
+//!
+//! This module contains the function computing which event a given particle
+//! will undergo next. This is done by using the notion of _distance_ to an event
+//! and finding the minimum distance between all the possible events.\
+//! The particle's position and time to census is also updated, while
+//! event-specific modifications are left to event-specific functions. The result
+//! is returned using an enum ([`MCSegmentOutcome`])that takes value according to
+//! the event.
+
 use core::panic;
 use std::fmt::Debug;
 
@@ -5,7 +16,7 @@ use num::{zero, FromPrimitive};
 
 use crate::{
     constants::{
-        physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
+        sim::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
         CustomFloat,
     },
     data::tallies::MCTallyEvent,
@@ -19,13 +30,26 @@ use crate::{
 /// Enum representing the outcome of the current segment.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MCSegmentOutcome {
+    /// Unused. **May be removed**.
     Initialize = -1,
+    /// Value for collision event.
     Collision = 0,
+    /// Value for facet crossing event.
     FacetCrossing = 1,
+    /// Value for census, i.e. no event.
     Census = 2,
 }
 
 /// Computes the outcome of the current segment for a given particle.
+///
+/// Three outcomes are possible for a given particle: census, facet crossing or
+/// collision. The distances are computed as follows:
+///
+/// - Census: The distance is simply equal to the speed of the particle multiplied
+///   by the time left until census.
+/// - Facet crossing: The distance is computed in a similar way by the function
+///   [`nearest_facet()`].
+/// - Collision: The distance is computed using probabilities.
 pub fn outcome<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
@@ -145,14 +169,10 @@ pub fn outcome<T: CustomFloat>(
         particle.time_to_census = zero();
     }
 
-    // update tallies
-    mcco.tallies.tally_scalar_flux(
-        particle.segment_path_length * particle.weight,
-        particle.domain,
-        flux_tally_idx,
-        particle.cell,
-        particle.energy_group,
-    );
+    // update scalar flux tally
+    // atomic in original code
+    mcco.tallies.scalar_flux_domain[particle.domain].task[flux_tally_idx].cell[particle.cell]
+        [particle.energy_group] += particle.segment_path_length * particle.weight;
 
     segment_outcome
 }
@@ -182,7 +202,7 @@ fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::constants::physical::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT};
+    use crate::constants::sim::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT};
     use num::zero;
 
     #[test]

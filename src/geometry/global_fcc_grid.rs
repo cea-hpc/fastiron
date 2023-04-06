@@ -1,3 +1,4 @@
+//! Code used to build and navigate the basis of the mesh
 use num::{zero, FromPrimitive};
 
 use crate::{
@@ -11,25 +12,25 @@ use crate::{
 /// Structure representing the spatial grid of the problem.
 #[derive(Debug)]
 pub struct GlobalFccGrid<T: CustomFloat> {
-    /// Number of cells along the x axis
+    /// Number of cells along the x axis.
     pub nx: usize,
-    /// Number of cells along the y axis
+    /// Number of cells along the y axis.
     pub ny: usize,
-    /// Number of cells along the z axis
+    /// Number of cells along the z axis.
     pub nz: usize,
 
-    /// Size of the problem along the x axis (cm)
+    /// Size of the problem along the x axis (cm).
     pub lx: T,
-    /// Size of the problem along the y axis (cm)
+    /// Size of the problem along the y axis (cm).
     pub ly: T,
-    /// Size of the problem along the z axis (cm)
+    /// Size of the problem along the z axis (cm).
     pub lz: T,
 
-    /// Size of a mesh cell along the x axis (cm)
+    /// Size of a mesh cell along the x axis (cm).
     pub dx: T,
-    /// Size of a mesh cell along the y axis (cm)
+    /// Size of a mesh cell along the y axis (cm).
     pub dy: T,
-    /// Size of a mesh cell along the z axis (cm)
+    /// Size of a mesh cell along the z axis (cm).
     pub dz: T,
 }
 
@@ -65,7 +66,7 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
         ))
     }
 
-    /// Returns the center of the given cell.
+    /// Returns the voordinate of the center of the given cell.
     pub fn cell_center(&self, idx_cell: usize) -> MCVector<T> {
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
         let tt: Tuple3 = self.cell_idx_to_tuple(idx_cell);

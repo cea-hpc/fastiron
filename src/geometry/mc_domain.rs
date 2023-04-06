@@ -1,3 +1,7 @@
+//! Code used for the domain separation model
+//!
+//!
+
 use std::collections::HashMap;
 
 use num::{one, zero, FromPrimitive};
@@ -22,10 +26,14 @@ use super::{
     mesh_partition::{CellInfo, MeshPartition},
 };
 
+/// Structure used to hold information related a cell's face.
 #[derive(Debug, Clone, Copy, Default)]
-struct FaceInfo {
+pub struct FaceInfo {
+    /// Event asociated to the crossing of the face.
     pub event: MCSubfacetAdjacencyEvent,
+    /// Current cell's data.
     pub cell_info: CellInfo,
+    /// Index of the domain of the neighboring cell.
     pub nbr_idx: Option<usize>,
 }
 
@@ -60,20 +68,20 @@ const OPPOSING_FACET: [usize; N_FACETS_OUT] = [
     7, 6, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 8, 11, 10, 9, 20, 23, 22, 21, 16, 19, 18, 17,
 ];
 
-/// Structure that manages a data set on a mesh-like geometry
+/// Structure that manages a data set on a mesh-like geometry.
 #[derive(Debug)]
 pub struct MCMeshDomain<T: CustomFloat> {
-    /// Global identifier of the domain
+    /// Global identifier associated of the domain.
     pub domain_gid: usize,
-    /// List of domain global identifiers
+    /// Global identifiers of the neighboring domains.
     pub nbr_domain_gid: Vec<usize>,
-    /// List of ranks
+    /// Ranks of the neighboring domains.
     pub nbr_rank: Vec<usize>,
-    /// List of nodes
+    /// List of nodes defining the mesh's geometry.
     pub node: Vec<MCVector<T>>,
-    /// List of connectivity between cells
+    /// List of connectivity between cells of the mesh.
     pub cell_connectivity: Vec<MCFacetAdjacencyCell>,
-    /// List of cells
+    /// List of the cells of the mesh.
     pub cell_geometry: Vec<MCFacetGeometryCell<T>>,
 }
 
@@ -137,14 +145,14 @@ impl<T: CustomFloat> MCMeshDomain<T> {
     }
 }
 
-/// Structure used to manage a domain, i.e. a spatial region of the problem
+/// Structure used to manage a domain, i.e. a spatial region of the problem.
 #[derive(Debug)]
 pub struct MCDomain<T: CustomFloat> {
-    /// Global domain number
+    /// Global domain identifier.
     pub global_domain: usize,
-    /// List of cells and their state (See [MCCellState] for more)
+    /// List of cells and their state. See [MCCellState] for more information.
     pub cell_state: Vec<MCCellState<T>>,
-    /// Mesh of the domain
+    /// Mesh of the domain.
     pub mesh: MCMeshDomain<T>,
 }
 
@@ -260,7 +268,6 @@ impl<T: CustomFloat> MCDomain<T> {
     }
 }
 
-/// Need to compare to original code
 fn bootstrap_node_map<T: CustomFloat>(
     partition: &MeshPartition,
     grid: &GlobalFccGrid<T>,
@@ -288,19 +295,6 @@ fn bootstrap_node_map<T: CustomFloat>(
             face_centers.entry(node_gids[ii]).or_insert_with(|| len);
         });
     }
-    // Debug
-    // probably happens because of a specific behavior of
-    // maps with keys that are already present
-    face_centers.values().for_each(|val| {
-        if *val == face_centers.len() {
-            println!("should not happen1");
-        }
-    });
-    node_idx_map.values().for_each(|val| {
-        if *val == node_idx_map.len() {
-            println!("should not happen2");
-        }
-    });
 
     face_centers.values_mut().for_each(|val| {
         *val += node_idx_map.len();

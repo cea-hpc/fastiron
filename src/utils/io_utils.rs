@@ -1,3 +1,7 @@
+//! Code used to manage I/O
+//!
+//! This module contains code used for the CLI and parsing input files.
+
 use std::{fs::File, io::Read};
 
 use crate::constants::CustomFloat;
@@ -18,7 +22,7 @@ pub enum InputError {
     BadBlockType,
 }
 
-/// Structure used to parse command line arguments using [clap].
+/// Fastiron, a Rust port of the Quicksilver proxy-app
 #[derive(Debug, Parser)]
 #[command(author, version, about, arg_required_else_help(true))]
 pub struct Cli {

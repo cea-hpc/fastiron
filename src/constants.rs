@@ -1,3 +1,9 @@
+//! Hardcoded constants used by the simulation
+//!
+//! Constants are sorted in sub-modules according to their nature.
+//! Are also included aliases, as well as the custom trait used to
+//! introduce a generic floatting point type in the code.
+
 use std::iter::Sum;
 use std::str::FromStr;
 use std::{
@@ -20,12 +26,12 @@ pub type Tuple4 = (usize, usize, usize, usize);
 
 // generic float type
 
+/// Custom trait for floatting point number
 pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
-pub trait UtilsFloat: Default + Debug + Display + LowerExp {}
-pub trait CustomFloat:
-    Float + FromPrimitive + OpsFloat + UtilsFloat + FromStr + From<f32> + Sum
-{
-}
+/// Custom trait for floatting point number
+pub trait UtilsFloat: Default + Debug + Display + LowerExp + FromStr + From<f32> + Sum {}
+/// Custom super-trait for floatting point number
+pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {}
 
 impl OpsFloat for f32 {}
 impl UtilsFloat for f32 {}
@@ -39,42 +45,63 @@ impl CustomFloat for f64 {}
 // constants modules
 //===================
 
-/// Modules containing all simulation-related constants.
+/// Simulation-related constants
 pub mod sim {
-    /// Number of timers, i.e. numbers of section we keep track of.
+    //!
+    //! The constants here have no physical grounding and are just related to
+    //! the nature of the running simulation.
+
+    /// Number of timers, i.e. numbers of section we keep track of
     pub const N_TIMERS: usize = 6;
-    /// Number of particle species.
+    /// Number of particle species
     pub const N_SPECIES: usize = 1;
-}
-
-/// Module containing all physics-related constants.
-pub mod physical {
-    // The below lines of comments are taken directly from Quicksilver
-    // ---
-    // The values of all physical constants are taken from:
-    // 2006 CODATA which is located on the web at
-    // http://physics.nist.gov/cuu/Constants/codata.pdf
-
-    // The units of physical quantities used by the code are:
-    //    Mass         -  gram (g)
-    //    Length       -  centimeter (cm)
-    //    Time         -  second (s)
-    //    Energy       -  million electron-volts (MeV) : of a particle
-    //    Energy       -  erg (g cm^2/s^2): in some background calculation
-    //    Temperature  -  thousand electron-volts (keV)
-
-    pub const NEUTRON_REST_MASS_ENERGY: f64 = 9.395656981095e+2; // MeV
-    pub const PI: f64 = std::f64::consts::PI;
-    pub const LIGHT_SPEED: f64 = 2.99792458e+10; // cm/s
-
+    /// Threshold value for decimal number
     pub const TINY_FLOAT: f64 = 1e-13;
+    /// Threshold value for decimal number
     pub const SMALL_FLOAT: f64 = 1e-10;
+    /// Threshold value for decimal number
     pub const HUGE_FLOAT: f64 = 1e75;
 }
 
-/// Modules containing all mesh and geometry related constants. The used mesh
-/// is made of cells (hexahedron), each divided in 12 sub-cells (tetrahedron).
+/// Physics-related constants
+pub mod physical {
+    //!
+    //! The below text is taken directly from a Quicksilver [source file][1]:
+    //!
+    //! The values of all physical constants are taken from
+    //! 2006 CODATA which is located [here][2].
+    //!
+    //! The units of physical quantities used by the code are:
+    //!
+    //! |   Quantity     |  Unit
+    //! |----------------|---------------------------------------------------
+    //! |   Mass         |  gram (g)
+    //! |   Length       |  centimeter (cm)
+    //! |   Time         |  second (s)
+    //! |   Energy       |  million electron-volts (MeV) : of a particle
+    //! |   Energy       |  erg (g cm^2/s^2): in some background calculation
+    //! |   Temperature  |  thousand electron-volts (keV)
+    //!
+    //! [1]: https://github.com/LLNL/Quicksilver/blob/master/src/PhysicalConstants.cc
+    //! [2]: http://physics.nist.gov/cuu/Constants/codata.pdf
+
+    /// Neutron rest energy (MeV)
+    pub const NEUTRON_REST_MASS_ENERGY: f64 = 9.395656981095e+2;
+    /// [Pick your definition][3]
+    ///
+    /// [3]: https://en.wikipedia.org/wiki/Pi
+    pub const PI: f64 = std::f64::consts::PI;
+    /// Light speed (cm/s)
+    pub const LIGHT_SPEED: f64 = 2.99792458e+10;
+}
+
+/// Mesh and geometry related constants
 pub mod mesh {
+    //!
+    //! The used mesh is made of cells (hexahedron), each divided in 12 sub-cells (tetrahedron).
+    //!
+    //! TODO: insert an image?
+    //!
     use super::Tuple4;
 
     /// Number of points per tetrahedron facet.
@@ -103,7 +130,7 @@ pub mod mesh {
     ];
     /// Number of faces defining a cell.
     pub const N_FACES: usize = 6;
-    /// Offsets of the faces of a cell
+    /// Offsets of the faces of a cell.
     pub const FACE_OFFSET: [(i32, i32, i32); N_FACES] = [
         (1, 0, 0),
         (-1, 0, 0),
