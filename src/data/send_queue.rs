@@ -21,7 +21,7 @@ pub struct SendQueueTuple<T: CustomFloat> {
 /// this structure. See
 /// [MCSubfacetAdjacencyEvent][crate::geometry::mc_facet_adjacency::MCSubfacetAdjacencyEvent]
 /// for more information.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SendQueue<T: CustomFloat> {
     /// Buffer structure.
     pub data: Vec<SendQueueTuple<T>>,

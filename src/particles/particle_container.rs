@@ -2,7 +2,10 @@ use crate::{constants::CustomFloat, data::send_queue::SendQueue};
 
 use super::mc_base_particle::MCBaseParticle;
 
+#[derive(Debug, Clone)]
 /// Structure used as a container for all particles.
+///
+/// The [Clone] implementation should not be used except at the beginning of the program.
 pub struct ParticleContainer<T: CustomFloat> {
     /// Container for particles that have yet to be processed.
     pub processing_particles: Vec<MCBaseParticle<T>>,
@@ -17,6 +20,16 @@ pub struct ParticleContainer<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> ParticleContainer<T> {
+    /// Constructor. The appropriate capacity is computed beforehand.
+    pub fn new(regular_capacity: usize, extra_capacity: usize) -> Self {
+        Self {
+            processing_particles: Vec::with_capacity(regular_capacity),
+            processed_particles: Vec::with_capacity(regular_capacity),
+            extra_particles: Vec::with_capacity(extra_capacity),
+            send_queue: Default::default(),
+        }
+    }
+
     /// Processes the particles stored in the send queue.
     /// - In a shared memory context, this is just a transfer from the send queue
     ///   to the extra storage

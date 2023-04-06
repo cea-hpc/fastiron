@@ -13,6 +13,7 @@ pub enum ExecPolicy {
 pub struct MCProcessorInfo {
     pub exec_policy: ExecPolicy,
     pub num_processors: usize,
+    pub num_threads: usize,
 }
 
 impl MCProcessorInfo {
@@ -27,6 +28,7 @@ impl Default for MCProcessorInfo {
         Self {
             exec_policy: Default::default(),
             num_processors: 1,
+            num_threads: 1,
         }
     }
 }

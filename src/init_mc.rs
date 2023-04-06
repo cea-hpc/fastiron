@@ -12,12 +12,29 @@ use crate::{
     },
     montecarlo::MonteCarlo,
     parameters::Parameters,
+    particles::particle_container::ParticleContainer,
     utils::{
         comm_object::CommObject, decomposition_object::DecompositionObject,
-        mc_rng_state::rng_sample,
+        mc_processor_info::MCProcessorInfo, mc_rng_state::rng_sample,
     },
 };
 use num::{one, zero, Float, FromPrimitive};
+
+/// Creates the correct number of particle containers for simulation.
+///
+/// The correct number is determined according to simulation parameters & execution policy.
+pub fn init_particle_containers<T: CustomFloat>(
+    params: &Parameters<T>,
+    proc_info: &MCProcessorInfo, // may be removed if we add it to parameters
+) -> Vec<ParticleContainer<T>> {
+    // compute the capacities using number of threads, target number of particles & fission statistical offset
+    let target_n_particles = params.simulation_params.n_particles as usize;
+    let regular_capacity_per_container = target_n_particles / proc_info.num_threads;
+    let regular_capacity = regular_capacity_per_container + regular_capacity_per_container / 10; // approximate 10% margin
+    let extra_capacity = regular_capacity_per_container;
+    let container = ParticleContainer::new(regular_capacity, extra_capacity);
+    vec![container; proc_info.num_threads]
+}
 
 /// Creates a [MonteCarlo] object using the specified parameters.
 pub fn init_mc<T: CustomFloat>(params: Parameters<T>) -> MonteCarlo<T> {
@@ -33,6 +50,10 @@ pub fn init_mc<T: CustomFloat>(params: Parameters<T>) -> MonteCarlo<T> {
 
     mcco
 }
+
+//==================
+// Private functions
+//==================
 
 fn init_proc_info<T: CustomFloat>(_mcco: &mut MonteCarlo<T>) {}
 
