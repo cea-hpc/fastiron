@@ -175,7 +175,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
                 self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
             });
 
-            // Sum on replciated scalar flux tallies and resets them
+            // Sum on replicated scalar flux tallies and resets them
             (1..self.tallies.num_flux_replications).for_each(|rep_idx| {
                 let val =
                     self.tallies.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?

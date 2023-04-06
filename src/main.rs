@@ -1,8 +1,9 @@
 use clap::Parser;
 use fastiron::constants::CustomFloat;
-use fastiron::init_mc::init_mc;
+use fastiron::init_mc::{init_mc, init_particle_containers};
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::Parameters;
+use fastiron::particles::particle_container::ParticleContainer;
 use fastiron::simulation::cycle_tracking::cycle_tracking_guts;
 use fastiron::simulation::population_control;
 use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
@@ -15,19 +16,21 @@ fn main() {
     let params = Parameters::get_parameters(cli).unwrap();
     println!("Printing Parameters:\n{params:#?}");
 
-    let load_balance: bool = params.simulation_params.load_balance;
-
     let n_steps = params.simulation_params.n_steps;
 
     let mut mcco_obj: MonteCarlo<f64> = init_mc(params);
     let mcco = &mut mcco_obj;
 
+    // todo: write a cleaner, more flexible way to use the vector for individual containers
+    let mut containers = init_particle_containers(&mcco.params, &mcco.processor_info);
+    let container = &mut containers[0];
+
     mc_fast_timer::start(mcco, Section::Main);
 
     for _ in 0..n_steps {
-        cycle_init(mcco, load_balance);
-        cycle_tracking(mcco);
-        cycle_finalize(mcco);
+        cycle_init(mcco, container);
+        cycle_tracking(mcco, container);
+        cycle_finalize(mcco, container);
         if mcco.params.simulation_params.cycle_timers {
             mcco.fast_timer.last_cycle_report();
         }
@@ -49,7 +52,7 @@ pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.tallies.spectrum.print_spectrum(mcco);
 }
 
-pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) {
+pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut ParticleContainer<T>) {
     mc_fast_timer::start(mcco, Section::CycleInit);
 
     mcco.clear_cross_section_cache();
@@ -63,13 +66,14 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
     let tmp = mcco.particle_vault_container.particles_processing_size() as u64;
     mcco.tallies.balance_task[0].start = tmp;
 
-    population_control::source_now(mcco);
+    population_control::source_now(mcco, container);
 
-    population_control::population_control(mcco, load_balance);
+    population_control::population_control(mcco, container);
 
     population_control::roulette_low_weight_particles(
         mcco.params.simulation_params.low_weight_cutoff,
         mcco.source_particle_weight,
+        container,
         &mut mcco.particle_vault_container,
         &mut mcco.tallies.balance_task[0],
     );
@@ -77,7 +81,10 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) 
     mc_fast_timer::stop(mcco, Section::CycleInit);
 }
 
-pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
+pub fn cycle_tracking<T: CustomFloat>(
+    mcco: &mut MonteCarlo<T>,
+    container: &mut ParticleContainer<T>,
+) {
     mc_fast_timer::start(mcco, Section::CycleTracking);
     let mut done = false;
     loop {
@@ -138,7 +145,10 @@ pub fn cycle_tracking<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mc_fast_timer::stop(mcco, Section::CycleTracking);
 }
 
-pub fn cycle_finalize<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
+pub fn cycle_finalize<T: CustomFloat>(
+    mcco: &mut MonteCarlo<T>,
+    container: &mut ParticleContainer<T>,
+) {
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
     mcco.tallies.balance_task[0].end =

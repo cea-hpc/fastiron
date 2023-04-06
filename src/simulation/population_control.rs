@@ -15,7 +15,7 @@ use crate::{
     montecarlo::MonteCarlo,
     particles::{
         mc_base_particle::MCBaseParticle, mc_particle::MCParticle,
-        particle_vault_container::ParticleVaultContainer,
+        particle_container::ParticleContainer, particle_vault_container::ParticleVaultContainer,
     },
     simulation::mct::generate_coordinate_3dg,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
@@ -29,10 +29,14 @@ use crate::{
 /// If the split factor is strictly below one, there are too many particles,
 /// if it is striclty superior to one, there are too little. Particles are
 /// then either randomly killed or spawned to get to the desired number.
-pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) {
+pub fn population_control<T: CustomFloat>(
+    mcco: &mut MonteCarlo<T>,
+    container: &mut ParticleContainer<T>,
+) {
     let mut target_n_particles: usize = mcco.params.simulation_params.n_particles as usize;
     let mut global_n_particles: usize = 0;
     let local_n_particles: usize = mcco.particle_vault_container.particles_processing_size();
+    let load_balance = mcco.params.simulation_params.load_balance;
 
     if load_balance {
         // Spread the target number of particle among the processors
@@ -59,6 +63,7 @@ pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance
         population_control_guts(
             split_rr_factor,
             local_n_particles,
+            container,
             &mut mcco.particle_vault_container,
             &mut mcco.tallies.balance_task[0],
         );
@@ -70,6 +75,7 @@ pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance
 fn population_control_guts<T: CustomFloat>(
     split_rr_factor: T,
     current_n_particles: usize,
+    container: &mut ParticleContainer<T>,
     vault_container: &mut ParticleVaultContainer<T>,
     task_balance: &mut Balance,
 ) {
@@ -138,6 +144,7 @@ fn population_control_guts<T: CustomFloat>(
 pub fn roulette_low_weight_particles<T: CustomFloat>(
     low_weight_cutoff: T,
     source_particle_weight: T,
+    container: &mut ParticleContainer<T>,
     vault_container: &mut ParticleVaultContainer<T>,
     task_balance: &mut Balance,
 ) {
@@ -178,7 +185,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 /// is called (once per cycle), 10% of the target number of particles are
 /// spawned. _Where_ they are spawned depends on both deterministic factors and
 /// randomness.
-pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
+pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut ParticleContainer<T>) {
     let time_step = mcco.time_info.time_step;
 
     let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];

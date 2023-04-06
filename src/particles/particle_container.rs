@@ -30,6 +30,15 @@ impl<T: CustomFloat> ParticleContainer<T> {
         }
     }
 
+    /// Swap the processing and processed particle lists. This function is used in-between
+    /// iterations.
+    pub fn swap_processing_processed(&mut self) {
+        core::mem::swap(
+            &mut self.processing_particles,
+            &mut self.processed_particles,
+        );
+    }
+
     /// Processes the particles stored in the send queue.
     /// - In a shared memory context, this is just a transfer from the send queue
     ///   to the extra storage
