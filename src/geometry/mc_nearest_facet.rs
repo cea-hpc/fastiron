@@ -1,14 +1,16 @@
+//! Code used to model the nearest facet to a given particule
+
 use num::{zero, FromPrimitive};
 
 use crate::constants::{sim::HUGE_FLOAT, CustomFloat};
 
-/// Structure used to represent the nearest facet to a point,
+/// Structure used to represent the nearest facet to a particle,
 /// holding relevant data for computation.
 #[derive(Debug, Clone, Copy)]
 pub struct MCNearestFacet<T: CustomFloat> {
-    /// Facet the particle is the closest to
+    /// Index of the facet the particle is the closest to.
     pub facet: usize,
-    /// Distance between facet and particle
+    /// Distance between facet and particle.
     pub distance_to_facet: T,
     /// Dot product between facet and direction vector.
     pub dot_product: T,
