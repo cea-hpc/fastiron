@@ -30,10 +30,23 @@ pub fn init_particle_containers<T: CustomFloat>(
     // compute the capacities using number of threads, target number of particles & fission statistical offset
     let target_n_particles = params.simulation_params.n_particles as usize;
 
-    let regular_capacity_per_container = target_n_particles / proc_info.num_threads;
+    let regular_capacity_per_container = target_n_particles / proc_info.num_threads; // equivalent of batch size
     let regular_capacity = regular_capacity_per_container + regular_capacity_per_container / 10; // approximate 10% margin
 
-    let extra_capacity = regular_capacity_per_container; // TODO: change that
+    let max_nu_bar: usize = params
+        .material_params
+        .values()
+        .map(|mp| {
+            params.cross_section_params[&mp.fission_cross_section]
+                .nu_bar
+                .ceil()
+                .to_usize()
+                .unwrap()
+        })
+        .max()
+        .unwrap();
+
+    let extra_capacity = regular_capacity_per_container * max_nu_bar.max(2);
 
     let container = ParticleContainer::new(regular_capacity, extra_capacity);
     vec![container; proc_info.num_threads]
