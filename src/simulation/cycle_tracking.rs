@@ -10,7 +10,6 @@ use crate::{
     data::{send_queue::SendQueue, tallies::MCTallyEvent},
     montecarlo::MonteCarlo,
     particles::{
-        load_particle::load_particle,
         mc_base_particle::{MCBaseParticle, Species},
         mc_particle::MCParticle,
     },
@@ -44,33 +43,6 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     cycle_tracking_function(mcco, &mut particle, particle_idx, extra, send_queue);
 
     *base_particle = MCBaseParticle::new(&particle);
-
-    /*
-    if let Some(mut particle) = load_particle(
-        &mcco.particle_vault_container.processing_vaults[processing_vault_idx],
-        particle_idx,
-        mcco.time_info.time_step,
-    ) {
-        particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
-        particle.task = 0;
-
-        cycle_tracking_function(mcco, &mut particle, particle_idx);
-
-        // necessary overwrite
-        mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-            .put_particle(particle.clone(), particle_idx);
-
-        // These functions operate using indexes, i.e. the version of the particle that is
-        // in the vault, not the copy we loaded & updated, hence the overwrite above
-        if particle.species == Species::Known {
-            mcco.particle_vault_container
-                .set_as_processed(processing_vault_idx, particle_idx);
-        } else {
-            mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-                .invalidate_particle(particle_idx);
-        }
-    }
-    */
 }
 
 fn cycle_tracking_function<T: CustomFloat>(

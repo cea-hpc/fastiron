@@ -58,12 +58,7 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
 
     mcco.clear_cross_section_cache();
 
-    //mcco.particle_vault_container
-    //    .swap_processing_processed_vaults();
     container.swap_processing_processed();
-
-    //mcco.particle_vault_container.collapse_processed();
-    //mcco.particle_vault_container.collapse_processing();
 
     let tmp = container.processing_particles.len() as u64;
     mcco.tallies.balance_task[0].start = tmp;
@@ -103,51 +98,15 @@ pub fn cycle_tracking<T: CustomFloat>(
                         particle_idx,
                         &mut container.extra_particles,
                         &mut container.send_queue,
-                    )
-                });
-            // delete invalid ones
-            container
-                .processing_particles
-                .retain(|pp| pp.species != Species::Unknown);
-            /*
-            for processing_vault_idx in 0..mcco.particle_vault_container.processing_vaults.len() {
-                // Computing block
-                mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
-
-                // number of VALID particles in current vault
-                let num_particles =
-                    mcco.particle_vault_container.processing_vaults[processing_vault_idx].size();
-
-                // for all particles
-                if num_particles != 0 {
-                    let mut particle_idx: usize = 0;
-                    while particle_idx < mcco.particle_vault_container.vault_size {
-                        cycle_tracking_guts(mcco, particle_idx, processing_vault_idx);
-                        particle_idx += 1;
+                    );
+                    if base_particle.species != Species::Unknown {
+                        container.processed_particles.push(base_particle.clone());
                     }
-                }
+                });
+            container.processing_particles.clear();
 
-                mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
-
-                // Inter-domain communication block
-                mc_fast_timer::start(mcco, Section::CycleTrackingComm);
-
-                // this replace the "send" part (tx)
-                // in a shared memory context, we add the particles to extra vaults
-                mcco.particle_vault_container.read_send_queue();
-
-                // this would be the "receive" part (rx)
-                // in a shared memory context, we transfer the particles
-                // from extra vaults to processing vaults
-                mcco.particle_vault_container.clean_extra_vaults();
-
-                mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
-            }
-            */
             mc_fast_timer::start(mcco, Section::CycleTrackingComm);
 
-            //mcco.particle_vault_container.collapse_processing();
-            //mcco.particle_vault_container.collapse_processed();
             // clean extra here
             container.process_sq();
             container.clean_extra_vaults();
