@@ -32,19 +32,19 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     particle_idx: usize,
     extra: &mut Vec<MCBaseParticle<T>>,
     send_queue: &mut SendQueue<T>,
-    //processing_vault_idx: usize,
 ) {
     // load particle, track it & update the original
     // next step is to refactor MCParticle / MCBaseParticle to lighten conversion between the types
     let mut particle = MCParticle::new(base_particle);
+
+    // set age & time to census
     if particle.time_to_census <= zero() {
         particle.time_to_census += mcco.time_info.time_step;
     }
-
-    // set age
     if particle.age < zero() {
         particle.age = zero();
     }
+    // update energy & task
     particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
     particle.task = 0; // useful?
 

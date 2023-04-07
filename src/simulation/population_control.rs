@@ -14,8 +14,7 @@ use crate::{
     data::tallies::Balance,
     montecarlo::MonteCarlo,
     particles::{
-        mc_base_particle::{MCBaseParticle, Species},
-        mc_particle::MCParticle,
+        mc_base_particle::MCBaseParticle, mc_particle::MCParticle,
         particle_container::ParticleContainer,
     },
     simulation::mct::generate_coordinate_3dg,
@@ -110,52 +109,6 @@ fn population_control_guts<T: CustomFloat>(
         });
         container.clean_extra_vaults();
     }
-
-    /*
-    // march backwards through particles; might be unecessary since we use vectors?
-    (0..container.processing_particles.len()).for_each(|particle_idx| {
-        let mut pp = MCParticle::new(&container.processing_particles[particle_idx]);
-        let rand_f: T = rng_sample(&mut pp.random_number_seed);
-
-        if split_rr_factor < one() {
-            // too many particles; roll for a kill
-            if rand_f > split_rr_factor {
-                container.processing_particles[particle_idx].species = Species::Unknown;
-                task_balance.rr += 1;
-            } else {
-                // update particle & overwrite old version
-                pp.weight /= split_rr_factor;
-                container.processing_particles[particle_idx] = MCBaseParticle::new(&pp);
-            }
-        } else if split_rr_factor > one() {
-            // not enough particles; create new ones by splitting
-            let mut split_factor = split_rr_factor.floor();
-            if rand_f > split_rr_factor - split_factor {
-                split_factor -= one();
-            }
-            pp.weight /= split_rr_factor;
-
-            // create child particle & add them to vault
-            let n_split: usize = split_factor.to_usize().unwrap();
-            (0..n_split).for_each(|_| {
-                let mut split_pp = pp.clone();
-                task_balance.split += 1;
-                split_pp.random_number_seed = spawn_rn_seed::<T>(&mut pp.random_number_seed);
-                split_pp.identifier = split_pp.random_number_seed;
-                // add to the vault
-                container
-                    .processing_particles
-                    .push(MCBaseParticle::new(&split_pp));
-            });
-
-            // update original by overwriting it
-            container.processing_particles[particle_idx] = MCBaseParticle::new(&pp);
-        }
-    });
-    container
-        .processing_particles
-        .retain(|pp| pp.species != Species::Unknown);
-    */
 }
 
 /// Play russian-roulette with low-weight particles relative
@@ -190,28 +143,6 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
             }
         });
     }
-    // march backwards through particles; might be unecessary since we use vectors?
-    /*
-    if low_weight_cutoff > zero() {
-        let weight_cutoff = low_weight_cutoff * source_particle_weight;
-        (0..container.processing_particles.len())
-            .rev()
-            .for_each(|particle_idx| {
-                let pp = &mut container.processing_particles[particle_idx];
-                if pp.weight <= weight_cutoff {
-                    let rand_f: T = rng_sample(&mut pp.random_number_seed);
-                    if rand_f <= low_weight_cutoff {
-                        // particle continues with an increased weight
-                        pp.weight /= low_weight_cutoff;
-                    } else {
-                        // particle is killed
-                        container.processing_particles.swap_remove(particle_idx);
-                        task_balance.rr += 1;
-                    }
-                }
-            });
-    }
-    */
 }
 
 /// Simulates the sources according to the problem's parameters.
