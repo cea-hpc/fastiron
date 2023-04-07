@@ -57,13 +57,14 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
 
     mcco.clear_cross_section_cache();
 
-    mcco.particle_vault_container
-        .swap_processing_processed_vaults();
+    //mcco.particle_vault_container
+    //    .swap_processing_processed_vaults();
+    container.swap_processing_processed();
 
-    mcco.particle_vault_container.collapse_processed();
-    mcco.particle_vault_container.collapse_processing();
+    //mcco.particle_vault_container.collapse_processed();
+    //mcco.particle_vault_container.collapse_processing();
 
-    let tmp = mcco.particle_vault_container.particles_processing_size() as u64;
+    let tmp = container.processing_particles.len() as u64;
     mcco.tallies.balance_task[0].start = tmp;
 
     population_control::source_now(mcco, container);
