@@ -13,7 +13,7 @@ use crate::{
     },
     data::nuclear_data::ReactionType,
     montecarlo::MonteCarlo,
-    particles::mc_particle::MCParticle,
+    particles::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
     simulation::macro_cross_section::macroscopic_cross_section,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
@@ -61,6 +61,7 @@ pub fn collision_event<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
     tally_idx: usize,
+    extra: &mut Vec<MCBaseParticle<T>>,
 ) -> bool {
     let mat_gidx = mcco.domain[particle.domain].cell_state[particle.cell].material;
 
@@ -157,8 +158,7 @@ pub fn collision_event<T: CustomFloat>(
                 angle_out[secondary_idx],
                 &mut sec_particle,
             );
-            mcco.particle_vault_container
-                .add_extra_particle(sec_particle);
+            extra.push(MCBaseParticle::new(&sec_particle));
         }
     }
 
@@ -166,8 +166,7 @@ pub fn collision_event<T: CustomFloat>(
     particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
 
     if n_out > 1 {
-        mcco.particle_vault_container
-            .add_extra_particle(particle.clone());
+        extra.push(MCBaseParticle::new(particle));
     }
 
     n_out == 1

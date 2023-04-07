@@ -62,9 +62,9 @@ pub fn population_control<T: CustomFloat>(
     if split_rr_factor != one() {
         population_control_guts(
             split_rr_factor,
-            local_n_particles,
+            //local_n_particles,
             container,
-            &mut mcco.particle_vault_container,
+            //&mut mcco.particle_vault_container,
             &mut mcco.tallies.balance_task[0],
         );
     }
@@ -74,9 +74,9 @@ pub fn population_control<T: CustomFloat>(
 
 fn population_control_guts<T: CustomFloat>(
     split_rr_factor: T,
-    current_n_particles: usize,
+    //current_n_particles: usize,
     container: &mut ParticleContainer<T>,
-    vault_container: &mut ParticleVaultContainer<T>,
+    //vault_container: &mut ParticleVaultContainer<T>,
     task_balance: &mut Balance,
 ) {
     //let vault_size = vault_container.vault_size;

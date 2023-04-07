@@ -3,6 +3,8 @@ use fastiron::constants::CustomFloat;
 use fastiron::init_mc::{init_mc, init_particle_containers};
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::Parameters;
+use fastiron::particles::mc_base_particle::Species;
+use fastiron::particles::mc_particle::MCParticle;
 use fastiron::particles::particle_container::ParticleContainer;
 use fastiron::simulation::cycle_tracking::cycle_tracking_guts;
 use fastiron::simulation::population_control;
@@ -90,7 +92,25 @@ pub fn cycle_tracking<T: CustomFloat>(
     let mut done = false;
     loop {
         while !done {
-            // for all processing vaults
+            // track particles
+            container
+                .processing_particles
+                .iter_mut()
+                .enumerate()
+                .for_each(|(particle_idx, base_particle)| {
+                    cycle_tracking_guts(
+                        mcco,
+                        base_particle,
+                        particle_idx,
+                        &mut container.extra_particles,
+                        &mut container.send_queue,
+                    )
+                });
+            // delete invalid ones
+            container
+                .processing_particles
+                .retain(|pp| pp.species != Species::Unknown);
+            /*
             for processing_vault_idx in 0..mcco.particle_vault_container.processing_vaults.len() {
                 // Computing block
                 mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
@@ -120,23 +140,24 @@ pub fn cycle_tracking<T: CustomFloat>(
                 // this would be the "receive" part (rx)
                 // in a shared memory context, we transfer the particles
                 // from extra vaults to processing vaults
-                // this probably will have to be done only after iterating over
-                // all processing vaults because of the borrow system
                 mcco.particle_vault_container.clean_extra_vaults();
 
                 mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
             }
-
+            */
             mc_fast_timer::start(mcco, Section::CycleTrackingComm);
 
-            mcco.particle_vault_container.collapse_processing();
-            mcco.particle_vault_container.collapse_processed();
+            //mcco.particle_vault_container.collapse_processing();
+            //mcco.particle_vault_container.collapse_processed();
             // clean extra here
-            done = mcco.particle_vault_container.test_done_new();
+            container.process_sq();
+            container.clean_extra_vaults();
+
+            done = container.test_done_new();
 
             mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
         }
-        done = mcco.particle_vault_container.test_done_new();
+        done = container.test_done_new();
 
         if done {
             break;

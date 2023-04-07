@@ -4,8 +4,10 @@
 //! it is crossing. See [MCSubfacetAdjacencyEvent] for more information.
 
 use crate::{
-    constants::CustomFloat, data::tallies::MCTallyEvent,
-    geometry::mc_facet_adjacency::MCSubfacetAdjacencyEvent, montecarlo::MonteCarlo,
+    constants::CustomFloat,
+    data::{send_queue::SendQueue, tallies::MCTallyEvent},
+    geometry::mc_facet_adjacency::MCSubfacetAdjacencyEvent,
+    montecarlo::MonteCarlo,
     particles::mc_particle::MCParticle,
 };
 
@@ -18,6 +20,7 @@ use crate::{
 pub fn facet_crossing_event<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     mcco: &mut MonteCarlo<T>,
+    send_queue: &mut SendQueue<T>,
 ) -> MCTallyEvent {
     let location = particle.get_location();
     let facet_adjacency = &mcco.domain[location.domain.unwrap()].mesh.cell_connectivity
@@ -53,9 +56,7 @@ pub fn facet_crossing_event<T: CustomFloat>(
                 .mesh
                 .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
 
-            mcco.particle_vault_container
-                .send_queue
-                .push(neighbor_rank, particle);
+            send_queue.push(neighbor_rank, particle);
         }
         MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
     }
