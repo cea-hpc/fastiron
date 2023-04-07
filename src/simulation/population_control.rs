@@ -169,7 +169,6 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
     container: &mut ParticleContainer<T>,
     task_balance: &mut Balance,
 ) {
-    
     if low_weight_cutoff > zero() {
         let weight_cutoff = low_weight_cutoff * source_particle_weight;
 
@@ -190,9 +189,9 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
                 true
             }
         });
-    
+    }
     // march backwards through particles; might be unecessary since we use vectors?
-    /* 
+    /*
     if low_weight_cutoff > zero() {
         let weight_cutoff = low_weight_cutoff * source_particle_weight;
         (0..container.processing_particles.len())

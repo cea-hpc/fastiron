@@ -85,6 +85,8 @@ pub fn cycle_tracking<T: CustomFloat>(
     let mut done = false;
     loop {
         while !done {
+            mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
+
             // track particles
             container
                 .processing_particles
@@ -104,6 +106,7 @@ pub fn cycle_tracking<T: CustomFloat>(
                 });
             container.processing_particles.clear();
 
+            mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
             mc_fast_timer::start(mcco, Section::CycleTrackingComm);
 
             // clean extra here
@@ -131,7 +134,6 @@ pub fn cycle_finalize<T: CustomFloat>(
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
     mcco.tallies.balance_task[0].end = container.processed_particles.len() as u64;
-    //mcco.particle_vault_container.particles_processed_size() as u64;
 
     mcco.cycle_finalize(container);
     mcco.time_info.cycle += 1;
