@@ -3,7 +3,7 @@
 //! This module contains the function individually tracking particles during the
 //! main simulation section.
 
-use num::one;
+use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
@@ -37,6 +37,14 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     // load particle, track it & update the original
     // next step is to refactor MCParticle / MCBaseParticle to lighten conversion between the types
     let mut particle = MCParticle::new(base_particle);
+    if particle.time_to_census <= zero() {
+        particle.time_to_census += mcco.time_info.time_step;
+    }
+
+    // set age
+    if particle.age < zero() {
+        particle.age = zero();
+    }
     particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
     particle.task = 0; // useful?
 
