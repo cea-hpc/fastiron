@@ -17,7 +17,6 @@ use crate::{
         mc_base_particle::{MCBaseParticle, Species},
         mc_particle::MCParticle,
         particle_container::ParticleContainer,
-        particle_vault_container::ParticleVaultContainer,
     },
     simulation::mct::generate_coordinate_3dg,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
@@ -168,9 +167,9 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
     low_weight_cutoff: T,
     source_particle_weight: T,
     container: &mut ParticleContainer<T>,
-    vault_container: &mut ParticleVaultContainer<T>,
     task_balance: &mut Balance,
 ) {
+    
     if low_weight_cutoff > zero() {
         let weight_cutoff = low_weight_cutoff * source_particle_weight;
 
@@ -191,31 +190,29 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
                 true
             }
         });
-        // march backwards through particles; might be unecessary since we use vectors?
-        /*
-        (0..current_n_particles).rev().for_each(|particle_idx| {
-            let vault_idx = particle_idx / vault_size;
-            let task_particle_idx = particle_idx % vault_size;
-
-            let task_processing_vault = vault_container.get_task_processing_vault(vault_idx);
-            if let Some(mut pp) = task_processing_vault[task_particle_idx].clone() {
+    
+    // march backwards through particles; might be unecessary since we use vectors?
+    /* 
+    if low_weight_cutoff > zero() {
+        let weight_cutoff = low_weight_cutoff * source_particle_weight;
+        (0..container.processing_particles.len())
+            .rev()
+            .for_each(|particle_idx| {
+                let pp = &mut container.processing_particles[particle_idx];
                 if pp.weight <= weight_cutoff {
                     let rand_f: T = rng_sample(&mut pp.random_number_seed);
                     if rand_f <= low_weight_cutoff {
                         // particle continues with an increased weight
                         pp.weight /= low_weight_cutoff;
-                        task_processing_vault[task_particle_idx] = Some(pp);
                     } else {
                         // particle is killed
-                        task_processing_vault.erase_swap_particles(task_particle_idx);
+                        container.processing_particles.swap_remove(particle_idx);
                         task_balance.rr += 1;
                     }
                 }
-            }
-        });
-        */
-        vault_container.collapse_processing();
+            });
     }
+    */
 }
 
 /// Simulates the sources according to the problem's parameters.

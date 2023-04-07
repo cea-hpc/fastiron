@@ -71,7 +71,6 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
         mcco.params.simulation_params.low_weight_cutoff,
         mcco.source_particle_weight,
         container,
-        &mut mcco.particle_vault_container,
         &mut mcco.tallies.balance_task[0],
     );
 
