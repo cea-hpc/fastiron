@@ -15,6 +15,9 @@ use crate::data::tallies::Tallies;
 use crate::geometry::mc_domain::MCDomain;
 use crate::parameters::{BenchType, Parameters};
 use crate::particles::load_particle::load_particle;
+use crate::particles::mc_base_particle::MCBaseParticle;
+use crate::particles::mc_particle::MCParticle;
+use crate::particles::particle_container::ParticleContainer;
 use crate::particles::particle_vault::ParticleVault;
 use crate::particles::particle_vault_container::ParticleVaultContainer;
 use crate::utils::mc_fast_timer::{self, MCFastTimerContainer, Section};
@@ -124,33 +127,36 @@ impl<T: CustomFloat> MonteCarlo<T> {
     }
 
     /// Update the energy spectrum by going over all the currently valid particles.
-    pub fn update_spectrum(&mut self) {
+    pub fn update_spectrum(&mut self, container: &ParticleContainer<T>) {
         if self.tallies.spectrum.file_name.is_empty() {
             println!("No output name specified for energy");
             return;
         }
 
-        let update_function = |vault: &ParticleVault<T>, spectrum: &mut [u64]| {
-            (0..vault.size()).for_each(|particle_idx| {
+        let update_function = |particle_list: &[MCBaseParticle<T>], spectrum: &mut [u64]| {
+            particle_list.iter().for_each(|pp| {
                 // load particle & update energy group
-                let mut pp = load_particle(vault, particle_idx, self.time_info.time_step).unwrap();
-                pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
-                spectrum[pp.energy_group] += 1;
+                let mut particle = MCParticle::new(pp);
+                particle.energy_group =
+                    self.nuclear_data.get_energy_groups(particle.kinetic_energy);
+                spectrum[particle.energy_group] += 1;
             });
         };
 
-        // Iterate on processing vaults
-        for vv in &self.particle_vault_container.processing_vaults {
-            update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
-        }
-        // Iterate on processed vaults
-        for vv in &self.particle_vault_container.processed_vaults {
-            update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
-        }
+        // Iterate on processing particles
+        update_function(
+            &container.processing_particles,
+            &mut self.tallies.spectrum.census_energy_spectrum,
+        );
+        // Iterate on processed particles
+        update_function(
+            &container.processed_particles,
+            &mut self.tallies.spectrum.census_energy_spectrum,
+        );
     }
 
     /// Print stats of the current cycle and update the cumulative counters.
-    pub fn cycle_finalize(&mut self) {
+    pub fn cycle_finalize(&mut self, container: &ParticleContainer<T>) {
         self.tallies.sum_tasks();
 
         mc_fast_timer::stop(self, Section::CycleFinalize);
@@ -191,6 +197,6 @@ impl<T: CustomFloat> MonteCarlo<T> {
             self.tallies.cell_tally_domain[domain_idx].task[0].reset();
             self.tallies.scalar_flux_domain[domain_idx].task[0].reset();
         });
-        self.update_spectrum();
+        self.update_spectrum(container);
     }
 }

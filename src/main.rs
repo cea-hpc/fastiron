@@ -4,7 +4,6 @@ use fastiron::init_mc::{init_mc, init_particle_containers};
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::Parameters;
 use fastiron::particles::mc_base_particle::Species;
-use fastiron::particles::mc_particle::MCParticle;
 use fastiron::particles::particle_container::ParticleContainer;
 use fastiron::simulation::cycle_tracking::cycle_tracking_guts;
 use fastiron::simulation::population_control;
@@ -173,10 +172,10 @@ pub fn cycle_finalize<T: CustomFloat>(
 ) {
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
-    mcco.tallies.balance_task[0].end =
-        mcco.particle_vault_container.particles_processed_size() as u64;
+    mcco.tallies.balance_task[0].end = container.processed_particles.len() as u64;
+    //mcco.particle_vault_container.particles_processed_size() as u64;
 
-    mcco.cycle_finalize();
+    mcco.cycle_finalize(container);
     mcco.time_info.cycle += 1;
 
     mc_fast_timer::stop(mcco, Section::CycleFinalize);
