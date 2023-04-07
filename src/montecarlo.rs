@@ -17,7 +17,6 @@ use crate::parameters::{BenchType, Parameters};
 use crate::particles::mc_base_particle::MCBaseParticle;
 use crate::particles::mc_particle::MCParticle;
 use crate::particles::particle_container::ParticleContainer;
-use crate::particles::particle_vault_container::ParticleVaultContainer;
 use crate::utils::mc_fast_timer::{self, MCFastTimerContainer, Section};
 use crate::utils::mc_processor_info::MCProcessorInfo;
 use crate::utils::mc_time_info::MCTimeInfo;
@@ -31,8 +30,6 @@ pub struct MonteCarlo<T: CustomFloat> {
     pub params: Parameters<T>,
     /// Object storing all data related to particles.
     pub nuclear_data: NuclearData<T>,
-    /// Container for all the particle vaults used during simulation.
-    pub particle_vault_container: ParticleVaultContainer<T>,
     /// Object storing all data related to materials.
     pub material_database: MaterialDatabase<T>,
     /// Object storing all tallies of the simulation.
@@ -61,53 +58,10 @@ impl<T: CustomFloat> MonteCarlo<T> {
         let time_info = MCTimeInfo::<T>::default();
         let fast_timer: MCFastTimerContainer = MCFastTimerContainer::default();
 
-        let num_proc = processor_info.num_processors;
-        let num_particles = params.simulation_params.n_particles as usize;
-        let mut batch_size = params.simulation_params.batch_size as usize;
-        let mut num_batches = params.simulation_params.n_batches as usize;
-
-        let n_particles_per_process = num_particles / num_proc;
-
-        if batch_size == 0 {
-            batch_size = if n_particles_per_process % num_batches == 0 {
-                n_particles_per_process / num_batches
-            } else {
-                n_particles_per_process / num_batches + 1
-            }
-        } else {
-            num_batches = if n_particles_per_process % batch_size == 0 {
-                n_particles_per_process / batch_size
-            } else {
-                n_particles_per_process / batch_size + 1
-            }
-        }
-        assert_ne!(batch_size, 0);
-
-        let mut vec_size: usize = 0;
-
-        params.material_params.values().for_each(|mp| {
-            let nb = params.cross_section_params[&mp.fission_cross_section]
-                .nu_bar
-                .ceil()
-                .to_usize()
-                .unwrap();
-            if nb * batch_size > vec_size {
-                vec_size = nb * batch_size;
-            }
-        });
-        if vec_size == 0 {
-            vec_size = 2 * batch_size;
-        }
-
-        let num_extra_vaults = (vec_size / batch_size) + 1;
-        let particle_vault_container: ParticleVaultContainer<T> =
-            ParticleVaultContainer::new(batch_size, num_batches, num_extra_vaults);
-
         Self {
             domain: Default::default(),
             params,
             nuclear_data: Default::default(),
-            particle_vault_container,
             material_database: Default::default(),
             tallies,
             time_info,
