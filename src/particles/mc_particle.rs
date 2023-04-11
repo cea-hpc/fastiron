@@ -8,58 +8,31 @@ use std::fmt::Display;
 use num::zero;
 
 use crate::{
-    constants::CustomFloat,
-    data::{direction_cosine::DirectionCosine, mc_vector::MCVector, tallies::MCTallyEvent},
+    constants::CustomFloat, data::direction_cosine::DirectionCosine,
     geometry::mc_location::MCLocation,
 };
 
-use super::mc_base_particle::{MCBaseParticle, Species};
+use super::mc_base_particle::MCBaseParticle;
 
 /// Structure used to hold all data of a particle.
 ///
 /// This is mostly used for computations during the tracking section.
 #[derive(Debug, Default, Clone)]
 pub struct MCParticle<T: CustomFloat> {
-    /// Current position of the particle.
-    pub coordinate: MCVector<T>,
-    /// Current velocity of the particle.
-    pub velocity: MCVector<T>,
+    /// Base data of the particle.
+    pub base_particle: MCBaseParticle<T>,
     /// Direction of the particle as a normalized `(x, y, z)` vector.
     pub direction_cosine: DirectionCosine<T>,
-    /// Kinetic energy of the particle.
-    pub kinetic_energy: T,
-    /// Weight of the particle.
-    pub weight: T,
-    /// Time remaining before this particle hit census.
-    pub time_to_census: T,
     /// Cache-ing the current total cross section/
     pub total_cross_section: T,
-    /// Age of the particle.
-    pub age: T,
-    /// Number of mean free paths to a collision.
-    pub num_mean_free_paths: T,
     /// Distance to a collision.
     pub mean_free_path: T,
     /// Distance this particle travels in a segment.
     pub segment_path_length: T,
-    /// Random number seed used by the PRNG call for this particle.
-    pub random_number_seed: u64,
-    /// Unique ID used to identify and track individual particles.
-    pub identifier: u64,
-    /// Last event this particle underwent.
-    pub last_event: MCTallyEvent,
-    /// Number of segments the particle travelled.
-    pub num_segments: T,
     /// Task working on
     pub task: usize,
-    /// Species of the particle.
-    pub species: Species,
     /// Current energy group the particle belong to.
     pub energy_group: usize,
-    /// Current domain in the spatial grid.
-    pub domain: usize,
-    /// Current cell in the current domain.
-    pub cell: usize,
     /// Nearest facet.
     pub facet: usize,
     /// Normal dot product value kept when crossing a facet.
@@ -77,26 +50,13 @@ impl<T: CustomFloat> MCParticle<T> {
         };
 
         MCParticle {
-            coordinate: from_particle.coordinate,
-            velocity: from_particle.velocity,
+            base_particle: from_particle.clone(),
             direction_cosine: d_cos,
-            kinetic_energy: from_particle.kinetic_energy,
-            weight: from_particle.weight,
-            time_to_census: from_particle.time_to_census,
             total_cross_section: zero(),
-            age: from_particle.age,
-            num_mean_free_paths: from_particle.num_mean_free_paths,
             mean_free_path: zero(),
             segment_path_length: zero(),
-            random_number_seed: from_particle.random_number_seed,
-            identifier: from_particle.identifier,
-            last_event: from_particle.last_event,
-            num_segments: from_particle.num_segments,
             task: 0,
-            species: from_particle.species,
             energy_group: 0,
-            domain: from_particle.domain,
-            cell: from_particle.cell,
             facet: 0,
             normal_dot: zero(),
         }
@@ -105,8 +65,8 @@ impl<T: CustomFloat> MCParticle<T> {
     /// Returns the location of the particle as a [MCLocation] object.
     pub fn get_location(&self) -> MCLocation {
         MCLocation {
-            domain: Some(self.domain),
-            cell: Some(self.cell),
+            domain: Some(self.base_particle.domain),
+            cell: Some(self.base_particle.cell),
             facet: Some(self.facet),
         }
     }
@@ -114,9 +74,9 @@ impl<T: CustomFloat> MCParticle<T> {
     /// Update the particle's field to model its movement along the specified
     /// direction and distance
     pub fn move_particle(&mut self, distance: T) {
-        self.coordinate.x += self.direction_cosine.alpha * distance;
-        self.coordinate.y += self.direction_cosine.beta * distance;
-        self.coordinate.z += self.direction_cosine.gamma * distance;
+        self.base_particle.coordinate.x += self.direction_cosine.alpha * distance;
+        self.base_particle.coordinate.y += self.direction_cosine.beta * distance;
+        self.base_particle.coordinate.z += self.direction_cosine.gamma * distance;
     }
 }
 
@@ -126,35 +86,47 @@ impl<T: CustomFloat> Display for MCParticle<T> {
         writeln!(
             f,
             "coordinate: {} {} {}",
-            self.coordinate.x, self.coordinate.y, self.coordinate.z
+            self.base_particle.coordinate.x,
+            self.base_particle.coordinate.y,
+            self.base_particle.coordinate.z
         )?;
         writeln!(
             f,
             "velocity: {} {} {}",
-            self.velocity.x, self.velocity.y, self.velocity.z
+            self.base_particle.velocity.x,
+            self.base_particle.velocity.y,
+            self.base_particle.velocity.z
         )?;
         writeln!(
             f,
             "direction cosine: {} {} {}",
             self.direction_cosine.alpha, self.direction_cosine.beta, self.direction_cosine.gamma
         )?;
-        writeln!(f, "kinetic energy: {}", self.kinetic_energy)?;
-        writeln!(f, "weight: {}", self.weight)?;
-        writeln!(f, "time to census: {}", self.time_to_census)?;
+        writeln!(f, "kinetic energy: {}", self.base_particle.kinetic_energy)?;
+        writeln!(f, "weight: {}", self.base_particle.weight)?;
+        writeln!(f, "time to census: {}", self.base_particle.time_to_census)?;
         writeln!(f, "total cross section: {}", self.total_cross_section)?;
-        writeln!(f, "age: {}", self.age)?;
-        writeln!(f, "num mean free paths: {}", self.num_mean_free_paths)?;
+        writeln!(f, "age: {}", self.base_particle.age)?;
+        writeln!(
+            f,
+            "num mean free paths: {}",
+            self.base_particle.num_mean_free_paths
+        )?;
         writeln!(f, "mean free path: {}", self.mean_free_path)?;
         writeln!(f, "segment path length: {}", self.segment_path_length)?;
-        writeln!(f, "random number seed: {}", self.random_number_seed)?;
-        writeln!(f, "identifier: {}", self.identifier)?;
-        writeln!(f, "last event: {:?}", self.last_event)?;
-        writeln!(f, "num segments: {}", self.num_segments)?;
+        writeln!(
+            f,
+            "random number seed: {}",
+            self.base_particle.random_number_seed
+        )?;
+        writeln!(f, "identifier: {}", self.base_particle.identifier)?;
+        writeln!(f, "last event: {:?}", self.base_particle.last_event)?;
+        writeln!(f, "num segments: {}", self.base_particle.num_segments)?;
         writeln!(f, "task: {}", self.task)?;
-        writeln!(f, "species: {:?}", self.species)?;
+        writeln!(f, "species: {:?}", self.base_particle.species)?;
         writeln!(f, "energy group: {}", self.energy_group)?;
-        writeln!(f, "domain: {}", self.domain)?;
-        writeln!(f, "cell: {}", self.cell)?;
+        writeln!(f, "domain: {}", self.base_particle.domain)?;
+        writeln!(f, "cell: {}", self.base_particle.cell)?;
         writeln!(f, "facet: {}", self.facet)?;
         writeln!(f, "normal dot: {}", self.normal_dot)
     }
@@ -163,6 +135,6 @@ impl<T: CustomFloat> Display for MCParticle<T> {
 impl<T: CustomFloat> PartialEq for MCParticle<T> {
     fn eq(&self, other: &Self) -> bool {
         // is this enough?
-        self.identifier == other.identifier
+        self.base_particle.identifier == other.base_particle.identifier
     }
 }

@@ -61,22 +61,7 @@ impl<T: CustomFloat> MCBaseParticle<T> {
     /// Constructor from a [MCParticle] object. To construct from a
     /// [MCBaseParticle] object, we derive the [Clone] trait.
     pub fn new(particle: &MCParticle<T>) -> Self {
-        MCBaseParticle {
-            coordinate: particle.coordinate,
-            velocity: particle.velocity,
-            kinetic_energy: particle.kinetic_energy,
-            weight: particle.weight,
-            time_to_census: particle.time_to_census,
-            age: particle.age,
-            num_mean_free_paths: particle.num_mean_free_paths,
-            num_segments: particle.num_segments,
-            random_number_seed: particle.random_number_seed,
-            identifier: particle.identifier,
-            last_event: particle.last_event,
-            species: particle.species,
-            domain: particle.domain,
-            cell: particle.cell,
-        }
+        particle.base_particle.clone()
     }
 
     /// Return the current particle's location.
