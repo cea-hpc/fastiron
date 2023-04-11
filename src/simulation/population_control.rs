@@ -15,7 +15,7 @@ use crate::{
     montecarlo::MonteCarlo,
     particles::{
         mc_base_particle::MCBaseParticle, mc_particle::MCParticle,
-        particle_vault_container::ParticleVaultContainer,
+        particle_container::ParticleContainer,
     },
     simulation::mct::generate_coordinate_3dg,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
@@ -29,10 +29,15 @@ use crate::{
 /// If the split factor is strictly below one, there are too many particles,
 /// if it is striclty superior to one, there are too little. Particles are
 /// then either randomly killed or spawned to get to the desired number.
-pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance: bool) {
+
+pub fn population_control<T: CustomFloat>(
+    mcco: &mut MonteCarlo<T>,
+    container: &mut ParticleContainer<T>,
+) {
     let mut target_n_particles: usize = mcco.params.simulation_params.n_particles as usize;
     let mut global_n_particles: usize = 0;
-    let local_n_particles: usize = mcco.particle_vault_container.particles_processing_size();
+    let local_n_particles: usize = container.processing_particles.len();
+    let load_balance = mcco.params.simulation_params.load_balance;
 
     if load_balance {
         // Spread the target number of particle among the processors
@@ -58,76 +63,53 @@ pub fn population_control<T: CustomFloat>(mcco: &mut MonteCarlo<T>, load_balance
     if split_rr_factor != one() {
         population_control_guts(
             split_rr_factor,
-            local_n_particles,
-            &mut mcco.particle_vault_container,
+            container,
             &mut mcco.tallies.balance_task[0],
         );
     }
-
-    mcco.particle_vault_container.collapse_processing();
 }
 
 fn population_control_guts<T: CustomFloat>(
     split_rr_factor: T,
-    current_n_particles: usize,
-    vault_container: &mut ParticleVaultContainer<T>,
+    container: &mut ParticleContainer<T>,
     task_balance: &mut Balance,
 ) {
-    let vault_size = vault_container.vault_size;
-    let mut fill_vault_idx = current_n_particles / vault_size;
-
-    let mut count: usize = 0;
-
-    // march backwards through particles; might be unecessary since we use vectors?
-    (0..current_n_particles).rev().for_each(|particle_idx| {
-        let vault_idx = particle_idx / vault_size;
-        let task_particle_idx = particle_idx % vault_size;
-
-        // since we cant pass around a mutable reference to the inside of an option,
-        // we clone the particle and overwrite it.
-        if let Some(mut pp) =
-            vault_container.get_task_processing_vault(vault_idx)[task_particle_idx].clone()
-        {
-            count += 1; // count only valid particles
+    if split_rr_factor < one() {
+        // too many particles; roll for a kill
+        container.processing_particles.retain_mut(|pp| {
             let rand_f: T = rng_sample(&mut pp.random_number_seed);
-
-            if split_rr_factor < one() {
-                // too many particles; roll for a kill
-                let task_processing_vault = vault_container.get_task_processing_vault(vault_idx);
-                if rand_f > split_rr_factor {
-                    task_processing_vault.erase_swap_particles(task_particle_idx);
-                    task_balance.rr += 1;
-                } else {
-                    // update particle & overwrite old version
-                    pp.weight /= split_rr_factor;
-                    task_processing_vault[task_particle_idx] = Some(pp);
-                }
-            } else if split_rr_factor > one() {
-                // not enough particles; create new ones by splitting
-                let mut split_factor = split_rr_factor.floor();
-                if rand_f > split_rr_factor - split_factor {
-                    split_factor -= one();
-                }
+            if rand_f > split_rr_factor {
+                // particle dies
+                task_balance.rr += 1;
+                false
+            } else {
+                // particle survives with increased weight
                 pp.weight /= split_rr_factor;
-
-                // create child particle & add them to vault
-                let n_split: usize = split_factor.to_usize().unwrap();
-                (0..n_split).for_each(|_| {
-                    let mut split_pp = pp.clone();
-                    task_balance.split += 1;
-                    split_pp.random_number_seed = spawn_rn_seed::<T>(&mut pp.random_number_seed);
-                    split_pp.identifier = split_pp.random_number_seed;
-                    // add to the vault
-                    vault_container.add_processing_particle(split_pp, &mut fill_vault_idx);
-                });
-
-                // update original by overwriting it
-                vault_container.get_task_processing_vault(vault_idx)[task_particle_idx] = Some(pp);
+                true
             }
-        }
-    });
-    // did we really march through all particles?
-    assert_eq!(count, current_n_particles);
+        });
+    } else if split_rr_factor > one() {
+        // not enough particles; create new ones by splitting
+        container.processing_particles.iter_mut().for_each(|pp| {
+            let rand_f: T = rng_sample(&mut pp.random_number_seed);
+            let mut split_factor = split_rr_factor.floor();
+            if rand_f > split_rr_factor - split_factor {
+                split_factor -= one();
+            }
+            pp.weight /= split_rr_factor;
+
+            let n_split: usize = split_factor.to_usize().unwrap();
+            (0..n_split).for_each(|_| {
+                let mut split_pp = pp.clone();
+                task_balance.split += 1;
+                split_pp.random_number_seed = spawn_rn_seed::<T>(&mut pp.random_number_seed);
+                split_pp.identifier = split_pp.random_number_seed;
+
+                container.extra_particles.push(split_pp);
+            })
+        });
+        container.clean_extra_vaults();
+    }
 }
 
 /// Play russian-roulette with low-weight particles relative
@@ -138,37 +120,29 @@ fn population_control_guts<T: CustomFloat>(
 pub fn roulette_low_weight_particles<T: CustomFloat>(
     low_weight_cutoff: T,
     source_particle_weight: T,
-    vault_container: &mut ParticleVaultContainer<T>,
+    container: &mut ParticleContainer<T>,
     task_balance: &mut Balance,
 ) {
     if low_weight_cutoff > zero() {
-        let current_n_particles = vault_container.particles_processing_size();
-        let vault_size = vault_container.vault_size;
-
         let weight_cutoff = low_weight_cutoff * source_particle_weight;
 
-        // march backwards through particles; might be unecessary since we use vectors?
-        (0..current_n_particles).rev().for_each(|particle_idx| {
-            let vault_idx = particle_idx / vault_size;
-            let task_particle_idx = particle_idx % vault_size;
-
-            let task_processing_vault = vault_container.get_task_processing_vault(vault_idx);
-            if let Some(mut pp) = task_processing_vault[task_particle_idx].clone() {
-                if pp.weight <= weight_cutoff {
-                    let rand_f: T = rng_sample(&mut pp.random_number_seed);
-                    if rand_f <= low_weight_cutoff {
-                        // particle continues with an increased weight
-                        pp.weight /= low_weight_cutoff;
-                        task_processing_vault[task_particle_idx] = Some(pp);
-                    } else {
-                        // particle is killed
-                        task_processing_vault.erase_swap_particles(task_particle_idx);
-                        task_balance.rr += 1;
-                    }
+        container.processing_particles.retain_mut(|pp| {
+            if pp.weight <= weight_cutoff {
+                let rand_f: T = rng_sample(&mut pp.random_number_seed);
+                if rand_f <= low_weight_cutoff {
+                    // particle survives with increased weight
+                    pp.weight /= low_weight_cutoff;
+                    true
+                } else {
+                    // particle dies
+                    task_balance.rr += 1;
+                    false
                 }
+            } else {
+                // particle survives
+                true
             }
         });
-        vault_container.collapse_processing();
     }
 }
 
@@ -178,7 +152,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 /// is called (once per cycle), 10% of the target number of particles are
 /// spawned. _Where_ they are spawned depends on both deterministic factors and
 /// randomness.
-pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
+pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut ParticleContainer<T>) {
     let time_step = mcco.time_info.time_step;
 
     let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];
@@ -205,9 +179,6 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     assert_ne!(source_particle_weight, zero());
 
     mcco.source_particle_weight = source_particle_weight;
-
-    // let vault_size = mcco.particle_vault_container.vault_size;
-    let mut processing_idx = 0; // mcco.particle_vault_container.particles_processing_size() / vault_size;
 
     // on each domain
     mcco.domain
@@ -277,8 +248,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                         particle.time_to_census = time_step * rand_f;
 
                         let base_particle: MCBaseParticle<T> = MCBaseParticle::new(&particle);
-                        mcco.particle_vault_container
-                            .add_processing_particle(base_particle, &mut processing_idx);
+                        container.processing_particles.push(base_particle);
 
                         // atomic in original code
                         mcco.tallies.balance_task[particle.task].source += 1;

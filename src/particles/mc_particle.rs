@@ -1,3 +1,8 @@
+//! Extended code for particles
+//!
+//! This module contains code of an extended particle structure used
+//! for computations.
+
 use std::fmt::Display;
 
 use num::zero;
@@ -10,52 +15,54 @@ use crate::{
 
 use super::mc_base_particle::{MCBaseParticle, Species};
 
-/// Structure used to represent a particle.
+/// Structure used to hold all data of a particle.
+///
+/// This is mostly used for computations during the tracking section.
 #[derive(Debug, Default, Clone)]
 pub struct MCParticle<T: CustomFloat> {
-    /// Current position
+    /// Current position of the particle.
     pub coordinate: MCVector<T>,
-    /// Current velocity
+    /// Current velocity of the particle.
     pub velocity: MCVector<T>,
-    /// Direction of the particle
+    /// Direction of the particle as a normalized `(x, y, z)` vector.
     pub direction_cosine: DirectionCosine<T>,
-    /// Kinetic energy
+    /// Kinetic energy of the particle.
     pub kinetic_energy: T,
-    /// Weight
+    /// Weight of the particle.
     pub weight: T,
-    /// Time remaining before this particle hit census
+    /// Time remaining before this particle hit census.
     pub time_to_census: T,
-    /// Cache-ing the current total cross section
+    /// Cache-ing the current total cross section/
     pub total_cross_section: T,
-    /// Age
+    /// Age of the particle.
     pub age: T,
-    /// Number of mean free paths to a collision
+    /// Number of mean free paths to a collision.
     pub num_mean_free_paths: T,
-    /// Distance to a collision
+    /// Distance to a collision.
     pub mean_free_path: T,
-    /// Distance this particle travels in a segment
+    /// Distance this particle travels in a segment.
     pub segment_path_length: T,
-    /// Random number seed for the rng for this particle
+    /// Random number seed used by the PRNG call for this particle.
     pub random_number_seed: u64,
-    /// Unique ID used to identify and track individual particles
+    /// Unique ID used to identify and track individual particles.
     pub identifier: u64,
-    /// Last event this particle underwent
+    /// Last event this particle underwent.
     pub last_event: MCTallyEvent,
-    /// Number of segments the particle travelled?
+    /// Number of segments the particle travelled.
     pub num_segments: T,
     /// Task working on
     pub task: usize,
-    /// Species of the particle
+    /// Species of the particle.
     pub species: Species,
-    /// Current energy group the particle belong to
+    /// Current energy group the particle belong to.
     pub energy_group: usize,
-    /// Current domain in the spatial grid
+    /// Current domain in the spatial grid.
     pub domain: usize,
-    /// Current cell in the current domain
+    /// Current cell in the current domain.
     pub cell: usize,
-    /// Nearest facet
+    /// Nearest facet.
     pub facet: usize,
-    /// When crossing a facet, keep the surface normal dot product
+    /// Normal dot product value kept when crossing a facet.
     pub normal_dot: T,
 }
 

@@ -3,13 +3,16 @@
 //! This module contains the function individually tracking particles during the
 //! main simulation section.
 
-use num::one;
+use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::MCTallyEvent,
+    data::{send_queue::SendQueue, tallies::MCTallyEvent},
     montecarlo::MonteCarlo,
-    particles::{load_particle::load_particle, mc_base_particle::Species, mc_particle::MCParticle},
+    particles::{
+        mc_base_particle::{MCBaseParticle, Species},
+        mc_particle::MCParticle,
+    },
     simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
 };
 
@@ -25,43 +28,37 @@ use super::{
 /// invalidated.
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
+    base_particle: &mut MCBaseParticle<T>,
     particle_idx: usize,
-    processing_vault_idx: usize,
+    extra: &mut Vec<MCBaseParticle<T>>,
+    send_queue: &mut SendQueue<T>,
 ) {
-    // A major change to be done is to do every computation using a reference to the particles
-    // instead of loading a copy & overwriting it; This would also mean propagating the
-    // "keep_tracking" result to the top level functions where it can be used to update the
-    // particle's status accordingly
-    if let Some(mut particle) = load_particle(
-        &mcco.particle_vault_container.processing_vaults[processing_vault_idx],
-        particle_idx,
-        mcco.time_info.time_step,
-    ) {
-        particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
-        particle.task = 0;
+    // load particle, track it & update the original
+    // next step is to refactor MCParticle / MCBaseParticle to lighten conversion between the types
+    let mut particle = MCParticle::new(base_particle);
 
-        cycle_tracking_function(mcco, &mut particle, particle_idx);
-
-        // necessary overwrite
-        mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-            .put_particle(particle.clone(), particle_idx);
-
-        // These functions operate using indexes, i.e. the version of the particle that is
-        // in the vault, not the copy we loaded & updated, hence the overwrite above
-        if particle.species == Species::Known {
-            mcco.particle_vault_container
-                .set_as_processed(processing_vault_idx, particle_idx);
-        } else {
-            mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-                .invalidate_particle(particle_idx);
-        }
+    // set age & time to census
+    if particle.time_to_census <= zero() {
+        particle.time_to_census += mcco.time_info.time_step;
     }
+    if particle.age < zero() {
+        particle.age = zero();
+    }
+    // update energy & task
+    particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
+    particle.task = 0; // useful?
+
+    cycle_tracking_function(mcco, &mut particle, particle_idx, extra, send_queue);
+
+    *base_particle = MCBaseParticle::new(&particle);
 }
 
 fn cycle_tracking_function<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
     particle_idx: usize,
+    extra: &mut Vec<MCBaseParticle<T>>,
+    send_queue: &mut SendQueue<T>,
 ) {
     let mut keep_tracking: bool;
     let tally_idx: usize = particle_idx % mcco.tallies.num_balance_replications as usize;
@@ -76,13 +73,13 @@ fn cycle_tracking_function<T: CustomFloat>(
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                keep_tracking = collision_event(mcco, particle, tally_idx);
+                keep_tracking = collision_event(mcco, particle, tally_idx, extra);
                 if !keep_tracking {
                     particle.species = Species::Unknown;
                 }
             }
             MCSegmentOutcome::FacetCrossing => {
-                let facet_crossing_type = facet_crossing_event(particle, mcco);
+                let facet_crossing_type = facet_crossing_event(particle, mcco, send_queue);
 
                 keep_tracking = match facet_crossing_type {
                     MCTallyEvent::FacetCrossingTransitExit => true,

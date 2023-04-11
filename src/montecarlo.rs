@@ -14,9 +14,9 @@ use crate::data::nuclear_data::NuclearData;
 use crate::data::tallies::Tallies;
 use crate::geometry::mc_domain::MCDomain;
 use crate::parameters::{BenchType, Parameters};
-use crate::particles::load_particle::load_particle;
-use crate::particles::particle_vault::ParticleVault;
-use crate::particles::particle_vault_container::ParticleVaultContainer;
+use crate::particles::mc_base_particle::MCBaseParticle;
+use crate::particles::mc_particle::MCParticle;
+use crate::particles::particle_container::ParticleContainer;
 use crate::utils::mc_fast_timer::{self, MCFastTimerContainer, Section};
 use crate::utils::mc_processor_info::MCProcessorInfo;
 use crate::utils::mc_time_info::MCTimeInfo;
@@ -30,8 +30,6 @@ pub struct MonteCarlo<T: CustomFloat> {
     pub params: Parameters<T>,
     /// Object storing all data related to particles.
     pub nuclear_data: NuclearData<T>,
-    /// Container for all the particle vaults used during simulation.
-    pub particle_vault_container: ParticleVaultContainer<T>,
     /// Object storing all data related to materials.
     pub material_database: MaterialDatabase<T>,
     /// Object storing all tallies of the simulation.
@@ -60,53 +58,10 @@ impl<T: CustomFloat> MonteCarlo<T> {
         let time_info = MCTimeInfo::<T>::default();
         let fast_timer: MCFastTimerContainer = MCFastTimerContainer::default();
 
-        let num_proc = processor_info.num_processors;
-        let num_particles = params.simulation_params.n_particles as usize;
-        let mut batch_size = params.simulation_params.batch_size as usize;
-        let mut num_batches = params.simulation_params.n_batches as usize;
-
-        let n_particles_per_process = num_particles / num_proc;
-
-        if batch_size == 0 {
-            batch_size = if n_particles_per_process % num_batches == 0 {
-                n_particles_per_process / num_batches
-            } else {
-                n_particles_per_process / num_batches + 1
-            }
-        } else {
-            num_batches = if n_particles_per_process % batch_size == 0 {
-                n_particles_per_process / batch_size
-            } else {
-                n_particles_per_process / batch_size + 1
-            }
-        }
-        assert_ne!(batch_size, 0);
-
-        let mut vec_size: usize = 0;
-
-        params.material_params.values().for_each(|mp| {
-            let nb = params.cross_section_params[&mp.fission_cross_section]
-                .nu_bar
-                .ceil()
-                .to_usize()
-                .unwrap();
-            if nb * batch_size > vec_size {
-                vec_size = nb * batch_size;
-            }
-        });
-        if vec_size == 0 {
-            vec_size = 2 * batch_size;
-        }
-
-        let num_extra_vaults = (vec_size / batch_size) + 1;
-        let particle_vault_container: ParticleVaultContainer<T> =
-            ParticleVaultContainer::new(batch_size, num_batches, num_extra_vaults);
-
         Self {
             domain: Default::default(),
             params,
             nuclear_data: Default::default(),
-            particle_vault_container,
             material_database: Default::default(),
             tallies,
             time_info,
@@ -124,33 +79,36 @@ impl<T: CustomFloat> MonteCarlo<T> {
     }
 
     /// Update the energy spectrum by going over all the currently valid particles.
-    pub fn update_spectrum(&mut self) {
+    pub fn update_spectrum(&mut self, container: &ParticleContainer<T>) {
         if self.tallies.spectrum.file_name.is_empty() {
             println!("No output name specified for energy");
             return;
         }
 
-        let update_function = |vault: &ParticleVault<T>, spectrum: &mut [u64]| {
-            (0..vault.size()).for_each(|particle_idx| {
+        let update_function = |particle_list: &[MCBaseParticle<T>], spectrum: &mut [u64]| {
+            particle_list.iter().for_each(|pp| {
                 // load particle & update energy group
-                let mut pp = load_particle(vault, particle_idx, self.time_info.time_step).unwrap();
-                pp.energy_group = self.nuclear_data.get_energy_groups(pp.kinetic_energy);
-                spectrum[pp.energy_group] += 1;
+                let mut particle = MCParticle::new(pp);
+                particle.energy_group =
+                    self.nuclear_data.get_energy_groups(particle.kinetic_energy);
+                spectrum[particle.energy_group] += 1;
             });
         };
 
-        // Iterate on processing vaults
-        for vv in &self.particle_vault_container.processing_vaults {
-            update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
-        }
-        // Iterate on processed vaults
-        for vv in &self.particle_vault_container.processed_vaults {
-            update_function(vv, &mut self.tallies.spectrum.census_energy_spectrum);
-        }
+        // Iterate on processing particles
+        update_function(
+            &container.processing_particles,
+            &mut self.tallies.spectrum.census_energy_spectrum,
+        );
+        // Iterate on processed particles
+        update_function(
+            &container.processed_particles,
+            &mut self.tallies.spectrum.census_energy_spectrum,
+        );
     }
 
     /// Print stats of the current cycle and update the cumulative counters.
-    pub fn cycle_finalize(&mut self) {
+    pub fn cycle_finalize(&mut self, container: &ParticleContainer<T>) {
         self.tallies.sum_tasks();
 
         mc_fast_timer::stop(self, Section::CycleFinalize);
@@ -175,7 +133,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
                 self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
             });
 
-            // Sum on replciated scalar flux tallies and resets them
+            // Sum on replicated scalar flux tallies and resets them
             (1..self.tallies.num_flux_replications).for_each(|rep_idx| {
                 let val =
                     self.tallies.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
@@ -191,6 +149,6 @@ impl<T: CustomFloat> MonteCarlo<T> {
             self.tallies.cell_tally_domain[domain_idx].task[0].reset();
             self.tallies.scalar_flux_domain[domain_idx].task[0].reset();
         });
-        self.update_spectrum();
+        self.update_spectrum(container);
     }
 }

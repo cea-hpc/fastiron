@@ -1,3 +1,7 @@
+//! Base code for particles
+//!
+//! This module contains the code of the basic particle structure.
+
 use crate::{
     constants::CustomFloat,
     data::{mc_vector::MCVector, tallies::MCTallyEvent},
@@ -6,46 +10,50 @@ use crate::{
 
 use super::mc_particle::MCParticle;
 
+/// Custom enum used to model a particle's species.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Species {
+    /// Invalid value.
     Unknown = -1,
     #[default]
+    /// Valid value. Quicksilver only supportedone particle type.
     Known = 0, // \o/
 }
 
-/// Structure used to represent a base particle, i.e. a fresh
-/// particle with no direction.
+/// Structure used to hold base data of a particle.
+///
+/// This is mostly used to store particle using a reduced amount of memory.
 #[derive(Debug, Clone, Default)]
 pub struct MCBaseParticle<T: CustomFloat> {
-    /// Current position
+    /// Current position.
     pub coordinate: MCVector<T>,
-    /// Current velocity
+    /// Current velocity.
     pub velocity: MCVector<T>,
-    /// Kinetic energy
+    /// Kinetic energy.
     pub kinetic_energy: T,
-    /// Weight
+    /// Weight.
     pub weight: T,
-    /// Time remaining before this particle hit census
+    /// Time remaining before this particle hit census.
     pub time_to_census: T,
-    /// Age
+    /// Age.
     pub age: T,
-    /// Number of mean free paths to a collision
+    /// Number of mean free paths to a collision.
     pub num_mean_free_paths: T,
-    /// Number of segments the particle travelled
+    /// Number of segments the particle travelled.
     pub num_segments: T,
 
-    /// Random number seed for the rng for this particle
+    /// Random number seed for the rng for this particle.
     pub random_number_seed: u64,
-    /// Unique ID used to identify and track individual particles
+    /// Unique ID used to identify and track individual particles.
     pub identifier: u64,
 
-    /// Last event this particle underwent
+    /// Last event this particle underwent.
     pub last_event: MCTallyEvent,
-    /// Species of the particle
+    /// Species of the particle.
     pub species: Species,
-    /// Current domain in the spatial grid
+    /// Current domain in the spatial grid.
     pub domain: usize,
-    /// Current cell in the current domain
+    /// Current cell in the current domain.
     pub cell: usize,
 }
 

@@ -1,7 +1,8 @@
-pub mod load_particle;
+//! Particle modelling code
+//!
+//! This module contains code used to model particles and data structures holding
+//! particles.
+
 pub mod mc_base_particle;
 pub mod mc_particle;
-pub mod mc_particle_buffer;
 pub mod particle_container;
-pub mod particle_vault;
-pub mod particle_vault_container;
