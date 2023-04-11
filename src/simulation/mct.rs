@@ -410,32 +410,21 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     let mut cross1: T = zero();
     let mut cross2: T = zero();
 
-    let v01: MCVector<T> = facet_coords[1] - facet_coords[0];
-    let v12: MCVector<T> = facet_coords[2] - facet_coords[1];
-    let v20: MCVector<T> = facet_coords[0] - facet_coords[2];
-    let v0i: MCVector<T> = intersection_pt - facet_coords[0];
-    let v1i: MCVector<T> = intersection_pt - facet_coords[1];
-    let v2i: MCVector<T> = intersection_pt - facet_coords[2];
-
-    let crosses: [MCVector<T>; 3] = [v01.cross(&v0i), v12.cross(&v1i), v20.cross(&v2i)];
-
     if (plane.c < -pfive) | (plane.c > pfive) {
         belongs_or_return!(x);
         belongs_or_return!(y);
         // update cross; TODO:  check if we can replace it by a cross product using MCVector
         // for example, those are the coeff along Z of fcoords0fcoords1 x fcoords0inter_pt, etc..
         // + the cross0/1/2 are interchangeable so no naming issues will appear
-        cross1 = crosses[0].z;
-        /*ab_cross_ac!(
+        cross1 = ab_cross_ac!(
             facet_coords[0].x,
             facet_coords[0].y,
             facet_coords[1].x,
             facet_coords[1].y,
             intersection_pt.x,
             intersection_pt.y
-        );*/
-        cross2 = crosses[1].z;
-        /*ab_cross_ac!(
+        );
+        cross2 = ab_cross_ac!(
             facet_coords[1].x,
             facet_coords[1].y,
             facet_coords[2].x,
@@ -443,78 +432,70 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
             intersection_pt.x,
             intersection_pt.y
         );
-        */
-        cross0 = crosses[2].z;
-        /*ab_cross_ac!(
+        cross0 = ab_cross_ac!(
             facet_coords[2].x,
             facet_coords[2].y,
             facet_coords[0].x,
             facet_coords[0].y,
             intersection_pt.x,
             intersection_pt.y
-        );*/
+        );
     } else if (plane.b < -pfive) | (plane.b > pfive) {
         belongs_or_return!(x);
         belongs_or_return!(z);
         // update cross; y elements
-        cross1 = crosses[0].y;
-        /*ab_cross_ac!(
+        cross1 = ab_cross_ac!(
             facet_coords[0].z,
             facet_coords[0].x,
             facet_coords[1].z,
             facet_coords[1].x,
             intersection_pt.z,
             intersection_pt.x
-        );*/
-        cross2 = crosses[1].y;
-        /*ab_cross_ac!(
+        );
+        cross2 = ab_cross_ac!(
             facet_coords[1].z,
             facet_coords[1].x,
             facet_coords[2].z,
             facet_coords[2].x,
             intersection_pt.z,
             intersection_pt.x
-        );*/
-        cross0 = crosses[2].y;
-        /*ab_cross_ac!(
+        );
+        cross0 = ab_cross_ac!(
             facet_coords[2].z,
             facet_coords[2].x,
             facet_coords[0].z,
             facet_coords[0].x,
             intersection_pt.z,
             intersection_pt.x
-        );*/
+        );
     } else if (plane.a < -pfive) | (plane.a > pfive) {
         belongs_or_return!(z);
         belongs_or_return!(y);
         // update cross; x elements
-        cross1 = crosses[0].x;
-        /*ab_cross_ac!(
+        cross1 = ab_cross_ac!(
             facet_coords[0].y,
             facet_coords[0].z,
             facet_coords[1].y,
             facet_coords[1].z,
             intersection_pt.y,
             intersection_pt.z
-        );*/
-        cross2 = crosses[1].x;
-        /*ab_cross_ac!(
+        );
+        cross2 = ab_cross_ac!(
             facet_coords[1].y,
             facet_coords[1].z,
             facet_coords[2].y,
             facet_coords[2].z,
             intersection_pt.y,
             intersection_pt.z
-        );*/
-        cross0 = crosses[2].x;
-        /*ab_cross_ac!(
+        );
+        cross0 = ab_cross_ac!(
             facet_coords[2].y,
             facet_coords[2].z,
             facet_coords[0].y,
             facet_coords[0].z,
             intersection_pt.y,
             intersection_pt.z
-        );*/
+        );
     }
 
     let cross_tolerance: T = bounding_box_tolerance * (cross0 + cross1 + cross2).abs();
