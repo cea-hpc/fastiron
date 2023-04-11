@@ -41,7 +41,7 @@ fn main() {
 
     game_over(mcco);
 
-    coral_benchmark_correctness(&mcco.params, &mcco.tallies);
+    coral_benchmark_correctness(mcco.params.simulation_params.coral_benchmark, &mcco.tallies);
 }
 
 pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {

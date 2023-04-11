@@ -6,20 +6,16 @@
 
 use num::{one, zero, FromPrimitive};
 
-use crate::{
-    constants::CustomFloat,
-    data::tallies::Tallies,
-    parameters::{BenchType, Parameters},
-};
+use crate::{constants::CustomFloat, data::tallies::Tallies, parameters::BenchType};
 
 /// Runs additionnal tests according to the [BenchType].
-pub fn coral_benchmark_correctness<T: CustomFloat>(params: &Parameters<T>, tallies: &Tallies<T>) {
-    if params.simulation_params.coral_benchmark == BenchType::Standard {
+pub fn coral_benchmark_correctness<T: CustomFloat>(bench_type: BenchType, tallies: &Tallies<T>) {
+    if bench_type == BenchType::Standard {
         return;
     }
 
     // only on mpi rank 0 in QS code
-    balance_ratio_test(params, tallies);
+    balance_ratio_test(bench_type, tallies);
     balance_event_test(tallies);
     missing_particle_test(tallies);
 
@@ -31,7 +27,7 @@ pub fn coral_benchmark_correctness<T: CustomFloat>(params: &Parameters<T>, talli
 ///
 /// Expected ratios of absorbs, fissions, scatters are maintained
 /// withing some tolerance, based on input expectation.
-pub fn balance_ratio_test<T: CustomFloat>(params: &Parameters<T>, tallies: &Tallies<T>) {
+pub fn balance_ratio_test<T: CustomFloat>(bench_type: BenchType, tallies: &Tallies<T>) {
     println!("Testing if ratios for absorbtion, fission & scattering are maintained...");
 
     let balance_tally = &tallies.balance_cumulative;
@@ -39,7 +35,7 @@ pub fn balance_ratio_test<T: CustomFloat>(params: &Parameters<T>, tallies: &Tall
     let fission: T = FromPrimitive::from_u64(balance_tally.fission).unwrap();
     let scatter: T = FromPrimitive::from_u64(balance_tally.scatter).unwrap();
     let (fission_ratio, scatter_ratio, absorb_ratio, percent_tolerance): (T, T, T, T) =
-        if params.simulation_params.coral_benchmark == BenchType::Coral1 {
+        if bench_type == BenchType::Coral1 {
             (
                 FromPrimitive::from_f64(0.05).unwrap(),
                 FromPrimitive::from_f64(1.0).unwrap(),
