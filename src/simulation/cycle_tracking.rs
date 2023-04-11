@@ -38,14 +38,16 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     let mut particle = MCParticle::new(base_particle);
 
     // set age & time to census
-    if particle.time_to_census <= zero() {
-        particle.time_to_census += mcco.time_info.time_step;
+    if particle.base_particle.time_to_census <= zero() {
+        particle.base_particle.time_to_census += mcco.time_info.time_step;
     }
-    if particle.age < zero() {
-        particle.age = zero();
+    if particle.base_particle.age < zero() {
+        particle.base_particle.age = zero();
     }
     // update energy & task
-    particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
+    particle.energy_group = mcco
+        .nuclear_data
+        .get_energy_groups(particle.base_particle.kinetic_energy);
     particle.task = 0; // useful?
 
     cycle_tracking_function(mcco, &mut particle, particle_idx, extra, send_queue);
@@ -69,13 +71,13 @@ fn cycle_tracking_function<T: CustomFloat>(
         let segment_outcome = outcome(mcco, particle, flux_tally_idx);
         mcco.tallies.balance_task[tally_idx].num_segments += 1; // atomic in original code
 
-        particle.num_segments += one();
+        particle.base_particle.num_segments += one();
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
                 keep_tracking = collision_event(mcco, particle, tally_idx, extra);
                 if !keep_tracking {
-                    particle.species = Species::Unknown;
+                    particle.base_particle.species = Species::Unknown;
                 }
             }
             MCSegmentOutcome::FacetCrossing => {
@@ -86,8 +88,8 @@ fn cycle_tracking_function<T: CustomFloat>(
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
                         mcco.tallies.balance_task[tally_idx].escape += 1;
-                        particle.last_event = MCTallyEvent::FacetCrossingEscape;
-                        particle.species = Species::Unknown;
+                        particle.base_particle.last_event = MCTallyEvent::FacetCrossingEscape;
+                        particle.base_particle.species = Species::Unknown;
                         false
                     }
                     MCTallyEvent::FacetCrossingReflection => {
@@ -96,7 +98,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                     }
                     _ => {
                         // transit to off-cluster domain
-                        particle.species = Species::Unknown;
+                        particle.base_particle.species = Species::Unknown;
                         false
                     }
                 };
