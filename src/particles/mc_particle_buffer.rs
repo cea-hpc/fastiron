@@ -9,8 +9,8 @@ use super::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle};
 /// on space division. Should probably be deleted asap.
 #[derive(Debug, Default)]
 pub struct MCParticleBuffer<T: CustomFloat> {
-    /// One buffer per domain: buffers.len()==mcco.domain.len().
-    /// The indexing is coherent (buffer of domain[N] == buffers[N])
+    /// One buffer per domain: `buffers.len()==mcco.domain.len()`.
+    /// The indexing is coherent (`buffer of domain[N] == buffers[N]`)
     pub buffers: Vec<Vec<MCParticle<T>>>,
 }
 
