@@ -228,9 +228,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
                             sample * range + mcco.params.simulation_params.e_min;
 
                         let speed: T = speed_from_energy(particle.kinetic_energy);
-                        particle.velocity.x = speed * direction_cosine.alpha;
-                        particle.velocity.y = speed * direction_cosine.beta;
-                        particle.velocity.z = speed * direction_cosine.gamma;
+                        particle.velocity = direction_cosine.dir * speed;
 
                         particle.domain = domain_idx;
                         particle.cell = cell_idx;

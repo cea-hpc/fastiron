@@ -44,9 +44,7 @@ impl<T: CustomFloat> MCParticle<T> {
     pub fn new(from_particle: &MCBaseParticle<T>) -> Self {
         let speed = from_particle.velocity.length();
         let d_cos = DirectionCosine {
-            alpha: speed.recip() * from_particle.velocity.x,
-            beta: speed.recip() * from_particle.velocity.y,
-            gamma: speed.recip() * from_particle.velocity.z,
+            dir: from_particle.velocity * speed.recip(),
         };
 
         MCParticle {
@@ -74,9 +72,7 @@ impl<T: CustomFloat> MCParticle<T> {
     /// Update the particle's field to model its movement along the specified
     /// direction and distance
     pub fn move_particle(&mut self, distance: T) {
-        self.base_particle.coordinate.x += self.direction_cosine.alpha * distance;
-        self.base_particle.coordinate.y += self.direction_cosine.beta * distance;
-        self.base_particle.coordinate.z += self.direction_cosine.gamma * distance;
+        self.base_particle.coordinate += self.direction_cosine.dir * distance;
     }
 }
 
@@ -100,7 +96,7 @@ impl<T: CustomFloat> Display for MCParticle<T> {
         writeln!(
             f,
             "direction cosine: {} {} {}",
-            self.direction_cosine.alpha, self.direction_cosine.beta, self.direction_cosine.gamma
+            self.direction_cosine.dir.x, self.direction_cosine.dir.y, self.direction_cosine.dir.z
         )?;
         writeln!(f, "kinetic energy: {}", self.base_particle.kinetic_energy)?;
         writeln!(f, "weight: {}", self.base_particle.weight)?;

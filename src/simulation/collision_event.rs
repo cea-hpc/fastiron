@@ -40,9 +40,10 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
     particle
         .direction_cosine
         .rotate_3d_vector(sin_theta, cos_theta, sin_phi, cos_phi);
-    particle.base_particle.velocity.x = speed * particle.direction_cosine.alpha;
-    particle.base_particle.velocity.y = speed * particle.direction_cosine.beta;
-    particle.base_particle.velocity.z = speed * particle.direction_cosine.gamma;
+    particle.base_particle.velocity = particle.direction_cosine.dir * speed;
+    //particle.base_particle.velocity.x = speed * particle.direction_cosine.alpha;
+    //particle.base_particle.velocity.y = speed * particle.direction_cosine.beta;
+    //particle.base_particle.velocity.z = speed * particle.direction_cosine.gamma;
     rdm_number = rng_sample(&mut particle.base_particle.random_number_seed);
     particle.base_particle.num_mean_free_paths = -one * rdm_number.ln();
 }
@@ -199,9 +200,11 @@ mod tests {
             z: 1.0,
         };
         let d_cos: DirectionCosine<f64> = DirectionCosine {
-            alpha: 1.0 / 3.0.sqrt(),
-            beta: 1.0 / 3.0.sqrt(),
-            gamma: 1.0 / 3.0.sqrt(),
+            dir: MCVector {
+                x: 1.0 / 3.0.sqrt(),
+                y: 1.0 / 3.0.sqrt(),
+                z: 1.0 / 3.0.sqrt(),
+            },
         };
         let e: f64 = 1.0;
         pp.base_particle.velocity = vv;
@@ -214,9 +217,9 @@ mod tests {
         // update & print result
         update_trajectory(energy, angle, &mut pp);
 
-        assert!((pp.direction_cosine.alpha - 0.620283).abs() < 1.0e-6);
-        assert!((pp.direction_cosine.beta - 0.620283).abs() < 1.0e-6);
-        assert!((pp.direction_cosine.gamma - (-0.480102)).abs() < 1.0e-6);
+        assert!((pp.direction_cosine.dir.x - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction_cosine.dir.y - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction_cosine.dir.z - (-0.480102)).abs() < 1.0e-6);
         assert!((pp.base_particle.kinetic_energy - energy).abs() < TINY_FLOAT);
     }
 }

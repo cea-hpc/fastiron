@@ -157,21 +157,14 @@ pub fn reflect_particle<T: CustomFloat>(mcco: &MonteCarlo<T>, particle: &mut MCP
     };
 
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    let dot: T = two
-        * (new_d_cos.alpha * facet_normal.x
-            + new_d_cos.beta * facet_normal.y
-            + new_d_cos.gamma * facet_normal.z);
+    let dot: T = two * new_d_cos.dir.dot(&facet_normal);
 
     if dot > zero() {
-        new_d_cos.alpha -= dot * facet_normal.x;
-        new_d_cos.beta -= dot * facet_normal.y;
-        new_d_cos.gamma -= dot * facet_normal.z;
+        new_d_cos.dir -= facet_normal * dot;
         particle.direction_cosine = new_d_cos;
     }
     let particle_speed = particle.base_particle.velocity.length();
-    particle.base_particle.velocity.x = particle_speed * particle.direction_cosine.alpha;
-    particle.base_particle.velocity.y = particle_speed * particle.direction_cosine.beta;
-    particle.base_particle.velocity.z = particle_speed * particle.direction_cosine.gamma;
+    particle.base_particle.velocity = particle.direction_cosine.dir * particle_speed;
 }
 
 // ==============================
@@ -204,9 +197,9 @@ fn mct_nf_3dg<T: CustomFloat>(
 
             let plane = &domain.mesh.cell_geometry[location.cell.unwrap()][facet_idx];
 
-            let facet_normal_dot_dcos: T = plane.a * direction_cosine.alpha
-                + plane.b * direction_cosine.beta
-                + plane.c * direction_cosine.gamma;
+            let facet_normal_dot_dcos: T = plane.a * direction_cosine.dir.x
+                + plane.b * direction_cosine.dir.y
+                + plane.c * direction_cosine.dir.z;
 
             if facet_normal_dot_dcos <= zero() {
                 return;
@@ -386,11 +379,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
 
     let distance: T = numerator / facet_normal_dot_dcos;
 
-    let intersection_pt: MCVector<T> = MCVector {
-        x: coords.x + distance * d_cos.alpha,
-        y: coords.y + distance * d_cos.beta,
-        z: coords.z + distance * d_cos.gamma,
-    };
+    let intersection_pt: MCVector<T> = *coords + d_cos.dir * distance;
 
     // if the point doesn't belong to the facet, returns huge_f
     macro_rules! belongs_or_return {
