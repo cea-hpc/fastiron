@@ -14,6 +14,7 @@ use crate::{
     constants::CustomFloat,
     geometry::mc_domain::MCDomain,
     montecarlo::MonteCarlo,
+    parameters::BenchType,
     utils::mc_fast_timer::{self, Section},
 };
 
@@ -432,5 +433,39 @@ impl<T: CustomFloat> Tallies<T> {
         });
 
         sum
+    }
+
+    /// Print stats of the current cycle and update the cumulative counters.
+    pub fn cycle_finalize(&mut self, bench_type: BenchType) {
+        self.balance_cumulative.add(&self.balance_task[0]);
+
+        let new_start: u64 = self.balance_task[0].end;
+        (0..self.balance_task.len()).for_each(|balance_idx| {
+            self.balance_task[balance_idx].reset();
+        });
+        self.balance_task[0].start = new_start;
+
+        (0..self.scalar_flux_domain.len()).for_each(|domain_idx| {
+            // Sum on replicated cell tallies and resets them
+            (1..self.num_cell_tally_replications).for_each(|rep_idx| {
+                let val = self.cell_tally_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                self.cell_tally_domain[domain_idx].task[0].add(&val);
+                self.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
+            });
+
+            // Sum on replicated scalar flux tallies and resets them
+            (1..self.num_flux_replications).for_each(|rep_idx| {
+                let val = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                self.scalar_flux_domain[domain_idx].task[0].add(&val);
+                self.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
+            });
+
+            if bench_type != BenchType::Standard {
+                self.fluence
+                    .compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
+            }
+            self.cell_tally_domain[domain_idx].task[0].reset();
+            self.scalar_flux_domain[domain_idx].task[0].reset();
+        });
     }
 }

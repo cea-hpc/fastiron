@@ -133,9 +133,17 @@ pub fn cycle_finalize<T: CustomFloat>(
 ) {
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
+    // prepare data for summary
     mcco.tallies.balance_task[0].end = container.processed_particles.len() as u64;
-
-    mcco.cycle_finalize(container);
+    mcco.tallies.sum_tasks();
+    // print summary
+    mc_fast_timer::stop(mcco, Section::CycleFinalize);
+    mcco.tallies.print_summary(mcco);
+    mc_fast_timer::start(mcco, Section::CycleFinalize);
+    // record / process data for the next cycle
+    mcco.tallies
+        .cycle_finalize(mcco.params.simulation_params.coral_benchmark);
+    mcco.update_spectrum(container);
     mcco.time_info.cycle += 1;
 
     mc_fast_timer::stop(mcco, Section::CycleFinalize);
