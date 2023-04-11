@@ -81,9 +81,9 @@ fn cycle_tracking_function<T: CustomFloat>(
                 }
             }
             MCSegmentOutcome::FacetCrossing => {
-                let facet_crossing_type = facet_crossing_event(particle, mcco, send_queue);
+                facet_crossing_event(particle, mcco, send_queue);
 
-                keep_tracking = match facet_crossing_type {
+                keep_tracking = match particle.base_particle.last_event {
                     MCTallyEvent::FacetCrossingTransitExit => true,
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
