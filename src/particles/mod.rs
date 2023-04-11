@@ -1,4 +1,3 @@
-pub mod load_particle;
 pub mod mc_base_particle;
 pub mod mc_particle;
 pub mod particle_container;
