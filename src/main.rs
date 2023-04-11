@@ -1,6 +1,6 @@
 use clap::Parser;
 use fastiron::constants::CustomFloat;
-use fastiron::init_mc::{init_mc, init_particle_containers};
+use fastiron::init::{init_mc, init_particle_containers};
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::Parameters;
 use fastiron::particles::mc_base_particle::Species;
@@ -123,7 +123,6 @@ pub fn cycle_tracking<T: CustomFloat>(
             break;
         }
     }
-    //
     mc_fast_timer::stop(mcco, Section::CycleTracking);
 }
 

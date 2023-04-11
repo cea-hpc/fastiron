@@ -44,7 +44,7 @@ pub fn balance_ratio_test<T: CustomFloat>(bench_type: BenchType, tallies: &Talli
             )
         } else {
             // then it's BenchType::Coral2
-            // can be verified from parsing & first of of the calling function
+            // can be verified from parsing & first if-branch of the calling function
             (
                 FromPrimitive::from_f64(0.075).unwrap(),
                 FromPrimitive::from_f64(0.830).unwrap(),
