@@ -168,10 +168,10 @@ pub fn reflect_particle<T: CustomFloat>(mcco: &MonteCarlo<T>, particle: &mut MCP
         new_d_cos.gamma -= dot * facet_normal.z;
         particle.direction_cosine = new_d_cos;
     }
-    let particle_speed = particle.velocity.length();
-    particle.velocity.x = particle_speed * particle.direction_cosine.alpha;
-    particle.velocity.y = particle_speed * particle.direction_cosine.beta;
-    particle.velocity.z = particle_speed * particle.direction_cosine.gamma;
+    let particle_speed = particle.base_particle.velocity.length();
+    particle.base_particle.velocity.x = particle_speed * particle.direction_cosine.alpha;
+    particle.base_particle.velocity.y = particle_speed * particle.direction_cosine.beta;
+    particle.base_particle.velocity.z = particle_speed * particle.direction_cosine.gamma;
 }
 
 // ==============================
@@ -185,7 +185,7 @@ fn mct_nf_3dg<T: CustomFloat>(
     let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
 
     let mut location = particle.get_location();
-    let coords = particle.coordinate;
+    let coords = particle.base_particle.coordinate;
     let direction_cosine = particle.direction_cosine.clone();
 
     let mut facet_coords: [MCVector<T>; N_POINTS_PER_FACET] = Default::default();
@@ -320,7 +320,7 @@ fn mct_nf_find_nearest<T: CustomFloat>(
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
     let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
 
-    let coord = &mut particle.coordinate;
+    let coord = &mut particle.base_particle.coordinate;
 
     const MAX_ALLOWED_SEGMENTS: usize = 10000000;
     const MAX_ITERATION: usize = 1000;
@@ -330,7 +330,8 @@ fn mct_nf_find_nearest<T: CustomFloat>(
 
     // take an option as arg and check if is_some ?
     if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
-        | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
+        | ((particle.base_particle.num_segments > max)
+            & (nearest_facet.distance_to_facet <= zero()))
     {
         mct_nf_3dg_move_particle(domain, location, coord, *move_factor);
         *iteration += 1;

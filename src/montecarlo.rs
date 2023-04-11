@@ -89,8 +89,9 @@ impl<T: CustomFloat> MonteCarlo<T> {
             particle_list.iter().for_each(|pp| {
                 // load particle & update energy group
                 let mut particle = MCParticle::new(pp);
-                particle.energy_group =
-                    self.nuclear_data.get_energy_groups(particle.kinetic_energy);
+                particle.energy_group = self
+                    .nuclear_data
+                    .get_energy_groups(particle.base_particle.kinetic_energy);
                 spectrum[particle.energy_group] += 1;
             });
         };
