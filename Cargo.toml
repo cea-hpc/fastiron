@@ -22,3 +22,7 @@ criterion = {version="0.3.4", features=["html_reports"]}
 [[bench]]
 name = "rng_benchmark"
 harness = false
+
+[[bench]]
+name = "mct_cross_product"
+harness = false
