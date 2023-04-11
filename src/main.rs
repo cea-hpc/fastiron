@@ -137,7 +137,7 @@ pub fn cycle_finalize<T: CustomFloat>(
     mcco.tallies.balance_task[0].end = container.processed_particles.len() as u64;
     mcco.tallies.sum_tasks();
     // print summary
-    mc_fast_timer::stop(mcco, Section::CycleFinalize);
+    //mc_fast_timer::stop(mcco, Section::CycleFinalize);
     mcco.tallies.print_summary(mcco);
     mc_fast_timer::start(mcco, Section::CycleFinalize);
     // record / process data for the next cycle
