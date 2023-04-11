@@ -29,6 +29,7 @@ use crate::{
 /// If the split factor is strictly below one, there are too many particles,
 /// if it is striclty superior to one, there are too little. Particles are
 /// then either randomly killed or spawned to get to the desired number.
+
 pub fn population_control<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     container: &mut ParticleContainer<T>,
