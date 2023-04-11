@@ -1,3 +1,7 @@
+//! Data structure used to hold particles
+//!
+//! This module contains code used for the main structure holding particles.
+
 use crate::{constants::CustomFloat, data::send_queue::SendQueue};
 
 use super::mc_base_particle::MCBaseParticle;
@@ -15,7 +19,8 @@ pub struct ParticleContainer<T: CustomFloat> {
     /// particles and incoming off-processor particles.
     pub extra_particles: Vec<MCBaseParticle<T>>,
     /// Queue used to save particles and neighbor index for any particles
-    /// that hit TransitOffProcessor (See MCSubfacetAdjacencyEvent)
+    /// moving from a domain managed by a different processor than the current
+    /// one.
     pub send_queue: SendQueue<T>,
 }
 
