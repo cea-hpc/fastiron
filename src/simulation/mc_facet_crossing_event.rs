@@ -31,26 +31,26 @@ pub fn facet_crossing_event<T: CustomFloat>(
     match facet_adjacency.event {
         MCSubfacetAdjacencyEvent::TransitOnProcessor => {
             // particle enters an adjacent cell
-            particle.domain = facet_adjacency.adjacent.domain.unwrap();
-            particle.cell = facet_adjacency.adjacent.cell.unwrap();
+            particle.base_particle.domain = facet_adjacency.adjacent.domain.unwrap();
+            particle.base_particle.cell = facet_adjacency.adjacent.cell.unwrap();
             particle.facet = facet_adjacency.adjacent.facet.unwrap();
-            particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
+            particle.base_particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
         }
         MCSubfacetAdjacencyEvent::BoundaryEscape => {
             // particle escape the system
-            particle.last_event = MCTallyEvent::FacetCrossingEscape;
+            particle.base_particle.last_event = MCTallyEvent::FacetCrossingEscape;
         }
         MCSubfacetAdjacencyEvent::BoundaryReflection => {
             // particle reflect off a system boundary
-            particle.last_event = MCTallyEvent::FacetCrossingReflection
+            particle.base_particle.last_event = MCTallyEvent::FacetCrossingReflection
         }
         MCSubfacetAdjacencyEvent::TransitOffProcessor => {
             // particle enters an adjacent cell that belongs to
             // a domain managed by another processor.
-            particle.domain = facet_adjacency.adjacent.domain.unwrap();
-            particle.cell = facet_adjacency.adjacent.cell.unwrap();
+            particle.base_particle.domain = facet_adjacency.adjacent.domain.unwrap();
+            particle.base_particle.cell = facet_adjacency.adjacent.cell.unwrap();
             particle.facet = facet_adjacency.adjacent.facet.unwrap();
-            particle.last_event = MCTallyEvent::FacetCrossingCommunication;
+            particle.base_particle.last_event = MCTallyEvent::FacetCrossingCommunication;
 
             let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
                 .mesh
@@ -60,5 +60,5 @@ pub fn facet_crossing_event<T: CustomFloat>(
         }
         MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
     }
-    particle.last_event
+    particle.base_particle.last_event
 }

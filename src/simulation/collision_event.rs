@@ -29,22 +29,20 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
     // value for update
     let cos_theta: T = angle;
     let sin_theta: T = (one - cos_theta * cos_theta).sqrt();
-    let mut rdm_number: T = rng_sample(&mut particle.random_number_seed);
+    let mut rdm_number: T = rng_sample(&mut particle.base_particle.random_number_seed);
     let phi = two * pi * rdm_number;
     let sin_phi: T = phi.sin();
     let cos_phi: T = phi.cos();
     let speed: T = c * (one - ((nrm * nrm) / ((energy + nrm) * (energy + nrm)))).sqrt();
 
     // update
-    particle.kinetic_energy = energy;
+    particle.base_particle.kinetic_energy = energy;
     particle
         .direction_cosine
         .rotate_3d_vector(sin_theta, cos_theta, sin_phi, cos_phi);
-    particle.velocity.x = speed * particle.direction_cosine.alpha;
-    particle.velocity.y = speed * particle.direction_cosine.beta;
-    particle.velocity.z = speed * particle.direction_cosine.gamma;
-    rdm_number = rng_sample(&mut particle.random_number_seed);
-    particle.num_mean_free_paths = -one * rdm_number.ln();
+    particle.base_particle.velocity = particle.direction_cosine.dir * speed;
+    rdm_number = rng_sample(&mut particle.base_particle.random_number_seed);
+    particle.base_particle.num_mean_free_paths = -one * rdm_number.ln();
 }
 
 /// Transforms a given particle according to an internally drawn type of collision.
@@ -63,12 +61,13 @@ pub fn collision_event<T: CustomFloat>(
     tally_idx: usize,
     extra: &mut Vec<MCBaseParticle<T>>,
 ) -> bool {
-    let mat_gidx = mcco.domain[particle.domain].cell_state[particle.cell].material;
+    let mat_gidx =
+        mcco.domain[particle.base_particle.domain].cell_state[particle.base_particle.cell].material;
 
     // ==========================
     // Pick an isotope & reaction
 
-    let rdm_number: T = rng_sample(&mut particle.random_number_seed);
+    let rdm_number: T = rng_sample(&mut particle.base_particle.random_number_seed);
     let total_xsection: T = particle.total_cross_section;
 
     let mut current_xsection: T = total_xsection * rdm_number;
@@ -88,8 +87,8 @@ pub fn collision_event<T: CustomFloat>(
                 current_xsection -= macroscopic_cross_section(
                     mcco,
                     reaction_idx,
-                    particle.domain,
-                    particle.cell,
+                    particle.base_particle.domain,
+                    particle.base_particle.cell,
                     iso_idx,
                     particle.energy_group,
                 );
@@ -117,9 +116,9 @@ pub fn collision_event<T: CustomFloat>(
     let (energy_out, angle_out) = mcco.nuclear_data.isotopes[selected_unique_n][0].reactions
         [selected_react]
         .sample_collision(
-            particle.kinetic_energy,
+            particle.base_particle.kinetic_energy,
             mat_mass,
-            &mut particle.random_number_seed,
+            &mut particle.base_particle.random_number_seed,
         );
     // number of particles resulting from the collision, including the original
     // e.g. zero means the original particle was absorbed or invalidated in some way
@@ -151,8 +150,9 @@ pub fn collision_event<T: CustomFloat>(
     if n_out > 1 {
         for secondary_idx in 1..n_out {
             let mut sec_particle = particle.clone();
-            sec_particle.random_number_seed = spawn_rn_seed::<T>(&mut particle.random_number_seed);
-            sec_particle.identifier = sec_particle.random_number_seed;
+            sec_particle.base_particle.random_number_seed =
+                spawn_rn_seed::<T>(&mut particle.base_particle.random_number_seed);
+            sec_particle.base_particle.identifier = sec_particle.base_particle.random_number_seed;
             update_trajectory(
                 energy_out[secondary_idx],
                 angle_out[secondary_idx],
@@ -163,7 +163,9 @@ pub fn collision_event<T: CustomFloat>(
     }
 
     update_trajectory(energy_out[0], angle_out[0], particle);
-    particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
+    particle.energy_group = mcco
+        .nuclear_data
+        .get_energy_groups(particle.base_particle.kinetic_energy);
 
     if n_out > 1 {
         extra.push(MCBaseParticle::new(particle));
@@ -195,14 +197,16 @@ mod tests {
             z: 1.0,
         };
         let d_cos: DirectionCosine<f64> = DirectionCosine {
-            alpha: 1.0 / 3.0.sqrt(),
-            beta: 1.0 / 3.0.sqrt(),
-            gamma: 1.0 / 3.0.sqrt(),
+            dir: MCVector {
+                x: 1.0 / 3.0.sqrt(),
+                y: 1.0 / 3.0.sqrt(),
+                z: 1.0 / 3.0.sqrt(),
+            },
         };
         let e: f64 = 1.0;
-        pp.velocity = vv;
+        pp.base_particle.velocity = vv;
         pp.direction_cosine = d_cos;
-        pp.kinetic_energy = e;
+        pp.base_particle.kinetic_energy = e;
         let mut seed: u64 = 90374384094798327;
         let energy = rng_sample(&mut seed);
         let angle = rng_sample(&mut seed);
@@ -210,9 +214,9 @@ mod tests {
         // update & print result
         update_trajectory(energy, angle, &mut pp);
 
-        assert!((pp.direction_cosine.alpha - 0.620283).abs() < 1.0e-6);
-        assert!((pp.direction_cosine.beta - 0.620283).abs() < 1.0e-6);
-        assert!((pp.direction_cosine.gamma - (-0.480102)).abs() < 1.0e-6);
-        assert!((pp.kinetic_energy - energy).abs() < TINY_FLOAT);
+        assert!((pp.direction_cosine.dir.x - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction_cosine.dir.y - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction_cosine.dir.z - (-0.480102)).abs() < 1.0e-6);
+        assert!((pp.base_particle.kinetic_energy - energy).abs() < TINY_FLOAT);
     }
 }
