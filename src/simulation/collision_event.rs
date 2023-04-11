@@ -41,9 +41,6 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
         .direction_cosine
         .rotate_3d_vector(sin_theta, cos_theta, sin_phi, cos_phi);
     particle.base_particle.velocity = particle.direction_cosine.dir * speed;
-    //particle.base_particle.velocity.x = speed * particle.direction_cosine.alpha;
-    //particle.base_particle.velocity.y = speed * particle.direction_cosine.beta;
-    //particle.base_particle.velocity.z = speed * particle.direction_cosine.gamma;
     rdm_number = rng_sample(&mut particle.base_particle.random_number_seed);
     particle.base_particle.num_mean_free_paths = -one * rdm_number.ln();
 }
