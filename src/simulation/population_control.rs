@@ -11,12 +11,9 @@ use crate::{
         physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY},
         CustomFloat,
     },
-    data::tallies::Balance,
+    data::{direction_cosine::DirectionCosine, tallies::Balance},
     montecarlo::MonteCarlo,
-    particles::{
-        mc_base_particle::MCBaseParticle, mc_particle::MCParticle,
-        particle_container::ParticleContainer,
-    },
+    particles::{mc_base_particle::MCBaseParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
@@ -204,7 +201,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
                         .unwrap();
                     cell_source_tally[cell_idx] = cell.source_tally;
                     (0..cell_n_particles).for_each(|_ii| {
-                        let mut particle: MCParticle<T> = MCParticle::default();
+                        let mut particle: MCBaseParticle<T> = MCBaseParticle::default();
 
                         // atomic in original code
                         let mut rand_n_seed = cell_source_tally[cell_idx] as u64;
@@ -212,48 +209,43 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
 
                         rand_n_seed += cell.id as u64;
 
-                        particle.base_particle.random_number_seed =
-                            spawn_rn_seed::<T>(&mut rand_n_seed);
-                        particle.base_particle.identifier = rand_n_seed;
+                        particle.random_number_seed = spawn_rn_seed::<T>(&mut rand_n_seed);
+                        particle.identifier = rand_n_seed;
 
-                        particle.base_particle.coordinate = generate_coordinate_3dg(
-                            &mut particle.base_particle.random_number_seed,
+                        particle.coordinate = generate_coordinate_3dg(
+                            &mut particle.random_number_seed,
                             dom,
                             cell_idx,
                         );
-
-                        particle
-                            .direction_cosine
-                            .sample_isotropic(&mut particle.base_particle.random_number_seed);
+                        let mut direction_cosine = DirectionCosine::default();
+                        direction_cosine.sample_isotropic(&mut particle.random_number_seed);
 
                         // sample energy uniformly in [emin; emax] MeV
                         let range = mcco.params.simulation_params.e_max
                             - mcco.params.simulation_params.e_min;
-                        let sample: T = rng_sample(&mut particle.base_particle.random_number_seed);
-                        particle.base_particle.kinetic_energy =
+                        let sample: T = rng_sample(&mut particle.random_number_seed);
+                        particle.kinetic_energy =
                             sample * range + mcco.params.simulation_params.e_min;
 
-                        let speed: T = speed_from_energy(particle.base_particle.kinetic_energy);
-                        particle.base_particle.velocity.x = speed * particle.direction_cosine.alpha;
-                        particle.base_particle.velocity.y = speed * particle.direction_cosine.beta;
-                        particle.base_particle.velocity.z = speed * particle.direction_cosine.gamma;
+                        let speed: T = speed_from_energy(particle.kinetic_energy);
+                        particle.velocity.x = speed * direction_cosine.alpha;
+                        particle.velocity.y = speed * direction_cosine.beta;
+                        particle.velocity.z = speed * direction_cosine.gamma;
 
-                        particle.base_particle.domain = domain_idx;
-                        particle.base_particle.cell = cell_idx;
-                        particle.task = 0; // used task_idx in original code but it stayed const
-                        particle.base_particle.weight = source_particle_weight;
+                        particle.domain = domain_idx;
+                        particle.cell = cell_idx;
+                        particle.weight = source_particle_weight;
 
-                        let mut rand_f: T =
-                            rng_sample(&mut particle.base_particle.random_number_seed);
-                        particle.base_particle.num_mean_free_paths = -one::<T>() * rand_f.ln();
-                        rand_f = rng_sample(&mut particle.base_particle.random_number_seed);
-                        particle.base_particle.time_to_census = time_step * rand_f;
+                        let mut rand_f: T = rng_sample(&mut particle.random_number_seed);
+                        particle.num_mean_free_paths = -one::<T>() * rand_f.ln();
+                        rand_f = rng_sample(&mut particle.random_number_seed);
+                        particle.time_to_census = time_step * rand_f;
 
-                        let base_particle: MCBaseParticle<T> = MCBaseParticle::new(&particle);
-                        container.processing_particles.push(base_particle);
+                        container.processing_particles.push(particle);
 
                         // atomic in original code
-                        mcco.tallies.balance_task[particle.task].source += 1;
+                        //mcco.tallies.balance_task[particle.task].source += 1;
+                        mcco.tallies.balance_task[0].source += 1;
                     });
                 });
             // update source_tally
