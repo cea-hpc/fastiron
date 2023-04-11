@@ -21,7 +21,7 @@ pub fn facet_crossing_event<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     mcco: &mut MonteCarlo<T>,
     send_queue: &mut SendQueue<T>,
-) -> MCTallyEvent {
+) {
     let location = particle.get_location();
     let facet_adjacency = &mcco.domain[location.domain.unwrap()].mesh.cell_connectivity
         [location.cell.unwrap()]
@@ -60,5 +60,4 @@ pub fn facet_crossing_event<T: CustomFloat>(
         }
         MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
     }
-    particle.base_particle.last_event
 }

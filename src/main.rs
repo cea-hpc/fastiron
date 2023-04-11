@@ -1,6 +1,6 @@
 use clap::Parser;
 use fastiron::constants::CustomFloat;
-use fastiron::init_mc::{init_mc, init_particle_containers};
+use fastiron::init::{init_mc, init_particle_containers};
 use fastiron::montecarlo::MonteCarlo;
 use fastiron::parameters::Parameters;
 use fastiron::particles::mc_base_particle::Species;
@@ -41,7 +41,7 @@ fn main() {
 
     game_over(mcco);
 
-    coral_benchmark_correctness(&mcco.params, &mcco.tallies);
+    coral_benchmark_correctness(mcco.params.simulation_params.coral_benchmark, &mcco.tallies);
 }
 
 pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
@@ -123,7 +123,6 @@ pub fn cycle_tracking<T: CustomFloat>(
             break;
         }
     }
-    //
     mc_fast_timer::stop(mcco, Section::CycleTracking);
 }
 
@@ -133,9 +132,17 @@ pub fn cycle_finalize<T: CustomFloat>(
 ) {
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
+    // prepare data for summary
     mcco.tallies.balance_task[0].end = container.processed_particles.len() as u64;
-
-    mcco.cycle_finalize(container);
+    mcco.tallies.sum_tasks();
+    // print summary
+    //mc_fast_timer::stop(mcco, Section::CycleFinalize);
+    mcco.tallies.print_summary(mcco);
+    mc_fast_timer::start(mcco, Section::CycleFinalize);
+    // record / process data for the next cycle
+    mcco.tallies
+        .cycle_finalize(mcco.params.simulation_params.coral_benchmark);
+    mcco.update_spectrum(container);
     mcco.time_info.cycle += 1;
 
     mc_fast_timer::stop(mcco, Section::CycleFinalize);

@@ -13,11 +13,11 @@ use crate::data::material_database::MaterialDatabase;
 use crate::data::nuclear_data::NuclearData;
 use crate::data::tallies::Tallies;
 use crate::geometry::mc_domain::MCDomain;
-use crate::parameters::{BenchType, Parameters};
+use crate::parameters::Parameters;
 use crate::particles::mc_base_particle::MCBaseParticle;
 use crate::particles::mc_particle::MCParticle;
 use crate::particles::particle_container::ParticleContainer;
-use crate::utils::mc_fast_timer::{self, MCFastTimerContainer, Section};
+use crate::utils::mc_fast_timer::MCFastTimerContainer;
 use crate::utils::mc_processor_info::MCProcessorInfo;
 use crate::utils::mc_time_info::MCTimeInfo;
 
@@ -106,50 +106,5 @@ impl<T: CustomFloat> MonteCarlo<T> {
             &container.processed_particles,
             &mut self.tallies.spectrum.census_energy_spectrum,
         );
-    }
-
-    /// Print stats of the current cycle and update the cumulative counters.
-    pub fn cycle_finalize(&mut self, container: &ParticleContainer<T>) {
-        self.tallies.sum_tasks();
-
-        mc_fast_timer::stop(self, Section::CycleFinalize);
-        self.tallies.print_summary(self);
-        mc_fast_timer::start(self, Section::CycleFinalize);
-
-        self.tallies
-            .balance_cumulative
-            .add(&self.tallies.balance_task[0]);
-
-        let new_start: u64 = self.tallies.balance_task[0].end;
-        (0..self.tallies.balance_task.len()).for_each(|balance_idx| {
-            self.tallies.balance_task[balance_idx].reset();
-        });
-        self.tallies.balance_task[0].start = new_start;
-
-        (0..self.tallies.scalar_flux_domain.len()).for_each(|domain_idx| {
-            // Sum on replicated cell tallies and resets them
-            (1..self.tallies.num_cell_tally_replications).for_each(|rep_idx| {
-                let val = self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
-                self.tallies.cell_tally_domain[domain_idx].task[0].add(&val);
-                self.tallies.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
-            });
-
-            // Sum on replicated scalar flux tallies and resets them
-            (1..self.tallies.num_flux_replications).for_each(|rep_idx| {
-                let val =
-                    self.tallies.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
-                self.tallies.scalar_flux_domain[domain_idx].task[0].add(&val);
-                self.tallies.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
-            });
-
-            if self.params.simulation_params.coral_benchmark != BenchType::Standard {
-                self.tallies
-                    .fluence
-                    .compute(domain_idx, &self.tallies.scalar_flux_domain[domain_idx]);
-            }
-            self.tallies.cell_tally_domain[domain_idx].task[0].reset();
-            self.tallies.scalar_flux_domain[domain_idx].task[0].reset();
-        });
-        self.update_spectrum(container);
     }
 }

@@ -40,10 +40,6 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     // Generate/Define the input
     let n_iter: usize = 1000;
 
-    // Creates a bench using
-    // - an Id
-    // - a reference to the arguments
-    // - the routine put inside an iterator
     let mut group = c.benchmark_group("RNG");
     group.bench_with_input(
         BenchmarkId::new("Custom RNG", "number of iterations"),

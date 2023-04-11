@@ -104,7 +104,7 @@ pub mod constants;
 pub mod data;
 pub mod geometry;
 /// Initialization code for the problem
-pub mod init_mc;
+pub mod init;
 pub mod montecarlo;
 pub mod parameters;
 /// Particle-related code

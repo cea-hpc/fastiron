@@ -33,7 +33,7 @@ pub enum ParameterError {
 }
 
 /// Enum used to run additional tests according to the input benchmark
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum BenchType {
     /// No additional tests are executed. This is the default mode.
     #[default]
