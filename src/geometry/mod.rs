@@ -10,5 +10,4 @@ pub mod mc_cell_state;
 pub mod mc_domain;
 pub mod mc_facet_adjacency;
 pub mod mc_location;
-pub mod mc_nearest_facet;
 pub mod mesh_partition;
