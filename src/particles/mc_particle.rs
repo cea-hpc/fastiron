@@ -29,8 +29,6 @@ pub struct MCParticle<T: CustomFloat> {
     pub mean_free_path: T,
     /// Distance this particle travels in a segment.
     pub segment_path_length: T,
-    /// Task working on
-    pub task: usize,
     /// Current energy group the particle belong to.
     pub energy_group: usize,
     /// Nearest facet.
@@ -53,7 +51,6 @@ impl<T: CustomFloat> MCParticle<T> {
             total_cross_section: zero(),
             mean_free_path: zero(),
             segment_path_length: zero(),
-            task: 0,
             energy_group: 0,
             facet: 0,
             normal_dot: zero(),
@@ -118,7 +115,6 @@ impl<T: CustomFloat> Display for MCParticle<T> {
         writeln!(f, "identifier: {}", self.base_particle.identifier)?;
         writeln!(f, "last event: {:?}", self.base_particle.last_event)?;
         writeln!(f, "num segments: {}", self.base_particle.num_segments)?;
-        writeln!(f, "task: {}", self.task)?;
         writeln!(f, "species: {:?}", self.base_particle.species)?;
         writeln!(f, "energy group: {}", self.energy_group)?;
         writeln!(f, "domain: {}", self.base_particle.domain)?;
