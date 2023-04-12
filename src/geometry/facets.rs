@@ -1,4 +1,7 @@
 //! Facet modelling & related computation
+//!
+//! This module contains the code used for the modelling and computations
+//! related to the facets of the mesh.
 
 use super::mc_location::MCLocation;
 use crate::{
@@ -11,9 +14,9 @@ use crate::{
 };
 use num::{zero, FromPrimitive};
 
-//
+//==================
 // Distance to facet
-//
+//==================
 
 /// Structure used to represent the distance to a given facet.
 ///
@@ -30,9 +33,9 @@ pub struct MCDistanceToFacet<T: CustomFloat> {
     pub subfacet: usize,
 }
 
-//
+//==============
 // Spatial plane
-//
+//==============
 
 /// Structure representing a plane of equation `a*x + b*y + c*z + d = 0`
 ///
@@ -80,9 +83,9 @@ impl<T: CustomFloat> MCGeneralPlane<T> {
 /// List of planes associated with the outward-facing facets of a cell.
 pub type MCFacetGeometryCell<T> = [MCGeneralPlane<T>; N_FACETS_OUT];
 
-//
+//==============
 // Nearest facet
-//
+//==============
 
 /// Structure used to represent the nearest facet to a particle,
 /// holding relevant data for computation.
@@ -106,9 +109,9 @@ impl<T: CustomFloat> Default for MCNearestFacet<T> {
     }
 }
 
-//
+//================
 // Facet adjacency
-//
+//================
 
 /// Enum used to categorize the event a particle
 /// undergo when reaching a given facet.
