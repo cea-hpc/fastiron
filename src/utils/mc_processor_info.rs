@@ -5,7 +5,7 @@
 
 use crate::{constants::CustomFloat, parameters::SimulationParameters};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub enum ExecPolicy {
     #[default]
     Sequential,
