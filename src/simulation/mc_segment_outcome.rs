@@ -30,8 +30,6 @@ use crate::{
 /// Enum representing the outcome of the current segment.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MCSegmentOutcome {
-    /// Unused. **May be removed**.
-    Initialize = -1,
     /// Value for collision event.
     Collision = 0,
     /// Value for facet crossing event.
@@ -115,10 +113,6 @@ pub fn outcome<T: CustomFloat>(
     particle.normal_dot = nearest_facet.dot_product;
     distance[MCSegmentOutcome::FacetCrossing as usize] = nearest_facet.distance_to_facet;
 
-    // exit if the tracker failed to bound the particle's volume
-    if particle.base_particle.last_event == MCTallyEvent::FacetCrossingTrackingError {
-        return MCSegmentOutcome::FacetCrossing;
-    }
     // force a collision if needed
     if force_collision {
         distance[MCSegmentOutcome::FacetCrossing as usize] = huge_f;
@@ -137,23 +131,21 @@ pub fn outcome<T: CustomFloat>(
     particle.base_particle.num_mean_free_paths -=
         particle.segment_path_length / particle.mean_free_path;
 
-    // update the last event
-    particle.base_particle.last_event = match segment_outcome {
-        MCSegmentOutcome::Initialize => panic!(),
-        MCSegmentOutcome::Collision => MCTallyEvent::Collision,
-        MCSegmentOutcome::FacetCrossing => MCTallyEvent::FacetCrossingTransitExit,
-        MCSegmentOutcome::Census => MCTallyEvent::Census,
-    };
-
-    // set the segment path length according to the minimum computed distance
+    // outcome-specific updates
     match segment_outcome {
-        MCSegmentOutcome::Collision => particle.base_particle.num_mean_free_paths = zero(),
-        MCSegmentOutcome::FacetCrossing => particle.facet = nearest_facet.facet,
+        MCSegmentOutcome::Collision => {
+            particle.base_particle.num_mean_free_paths = zero();
+            particle.base_particle.last_event = MCTallyEvent::Collision;
+        }
+        MCSegmentOutcome::FacetCrossing => {
+            particle.facet = nearest_facet.facet;
+            particle.base_particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
+        }
         MCSegmentOutcome::Census => {
             particle.base_particle.time_to_census =
-                zero::<T>().min(particle.base_particle.time_to_census)
+                zero::<T>().min(particle.base_particle.time_to_census);
+            particle.base_particle.last_event = MCTallyEvent::Census;
         }
-        MCSegmentOutcome::Initialize => panic!(),
     }
 
     if force_collision {

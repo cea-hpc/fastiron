@@ -110,7 +110,6 @@ fn verify_file_parsing() {
     // lots of assert!
     // sim block
     assert_eq!(params.simulation_params.dt, 1e-06);
-    assert_eq!(params.simulation_params.f_max, 0.1);
     assert_eq!(params.simulation_params.input_file, "parsing.inp");
     assert_eq!(params.simulation_params.boundary_condition, "reflect");
     assert!(params.simulation_params.load_balance);

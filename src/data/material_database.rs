@@ -3,8 +3,6 @@
 //! This module contains code used to store material-related data. It is mainly used when
 //! initializing the simulation, in order to build the environment of the problem.
 
-use num::FromPrimitive;
-
 use crate::constants::CustomFloat;
 
 /// Structure used to represent an isotope of a material.
@@ -29,28 +27,9 @@ pub struct Material<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> Material<T> {
-    /// Constructor.
-    pub fn new(name: &str) -> Self {
-        Material {
-            name: name.to_string(),
-            ..Default::default()
-        }
-    }
-
     /// Adds an [Isotope] to the internal list.
     pub fn add_isotope(&mut self, isotope: Isotope<T>) {
         self.iso.push(isotope);
-    }
-}
-
-impl<T: CustomFloat> Default for Material<T> {
-    fn default() -> Self {
-        let m: T = FromPrimitive::from_f32(1000.0).unwrap();
-        Self {
-            name: "0".to_string(),
-            mass: m,
-            iso: Vec::new(),
-        }
     }
 }
 

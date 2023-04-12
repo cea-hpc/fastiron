@@ -48,7 +48,6 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     particle.energy_group = mcco
         .nuclear_data
         .get_energy_groups(particle.base_particle.kinetic_energy);
-    particle.task = 0; // useful?
 
     cycle_tracking_function(mcco, &mut particle, particle_idx, extra, send_queue);
 
@@ -109,7 +108,6 @@ fn cycle_tracking_function<T: CustomFloat>(
                 // we're done tracking the particle FOR THIS STEP
                 keep_tracking = false;
             }
-            MCSegmentOutcome::Initialize => unreachable!(),
         }
 
         if !keep_tracking {

@@ -106,8 +106,6 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         n_isotopes += mat_params.n_isotopes;
     }
 
-    // These should be of capacity 0 by default, using directly the count is correct
-    // What did I mean by this ^
     mcco.nuclear_data.isotopes.reserve(n_isotopes);
     mcco.material_database.mat.reserve(n_materials);
 
@@ -115,10 +113,8 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         let mut material: Material<T> = Material {
             name: mp.name.to_owned(),
             mass: mp.mass,
-            ..Default::default()
+            iso: Vec::with_capacity(mp.n_isotopes),
         };
-
-        material.iso.reserve(mp.n_isotopes);
 
         (0..mp.n_isotopes).for_each(|_| {
             let isotope_gid = mcco.nuclear_data.add_isotope(
@@ -306,7 +302,7 @@ pub fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
     if params.simulation_params.cross_sections_out.is_empty() {
         return;
     }
-    // pass these directly as arguments?
+
     let nucdb = &mcco.nuclear_data;
     let matdb = &mcco.material_database;
 
@@ -342,7 +338,6 @@ pub fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
                         ReactionType::Fission => {
                             xc_vec[group_idx].fis += reaction.cross_section[group_idx] / n_isotopes;
                         }
-                        ReactionType::Undefined => unreachable!(),
                     });
                 });
         });

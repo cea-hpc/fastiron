@@ -13,8 +13,6 @@ use crate::{
 /// Enum used to represent a reaction type.
 #[derive(Debug)]
 pub enum ReactionType {
-    /// Unused. **May be removed**.
-    Undefined,
     /// Value for a scattering reaction.
     Scatter,
     /// Value for an absorption reaction.
@@ -143,9 +141,6 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
                     rand_f = rng_sample(seed);
                     angle_out[ii] = rand_f * two - one;
                 })
-            }
-            ReactionType::Undefined => {
-                panic!()
             }
         }
         (energy_out, angle_out)
