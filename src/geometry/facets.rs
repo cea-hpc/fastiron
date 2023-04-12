@@ -1,4 +1,4 @@
-//! Code used to represent the distance between a particle and a given facet.
+//! Facet modelling & related computation
 
 use crate::constants::CustomFloat;
 

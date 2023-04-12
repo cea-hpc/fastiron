@@ -14,9 +14,8 @@ use crate::{
     },
     data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
     geometry::{
-        mc_distance_to_facet::MCDistanceToFacet, mc_domain::MCDomain,
-        mc_facet_geometry::MCGeneralPlane, mc_location::MCLocation,
-        mc_nearest_facet::MCNearestFacet,
+        facets::MCDistanceToFacet, mc_domain::MCDomain, mc_facet_geometry::MCGeneralPlane,
+        mc_location::MCLocation, mc_nearest_facet::MCNearestFacet,
     },
     montecarlo::MonteCarlo,
     particles::mc_particle::MCParticle,
