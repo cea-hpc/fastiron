@@ -32,9 +32,6 @@ fn main() {
         cycle_init(mcco, container);
         cycle_tracking(mcco, container);
         cycle_finalize(mcco, container);
-        if mcco.params.simulation_params.cycle_timers {
-            mcco.fast_timer.last_cycle_report();
-        }
     }
 
     mc_fast_timer::stop(mcco, Section::Main);

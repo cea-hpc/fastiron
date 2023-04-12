@@ -134,11 +134,6 @@ impl MCFastTimerContainer {
         );
     }
 
-    /// Not functionnal. **May be removed**.
-    pub fn last_cycle_report(&self) {
-        todo!()
-    }
-
     /// Update statistics and clear the timers for the next cycle.
     pub fn clear_last_cycle_timers(&mut self) {
         self.n_avg += 1;

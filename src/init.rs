@@ -136,11 +136,7 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     }
 }
 
-fn consistency_check<T: CustomFloat>(
-    my_rank: usize,
-    domain: &[MCDomain<T>],
-    params: &Parameters<T>,
-) {
+fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>]) {
     if my_rank == 0 {
         println!("Starting consistency check");
     }
@@ -153,12 +149,7 @@ fn consistency_check<T: CustomFloat>(
             .for_each(|(cell_idx, cc)| {
                 cc.facet.iter().enumerate().for_each(|(facet_idx, ff)| {
                     let current = ff.subfacet.current;
-                    if params.simulation_params.debug_threads {
-                        println!(
-                            "current.cell == cell_idx: {}",
-                            current.cell.unwrap() == cell_idx
-                        );
-                    }
+                    assert_eq!(current.cell.unwrap(), cell_idx);
                     let adjacent = ff.subfacet.adjacent;
                     // These can hold none as a correct value e.g. if the current cell is on the border of the problem
                     if adjacent.domain.is_some()
@@ -282,7 +273,7 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     });
 
     if n_ranks == 1 {
-        consistency_check(my_rank, &mcco.domain, &mcco.params);
+        consistency_check(my_rank, &mcco.domain);
     }
 }
 
