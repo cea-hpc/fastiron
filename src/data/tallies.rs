@@ -373,6 +373,8 @@ impl<T: CustomFloat> Tallies<T> {
     }
 
     /// Prints summarized data recorded by the tallies.
+    ///
+    /// TODO: add a model of the produced output
     pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
         if mcco.time_info.cycle == 0 {
             // print header

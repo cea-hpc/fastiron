@@ -136,7 +136,11 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     }
 }
 
-fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>]) {
+/// Check the consistency of the domain list passed as argument.
+///
+/// This function goes through the given domain list and check for inconsistencies
+/// by checking adjacencies coherence.
+pub fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>]) {
     if my_rank == 0 {
         println!("Starting consistency check");
     }
@@ -163,12 +167,11 @@ fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>]) {
                             .facet[facet_idx_adj]
                             .subfacet;
 
-                        if !((backside.adjacent.domain.unwrap() == domain_idx)
-                            | (backside.adjacent.cell.unwrap() == cell_idx)
-                            | (backside.adjacent.facet.unwrap() == facet_idx))
-                        {
-                            panic!()
-                        }
+                        assert!(
+                            (backside.adjacent.domain.unwrap() == domain_idx)
+                                & (backside.adjacent.cell.unwrap() == cell_idx)
+                                & (backside.adjacent.facet.unwrap() == facet_idx)
+                        )
                     }
                 });
             });
@@ -295,7 +298,10 @@ struct XSData<T: Float> {
     sca: T,
 }
 
-fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
+/// Prints cross-section data of the problem.
+///
+/// TODO: add a model of the produced output
+pub fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
     let params = &mcco.params;
     if params.simulation_params.cross_sections_out.is_empty() {
         return;
