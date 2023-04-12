@@ -242,7 +242,6 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
                         container.processing_particles.push(base_particle);
 
                         // atomic in original code
-                        //mcco.tallies.balance_task[particle.task].source += 1;
                         mcco.tallies.balance_task[0].source += 1;
                     });
                 });
