@@ -20,7 +20,7 @@ use crate::{
         CustomFloat,
     },
     data::tallies::MCTallyEvent,
-    geometry::mc_nearest_facet::MCNearestFacet,
+    geometry::facets::MCNearestFacet,
     montecarlo::MonteCarlo,
     particles::mc_particle::MCParticle,
     simulation::{macro_cross_section::weighted_macroscopic_cross_section, mct::nearest_facet},

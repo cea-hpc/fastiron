@@ -6,7 +6,7 @@
 use crate::{
     constants::CustomFloat,
     data::{send_queue::SendQueue, tallies::MCTallyEvent},
-    geometry::mc_facet_adjacency::MCSubfacetAdjacencyEvent,
+    geometry::facets::MCSubfacetAdjacencyEvent,
     montecarlo::MonteCarlo,
     particles::mc_particle::MCParticle,
 };

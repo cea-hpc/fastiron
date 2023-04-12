@@ -1,7 +1,7 @@
 //! Super-structure used to store the problem's data
 //!
 //! This module contains the code of the super-structure holding all the
-//! problem's data. The content of module [`crate::init_mc`] may be moved
+//! problem's data. The content of module [`crate::init`] may be moved
 //! here in the future.
 
 use std::fmt::Debug;
