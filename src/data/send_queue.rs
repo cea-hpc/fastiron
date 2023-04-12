@@ -67,6 +67,8 @@ impl<T: CustomFloat> SendQueue<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate::particles::mc_base_particle::MCBaseParticle;
+
     use super::*;
 
     #[test]
@@ -84,50 +86,22 @@ mod tests {
 
     #[test]
     fn neighbor_size() {
-        let t0: SendQueueTuple<f64> = SendQueueTuple {
+        let tt: SendQueueTuple<f64> = SendQueueTuple {
             neighbor: 0,
             particle: MCParticle::default(),
         };
-        let t1: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 1,
-            particle: MCParticle::default(),
-        };
-        let t2: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 1,
-            particle: MCParticle::default(),
-        };
-        let t3: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 4,
-            particle: MCParticle::default(),
-        };
-        let t4: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 3,
-            particle: MCParticle::default(),
-        };
-        let t5: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 6,
-            particle: MCParticle::default(),
-        };
-        let t6: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 1,
-            particle: MCParticle::default(),
-        };
-        let t7: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 3,
-            particle: MCParticle::default(),
-        };
-        let t8: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 0,
-            particle: MCParticle::default(),
-        };
-        let t9: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 5,
-            particle: MCParticle::default(),
-        };
-
-        let queue = SendQueue {
-            data: vec![t0, t1, t2, t3, t4, t5, t6, t7, t8, t9],
-        };
+        let mut data = vec![tt; 10];
+        data[0].neighbor = 0;
+        data[1].neighbor = 1;
+        data[2].neighbor = 1;
+        data[3].neighbor = 4;
+        data[4].neighbor = 3;
+        data[5].neighbor = 6;
+        data[6].neighbor = 1;
+        data[7].neighbor = 3;
+        data[8].neighbor = 0;
+        data[9].neighbor = 5;
+        let queue = SendQueue { data };
 
         assert_eq!(queue.neighbor_size(0), 2);
         assert_eq!(queue.neighbor_size(1), 3);
@@ -141,34 +115,29 @@ mod tests {
 
     #[test]
     fn push_get_clear() {
-        let t0: SendQueueTuple<f64> = SendQueueTuple {
+        let tt: SendQueueTuple<f64> = SendQueueTuple {
             neighbor: 0,
             particle: MCParticle::default(),
         };
-        let t1: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 1,
-            particle: MCParticle::default(),
-        };
-        let t2: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 1,
-            particle: MCParticle::default(),
-        };
-        let t3: SendQueueTuple<f64> = SendQueueTuple {
-            neighbor: 4,
-            particle: MCParticle::default(),
-        };
-        let t4: SendQueueTuple<f64> = SendQueueTuple {
+        let ttt: SendQueueTuple<f64> = SendQueueTuple {
             neighbor: 3,
-            particle: MCParticle::default(),
+            particle: MCParticle {
+                base_particle: MCBaseParticle {
+                    identifier: 23,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
         };
 
-        let mut queue = SendQueue {
-            data: vec![t0, t1, t2, t3],
-        };
-        queue.push(3, &MCParticle::default());
+        let mut queue = SendQueue { data: vec![tt; 4] };
+
+        let mut pp = MCParticle::default();
+        pp.base_particle.identifier = 23;
+        queue.push(3, &pp);
 
         assert_eq!(queue.size(), 5);
-        assert_eq!(queue.data[queue.size() - 1], t4);
+        assert_eq!(queue.data[queue.size() - 1], ttt);
 
         queue.clear();
 
