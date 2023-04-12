@@ -131,20 +131,20 @@ pub fn outcome<T: CustomFloat>(
     particle.base_particle.num_mean_free_paths -=
         particle.segment_path_length / particle.mean_free_path;
 
-    // update the last event
-    particle.base_particle.last_event = match segment_outcome {
-        MCSegmentOutcome::Collision => MCTallyEvent::Collision,
-        MCSegmentOutcome::FacetCrossing => MCTallyEvent::FacetCrossingTransitExit,
-        MCSegmentOutcome::Census => MCTallyEvent::Census,
-    };
-
-    // set the segment path length according to the minimum computed distance
+    // outcome-specific updates
     match segment_outcome {
-        MCSegmentOutcome::Collision => particle.base_particle.num_mean_free_paths = zero(),
-        MCSegmentOutcome::FacetCrossing => particle.facet = nearest_facet.facet,
+        MCSegmentOutcome::Collision => {
+            particle.base_particle.num_mean_free_paths = zero();
+            particle.base_particle.last_event = MCTallyEvent::Collision;
+        }
+        MCSegmentOutcome::FacetCrossing => {
+            particle.facet = nearest_facet.facet;
+            particle.base_particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
+        }
         MCSegmentOutcome::Census => {
             particle.base_particle.time_to_census =
-                zero::<T>().min(particle.base_particle.time_to_census)
+                zero::<T>().min(particle.base_particle.time_to_census);
+            particle.base_particle.last_event = MCTallyEvent::Census;
         }
     }
 
