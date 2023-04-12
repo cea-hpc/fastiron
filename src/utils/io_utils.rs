@@ -79,23 +79,14 @@ pub struct Cli {
     )]
     pub n_particles: Option<u64>,
 
-    /// number of particles in a vault/batch
-    #[arg(
-        short = 'g',
-        long = "batch-size",
-        num_args(1),
-        allow_negative_numbers(false)
-    )]
-    pub batch_size: Option<u64>,
-
-    /// number of vault/batch to start; sets batch-size automatically if specified
+    /// number of threads that should be used to run the simulation
     #[arg(
         short = 'b',
-        long = "n-batches",
+        long = "n-thread",
         num_args(1),
         allow_negative_numbers(false)
     )]
-    pub n_batches: Option<u64>,
+    pub n_threads: Option<u64>,
 
     /// number of steps simulated
     #[arg(

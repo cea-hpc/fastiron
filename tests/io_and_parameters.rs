@@ -16,7 +16,6 @@ fn verify_cli_parsing() {
     let cli = Cli::parse_from(cmd_line.split(' '));
     let simulation_params = SimulationParameters::<f64>::from_cli(&cli);
     assert_eq!(simulation_params.input_file, "somefile.inp");
-    assert!(simulation_params.cycle_timers);
     assert!(simulation_params.load_balance);
     assert!(!simulation_params.debug_threads);
     assert_eq!(simulation_params.energy_spectrum, "out1");
@@ -26,7 +25,7 @@ fn verify_cli_parsing() {
     assert_eq!(simulation_params.lz, 10.0);
     assert_eq!(simulation_params.seed, 123456);
     assert_eq!(simulation_params.n_particles, 1000);
-    assert_eq!(simulation_params.n_batches, 10);
+    assert_eq!(simulation_params.n_threads, 10);
 }
 
 #[test]
@@ -115,7 +114,6 @@ fn verify_file_parsing() {
     assert_eq!(params.simulation_params.input_file, "parsing.inp");
     assert_eq!(params.simulation_params.boundary_condition, "reflect");
     assert!(params.simulation_params.load_balance);
-    assert!(!params.simulation_params.cycle_timers);
     assert!(params.simulation_params.debug_threads);
     assert_eq!(params.simulation_params.n_steps, 10);
     assert_eq!(params.simulation_params.seed, 1029384756);
