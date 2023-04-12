@@ -14,7 +14,7 @@ use crate::{
     },
     data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
     geometry::{
-        facets::MCDistanceToFacet, mc_domain::MCDomain, mc_facet_geometry::MCGeneralPlane,
+        facets::MCDistanceToFacet, facets::MCGeneralPlane, mc_domain::MCDomain,
         mc_location::MCLocation, mc_nearest_facet::MCNearestFacet,
     },
     montecarlo::MonteCarlo,

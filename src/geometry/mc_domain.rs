@@ -18,10 +18,10 @@ use crate::{
 };
 
 use super::{
+    facets::{MCFacetGeometryCell, MCGeneralPlane},
     global_fcc_grid::GlobalFccGrid,
     mc_cell_state::MCCellState,
     mc_facet_adjacency::{MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent},
-    mc_facet_geometry::{MCFacetGeometryCell, MCGeneralPlane},
     mc_location::MCLocation,
     mesh_partition::{CellInfo, MeshPartition},
 };
