@@ -66,7 +66,7 @@ impl<T: CustomFloat> Fluence<T> {
         (0..n_cells).for_each(|cell_idx| {
             let n_groups = scalar_flux_domain.task[0].cell[cell_idx].len();
             (0..n_groups).for_each(|group_idx| {
-                self.domain[domain_idx].add_cell(
+                self.domain[domain_idx].add_to_cell(
                     cell_idx,
                     scalar_flux_domain.task[0].cell[cell_idx][group_idx],
                 );
@@ -82,12 +82,8 @@ pub struct FluenceDomain<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> FluenceDomain<T> {
-    pub fn add_cell(&mut self, index: usize, val: T) {
+    pub fn add_to_cell(&mut self, index: usize, val: T) {
         self.cell[index] += val;
-    }
-
-    pub fn get_cell(&self, index: usize) -> T {
-        self.cell[index]
     }
 
     pub fn size(&self) -> usize {
@@ -104,6 +100,9 @@ impl<T: CustomFloat> FluenceDomain<T> {
 /// During the simulation, each time an event of interest occurs, the counters
 /// are incremented accordingly. In a parallel context, this structure should be
 /// operated on using atomic operations.
+///
+/// CANDIDATE FOR VECTORIZATION: use a `Vec<u64>` & write `add()` method in a way
+/// that allow vectorization (no bound checks)
 #[derive(Debug, Default, Clone)]
 pub struct Balance {
     /// Number of particles absorbed.
@@ -189,6 +188,8 @@ impl<T: CustomFloat> ScalarFluxTask<T> {
     }
 
     /// Add another [ScalarFluxTask]'s value to its own.
+    ///
+    /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
     pub fn add(&mut self, scalar_flux_task: &ScalarFluxTask<T>) {
         let n_groups = self.cell[0].len();
         (0..self.cell.len()).for_each(|cell_idx| {
@@ -237,8 +238,9 @@ impl<T: CustomFloat> CellTallyTask<T> {
     }
 
     /// Add another [CellTallyTask]'s value to its own.
+    ///
+    /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
     pub fn add(&mut self, cell_tally_task: &CellTallyTask<T>) {
-        //assert_eq!(self.cell.len(), cell_tally_task.cell.len());
         (0..self.cell.len()).for_each(|ii| self.cell[ii] += cell_tally_task.cell[ii]);
     }
 }
@@ -411,7 +413,7 @@ impl<T: CustomFloat> Tallies<T> {
         );
     }
 
-    /// Computes the global scalar flux value in the problem.
+    /// Computes the global scalar flux value of the problem.
     pub fn scalar_flux_sum(&self) -> T {
         let mut sum: T = zero();
 
@@ -453,14 +455,14 @@ impl<T: CustomFloat> Tallies<T> {
         (0..self.scalar_flux_domain.len()).for_each(|domain_idx| {
             // Sum on replicated cell tallies and resets them
             (1..self.num_cell_tally_replications).for_each(|rep_idx| {
-                let val = self.cell_tally_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                let val = self.cell_tally_domain[domain_idx].task[rep_idx as usize].clone();
                 self.cell_tally_domain[domain_idx].task[0].add(&val);
                 self.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
             });
 
             // Sum on replicated scalar flux tallies and resets them
             (1..self.num_flux_replications).for_each(|rep_idx| {
-                let val = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone(); // is there a cheaper way?
+                let val = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone();
                 self.scalar_flux_domain[domain_idx].task[0].add(&val);
                 self.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
             });
