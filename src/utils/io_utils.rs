@@ -42,10 +42,6 @@ pub struct Cli {
     #[arg(short = 'D', long = "dt", num_args(1), allow_negative_numbers(false))]
     pub dt: Option<f32>,
 
-    /// max random mesh node displacement
-    #[arg(short = 'f', long = "f-max", num_args(1))]
-    pub f_max: Option<f32>,
-
     /// enable load balancing if present
     #[arg(short = 'l', long = "load-balance", num_args(0))]
     pub load_balance: bool,

@@ -337,8 +337,6 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub seed: u64,
     /// Value of the time step in seconds.
     pub dt: T,
-    /// Unused? **May be removed**.
-    pub f_max: T,
     /// Size of the simulation along the x axis.
     pub lx: T,
     /// Size of the simulation along the y axis.
@@ -396,7 +394,6 @@ impl<T: CustomFloat> SimulationParameters<T> {
         fetch_from_cli!(energy_spectrum);
         fetch_from_cli!(cross_sections_out);
         fetch_from_cli!(dt);
-        fetch_from_cli!(f_max);
         simulation_params.load_balance = cli.load_balance;
         simulation_params.debug_threads = cli.debug_threads;
         fetch_from_cli!(lx);
@@ -434,7 +431,6 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             nz: 10,
             seed: 1029384756,
             dt: T::from_f64(1e-8).unwrap(),
-            f_max: T::from_f64(0.1).unwrap(),
             lx: T::from_f64(100.0).unwrap(),
             ly: T::from_f64(100.0).unwrap(),
             lz: T::from_f64(100.0).unwrap(),
@@ -648,7 +644,6 @@ impl<T: CustomFloat> Parameters<T> {
                 "nz" => fetch_data!(nz, val),
                 "seed" => fetch_data!(seed, val),
                 "dt" => fetch_data!(dt, val),
-                "fMax" => fetch_data!(f_max, val),
                 "lx" => fetch_data!(lx, val),
                 "ly" => fetch_data!(ly, val),
                 "lz" => fetch_data!(lz, val),
@@ -665,7 +660,7 @@ impl<T: CustomFloat> Parameters<T> {
                 // Unused in fastiron
                 "cycleTimers" => (),
                 "batchSize" | "nBatches" => (),
-                "xDom" | "yDom" | "zDom" => (),
+                "xDom" | "yDom" | "zDom" | "fMax" => (),
                 "mpiThreadMultiple" => (),
                 _ => return Err(InputError::BadSimulationBlock),
             }

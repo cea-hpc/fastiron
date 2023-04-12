@@ -31,8 +31,6 @@
 //!           name of cross-section output file
 //!   -D, --dt <DT>
 //!           time step in seconds
-//!   -f, --f-max <F_MAX>
-//!           max random mesh node displacement
 //!   -l, --load-balance
 //!           enable load balancing if present
 //!   -t, --debug-threads
