@@ -338,7 +338,6 @@ pub fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
                         ReactionType::Fission => {
                             xc_vec[group_idx].fis += reaction.cross_section[group_idx] / n_isotopes;
                         }
-                        ReactionType::Undefined => unreachable!(),
                     });
                 });
         });

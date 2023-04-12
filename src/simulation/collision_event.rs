@@ -135,7 +135,6 @@ pub fn collision_event<T: CustomFloat>(
             mcco.tallies.balance_task[tally_idx].fission += 1;
             mcco.tallies.balance_task[tally_idx].produce += n_out as u64;
         }
-        ReactionType::Undefined => panic!(),
     }
 
     // ================

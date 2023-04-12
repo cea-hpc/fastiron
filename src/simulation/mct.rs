@@ -404,9 +404,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     if (plane.c < -pfive) | (plane.c > pfive) {
         belongs_or_return!(x);
         belongs_or_return!(y);
-        // update cross; TODO:  check if we can replace it by a cross product using MCVector
-        // for example, those are the coeff along Z of fcoords0fcoords1 x fcoords0inter_pt, etc..
-        // + the cross0/1/2 are interchangeable so no naming issues will appear
+        // update cross; z elements
         cross1 = ab_cross_ac!(
             facet_coords[0].x,
             facet_coords[0].y,
