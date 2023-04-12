@@ -39,7 +39,7 @@ pub fn population_control<T: CustomFloat>(
     if load_balance {
         // Spread the target number of particle among the processors
         let tmp: T = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
-            / FromPrimitive::from_usize(mcco.processor_info.num_processors).unwrap();
+            / FromPrimitive::from_usize(mcco.processor_info.num_threads).unwrap();
         target_n_particles = tmp.ceil().to_usize().unwrap();
     } else {
         global_n_particles = local_n_particles;
