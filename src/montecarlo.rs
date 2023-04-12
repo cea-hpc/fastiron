@@ -54,7 +54,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
             params.simulation_params.energy_spectrum.to_owned(),
             params.simulation_params.n_groups,
         );
-        let processor_info = MCProcessorInfo::new();
+        let processor_info = MCProcessorInfo::new(&params.simulation_params);
         let time_info = MCTimeInfo::<T>::default();
         let fast_timer: MCFastTimerContainer = MCFastTimerContainer::default();
 

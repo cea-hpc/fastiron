@@ -59,15 +59,8 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
     domain: &MCDomain<T>,
     cell_idx: usize,
 ) -> MCVector<T> {
-    let mut coordinate: MCVector<T> = MCVector::default(); // result
     let six: T = FromPrimitive::from_f64(6.0).unwrap();
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
-
-    // TODO: is there a case when its 0 or can we replace it with N_FACETS_OUT?
-    let num_facets: usize = domain.mesh.cell_connectivity[cell_idx].facet.len();
-    if num_facets == 0 {
-        return coordinate;
-    }
 
     let center: MCVector<T> = cell_position_3dg(domain, cell_idx);
     let rdm_number: T = rng_sample(seed);
@@ -82,8 +75,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
 
     // find the facet to sample from
     while current_volume < which_volume {
-        // TODO: is there a case when its 0 or can we replace it with N_FACETS_OUT?
-        if facet_idx == num_facets {
+        if facet_idx == N_FACETS_OUT {
             break;
         }
         let facet_points = mct_facet_points_3dg(domain, cell_idx, facet_idx);
@@ -119,9 +111,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
     }
     let r4: T = one - r1 - r2 - r3;
 
-    coordinate = point0 * r1 + point1 * r2 + point2 * r3 + center * r4;
-
-    coordinate
+    point0 * r1 + point1 * r2 + point2 * r3 + center * r4
 }
 
 /// Returns a coordinate that represents the "center" of the cell.
@@ -190,7 +180,8 @@ fn mct_nf_3dg<T: CustomFloat>(
         let plane_tolerance: T =
             tmp * (coords.x * coords.x + coords.y * coords.y + coords.z * coords.z);
 
-        let mut distance_to_facet: [MCDistanceToFacet<T>; 24] = [MCDistanceToFacet::default(); 24]; // why 24? == numfacetpercell?
+        let mut distance_to_facet: [MCDistanceToFacet<T>; N_FACETS_OUT] =
+            [MCDistanceToFacet::default(); N_FACETS_OUT];
 
         (0..N_FACETS_OUT).for_each(|facet_idx| {
             distance_to_facet[facet_idx].distance = huge_f;

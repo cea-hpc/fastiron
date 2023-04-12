@@ -10,6 +10,7 @@ use fastiron::simulation::population_control;
 use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
 use fastiron::utils::io_utils::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
+use fastiron::utils::mc_processor_info::ExecPolicy;
 
 fn main() {
     let cli = Cli::parse();
@@ -22,22 +23,26 @@ fn main() {
     let mut mcco_obj: MonteCarlo<f64> = init_mc(params);
     let mcco = &mut mcco_obj;
 
-    // todo: write a cleaner, more flexible way to use the vector for individual containers
     let mut containers = init_particle_containers(&mcco.params, &mcco.processor_info);
-    let container = &mut containers[0];
 
-    mc_fast_timer::start(mcco, Section::Main);
+    match mcco.processor_info.exec_policy {
+        ExecPolicy::Sequential => {
+            let container = &mut containers[0];
 
-    for _ in 0..n_steps {
-        cycle_init(mcco, container);
-        cycle_tracking(mcco, container);
-        cycle_finalize(mcco, container);
-        if mcco.params.simulation_params.cycle_timers {
-            mcco.fast_timer.last_cycle_report();
+            mc_fast_timer::start(mcco, Section::Main);
+
+            for _ in 0..n_steps {
+                cycle_init(mcco, container);
+                cycle_tracking(mcco, container);
+                cycle_finalize(mcco, container);
+            }
+
+            mc_fast_timer::stop(mcco, Section::Main);
+        }
+        ExecPolicy::Parallel => {
+            todo!()
         }
     }
-
-    mc_fast_timer::stop(mcco, Section::Main);
 
     game_over(mcco);
 

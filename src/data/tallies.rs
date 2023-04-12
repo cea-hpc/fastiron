@@ -373,12 +373,17 @@ impl<T: CustomFloat> Tallies<T> {
     }
 
     /// Prints summarized data recorded by the tallies.
+    ///
+    /// TODO: add a model of the produced output
     pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
         if mcco.time_info.cycle == 0 {
             // print header
             println!("[Tally Summary]");
-            print!("cycle   |    start     source         rr        split       absorb      scatter      fission ");
-            println!("     produce    collision       escape       census      num_seg   scalar_flux   cycleInit (s)  cycleTracking (s)  cycleFinalize (s)");
+            println!(
+                "{:<7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>13} {:>15} {:>18} {:>18}",
+                "cycle", "start", "source", "rr", "split", "absorb", "scatter", "fission", "produce", "collision", 
+                "escape", "census", "num_seg", "scalar_flux", "cycleInit (s)", "cycleTracking (s)", "cycleFinalize (s)"
+            );
         }
         let cy_init = mc_fast_timer::get_last_cycle(mcco, Section::CycleInit);
         let cy_track = mc_fast_timer::get_last_cycle(mcco, Section::CycleTracking);

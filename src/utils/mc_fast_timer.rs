@@ -98,6 +98,8 @@ impl MCFastTimerContainer {
     /// Prints the cumulative report at the end of execution. The values of the  
     /// total column should be compared to Quicksilver's cumulative report despite
     /// what its header says.
+    ///
+    /// TODO: add a model of the produced output
     pub fn cumulative_report(&self, num_segments: u64) {
         // Print header
         println!("[Timer Report]");
@@ -132,11 +134,6 @@ impl MCFastTimerContainer {
             "Figure of merit: {:>.3e} [segments / cycle tracking time]",
             (num_segments as f64) / (self.tots[Section::CycleTracking as usize].as_secs_f64())
         );
-    }
-
-    /// Not functionnal. **May be removed**.
-    pub fn last_cycle_report(&self) {
-        todo!()
     }
 
     /// Update statistics and clear the timers for the next cycle.

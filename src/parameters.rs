@@ -318,17 +318,13 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub boundary_condition: String,
     /// Switch to enable or disable load balancing during execution.
     pub load_balance: bool,
-    /// Switch to enable cyclic timer reports. **May be removed**.
-    pub cycle_timers: bool,
-    /// Switch used to print debug information. **May be removed or repurposed**.
+    /// Switch used to print thread-debugging information. Currently unused.
     pub debug_threads: bool,
     /// Target number of particle for the simulation. Population will be controled
     /// according to this value.
     pub n_particles: u64,
-    /// Size of the batches of particles. **May be removed**.
-    pub batch_size: u64,
-    /// Number of batches. **May be removed**.
-    pub n_batches: u64,
+    /// Number of threads that should be used to run the simulation.
+    pub n_threads: u64,
     /// Number of steps simulated by the program.
     pub n_steps: usize,
     /// Number of cells along the x axis.
@@ -402,14 +398,12 @@ impl<T: CustomFloat> SimulationParameters<T> {
         fetch_from_cli!(dt);
         fetch_from_cli!(f_max);
         simulation_params.load_balance = cli.load_balance;
-        simulation_params.cycle_timers = cli.cycle_timers;
         simulation_params.debug_threads = cli.debug_threads;
         fetch_from_cli!(lx);
         fetch_from_cli!(ly);
         fetch_from_cli!(lz);
         fetch_from_cli!(n_particles);
-        fetch_from_cli!(batch_size);
-        fetch_from_cli!(n_batches);
+        fetch_from_cli!(n_threads);
         fetch_from_cli!(n_steps);
         fetch_from_cli!(nx);
         fetch_from_cli!(ny);
@@ -431,11 +425,9 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             cross_sections_out: "".to_string(),
             boundary_condition: "reflect".to_string(),
             load_balance: false,
-            cycle_timers: false,
             debug_threads: false,
             n_particles: 1000000,
-            batch_size: 0,
-            n_batches: 10,
+            n_threads: 1,
             n_steps: 10,
             nx: 10,
             ny: 10,
@@ -636,10 +628,6 @@ impl<T: CustomFloat> Parameters<T> {
                     let chars: Vec<char> = val.chars().collect();
                     fetch_bool!(load_balance, chars[0]);
                 }
-                "cycleTimers" => {
-                    let chars: Vec<char> = val.chars().collect();
-                    fetch_bool!(cycle_timers, chars[0]);
-                }
                 "debugThreads" => {
                     let chars: Vec<char> = val.chars().collect();
                     fetch_bool!(debug_threads, chars[0]);
@@ -654,8 +642,6 @@ impl<T: CustomFloat> Parameters<T> {
                     }
                 }
                 "nParticles" => fetch_data!(n_particles, val),
-                "batchSize" => fetch_data!(batch_size, val),
-                "nBatches" => fetch_data!(n_batches, val),
                 "nSteps" => fetch_data!(n_steps, val),
                 "nx" => fetch_data!(nx, val),
                 "ny" => fetch_data!(ny, val),
@@ -676,6 +662,9 @@ impl<T: CustomFloat> Parameters<T> {
                 "fluxTallyReplications" | "fTally" => fetch_data!(flux_tally_replications, val),
                 "cellTallyReplications" | "cTally" => fetch_data!(cell_tally_replications, val),
 
+                // Unused in fastiron
+                "cycleTimers" => (),
+                "batchSize" | "nBatches" => (),
                 "xDom" | "yDom" | "zDom" => (),
                 "mpiThreadMultiple" => (),
                 _ => return Err(InputError::BadSimulationBlock),
