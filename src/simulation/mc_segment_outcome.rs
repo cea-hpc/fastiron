@@ -30,8 +30,6 @@ use crate::{
 /// Enum representing the outcome of the current segment.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MCSegmentOutcome {
-    /// Unused. **May be removed**.
-    Initialize = -1,
     /// Value for collision event.
     Collision = 0,
     /// Value for facet crossing event.
@@ -135,7 +133,6 @@ pub fn outcome<T: CustomFloat>(
 
     // update the last event
     particle.base_particle.last_event = match segment_outcome {
-        MCSegmentOutcome::Initialize => panic!(),
         MCSegmentOutcome::Collision => MCTallyEvent::Collision,
         MCSegmentOutcome::FacetCrossing => MCTallyEvent::FacetCrossingTransitExit,
         MCSegmentOutcome::Census => MCTallyEvent::Census,
@@ -149,7 +146,6 @@ pub fn outcome<T: CustomFloat>(
             particle.base_particle.time_to_census =
                 zero::<T>().min(particle.base_particle.time_to_census)
         }
-        MCSegmentOutcome::Initialize => panic!(),
     }
 
     if force_collision {

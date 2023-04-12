@@ -109,7 +109,6 @@ fn cycle_tracking_function<T: CustomFloat>(
                 // we're done tracking the particle FOR THIS STEP
                 keep_tracking = false;
             }
-            MCSegmentOutcome::Initialize => unreachable!(),
         }
 
         if !keep_tracking {
