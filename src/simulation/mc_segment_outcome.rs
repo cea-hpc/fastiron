@@ -115,10 +115,6 @@ pub fn outcome<T: CustomFloat>(
     particle.normal_dot = nearest_facet.dot_product;
     distance[MCSegmentOutcome::FacetCrossing as usize] = nearest_facet.distance_to_facet;
 
-    // exit if the tracker failed to bound the particle's volume
-    if particle.base_particle.last_event == MCTallyEvent::FacetCrossingTrackingError {
-        return MCSegmentOutcome::FacetCrossing;
-    }
     // force a collision if needed
     if force_collision {
         distance[MCSegmentOutcome::FacetCrossing as usize] = huge_f;

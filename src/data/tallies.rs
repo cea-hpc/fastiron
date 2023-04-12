@@ -30,8 +30,6 @@ pub enum MCTallyEvent {
     /// Value for a census event.
     #[default]
     Census,
-    /// Value for a facet crossing event resulting in an error.
-    FacetCrossingTrackingError,
     /// Value for a facet crossing event resulting in an escape from the problem.
     FacetCrossingEscape,
     /// Value for a facet crossing event resulting in a reflection on the facet.
