@@ -19,7 +19,7 @@ pub struct SendQueueTuple<T: CustomFloat> {
 /// Particles may cross to cells that are managed by a domain managed by a
 /// different processor. In this case, they get are buffered for transfer by
 /// this structure. See
-/// [MCSubfacetAdjacencyEvent][crate::geometry::mc_facet_adjacency::MCSubfacetAdjacencyEvent]
+/// [MCSubfacetAdjacencyEvent][crate::geometry::facets::MCSubfacetAdjacencyEvent]
 /// for more information.
 #[derive(Debug, Clone, Default)]
 pub struct SendQueue<T: CustomFloat> {
