@@ -108,33 +108,6 @@ pub struct Cli {
     /// random number seed
     #[arg(short = 's', long = "seed", num_args(1), allow_negative_numbers(false))]
     pub seed: Option<u64>, //maybe allow negative values ? need to test QS behavior
-
-    /// number of balance tally replications
-    #[arg(
-        short = 'B',
-        long = "b-tally",
-        num_args(1),
-        allow_negative_numbers(false)
-    )]
-    pub balance_tally_replications: Option<u32>,
-
-    /// number of scalar flux tally replications
-    #[arg(
-        short = 'F',
-        long = "f-tally",
-        num_args(1),
-        allow_negative_numbers(false)
-    )]
-    pub flux_tally_replications: Option<u32>,
-
-    /// number of scalar cell tally replications
-    #[arg(
-        short = 'C',
-        long = "c-tally",
-        num_args(1),
-        allow_negative_numbers(false)
-    )]
-    pub cell_tally_replications: Option<u32>,
 }
 
 /// Updates the Parameters structure passed as argument using the
