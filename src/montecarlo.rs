@@ -48,9 +48,6 @@ impl<T: CustomFloat> MonteCarlo<T> {
     /// Constructor.
     pub fn new(params: Parameters<T>) -> Self {
         let tallies: Tallies<T> = Tallies::new(
-            params.simulation_params.balance_tally_replications,
-            params.simulation_params.flux_tally_replications,
-            params.simulation_params.cell_tally_replications,
             params.simulation_params.energy_spectrum.to_owned(),
             params.simulation_params.n_groups,
         );

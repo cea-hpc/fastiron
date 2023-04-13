@@ -351,12 +351,6 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub n_groups: usize,
     /// Low statistical weight cutoff used for population control.
     pub low_weight_cutoff: T,
-    /// Number of balance tallies for parallel processing. `1` means no replication.
-    pub balance_tally_replications: u32,
-    /// Number of flux tallies for parallel processing. `1` means no replication.
-    pub flux_tally_replications: u32,
-    /// Number of cell tallies for parallel processing. `1` means no replication.
-    pub cell_tally_replications: u32,
     /// Benchmark type of the input problem. See [BenchType] for more information.
     pub coral_benchmark: BenchType,
 }
@@ -406,9 +400,6 @@ impl<T: CustomFloat> SimulationParameters<T> {
         fetch_from_cli!(ny);
         fetch_from_cli!(nz);
         fetch_from_cli!(seed);
-        fetch_from_cli!(balance_tally_replications);
-        fetch_from_cli!(flux_tally_replications);
-        fetch_from_cli!(cell_tally_replications);
 
         simulation_params
     }
@@ -438,9 +429,6 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             e_max: T::from_f64(20.0).unwrap(),
             n_groups: 230,
             low_weight_cutoff: T::from_f64(0.001).unwrap(),
-            balance_tally_replications: 1,
-            flux_tally_replications: 1,
-            cell_tally_replications: 1,
             coral_benchmark: BenchType::Standard,
         }
     }
@@ -651,15 +639,13 @@ impl<T: CustomFloat> Parameters<T> {
                 "eMax" => fetch_data!(e_max, val),
                 "nGroups" => fetch_data!(n_groups, val),
                 "lowWeightCutoff" => fetch_data!(low_weight_cutoff, val),
-                "balanceTallyReplications" | "bTally" => {
-                    fetch_data!(balance_tally_replications, val)
-                }
-                "fluxTallyReplications" | "fTally" => fetch_data!(flux_tally_replications, val),
-                "cellTallyReplications" | "cTally" => fetch_data!(cell_tally_replications, val),
 
-                // Unused in fastiron
+                // Unused in fastiron;
                 "cycleTimers" => (),
                 "batchSize" | "nBatches" => (),
+                "balanceTallyReplications" | "bTally" => (),
+                "fluxTallyReplications" | "fTally" => (),
+                "cellTallyReplications" | "cTally" => (),
                 "xDom" | "yDom" | "zDom" | "fMax" => (),
                 "mpiThreadMultiple" => (),
                 _ => return Err(InputError::BadSimulationBlock),

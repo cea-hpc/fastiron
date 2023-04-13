@@ -58,7 +58,6 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
 pub fn collision_event<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
-    tally_idx: usize,
     extra: &mut Vec<MCBaseParticle<T>>,
 ) -> bool {
     let mat_gidx =
@@ -127,13 +126,13 @@ pub fn collision_event<T: CustomFloat>(
     // ===================
     // Tally the collision
 
-    mcco.tallies.balance_task[tally_idx].collision += 1; // atomic in original code
+    mcco.tallies.balance_cycle.collision += 1; // atomic in original code
     match mcco.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react].reaction_type {
-        ReactionType::Scatter => mcco.tallies.balance_task[tally_idx].scatter += 1,
-        ReactionType::Absorption => mcco.tallies.balance_task[tally_idx].absorb += 1,
+        ReactionType::Scatter => mcco.tallies.balance_cycle.scatter += 1,
+        ReactionType::Absorption => mcco.tallies.balance_cycle.absorb += 1,
         ReactionType::Fission => {
-            mcco.tallies.balance_task[tally_idx].fission += 1;
-            mcco.tallies.balance_task[tally_idx].produce += n_out as u64;
+            mcco.tallies.balance_cycle.fission += 1;
+            mcco.tallies.balance_cycle.produce += n_out as u64;
         }
     }
 

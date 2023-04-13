@@ -66,7 +66,7 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
     container.swap_processing_processed();
 
     let tmp = container.processing_particles.len() as u64;
-    mcco.tallies.balance_task[0].start = tmp;
+    mcco.tallies.balance_cycle.start = tmp;
 
     population_control::source_now(mcco, container);
 
@@ -76,7 +76,7 @@ pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
         mcco.params.simulation_params.low_weight_cutoff,
         mcco.source_particle_weight,
         container,
-        &mut mcco.tallies.balance_task[0],
+        &mut mcco.tallies.balance_cycle,
     );
 
     mc_fast_timer::stop(mcco, Section::CycleInit);
@@ -96,12 +96,10 @@ pub fn cycle_tracking<T: CustomFloat>(
             container
                 .processing_particles
                 .iter_mut()
-                .enumerate()
-                .for_each(|(particle_idx, base_particle)| {
+                .for_each(|base_particle| {
                     cycle_tracking_guts(
                         mcco,
                         base_particle,
-                        particle_idx,
                         &mut container.extra_particles,
                         &mut container.send_queue,
                     );
@@ -138,8 +136,7 @@ pub fn cycle_finalize<T: CustomFloat>(
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
     // prepare data for summary
-    mcco.tallies.balance_task[0].end = container.processed_particles.len() as u64;
-    mcco.tallies.sum_tasks();
+    mcco.tallies.balance_cycle.end = container.processed_particles.len() as u64;
     // print summary
     //mc_fast_timer::stop(mcco, Section::CycleFinalize);
     mcco.tallies.print_summary(mcco);

@@ -51,7 +51,6 @@ pub enum MCSegmentOutcome {
 pub fn outcome<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
-    flux_tally_idx: usize,
 ) -> MCSegmentOutcome {
     // initialize distances and constants
     const N_EVENTS: usize = 3;
@@ -170,7 +169,7 @@ pub fn outcome<T: CustomFloat>(
 
     // update scalar flux tally
     // atomic in original code
-    mcco.tallies.scalar_flux_domain[particle.base_particle.domain].task[flux_tally_idx].cell
+    mcco.tallies.scalar_flux_domain[particle.base_particle.domain].cell
         [particle.base_particle.cell][particle.energy_group] +=
         particle.segment_path_length * particle.base_particle.weight;
 
