@@ -246,23 +246,11 @@ pub struct Tallies<T: CustomFloat> {
     pub fluence: Fluence<T>,
     /// Energy spectrum of the problem.
     pub spectrum: EnergySpectrum,
-    /// Number of balance tallies for parallel processing. `1` means no replication.
-    pub num_balance_replications: u32,
-    /// Number of flux tallies for parallel processing. `1` means no replication.
-    pub num_flux_replications: u32,
-    /// Number of cell tallies for parallel processing. `1` means no replication.
-    pub num_cell_tally_replications: u32,
 }
 
 impl<T: CustomFloat> Tallies<T> {
     /// Constructor.
-    pub fn new(
-        bal_rep: u32,
-        flux_rep: u32,
-        cell_rep: u32,
-        spectrum_name: String,
-        spectrum_size: usize,
-    ) -> Self {
+    pub fn new(spectrum_name: String, spectrum_size: usize) -> Self {
         let spectrum = EnergySpectrum::new(spectrum_name, spectrum_size);
         Self {
             balance_cumulative: Default::default(),
@@ -271,25 +259,11 @@ impl<T: CustomFloat> Tallies<T> {
             cell_tally_domain: Default::default(),
             fluence: Default::default(),
             spectrum,
-            num_balance_replications: bal_rep,
-            num_flux_replications: flux_rep,
-            num_cell_tally_replications: cell_rep,
         }
     }
 
     /// Prepare the tallies for use.
-    pub fn initialize_tallies(
-        &mut self,
-        domain: &[MCDomain<T>],
-        num_energy_groups: usize,
-        balance_replications: u32,
-        flux_replications: u32,
-        cell_replications: u32,
-    ) {
-        self.num_balance_replications = balance_replications;
-        self.num_flux_replications = flux_replications;
-        self.num_cell_tally_replications = cell_replications;
-
+    pub fn initialize_tallies(&mut self, domain: &[MCDomain<T>], num_energy_groups: usize) {
         // Initialize the cell tallies
         if self.cell_tally_domain.is_empty() {
             if self.cell_tally_domain.capacity() == 0 {
