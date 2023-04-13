@@ -58,18 +58,14 @@ pub fn population_control<T: CustomFloat>(
     }
 
     if split_rr_factor != one() {
-        population_control_guts(
-            split_rr_factor,
-            container,
-            &mut mcco.tallies.balance_task[0],
-        );
+        population_control_guts(split_rr_factor, container, &mut mcco.tallies.balance_cycle);
     }
 }
 
 fn population_control_guts<T: CustomFloat>(
     split_rr_factor: T,
     container: &mut ParticleContainer<T>,
-    task_balance: &mut Balance,
+    balance: &mut Balance,
 ) {
     if split_rr_factor < one() {
         // too many particles; roll for a kill
@@ -77,7 +73,7 @@ fn population_control_guts<T: CustomFloat>(
             let rand_f: T = rng_sample(&mut pp.random_number_seed);
             if rand_f > split_rr_factor {
                 // particle dies
-                task_balance.rr += 1;
+                balance.rr += 1;
                 false
             } else {
                 // particle survives with increased weight
@@ -98,7 +94,7 @@ fn population_control_guts<T: CustomFloat>(
             let n_split: usize = split_factor.to_usize().unwrap();
             (0..n_split).for_each(|_| {
                 let mut split_pp = pp.clone();
-                task_balance.split += 1;
+                balance.split += 1;
                 split_pp.random_number_seed = spawn_rn_seed::<T>(&mut pp.random_number_seed);
                 split_pp.identifier = split_pp.random_number_seed;
 
@@ -242,7 +238,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
                         container.processing_particles.push(base_particle);
 
                         // atomic in original code
-                        mcco.tallies.balance_task[0].source += 1;
+                        mcco.tallies.balance_cycle.source += 1;
                     });
                 });
             // update source_tally

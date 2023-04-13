@@ -29,7 +29,6 @@ use super::{
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     base_particle: &mut MCBaseParticle<T>,
-    particle_idx: usize,
     extra: &mut Vec<MCBaseParticle<T>>,
     send_queue: &mut SendQueue<T>,
 ) {
@@ -49,7 +48,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
         .nuclear_data
         .get_energy_groups(particle.base_particle.kinetic_energy);
 
-    cycle_tracking_function(mcco, &mut particle, particle_idx, extra, send_queue);
+    cycle_tracking_function(mcco, &mut particle, extra, send_queue);
 
     *base_particle = MCBaseParticle::new(&particle);
 }
@@ -57,23 +56,21 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
 fn cycle_tracking_function<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
-    particle_idx: usize,
     extra: &mut Vec<MCBaseParticle<T>>,
     send_queue: &mut SendQueue<T>,
 ) {
     let mut keep_tracking: bool;
-    let tally_idx: usize = particle_idx % mcco.tallies.num_balance_replications as usize;
 
     loop {
         // compute event for segment & update # of segments
         let segment_outcome = outcome(mcco, particle);
-        mcco.tallies.balance_task[tally_idx].num_segments += 1; // atomic in original code
+        mcco.tallies.balance_cycle.num_segments += 1; // atomic in original code
 
         particle.base_particle.num_segments += one();
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                keep_tracking = collision_event(mcco, particle, tally_idx, extra);
+                keep_tracking = collision_event(mcco, particle, extra);
                 if !keep_tracking {
                     particle.base_particle.species = Species::Unknown;
                 }
@@ -85,7 +82,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                     MCTallyEvent::FacetCrossingTransitExit => true,
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
-                        mcco.tallies.balance_task[tally_idx].escape += 1;
+                        mcco.tallies.balance_cycle.escape += 1;
                         particle.base_particle.last_event = MCTallyEvent::FacetCrossingEscape;
                         particle.base_particle.species = Species::Unknown;
                         false
@@ -103,7 +100,7 @@ fn cycle_tracking_function<T: CustomFloat>(
             }
             MCSegmentOutcome::Census => {
                 // atomic in original code
-                mcco.tallies.balance_task[tally_idx].census += 1;
+                mcco.tallies.balance_cycle.census += 1;
                 // we're done tracking the particle FOR THIS STEP
                 keep_tracking = false;
             }

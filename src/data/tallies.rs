@@ -237,7 +237,7 @@ pub struct Tallies<T: CustomFloat> {
     /// Balance used for cumulative and centralized statistics.
     pub balance_cumulative: Balance,
     /// Task-specific cyclic balances.
-    pub balance_task: Vec<Balance>,
+    pub balance_cycle: Balance,
     /// Top-level structure holding scalar flux data.
     pub scalar_flux_domain: Vec<ScalarFluxDomain<T>>,
     /// Top-level structure holding cell tallied data.
@@ -266,7 +266,7 @@ impl<T: CustomFloat> Tallies<T> {
         let spectrum = EnergySpectrum::new(spectrum_name, spectrum_size);
         Self {
             balance_cumulative: Default::default(),
-            balance_task: Default::default(),
+            balance_cycle: Default::default(),
             scalar_flux_domain: Default::default(),
             cell_tally_domain: Default::default(),
             fluence: Default::default(),
@@ -289,18 +289,6 @@ impl<T: CustomFloat> Tallies<T> {
         self.num_balance_replications = balance_replications;
         self.num_flux_replications = flux_replications;
         self.num_cell_tally_replications = cell_replications;
-
-        // Initialize the balance tallies
-        if self.balance_task.is_empty() {
-            if self.balance_task.capacity() == 0 {
-                self.balance_task
-                    .reserve(self.num_balance_replications as usize);
-            }
-
-            (0..self.num_balance_replications).for_each(|_| {
-                self.balance_task.push(Balance::default());
-            });
-        }
 
         // Initialize the cell tallies
         if self.cell_tally_domain.is_empty() {
@@ -329,16 +317,6 @@ impl<T: CustomFloat> Tallies<T> {
         }
     }
 
-    /// Sums the task-level data. This is used when replications
-    /// is active.
-    pub fn sum_tasks(&mut self) {
-        (1..self.num_balance_replications).for_each(|rep_idx| {
-            let bal = self.balance_task[rep_idx as usize].clone(); // is there a cheaper way?
-            self.balance_task[0].add(&bal);
-            self.balance_task[rep_idx as usize].reset();
-        });
-    }
-
     /// Prints summarized data recorded by the tallies.
     ///
     /// TODO: add a model of the produced output
@@ -356,7 +334,7 @@ impl<T: CustomFloat> Tallies<T> {
         let cy_track = mc_fast_timer::get_last_cycle(mcco, Section::CycleTracking);
         let cy_fin = mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize);
         let sf_sum = self.scalar_flux_sum();
-        let bal = &self.balance_task[0];
+        let bal = &self.balance_cycle;
         println!("{:>7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>11e} {:>18e} {:>18e}",
             mcco.time_info.cycle,
             bal.start,
@@ -401,13 +379,11 @@ impl<T: CustomFloat> Tallies<T> {
 
     /// Print stats of the current cycle and update the cumulative counters.
     pub fn cycle_finalize(&mut self, bench_type: BenchType) {
-        self.balance_cumulative.add(&self.balance_task[0]);
+        self.balance_cumulative.add(&self.balance_cycle);
 
-        let new_start: u64 = self.balance_task[0].end;
-        (0..self.balance_task.len()).for_each(|balance_idx| {
-            self.balance_task[balance_idx].reset();
-        });
-        self.balance_task[0].start = new_start;
+        let new_start: u64 = self.balance_cycle.end;
+        self.balance_cycle.reset();
+        self.balance_cycle.start = new_start;
 
         (0..self.scalar_flux_domain.len()).for_each(|domain_idx| {
             if bench_type != BenchType::Standard {
