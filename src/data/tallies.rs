@@ -186,42 +186,27 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
     /// Add another [ScalarFluxTask]'s value to its own.
     ///
     /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
-    pub fn add(&mut self, scalar_flux_task: &ScalarFluxDomain<T>) {
+    pub fn add(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
         let n_groups = self.cell[0].len();
         (0..self.cell.len()).for_each(|cell_idx| {
             (0..n_groups).for_each(|group_idx| {
-                self.cell[cell_idx][group_idx] += scalar_flux_task.cell[cell_idx][group_idx];
+                self.cell[cell_idx][group_idx] += scalar_flux_domain.cell[cell_idx][group_idx];
             })
         });
     }
 }
 
-/*
-/// Domain-sorted _scalar-flux-data-holding_ sub-structure.
-#[derive(Debug)]
-pub struct ScalarFluxDomain<T: CustomFloat> {
-    pub task: Vec<ScalarFluxTask<T>>,
-}
-
-impl<T: CustomFloat> ScalarFluxDomain<T> {
-    // Constructor.
-    pub fn new(domain: &MCDomain<T>, num_groups: usize, flux_replications: usize) -> Self {
-        let task = vec![ScalarFluxTask::new(domain, num_groups); flux_replications];
-        Self { task }
-    }
-}
-*/
 //================
 // Cell tally data
 //================
 
 /// Task-specific _cell-tallied-data-holding_ sub-structure.
 #[derive(Debug, Default, Clone)]
-pub struct CellTallyTask<T: CustomFloat> {
+pub struct CellTallyDomain<T: CustomFloat> {
     pub cell: Vec<T>,
 }
 
-impl<T: CustomFloat> CellTallyTask<T> {
+impl<T: CustomFloat> CellTallyDomain<T> {
     /// Constructor.
     pub fn new(domain: &MCDomain<T>) -> Self {
         Self {
@@ -237,22 +222,8 @@ impl<T: CustomFloat> CellTallyTask<T> {
     /// Add another [CellTallyTask]'s value to its own.
     ///
     /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
-    pub fn add(&mut self, cell_tally_task: &CellTallyTask<T>) {
-        (0..self.cell.len()).for_each(|ii| self.cell[ii] += cell_tally_task.cell[ii]);
-    }
-}
-
-/// Domain-sorted _cell-tallied-data-holding_ sub-structure.
-#[derive(Debug)]
-pub struct CellTallyDomain<T: CustomFloat> {
-    pub task: Vec<CellTallyTask<T>>,
-}
-
-impl<T: CustomFloat> CellTallyDomain<T> {
-    /// Constructor.
-    pub fn new(domain: &MCDomain<T>, cell_tally_replications: usize) -> Self {
-        let task = vec![CellTallyTask::new(domain); cell_tally_replications];
-        Self { task }
+    pub fn add(&mut self, cell_tally_domain: &CellTallyDomain<T>) {
+        (0..self.cell.len()).for_each(|ii| self.cell[ii] += cell_tally_domain.cell[ii]);
     }
 }
 
@@ -338,10 +309,8 @@ impl<T: CustomFloat> Tallies<T> {
             }
 
             (0..domain.len()).for_each(|domain_idx| {
-                self.cell_tally_domain.push(CellTallyDomain::new(
-                    &domain[domain_idx],
-                    self.num_cell_tally_replications as usize,
-                ));
+                self.cell_tally_domain
+                    .push(CellTallyDomain::new(&domain[domain_idx]));
             });
         }
 
@@ -445,7 +414,7 @@ impl<T: CustomFloat> Tallies<T> {
                 self.fluence
                     .compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
             }
-            self.cell_tally_domain[domain_idx].task[0].reset();
+            self.cell_tally_domain[domain_idx].reset();
             self.scalar_flux_domain[domain_idx].reset();
         });
     }
