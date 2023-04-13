@@ -6,7 +6,7 @@
 //! Note that this module isn't used to compute time-related data, this is done in
 //! the [utils::mc_fast_timer][crate::utils::mc_fast_timer] module.
 
-use std::fmt::Debug;
+use std::{fmt::Debug, iter::zip};
 
 use num::zero;
 
@@ -184,15 +184,15 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
     }
 
     /// Add another [ScalarFluxDomain]'s value to its own.
-    ///
-    /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
-    pub fn add(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
-        let n_groups = self.cell[0].len();
-        (0..self.cell.len()).for_each(|cell_idx| {
-            (0..n_groups).for_each(|group_idx| {
-                self.cell[cell_idx][group_idx] += scalar_flux_domain.cell[cell_idx][group_idx];
-            })
-        });
+    pub fn add(&mut self, other: &ScalarFluxDomain<T>) {
+        // zip iterators from the two objects' values.
+        let cell_iter = zip(self.cell.iter_mut(), other.cell.iter());
+        cell_iter.for_each(|(cell_lhs, cell_rhs)| {
+            // zip iterators from the two objects' values.
+            let group_iter = zip(cell_lhs.iter_mut(), cell_rhs.iter());
+            // sum other to self
+            group_iter.for_each(|(group_lhs, group_rhs)| *group_lhs += *group_rhs);
+        })
     }
 }
 
@@ -220,10 +220,11 @@ impl<T: CustomFloat> CellTallyDomain<T> {
     }
 
     /// Add another [CellTallyDomain]'s value to its own.
-    ///
-    /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
-    pub fn add(&mut self, cell_tally_domain: &CellTallyDomain<T>) {
-        (0..self.cell.len()).for_each(|ii| self.cell[ii] += cell_tally_domain.cell[ii]);
+    pub fn add(&mut self, other: &CellTallyDomain<T>) {
+        // zip iterators from the two objects' values.
+        let iter = zip(self.cell.iter_mut(), other.cell.iter());
+        // sum other to self
+        iter.for_each(|(lhs, rhs)| *lhs += *rhs);
     }
 }
 
