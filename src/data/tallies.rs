@@ -55,12 +55,6 @@ pub struct Fluence<T: CustomFloat> {
 impl<T: CustomFloat> Fluence<T> {
     pub fn compute(&mut self, domain_idx: usize, scalar_flux_domain: &ScalarFluxDomain<T>) {
         let n_cells = scalar_flux_domain.cell.len();
-        while self.domain.len() <= domain_idx {
-            let new_domain: FluenceDomain<T> = FluenceDomain {
-                cell: vec![zero(); n_cells],
-            };
-            self.domain.push(new_domain);
-        }
         (0..n_cells).for_each(|cell_idx| {
             let n_groups = scalar_flux_domain.cell[cell_idx].len();
             (0..n_groups).for_each(|group_idx| {
@@ -264,7 +258,12 @@ impl<T: CustomFloat> Tallies<T> {
     }
 
     /// Prepare the tallies for use.
-    pub fn initialize_tallies(&mut self, domain: &[MCDomain<T>], num_energy_groups: usize) {
+    pub fn initialize_tallies(
+        &mut self,
+        domain: &[MCDomain<T>],
+        num_energy_groups: usize,
+        bench_type: BenchType,
+    ) {
         // Initialize the cell tallies
         if self.cell_tally_domain.is_empty() {
             if self.cell_tally_domain.capacity() == 0 {
@@ -289,6 +288,18 @@ impl<T: CustomFloat> Tallies<T> {
                     num_energy_groups,
                 ));
             });
+        }
+
+        // Initialize Fluence if necessary
+        if bench_type != BenchType::Standard {
+            self.scalar_flux_domain
+                .iter()
+                .map(|dom| dom.cell.len())
+                .for_each(|n_cells| {
+                    self.fluence.domain.push(FluenceDomain {
+                        cell: vec![zero(); n_cells],
+                    })
+                });
         }
     }
 
