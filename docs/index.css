@@ -1,0 +1,40 @@
+/* Ayu-like theme */
+html {
+    background-color: #0B0E14;
+    height: 100%;
+}
+
+body {
+    max-width: 70ch;
+    margin: auto;
+    padding: 1em;
+    text-align: left;
+    background-color: #47526640;
+    height: 100%;
+}
+
+h1 {
+    color: #39BAE6;
+}
+
+h2 {
+    color: #39BAE6;
+}
+
+p {
+    color: #BFBDB6;
+}
+
+li {
+    color: #BFBDB6;
+}
+
+a:link {
+    color: #39BAE6;
+    text-decoration: none;
+}
+
+a:visited {
+    color: #39BAE6;
+    text-decoration: none;
+}
