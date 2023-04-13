@@ -72,6 +72,13 @@ pub struct FluenceDomain<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> FluenceDomain<T> {
+    pub fn compute(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
+        let cell_iter = zip(self.cell.iter_mut(), scalar_flux_domain.cell.iter());
+        cell_iter.for_each(|(fl_cell, sf_cell)| {
+            *fl_cell += sf_cell.iter().copied().sum();
+        })
+    }
+
     pub fn add_to_cell(&mut self, index: usize, val: T) {
         self.cell[index] += val;
     }
@@ -264,31 +271,15 @@ impl<T: CustomFloat> Tallies<T> {
         num_energy_groups: usize,
         bench_type: BenchType,
     ) {
-        // Initialize the cell tallies
-        if self.cell_tally_domain.is_empty() {
-            if self.cell_tally_domain.capacity() == 0 {
-                self.cell_tally_domain.reserve(domain.len());
-            }
-
-            (0..domain.len()).for_each(|domain_idx| {
-                self.cell_tally_domain
-                    .push(CellTallyDomain::new(&domain[domain_idx]));
-            });
-        }
-
-        // Initialize the scalar flux tallies
-        if self.scalar_flux_domain.is_empty() {
-            if self.scalar_flux_domain.capacity() == 0 {
-                self.scalar_flux_domain.reserve(domain.len());
-            }
-
-            (0..domain.len()).for_each(|domain_idx| {
-                self.scalar_flux_domain.push(ScalarFluxDomain::new(
-                    &domain[domain_idx],
-                    num_energy_groups,
-                ));
-            });
-        }
+        self.cell_tally_domain.reserve(domain.len());
+        self.scalar_flux_domain.reserve(domain.len());
+        domain.iter().for_each(|dom| {
+            // Initialize the cell tallies
+            self.cell_tally_domain.push(CellTallyDomain::new(dom));
+            // Initialize the scalar flux tallies
+            self.scalar_flux_domain
+                .push(ScalarFluxDomain::new(dom, num_energy_groups));
+        });
 
         // Initialize Fluence if necessary
         if bench_type != BenchType::Standard {
@@ -390,6 +381,25 @@ impl<T: CustomFloat> Tallies<T> {
         self.balance_cycle.reset();
         self.balance_cycle.start = new_start;
 
+        if bench_type != BenchType::Standard {
+            let fluence_computation_iter = zip(
+                self.fluence.domain.iter_mut(),
+                self.scalar_flux_domain.iter(),
+            );
+            fluence_computation_iter.for_each(|(fl_domain, sf_domain)| {
+                fl_domain.compute(sf_domain);
+            })
+        }
+
+        let dom_iter = zip(
+            self.cell_tally_domain.iter_mut(),
+            self.scalar_flux_domain.iter_mut(),
+        );
+        dom_iter.for_each(|(ct_domain, sf_domain)| {
+            ct_domain.reset();
+            sf_domain.reset();
+        });
+        /*
         (0..self.scalar_flux_domain.len()).for_each(|domain_idx| {
             if bench_type != BenchType::Standard {
                 self.fluence
@@ -398,5 +408,6 @@ impl<T: CustomFloat> Tallies<T> {
             self.cell_tally_domain[domain_idx].reset();
             self.scalar_flux_domain[domain_idx].reset();
         });
+        */
     }
 }
