@@ -357,23 +357,18 @@ impl<T: CustomFloat> Tallies<T> {
 
     /// Computes the global scalar flux value of the problem.
     pub fn scalar_flux_sum(&self) -> T {
-        let mut sum: T = zero();
-
-        let n_domain = self.scalar_flux_domain.len();
-        // for all domains
-        (0..n_domain).for_each(|domain_idx| {
-            let n_cells = self.scalar_flux_domain[domain_idx].cell.len();
-            // for each cell
-            (0..n_cells).for_each(|cell_idx| {
-                let n_groups = self.scalar_flux_domain[domain_idx].cell[cell_idx].len();
-                // for each energy group
-                (0..n_groups).for_each(|group_idx| {
-                    sum += self.scalar_flux_domain[domain_idx].cell[cell_idx][group_idx];
-                })
+        let summ: T = self
+            .scalar_flux_domain
+            .iter()
+            .map(|sf_domain| {
+                sf_domain
+                    .cell
+                    .iter()
+                    .map(|sf_cell| sf_cell.iter().copied().sum())
+                    .sum()
             })
-        });
-
-        sum
+            .sum();
+        summ
     }
 
     /// Print stats of the current cycle and update the cumulative counters.
