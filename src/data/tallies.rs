@@ -162,7 +162,7 @@ impl Balance {
 /// Each element of the vector is corresponds to a cell's data.
 type ScalarFluxCell<T> = Vec<T>;
 
-/// Task-sorted _scalar-flux-data-holding_ sub-structure.
+/// Domain-sorted _scalar-flux-data-holding_ sub-structure.
 #[derive(Debug, Clone)]
 pub struct ScalarFluxDomain<T: CustomFloat> {
     pub cell: Vec<ScalarFluxCell<T>>,
@@ -183,7 +183,7 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
         });
     }
 
-    /// Add another [ScalarFluxTask]'s value to its own.
+    /// Add another [ScalarFluxDomain]'s value to its own.
     ///
     /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
     pub fn add(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
@@ -200,7 +200,7 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
 // Cell tally data
 //================
 
-/// Task-specific _cell-tallied-data-holding_ sub-structure.
+/// Domain-specific _cell-tallied-data-holding_ sub-structure.
 #[derive(Debug, Default, Clone)]
 pub struct CellTallyDomain<T: CustomFloat> {
     pub cell: Vec<T>,
@@ -219,7 +219,7 @@ impl<T: CustomFloat> CellTallyDomain<T> {
         self.cell = vec![zero(); self.cell.len()];
     }
 
-    /// Add another [CellTallyTask]'s value to its own.
+    /// Add another [CellTallyDomain]'s value to its own.
     ///
     /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
     pub fn add(&mut self, cell_tally_domain: &CellTallyDomain<T>) {
@@ -236,7 +236,7 @@ impl<T: CustomFloat> CellTallyDomain<T> {
 pub struct Tallies<T: CustomFloat> {
     /// Balance used for cumulative and centralized statistics.
     pub balance_cumulative: Balance,
-    /// Task-specific cyclic balances.
+    /// Cyclic balances.
     pub balance_cycle: Balance,
     /// Top-level structure holding scalar flux data.
     pub scalar_flux_domain: Vec<ScalarFluxDomain<T>>,
@@ -293,7 +293,31 @@ impl<T: CustomFloat> Tallies<T> {
 
     /// Prints summarized data recorded by the tallies.
     ///
-    /// TODO: add a model of the produced output
+    /// This function prints the number of recorded events & additionnal data
+    /// at each cycle of the simulation. After five cycle, the printed output
+    /// would look like the following:
+    ///
+    /// ```shell
+    /// cycle   |    start     source         rr        split       absorb      scatter      fission      produce    collision       escape       census      num_seg   scalar_flux   cycleInit (s)  cycleTracking (s)  cycleFinalize (s)
+    ///       0 |        0      10000          0        90000        97237       711673        86904        86904       895814            0         2763      2245733    8.984036e11   1.4745e-2         1.088409e0                0e0
+    ///       1 |     2763      10000          0        87202        97576       715193        86951        86951       899720            0         2389      2250433    9.191721e11   1.1338e-2         1.114024e0                0e0
+    ///       2 |     2389      10000          0        87625        97569       717781        87733        87733       903083            0         2445      2262159    9.303649e11     8.45e-3         1.125107e0                0e0
+    ///       3 |     2445      10000       1468        87569        96180       704095        85839        85839       886114            0         2366      2217454    9.227719e11    9.499e-3         1.106859e0                0e0
+    ///       4 |     2366      10000        331        87599        97132       716577        87708        87708       901417            0         2502      2256889    9.255832e11    9.701e-3         1.129408e0                0e0
+    /// ```
+    ///
+    /// - `cycle` column gives the cycle number.
+    /// - `start` column gives the number of particle at the start of the cycle,
+    ///   before population control algorithms.
+    /// - `source`, `rr`, `split` columns count
+    ///   [`population_control`][crate::simulation::population_control] events.
+    /// - `absorb`, `scatter`, `fission`, `produce`, `collision` columns count
+    ///   [collision_event][crate::simulation::collision_event] events.
+    /// - `escape`, `census` columns count the remaining possible
+    ///   [`outcomes`][crate::simulation::mc_segment_outcome].
+    /// - `num_seg` column counts the total number of computed segments.
+    /// - `scalar_flux` is the total scalar flux of the problem.
+    /// - The last three columns indicate the time spent in each section.
     pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
         if mcco.time_info.cycle == 0 {
             // print header

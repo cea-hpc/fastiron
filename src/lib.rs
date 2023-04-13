@@ -55,12 +55,6 @@
 //!           number of mesh elements along z
 //!   -s, --seed <SEED>
 //!           random number seed
-//!   -B, --b-tally <BALANCE_TALLY_REPLICATIONS>
-//!           number of balance tally replications
-//!   -F, --f-tally <FLUX_TALLY_REPLICATIONS>
-//!           number of scalar flux tally replications
-//!   -C, --c-tally <CELL_TALLY_REPLICATIONS>
-//!           number of scalar cell tally replications
 //!   -h, --help
 //!          Print help
 //!   -V, --version
