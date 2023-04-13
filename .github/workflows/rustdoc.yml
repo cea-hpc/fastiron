@@ -28,6 +28,7 @@ jobs:
         with:
           command: doc
           args: --all --no-deps
+      - run: ./docs/build.sh
       - name: Deploy Docs
         uses: peaceiris/actions-gh-pages@v3
         with:
