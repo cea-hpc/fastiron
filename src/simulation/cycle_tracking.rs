@@ -63,11 +63,10 @@ fn cycle_tracking_function<T: CustomFloat>(
 ) {
     let mut keep_tracking: bool;
     let tally_idx: usize = particle_idx % mcco.tallies.num_balance_replications as usize;
-    let flux_tally_idx: usize = particle_idx % mcco.tallies.num_flux_replications as usize;
 
     loop {
         // compute event for segment & update # of segments
-        let segment_outcome = outcome(mcco, particle, flux_tally_idx);
+        let segment_outcome = outcome(mcco, particle);
         mcco.tallies.balance_task[tally_idx].num_segments += 1; // atomic in original code
 
         particle.base_particle.num_segments += one();

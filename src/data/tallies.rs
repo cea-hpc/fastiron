@@ -54,7 +54,7 @@ pub struct Fluence<T: CustomFloat> {
 
 impl<T: CustomFloat> Fluence<T> {
     pub fn compute(&mut self, domain_idx: usize, scalar_flux_domain: &ScalarFluxDomain<T>) {
-        let n_cells = scalar_flux_domain.task[0].cell.len();
+        let n_cells = scalar_flux_domain.cell.len();
         while self.domain.len() <= domain_idx {
             let new_domain: FluenceDomain<T> = FluenceDomain {
                 cell: vec![zero(); n_cells],
@@ -62,12 +62,10 @@ impl<T: CustomFloat> Fluence<T> {
             self.domain.push(new_domain);
         }
         (0..n_cells).for_each(|cell_idx| {
-            let n_groups = scalar_flux_domain.task[0].cell[cell_idx].len();
+            let n_groups = scalar_flux_domain.cell[cell_idx].len();
             (0..n_groups).for_each(|group_idx| {
-                self.domain[domain_idx].add_to_cell(
-                    cell_idx,
-                    scalar_flux_domain.task[0].cell[cell_idx][group_idx],
-                );
+                self.domain[domain_idx]
+                    .add_to_cell(cell_idx, scalar_flux_domain.cell[cell_idx][group_idx]);
             });
         });
     }
@@ -166,11 +164,11 @@ type ScalarFluxCell<T> = Vec<T>;
 
 /// Task-sorted _scalar-flux-data-holding_ sub-structure.
 #[derive(Debug, Clone)]
-pub struct ScalarFluxTask<T: CustomFloat> {
+pub struct ScalarFluxDomain<T: CustomFloat> {
     pub cell: Vec<ScalarFluxCell<T>>,
 }
 
-impl<T: CustomFloat> ScalarFluxTask<T> {
+impl<T: CustomFloat> ScalarFluxDomain<T> {
     /// Constructor.
     pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
@@ -188,7 +186,7 @@ impl<T: CustomFloat> ScalarFluxTask<T> {
     /// Add another [ScalarFluxTask]'s value to its own.
     ///
     /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
-    pub fn add(&mut self, scalar_flux_task: &ScalarFluxTask<T>) {
+    pub fn add(&mut self, scalar_flux_task: &ScalarFluxDomain<T>) {
         let n_groups = self.cell[0].len();
         (0..self.cell.len()).for_each(|cell_idx| {
             (0..n_groups).for_each(|group_idx| {
@@ -198,6 +196,7 @@ impl<T: CustomFloat> ScalarFluxTask<T> {
     }
 }
 
+/*
 /// Domain-sorted _scalar-flux-data-holding_ sub-structure.
 #[derive(Debug)]
 pub struct ScalarFluxDomain<T: CustomFloat> {
@@ -211,7 +210,7 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
         Self { task }
     }
 }
-
+*/
 //================
 // Cell tally data
 //================
@@ -356,7 +355,6 @@ impl<T: CustomFloat> Tallies<T> {
                 self.scalar_flux_domain.push(ScalarFluxDomain::new(
                     &domain[domain_idx],
                     num_energy_groups,
-                    self.num_flux_replications as usize,
                 ));
             });
         }
@@ -418,21 +416,13 @@ impl<T: CustomFloat> Tallies<T> {
         let n_domain = self.scalar_flux_domain.len();
         // for all domains
         (0..n_domain).for_each(|domain_idx| {
-            // for each (replicated) tally
-            (0..self.num_flux_replications).for_each(|rep_idx| {
-                let n_cells = self.scalar_flux_domain[domain_idx].task[rep_idx as usize]
-                    .cell
-                    .len();
-                // for each cell
-                (0..n_cells).for_each(|cell_idx| {
-                    let n_groups = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
-                        [cell_idx]
-                        .len();
-                    // for each energy group
-                    (0..n_groups).for_each(|group_idx| {
-                        sum += self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
-                            [cell_idx][group_idx];
-                    })
+            let n_cells = self.scalar_flux_domain[domain_idx].cell.len();
+            // for each cell
+            (0..n_cells).for_each(|cell_idx| {
+                let n_groups = self.scalar_flux_domain[domain_idx].cell[cell_idx].len();
+                // for each energy group
+                (0..n_groups).for_each(|group_idx| {
+                    sum += self.scalar_flux_domain[domain_idx].cell[cell_idx][group_idx];
                 })
             })
         });
@@ -451,26 +441,12 @@ impl<T: CustomFloat> Tallies<T> {
         self.balance_task[0].start = new_start;
 
         (0..self.scalar_flux_domain.len()).for_each(|domain_idx| {
-            // Sum on replicated cell tallies and resets them
-            (1..self.num_cell_tally_replications).for_each(|rep_idx| {
-                let val = self.cell_tally_domain[domain_idx].task[rep_idx as usize].clone();
-                self.cell_tally_domain[domain_idx].task[0].add(&val);
-                self.cell_tally_domain[domain_idx].task[rep_idx as usize].reset();
-            });
-
-            // Sum on replicated scalar flux tallies and resets them
-            (1..self.num_flux_replications).for_each(|rep_idx| {
-                let val = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].clone();
-                self.scalar_flux_domain[domain_idx].task[0].add(&val);
-                self.scalar_flux_domain[domain_idx].task[rep_idx as usize].reset();
-            });
-
             if bench_type != BenchType::Standard {
                 self.fluence
                     .compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
             }
             self.cell_tally_domain[domain_idx].task[0].reset();
-            self.scalar_flux_domain[domain_idx].task[0].reset();
+            self.scalar_flux_domain[domain_idx].reset();
         });
     }
 }
