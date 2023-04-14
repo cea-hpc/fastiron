@@ -123,7 +123,11 @@ pub fn outcome<T: CustomFloat>(
 
     let segment_outcome = find_min(&distance);
 
-    if distance[segment_outcome as usize].is_sign_negative() {
+    if distance[segment_outcome as usize] < zero() {
+        println!(
+            "Distance to {segment_outcome:?} negative: {}",
+            distance[segment_outcome as usize]
+        );
         panic!()
     }
     particle.segment_path_length = distance[segment_outcome as usize];
