@@ -52,19 +52,6 @@ pub struct Fluence<T: CustomFloat> {
     pub domain: Vec<FluenceDomain<T>>,
 }
 
-impl<T: CustomFloat> Fluence<T> {
-    pub fn compute(&mut self, domain_idx: usize, scalar_flux_domain: &ScalarFluxDomain<T>) {
-        let n_cells = scalar_flux_domain.cell.len();
-        (0..n_cells).for_each(|cell_idx| {
-            let n_groups = scalar_flux_domain.cell[cell_idx].len();
-            (0..n_groups).for_each(|group_idx| {
-                self.domain[domain_idx]
-                    .add_to_cell(cell_idx, scalar_flux_domain.cell[cell_idx][group_idx]);
-            });
-        });
-    }
-}
-
 /// Domain-sorted fluence-data-holding sub-structure.
 #[derive(Debug, Default)]
 pub struct FluenceDomain<T: CustomFloat> {
@@ -77,10 +64,6 @@ impl<T: CustomFloat> FluenceDomain<T> {
         cell_iter.for_each(|(fl_cell, sf_cell)| {
             *fl_cell += sf_cell.iter().copied().sum();
         })
-    }
-
-    pub fn add_to_cell(&mut self, index: usize, val: T) {
-        self.cell[index] += val;
     }
 
     pub fn size(&self) -> usize {
@@ -97,9 +80,6 @@ impl<T: CustomFloat> FluenceDomain<T> {
 /// During the simulation, each time an event of interest occurs, the counters
 /// are incremented accordingly. In a parallel context, this structure should be
 /// operated on using atomic operations.
-///
-/// CANDIDATE FOR VECTORIZATION: use a `Vec<u64>` & write `add()` method in a way
-/// that allow vectorization (no bound checks)
 #[derive(Debug, Default, Clone)]
 pub struct Balance {
     /// Number of particles absorbed.
@@ -399,15 +379,5 @@ impl<T: CustomFloat> Tallies<T> {
             ct_domain.reset();
             sf_domain.reset();
         });
-        /*
-        (0..self.scalar_flux_domain.len()).for_each(|domain_idx| {
-            if bench_type != BenchType::Standard {
-                self.fluence
-                    .compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
-            }
-            self.cell_tally_domain[domain_idx].reset();
-            self.scalar_flux_domain[domain_idx].reset();
-        });
-        */
     }
 }
