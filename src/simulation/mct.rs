@@ -15,7 +15,7 @@ use crate::{
     data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
     geometry::{
         facets::{MCDistanceToFacet, MCGeneralPlane, MCNearestFacet},
-        mc_domain::MCDomain,
+        mc_domain::{MCDomain, MCMeshDomain},
         mc_location::MCLocation,
     },
     montecarlo::MonteCarlo,
@@ -56,15 +56,16 @@ pub fn nearest_facet<T: CustomFloat>(
 /// Generates a random coordinate inside a polyhedral cell.
 pub fn generate_coordinate_3dg<T: CustomFloat>(
     seed: &mut u64,
-    domain: &MCDomain<T>,
+    mesh: &MCMeshDomain<T>,
     cell_idx: usize,
+    cell_volume: T,
 ) -> MCVector<T> {
     let six: T = FromPrimitive::from_f64(6.0).unwrap();
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
 
-    let center: MCVector<T> = cell_position_3dg(domain, cell_idx);
+    let center: MCVector<T> = cell_position_3dg(mesh, cell_idx);
     let rdm_number: T = rng_sample(seed);
-    let which_volume = rdm_number * six * domain.cell_state[cell_idx].volume;
+    let which_volume = rdm_number * six * cell_volume;
 
     let mut current_volume: T = zero();
     let mut facet_idx: usize = 0;
@@ -78,11 +79,11 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
         if facet_idx == N_FACETS_OUT {
             break;
         }
-        let facet_points = mct_facet_points_3dg(domain, cell_idx, facet_idx);
+        let facet_points = mct_facet_points_3dg(mesh, cell_idx, facet_idx);
 
-        point0 = domain.mesh.node[facet_points[0]];
-        point1 = domain.mesh.node[facet_points[1]];
-        point2 = domain.mesh.node[facet_points[2]];
+        point0 = mesh.node[facet_points[0]];
+        point1 = mesh.node[facet_points[1]];
+        point2 = mesh.node[facet_points[2]];
 
         let subvolume = mct_cell_volume_3dg_vector_tetdet(&point0, &point1, &point2, &center);
         current_volume += subvolume;
@@ -115,12 +116,12 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
 }
 
 /// Returns a coordinate that represents the "center" of the cell.
-pub fn cell_position_3dg<T: CustomFloat>(domain: &MCDomain<T>, cell_idx: usize) -> MCVector<T> {
+pub fn cell_position_3dg<T: CustomFloat>(mesh: &MCMeshDomain<T>, cell_idx: usize) -> MCVector<T> {
     let mut coordinate: MCVector<T> = Default::default();
 
     (0..N_POINTS_INTERSEC).for_each(|point_idx| {
-        let point = domain.mesh.cell_connectivity[cell_idx].point[point_idx];
-        coordinate += domain.mesh.node[point];
+        let point = mesh.cell_connectivity[cell_idx].point[point_idx];
+        coordinate += mesh.node[point];
     });
 
     coordinate /= FromPrimitive::from_usize(N_POINTS_INTERSEC).unwrap();
@@ -252,7 +253,7 @@ fn mct_nf_3dg_move_particle<T: CustomFloat>(
     coord: &mut MCVector<T>,
     move_factor: T,
 ) {
-    let move_to = cell_position_3dg(domain, location.cell.unwrap());
+    let move_to = cell_position_3dg(&domain.mesh, location.cell.unwrap());
 
     *coord += (move_to - *coord) * move_factor;
 }
@@ -336,14 +337,14 @@ fn mct_nf_find_nearest<T: CustomFloat>(
 }
 
 fn mct_facet_points_3dg<T: CustomFloat>(
-    domain: &MCDomain<T>,
+    mesh: &MCMeshDomain<T>,
     cell: usize,
     facet: usize,
 ) -> [usize; N_POINTS_PER_FACET] {
     let mut res: [usize; N_POINTS_PER_FACET] = [0; N_POINTS_PER_FACET];
 
     (0..N_POINTS_PER_FACET).for_each(|point_idx| {
-        res[point_idx] = domain.mesh.cell_connectivity[cell].facet[facet].point[point_idx].unwrap();
+        res[point_idx] = mesh.cell_connectivity[cell].facet[facet].point[point_idx].unwrap();
     });
 
     res

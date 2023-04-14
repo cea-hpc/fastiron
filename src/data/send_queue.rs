@@ -28,11 +28,6 @@ pub struct SendQueue<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> SendQueue<T> {
-    /// Get the total size of the SendQueue.
-    pub fn size(&self) -> usize {
-        self.data.len()
-    }
-
     /// Reserve capacity for the queue.
     pub fn reserve(&mut self, size: usize) {
         if self.data.capacity() < size {
@@ -43,12 +38,12 @@ impl<T: CustomFloat> SendQueue<T> {
     /// Get the number of items in SendQueue going to a specific neighbor.
     /// See if it's used and how much it's used. Maybe returning directly a
     /// filtered iterator is more useful.
-    pub fn neighbor_size(&self, index: usize) -> u64 {
+    pub fn neighbor_size(&self, index: usize) -> usize {
         self.data
             .clone()
             .into_iter()
             .filter(|t| t.neighbor == index)
-            .count() as u64
+            .count()
     }
 
     /// Add items to the SendQueue.
@@ -79,7 +74,7 @@ mod tests {
         };
         let mut queue = SendQueue { data: vec![tt; 10] };
 
-        assert_eq!(queue.size(), 10);
+        assert_eq!(queue.data.len(), 10);
         queue.reserve(20);
         assert_eq!(queue.data.capacity(), 20);
     }
@@ -136,11 +131,11 @@ mod tests {
         pp.base_particle.identifier = 23;
         queue.push(3, &pp);
 
-        assert_eq!(queue.size(), 5);
-        assert_eq!(queue.data[queue.size() - 1], ttt);
+        assert_eq!(queue.data.len(), 5);
+        assert_eq!(queue.data[queue.data.len() - 1], ttt);
 
         queue.clear();
 
-        assert_eq!(queue.size(), 0);
+        assert_eq!(queue.data.len(), 0);
     }
 }

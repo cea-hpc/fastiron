@@ -148,16 +148,20 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut ParticleContainer<T>) {
     let time_step = mcco.time_info.time_step;
 
+    // this is a constant; add it to mcco ?
     let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];
-    (0..mcco.material_database.mat.len()).for_each(|mat_idx| {
-        let name = &mcco.material_database.mat[mat_idx].name;
-        let sr = mcco.params.material_params[name].source_rate;
-        source_rate[mat_idx] = sr;
-    });
+    source_rate
+        .iter_mut()
+        .zip(mcco.material_database.mat.iter())
+        .for_each(|(lhs, mat)| {
+            let rhs = mcco.params.material_params[&mat.name].source_rate;
+            *lhs = rhs;
+        });
 
     let mut total_weight_particles: T = zero();
     mcco.domain.iter().for_each(|dom| {
         dom.cell_state.iter().for_each(|cell| {
+            // constant because cell volume is constant in our program
             let cell_weight_particles: T = cell.volume * source_rate[cell.material] * time_step;
             total_weight_particles += cell_weight_particles;
         });
@@ -178,30 +182,26 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
         .iter_mut()
         .enumerate()
         .for_each(|(domain_idx, dom)| {
-            // update the tally separately and merge data after
-            // this allows for a read-only iterator
-            let mut cell_source_tally: Vec<usize> = vec![0; dom.cell_state.len()];
-
             // on each cell
             dom.cell_state
-                .iter()
+                .iter_mut()
                 .enumerate()
                 .for_each(|(cell_idx, cell)| {
+                    // compute number of particles to be created in the cell
                     let cell_weight_particle: T =
                         cell.volume * source_rate[cell.material] * time_step;
-
-                    // create cell_n_particles and add them to the vaults
                     let cell_n_particles: usize = (cell_weight_particle / source_particle_weight)
                         .floor()
                         .to_usize()
                         .unwrap();
-                    cell_source_tally[cell_idx] = cell.source_tally;
-                    (0..cell_n_particles).for_each(|_ii| {
+
+                    // create cell_n_particles and add them to the vaults
+                    let sourced = (0..cell_n_particles).map(|_| {
                         let mut base_particle: MCBaseParticle<T> = MCBaseParticle::default();
 
                         // atomic in original code
-                        let mut rand_n_seed = cell_source_tally[cell_idx] as u64;
-                        cell_source_tally[cell_idx] += 1;
+                        let mut rand_n_seed = cell.source_tally as u64;
+                        cell.source_tally += 1;
 
                         rand_n_seed += cell.id as u64;
 
@@ -210,8 +210,9 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
 
                         base_particle.coordinate = generate_coordinate_3dg(
                             &mut base_particle.random_number_seed,
-                            dom,
+                            &dom.mesh,
                             cell_idx,
+                            cell.volume,
                         );
                         let mut direction_cosine = DirectionCosine::default();
                         direction_cosine.sample_isotropic(&mut base_particle.random_number_seed);
@@ -235,16 +236,13 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
                         rand_f = rng_sample(&mut base_particle.random_number_seed);
                         base_particle.time_to_census = time_step * rand_f;
 
-                        container.processing_particles.push(base_particle);
-
                         // atomic in original code
                         mcco.tallies.balance_cycle.source += 1;
+
+                        base_particle
                     });
+                    container.processing_particles.extend(sourced);
                 });
-            // update source_tally
-            (0..dom.cell_state.len()).for_each(|cell_idx| {
-                dom.cell_state[cell_idx].source_tally = cell_source_tally[cell_idx];
-            });
         });
 }
 

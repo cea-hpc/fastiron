@@ -278,8 +278,11 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
 
 fn init_tallies<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;
-    mcco.tallies
-        .initialize_tallies(&mcco.domain, params.simulation_params.n_groups)
+    mcco.tallies.initialize_tallies(
+        &mcco.domain,
+        params.simulation_params.n_groups,
+        params.simulation_params.coral_benchmark,
+    )
 }
 
 #[derive(Debug, Clone, Default)]

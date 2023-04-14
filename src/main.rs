@@ -135,12 +135,12 @@ pub fn cycle_finalize<T: CustomFloat>(
 ) {
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
-    // prepare data for summary
+    // prepare data for summary; this would be a sync phase in parallel exec
     mcco.tallies.balance_cycle.end = container.processed_particles.len() as u64;
+
     // print summary
-    //mc_fast_timer::stop(mcco, Section::CycleFinalize);
     mcco.tallies.print_summary(mcco);
-    mc_fast_timer::start(mcco, Section::CycleFinalize);
+
     // record / process data for the next cycle
     mcco.tallies
         .cycle_finalize(mcco.params.simulation_params.coral_benchmark);

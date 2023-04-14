@@ -6,7 +6,7 @@
 //! Note that this module isn't used to compute time-related data, this is done in
 //! the [utils::mc_fast_timer][crate::utils::mc_fast_timer] module.
 
-use std::fmt::Debug;
+use std::{fmt::Debug, iter::zip};
 
 use num::zero;
 
@@ -52,25 +52,6 @@ pub struct Fluence<T: CustomFloat> {
     pub domain: Vec<FluenceDomain<T>>,
 }
 
-impl<T: CustomFloat> Fluence<T> {
-    pub fn compute(&mut self, domain_idx: usize, scalar_flux_domain: &ScalarFluxDomain<T>) {
-        let n_cells = scalar_flux_domain.cell.len();
-        while self.domain.len() <= domain_idx {
-            let new_domain: FluenceDomain<T> = FluenceDomain {
-                cell: vec![zero(); n_cells],
-            };
-            self.domain.push(new_domain);
-        }
-        (0..n_cells).for_each(|cell_idx| {
-            let n_groups = scalar_flux_domain.cell[cell_idx].len();
-            (0..n_groups).for_each(|group_idx| {
-                self.domain[domain_idx]
-                    .add_to_cell(cell_idx, scalar_flux_domain.cell[cell_idx][group_idx]);
-            });
-        });
-    }
-}
-
 /// Domain-sorted fluence-data-holding sub-structure.
 #[derive(Debug, Default)]
 pub struct FluenceDomain<T: CustomFloat> {
@@ -78,8 +59,11 @@ pub struct FluenceDomain<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> FluenceDomain<T> {
-    pub fn add_to_cell(&mut self, index: usize, val: T) {
-        self.cell[index] += val;
+    pub fn compute(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
+        let cell_iter = zip(self.cell.iter_mut(), scalar_flux_domain.cell.iter());
+        cell_iter.for_each(|(fl_cell, sf_cell)| {
+            *fl_cell += sf_cell.iter().copied().sum();
+        })
     }
 
     pub fn size(&self) -> usize {
@@ -96,9 +80,6 @@ impl<T: CustomFloat> FluenceDomain<T> {
 /// During the simulation, each time an event of interest occurs, the counters
 /// are incremented accordingly. In a parallel context, this structure should be
 /// operated on using atomic operations.
-///
-/// CANDIDATE FOR VECTORIZATION: use a `Vec<u64>` & write `add()` method in a way
-/// that allow vectorization (no bound checks)
 #[derive(Debug, Default, Clone)]
 pub struct Balance {
     /// Number of particles absorbed.
@@ -184,15 +165,15 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
     }
 
     /// Add another [ScalarFluxDomain]'s value to its own.
-    ///
-    /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
-    pub fn add(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
-        let n_groups = self.cell[0].len();
-        (0..self.cell.len()).for_each(|cell_idx| {
-            (0..n_groups).for_each(|group_idx| {
-                self.cell[cell_idx][group_idx] += scalar_flux_domain.cell[cell_idx][group_idx];
-            })
-        });
+    pub fn add(&mut self, other: &ScalarFluxDomain<T>) {
+        // zip iterators from the two objects' values.
+        let cell_iter = zip(self.cell.iter_mut(), other.cell.iter());
+        cell_iter.for_each(|(cell_lhs, cell_rhs)| {
+            // zip iterators from the two objects' values.
+            let group_iter = zip(cell_lhs.iter_mut(), cell_rhs.iter());
+            // sum other to self
+            group_iter.for_each(|(group_lhs, group_rhs)| *group_lhs += *group_rhs);
+        })
     }
 }
 
@@ -220,10 +201,11 @@ impl<T: CustomFloat> CellTallyDomain<T> {
     }
 
     /// Add another [CellTallyDomain]'s value to its own.
-    ///
-    /// CANDIDATE FOR VECTORIZATION: Rewrite to avoid bound checks
-    pub fn add(&mut self, cell_tally_domain: &CellTallyDomain<T>) {
-        (0..self.cell.len()).for_each(|ii| self.cell[ii] += cell_tally_domain.cell[ii]);
+    pub fn add(&mut self, other: &CellTallyDomain<T>) {
+        // zip iterators from the two objects' values.
+        let iter = zip(self.cell.iter_mut(), other.cell.iter());
+        // sum other to self
+        iter.for_each(|(lhs, rhs)| *lhs += *rhs);
     }
 }
 
@@ -263,31 +245,32 @@ impl<T: CustomFloat> Tallies<T> {
     }
 
     /// Prepare the tallies for use.
-    pub fn initialize_tallies(&mut self, domain: &[MCDomain<T>], num_energy_groups: usize) {
-        // Initialize the cell tallies
-        if self.cell_tally_domain.is_empty() {
-            if self.cell_tally_domain.capacity() == 0 {
-                self.cell_tally_domain.reserve(domain.len());
-            }
+    pub fn initialize_tallies(
+        &mut self,
+        domain: &[MCDomain<T>],
+        num_energy_groups: usize,
+        bench_type: BenchType,
+    ) {
+        self.cell_tally_domain.reserve(domain.len());
+        self.scalar_flux_domain.reserve(domain.len());
+        domain.iter().for_each(|dom| {
+            // Initialize the cell tallies
+            self.cell_tally_domain.push(CellTallyDomain::new(dom));
+            // Initialize the scalar flux tallies
+            self.scalar_flux_domain
+                .push(ScalarFluxDomain::new(dom, num_energy_groups));
+        });
 
-            (0..domain.len()).for_each(|domain_idx| {
-                self.cell_tally_domain
-                    .push(CellTallyDomain::new(&domain[domain_idx]));
-            });
-        }
-
-        // Initialize the scalar flux tallies
-        if self.scalar_flux_domain.is_empty() {
-            if self.scalar_flux_domain.capacity() == 0 {
-                self.scalar_flux_domain.reserve(domain.len());
-            }
-
-            (0..domain.len()).for_each(|domain_idx| {
-                self.scalar_flux_domain.push(ScalarFluxDomain::new(
-                    &domain[domain_idx],
-                    num_energy_groups,
-                ));
-            });
+        // Initialize Fluence if necessary
+        if bench_type != BenchType::Standard {
+            self.scalar_flux_domain
+                .iter()
+                .map(|dom| dom.cell.len())
+                .for_each(|n_cells| {
+                    self.fluence.domain.push(FluenceDomain {
+                        cell: vec![zero(); n_cells],
+                    })
+                });
         }
     }
 
@@ -356,23 +339,18 @@ impl<T: CustomFloat> Tallies<T> {
 
     /// Computes the global scalar flux value of the problem.
     pub fn scalar_flux_sum(&self) -> T {
-        let mut sum: T = zero();
-
-        let n_domain = self.scalar_flux_domain.len();
-        // for all domains
-        (0..n_domain).for_each(|domain_idx| {
-            let n_cells = self.scalar_flux_domain[domain_idx].cell.len();
-            // for each cell
-            (0..n_cells).for_each(|cell_idx| {
-                let n_groups = self.scalar_flux_domain[domain_idx].cell[cell_idx].len();
-                // for each energy group
-                (0..n_groups).for_each(|group_idx| {
-                    sum += self.scalar_flux_domain[domain_idx].cell[cell_idx][group_idx];
-                })
+        let summ: T = self
+            .scalar_flux_domain
+            .iter()
+            .map(|sf_domain| {
+                sf_domain
+                    .cell
+                    .iter()
+                    .map(|sf_cell| sf_cell.iter().copied().sum())
+                    .sum()
             })
-        });
-
-        sum
+            .sum();
+        summ
     }
 
     /// Print stats of the current cycle and update the cumulative counters.
@@ -383,13 +361,23 @@ impl<T: CustomFloat> Tallies<T> {
         self.balance_cycle.reset();
         self.balance_cycle.start = new_start;
 
-        (0..self.scalar_flux_domain.len()).for_each(|domain_idx| {
-            if bench_type != BenchType::Standard {
-                self.fluence
-                    .compute(domain_idx, &self.scalar_flux_domain[domain_idx]);
-            }
-            self.cell_tally_domain[domain_idx].reset();
-            self.scalar_flux_domain[domain_idx].reset();
+        if bench_type != BenchType::Standard {
+            let fluence_computation_iter = zip(
+                self.fluence.domain.iter_mut(),
+                self.scalar_flux_domain.iter(),
+            );
+            fluence_computation_iter.for_each(|(fl_domain, sf_domain)| {
+                fl_domain.compute(sf_domain);
+            })
+        }
+
+        let dom_iter = zip(
+            self.cell_tally_domain.iter_mut(),
+            self.scalar_flux_domain.iter_mut(),
+        );
+        dom_iter.for_each(|(ct_domain, sf_domain)| {
+            ct_domain.reset();
+            sf_domain.reset();
         });
     }
 }
