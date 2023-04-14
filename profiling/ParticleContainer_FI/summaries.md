@@ -32,10 +32,10 @@ This version has much better scaling. This is mainly due to the removal of index
 from the original structure. This was necessary before because of the usage of `Option<T>`
 and possible "holes" in the storage. 
 
-The simulation now completes in a very amount of time than Quicksilver. Most of the 
+The simulation now completes in a very similar amount of time as Quicksilver. Most of the 
 execution time is spent in the `CycleTracking` section, this is where performances are
 similar.\
-The eprformances in the `CycleInit` section do not match, however the section does not
+The performances in the `CycleInit` section do not match, however the section does not
 represent a significant enough part of the program to matter in overall performance.
 
 ```
