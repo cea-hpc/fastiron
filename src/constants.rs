@@ -40,6 +40,8 @@ pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {
 impl OpsFloat for f32 {}
 impl UtilsFloat for f32 {}
 impl CustomFloat for f32 {
+    // because of how conversion from f64 to f32 works, this should work
+
     const HUGE_FLOAT: f64 = 10e35;
     const SMALL_FLOAT: f64 = 1e-10;
     const TINY_FLOAT: f64 = 1e-13;
