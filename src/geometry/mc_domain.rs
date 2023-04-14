@@ -198,7 +198,7 @@ impl<T: CustomFloat> MCDomain<T> {
     pub fn clear_cross_section_cache(&mut self) {
         self.cell_state
             .iter_mut()
-            .for_each(|cs| cs.total = vec![zero(); cs.total.len()])
+            .for_each(|cs| cs.total.fill(zero()))
     }
 
     fn find_material(geometry_params: &[GeometryParameters<T>], rr: &MCVector<T>) -> String {

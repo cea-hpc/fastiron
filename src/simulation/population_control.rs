@@ -148,16 +148,20 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut ParticleContainer<T>) {
     let time_step = mcco.time_info.time_step;
 
+    // this is a constant; add it to mcco ?
     let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];
-    (0..mcco.material_database.mat.len()).for_each(|mat_idx| {
-        let name = &mcco.material_database.mat[mat_idx].name;
-        let sr = mcco.params.material_params[name].source_rate;
-        source_rate[mat_idx] = sr;
-    });
+    source_rate
+        .iter_mut()
+        .zip(mcco.material_database.mat.iter())
+        .for_each(|(lhs, mat)| {
+            let rhs = mcco.params.material_params[&mat.name].source_rate;
+            *lhs = rhs;
+        });
 
     let mut total_weight_particles: T = zero();
     mcco.domain.iter().for_each(|dom| {
         dom.cell_state.iter().for_each(|cell| {
+            // constant because cell volume is constant in our program
             let cell_weight_particles: T = cell.volume * source_rate[cell.material] * time_step;
             total_weight_particles += cell_weight_particles;
         });
