@@ -316,7 +316,7 @@ impl<T: CustomFloat> Tallies<T> {
         let cy_fin = mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize);
         let sf_sum = self.scalar_flux_sum();
         let bal = &self.balance_cycle;
-        println!("{:>7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>11e} {:>18e} {:>18e}",
+        println!("{:>7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>11.3e} {:>18.5e} {:>18.3e}",
             mcco.time_info.cycle,
             bal.start,
             bal.source,

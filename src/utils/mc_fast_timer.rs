@@ -50,12 +50,10 @@ pub struct MCFastTimer {
     pub start_clock: Instant,
     /// Clock value at the start of the timer.
     pub end_clock: Instant,
-    /// Value of the last duration in microseconds. **May change this to hold a
-    /// [Duration]` directly.
-    pub last_cycle_clock: u128,
-    /// Value of the total duration in microseconds. **May change this to hold a
-    /// [Duration]` directly.
-    pub cumulative_clock: u128,
+    /// Value of the last duration in microseconds.
+    pub last_cycle_clock: Duration,
+    /// Value of the total duration in microseconds.
+    pub cumulative_clock: Duration,
     /// Number of call to the timer i.e. number of measurement taken.
     pub num_calls: u64,
 }
@@ -160,7 +158,7 @@ impl MCFastTimerContainer {
                     / self.n_avg;
 
                 // clear timers
-                timer.last_cycle_clock = 0;
+                timer.last_cycle_clock = Duration::ZERO;
             });
     }
 
@@ -202,17 +200,15 @@ pub fn stop<T: CustomFloat>(mcco: &mut MonteCarlo<T>, section: Section) {
     mcco.fast_timer.timers[index].end_clock = Instant::now();
     mcco.fast_timer.timers[index].last_cycle_clock += mcco.fast_timer.timers[index]
         .end_clock
-        .duration_since(mcco.fast_timer.timers[index].start_clock)
-        .as_micros();
+        .duration_since(mcco.fast_timer.timers[index].start_clock);
     mcco.fast_timer.timers[index].cumulative_clock += mcco.fast_timer.timers[index]
         .end_clock
-        .duration_since(mcco.fast_timer.timers[index].start_clock)
-        .as_micros();
+        .duration_since(mcco.fast_timer.timers[index].start_clock);
     mcco.fast_timer.timers[index].num_calls += 1;
 }
 
 /// Returns the duration of the last cycle of the specified timer.
 pub fn get_last_cycle<T: CustomFloat>(mcco: &MonteCarlo<T>, section: Section) -> f64 {
     let index = section as usize;
-    mcco.fast_timer.timers[index].last_cycle_clock as f64 / 1000000.0
+    mcco.fast_timer.timers[index].last_cycle_clock.as_secs_f64()
 }
