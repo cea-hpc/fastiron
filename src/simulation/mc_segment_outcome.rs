@@ -55,19 +55,12 @@ pub fn outcome<T: CustomFloat>(
     let huge_f: T = FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap();
     let small_f: T = FromPrimitive::from_f64(T::SMALL_FLOAT).unwrap();
     let tiny_f: T = FromPrimitive::from_f64(T::TINY_FLOAT).unwrap();
-    //println!("huge f: {huge_f:e}");
-    //println!("small f: {small_f:e}");
-    //println!("tiny f: {tiny_f:e}");
     let mut distance: [T; N_EVENTS] = [huge_f; N_EVENTS];
 
     let particle_speed = particle.base_particle.velocity.length();
 
     let mut force_collision = false;
-    if particle
-        .base_particle
-        .num_mean_free_paths
-        .is_sign_negative()
-    {
+    if particle.base_particle.num_mean_free_paths < zero() {
         force_collision = true;
         particle.base_particle.num_mean_free_paths = small_f;
     }

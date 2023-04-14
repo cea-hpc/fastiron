@@ -4,7 +4,7 @@
 //! from beginning to end. Note that _collision_ refers to reaction with the
 //! particle's environment, not in-between particles.
 
-use num::FromPrimitive;
+use num::{zero, FromPrimitive};
 
 use crate::{
     constants::{
@@ -91,18 +91,18 @@ pub fn collision_event<T: CustomFloat>(
                     iso_idx,
                     particle.energy_group,
                 );
-                if current_xsection.is_sign_negative() {
+                if current_xsection < zero() {
                     selected_iso = iso_idx;
                     selected_unique_n = unique_n;
                     selected_react = reaction_idx;
                     break;
                 }
             }
-            if current_xsection.is_sign_negative() {
+            if current_xsection < zero() {
                 break;
             }
         }
-        if current_xsection.is_sign_negative() {
+        if current_xsection < zero() {
             break;
         }
     }
