@@ -145,17 +145,17 @@ impl MCFastTimerContainer {
                     return;
                 }
                 // update internal values for report
-                self.tots[timer_idx] += timer.end_clock.duration_since(timer.start_clock);
-                if self.mins[timer_idx] > timer.end_clock.duration_since(timer.start_clock) {
-                    self.mins[timer_idx] = timer.end_clock.duration_since(timer.start_clock);
-                } else if self.maxs[timer_idx] < timer.end_clock.duration_since(timer.start_clock) {
+                self.tots[timer_idx] += timer.last_cycle_clock;
+                if self.mins[timer_idx] > timer.last_cycle_clock {
+                    self.mins[timer_idx] = timer.last_cycle_clock;
+                }
+                if self.maxs[timer_idx] < timer.last_cycle_clock {
                     // cant be a max and a min
-                    self.maxs[timer_idx] = timer.end_clock.duration_since(timer.start_clock);
+                    self.maxs[timer_idx] = timer.last_cycle_clock;
                 }
                 // new_avg = old_avg * N-1/N + new_val/N
-                self.avgs[timer_idx] = (self.avgs[timer_idx] * (self.n_avg - 1)
-                    + timer.end_clock.duration_since(timer.start_clock))
-                    / self.n_avg;
+                self.avgs[timer_idx] =
+                    (self.avgs[timer_idx] * (self.n_avg - 1) + timer.last_cycle_clock) / self.n_avg;
 
                 // clear timers
                 timer.last_cycle_clock = Duration::ZERO;
