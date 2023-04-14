@@ -179,7 +179,7 @@ impl<T: CustomFloat> MCDomain<T> {
         (0..mcdomain.cell_state.len()).for_each(|ii| {
             mcdomain.cell_state[ii].volume = mcdomain.cell_volume(ii);
 
-            let rr = cell_position_3dg(&mcdomain, ii);
+            let rr = cell_position_3dg(&mcdomain.mesh, ii);
             let mat_name = Self::find_material(&params.geometry_params, &rr);
             mcdomain.cell_state[ii].material = mat_db.find_material(&mat_name).unwrap();
             mcdomain.cell_state[ii].total = vec![zero(); num_energy_groups];
