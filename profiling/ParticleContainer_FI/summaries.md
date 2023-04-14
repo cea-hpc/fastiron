@@ -28,9 +28,9 @@ Section::CycleFinalize           |                    10                 0e0    
 
 ## CTS2_1 - 40960 Particles
 
-This version has much better scaling. This is mainly due to the removal of index searches
-from the original structure. This was necessary before because of the usage of `Option<T>`
-and possible "holes" in the storage. 
+This version has much better scaling than the Naive version. This is mainly due to the removal 
+of index searches from the original structure. This was necessary before because of the usage 
+of `Option<T>` and possible "holes" in the storage. 
 
 The simulation now completes in a very similar amount of time as Quicksilver. Most of the 
 execution time is spent in the `CycleTracking` section, this is where performances are
