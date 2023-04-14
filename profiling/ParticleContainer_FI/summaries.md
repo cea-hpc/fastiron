@@ -28,6 +28,23 @@ Section::CycleFinalize           |                    10                 0e0    
 
 ## CTS2_1 - 40960 Particles
 
-```
+This version has much better scaling. This is mainly due to the removal of index searches
+from the original structure. This was necessary before because of the usage of `Option<T>`
+and possible "holes" in the storage. 
 
+The simulation now completes in a very amount of time than Quicksilver. Most of the 
+execution time is spent in the `CycleTracking` section, this is where performances are
+similar.\
+The eprformances in the `CycleInit` section do not match, however the section does not
+represent a significant enough part of the program to matter in overall performance.
+
+```
+[Timer Report]
+Timer Name                       | Total number of calls      Shortest cycle (µs)    Average per cycle (µs)     Longest cycle (µs)    Total in section (µs)    Efficiency rating (%)
+Section::Main                    |                     1        3.87337653e8              3.87337653e8           3.87337653e8             3.87337653e8                     100.0
+Section::CycleInit               |                   100             5.257e3                    5.72e3               1.0363e4                5.72041e5                      55.2
+Section::CycleTracking           |                   100          3.299985e6                3.864395e6             5.220484e6             3.86439589e8                      74.0
+Section::CycleTrackingKernel     |                  5353           3.29491e6                3.858629e6             5.213755e6             3.85862962e8                      74.0
+Section::CycleTrackingComm       |                  5353             5.064e3                   5.753e3                8.999e3                5.75341e5                      63.9
+Section::CycleFinalize           |                   100                 0e0                       0e0                    0e0                      3e0                      50.8
 ```
