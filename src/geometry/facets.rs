@@ -7,7 +7,6 @@ use super::mc_location::MCLocation;
 use crate::{
     constants::{
         mesh::{N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
-        sim::HUGE_FLOAT,
         CustomFloat,
     },
     data::mc_vector::MCVector,
@@ -103,7 +102,7 @@ impl<T: CustomFloat> Default for MCNearestFacet<T> {
     fn default() -> Self {
         Self {
             facet: 0,
-            distance_to_facet: FromPrimitive::from_f64(HUGE_FLOAT).unwrap(),
+            distance_to_facet: FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap(),
             dot_product: zero(),
         }
     }

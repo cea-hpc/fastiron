@@ -31,15 +31,27 @@ pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
 /// Custom trait for floatting point number
 pub trait UtilsFloat: Default + Debug + Display + LowerExp + FromStr + From<f32> + Sum {}
 /// Custom super-trait for floatting point number
-pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {}
+pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {
+    const HUGE_FLOAT: f64;
+    const SMALL_FLOAT: f64;
+    const TINY_FLOAT: f64;
+}
 
 impl OpsFloat for f32 {}
 impl UtilsFloat for f32 {}
-impl CustomFloat for f32 {}
+impl CustomFloat for f32 {
+    const HUGE_FLOAT: f64 = 10e35;
+    const SMALL_FLOAT: f64 = 1e-10;
+    const TINY_FLOAT: f64 = 1e-13;
+}
 
 impl OpsFloat for f64 {}
 impl UtilsFloat for f64 {}
-impl CustomFloat for f64 {}
+impl CustomFloat for f64 {
+    const HUGE_FLOAT: f64 = 10e75;
+    const SMALL_FLOAT: f64 = 1e-10;
+    const TINY_FLOAT: f64 = 1e-13;
+}
 
 //===================
 // constants modules
@@ -55,11 +67,11 @@ pub mod sim {
     pub const N_TIMERS: usize = 6;
     /// Number of particle species
     pub const N_SPECIES: usize = 1;
-    /// Threshold value for decimal number
+    /// Threshold value for decimal number in tests
     pub const TINY_FLOAT: f64 = 1e-13;
-    /// Threshold value for decimal number
+    /// Threshold value for decimal number in tests
     pub const SMALL_FLOAT: f64 = 1e-10;
-    /// Threshold value for decimal number
+    /// Threshold value for decimal number in tests
     pub const HUGE_FLOAT: f64 = 1e75;
 }
 
