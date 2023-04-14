@@ -360,6 +360,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
 ) -> T {
     let huge_f: T = FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap();
     let pfive: T = FromPrimitive::from_f64(0.5).unwrap();
+    // this hardcoded tolerance might be problematic for f32?
     let bounding_box_tolerance: T = FromPrimitive::from_f64(1e-9).unwrap();
     let numerator: T =
         -one::<T>() * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
