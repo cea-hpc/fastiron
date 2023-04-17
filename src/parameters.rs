@@ -213,7 +213,7 @@ impl<T: CustomFloat> Default for MaterialParameters<T> {
     fn default() -> Self {
         Self {
             name: Default::default(),
-            mass: T::from_f32(1000.0).unwrap(),
+            mass: T::from_f64(1000.0).unwrap(),
             total_cross_section: T::one(),
             n_isotopes: 10,
             n_reactions: 9,

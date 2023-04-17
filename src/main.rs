@@ -108,6 +108,7 @@ pub fn cycle_tracking<T: CustomFloat>(
                     }
                 });
             container.processing_particles.clear();
+            println!("Kernel tracking done");
 
             mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
             mc_fast_timer::start(mcco, Section::CycleTrackingComm);
