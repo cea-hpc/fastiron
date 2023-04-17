@@ -68,8 +68,10 @@ pub fn collision_event<T: CustomFloat>(
 
     let rdm_number: T = rng_sample(&mut particle.base_particle.random_number_seed);
     let total_xsection: T = particle.total_cross_section;
+    println!("total XS: {total_xsection}");
 
     let mut current_xsection: T = total_xsection * rdm_number;
+    println!("current XS: {current_xsection}");
 
     // sort of a magic value but using an option seems to be overkill
     let mut selected_iso: usize = usize::MAX;
@@ -83,6 +85,7 @@ pub fn collision_event<T: CustomFloat>(
             let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
             let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
             for reaction_idx in 0..n_reactions {
+                //println!("current XS: {current_xsection}");
                 current_xsection -= macroscopic_cross_section(
                     mcco,
                     reaction_idx,
