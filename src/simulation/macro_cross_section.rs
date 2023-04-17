@@ -28,7 +28,6 @@ pub fn macroscopic_cross_section<T: CustomFloat>(
 
     if (atom_fraction == zero()) | (cell_number_density == zero()) {
         // one of the two is 0
-        // problematic for f32?
         let res: T = FromPrimitive::from_f64(1e-20).unwrap();
         return res;
     }
@@ -70,7 +69,6 @@ fn macroscopic_total_cross_section<T: CustomFloat>(
         .nuclear_data
         .get_total_cross_section(isotope_gid, energy_group);
 
-    println!("micro XS: {micro_cross_section}");
     atom_fraction * cell_number_density * micro_cross_section
 }
 
@@ -104,6 +102,5 @@ pub fn weighted_macroscopic_cross_section<T: CustomFloat>(
     // atomic in original code
     mcco.domain[domain_idx].cell_state[cell_idx].total[energy_group] = sum;
 
-    println!("sum: {sum}");
     sum
 }

@@ -97,7 +97,6 @@ pub fn cycle_tracking<T: CustomFloat>(
                 .processing_particles
                 .iter_mut()
                 .for_each(|base_particle| {
-                    println!("{base_particle:#?}");
                     cycle_tracking_guts(
                         mcco,
                         base_particle,
@@ -109,7 +108,6 @@ pub fn cycle_tracking<T: CustomFloat>(
                     }
                 });
             container.processing_particles.clear();
-            println!("Kernel tracking done");
 
             mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
             mc_fast_timer::start(mcco, Section::CycleTrackingComm);

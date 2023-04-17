@@ -76,30 +76,32 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
         reaction_cross_section: T,
     ) -> Self {
         let n_groups = energies.len() - 1;
-        let mut xsection: Vec<T> = vec![zero(); n_groups];
-
-        let mut normal_value: T = zero();
-        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let mut xsection: Vec<f64> = vec![zero(); n_groups];
+        let mut normal_value: f64 = 0.0;
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
 
         (0..n_groups).for_each(|ii| {
-            let factor: T = FromPrimitive::from_f64(2.0).unwrap();
-            let energy: T = (energies[ii] + energies[ii + 1]) / factor;
+            let energy: T = (energies[ii] + energies[ii + 1]) / two;
             // 10^(Poly(log10(energy)))
-            let base: T = FromPrimitive::from_f64(10.0).unwrap();
             // this here gives a value too big for f32
-            xsection[ii] = base.powf(polynomial.val(energy.log10()));
+            xsection[ii] = 10.0_f64.powf(polynomial.val(energy.log10()).to_f64().unwrap());
 
-            if (energies[ii + 1] >= one) & normal_value.is_zero() {
+            if (energies[ii + 1] >= 1.0.into()) & (normal_value == 0.0) {
                 normal_value = xsection[ii];
             }
         });
-        let scale = reaction_cross_section / normal_value;
+        let scale = reaction_cross_section.to_f64().unwrap() / normal_value;
         (0..n_groups).for_each(|ii| {
             xsection[ii] *= scale;
         });
 
+        let xsection_t: Vec<T> = xsection
+            .iter()
+            .map(|ff| FromPrimitive::from_f64(*ff).unwrap())
+            .collect();
+
         Self {
-            cross_section: xsection,
+            cross_section: xsection_t,
             reaction_type: rtype,
             nu_bar,
         }
