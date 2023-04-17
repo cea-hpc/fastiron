@@ -305,7 +305,7 @@ impl<T: CustomFloat> NuclearData<T> {
             return 0;
         }
         // extreme high
-        if energy >= self.energies[num_energies - 1] {
+        if energy > self.energies[num_energies - 1] {
             return num_energies - 1;
         }
 
