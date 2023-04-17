@@ -78,7 +78,6 @@ impl<T: CustomFloat> MonteCarlo<T> {
     /// Update the energy spectrum by going over all the currently valid particles.
     pub fn update_spectrum(&mut self, container: &ParticleContainer<T>) {
         if self.tallies.spectrum.file_name.is_empty() {
-            println!("No output name specified for energy");
             return;
         }
 

@@ -9,7 +9,6 @@ use num::{one, zero, FromPrimitive};
 use crate::{
     constants::{
         mesh::{N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
-        sim::{HUGE_FLOAT, SMALL_FLOAT},
         CustomFloat,
     },
     data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
@@ -46,7 +45,7 @@ pub fn nearest_facet<T: CustomFloat>(
         nearest_facet.distance_to_facet = zero();
     }
 
-    if nearest_facet.distance_to_facet > FromPrimitive::from_f64(HUGE_FLOAT).unwrap() {
+    if nearest_facet.distance_to_facet > FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap() {
         panic!()
     }
 
@@ -166,7 +165,7 @@ fn mct_nf_3dg<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
 ) -> MCNearestFacet<T> {
-    let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
+    let huge_f: T = FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap();
 
     let mut location = particle.get_location();
     let coords = particle.base_particle.coordinate;
@@ -174,7 +173,7 @@ fn mct_nf_3dg<T: CustomFloat>(
 
     let mut facet_coords: [MCVector<T>; N_POINTS_PER_FACET] = Default::default();
     let mut iteration: usize = 0;
-    let mut move_factor: T = FromPrimitive::from_f64(0.5 * SMALL_FLOAT).unwrap();
+    let mut move_factor: T = FromPrimitive::from_f64(0.5 * T::SMALL_FLOAT).unwrap();
 
     loop {
         let tmp: T = FromPrimitive::from_f64(1e-16).unwrap();
@@ -262,7 +261,7 @@ fn mct_nf_3dg_move_particle<T: CustomFloat>(
 fn mct_nf_compute_nearest<T: CustomFloat>(
     distance_to_facet: &[MCDistanceToFacet<T>],
 ) -> MCNearestFacet<T> {
-    let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
+    let huge_f: T = FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap();
     let mut nearest_facet: MCNearestFacet<T> = Default::default();
     let mut nearest_negative_facet: MCNearestFacet<T> = MCNearestFacet {
         distance_to_facet: -huge_f,
@@ -301,7 +300,7 @@ fn mct_nf_find_nearest<T: CustomFloat>(
     distance_to_facet: &[MCDistanceToFacet<T>],
 ) -> (MCNearestFacet<T>, bool) {
     let nearest_facet = mct_nf_compute_nearest(distance_to_facet);
-    let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
+    let huge_f: T = FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap();
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
     let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
 
@@ -359,8 +358,9 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     d_cos: &DirectionCosine<T>,
     allow_enter: bool,
 ) -> T {
-    let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
+    let huge_f: T = FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap();
     let pfive: T = FromPrimitive::from_f64(0.5).unwrap();
+    // this hardcoded tolerance might be problematic for f32?
     let bounding_box_tolerance: T = FromPrimitive::from_f64(1e-9).unwrap();
     let numerator: T =
         -one::<T>() * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);

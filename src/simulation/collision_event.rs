@@ -4,7 +4,7 @@
 //! from beginning to end. Note that _collision_ refers to reaction with the
 //! particle's environment, not in-between particles.
 
-use num::FromPrimitive;
+use num::{zero, FromPrimitive};
 
 use crate::{
     constants::{
@@ -83,6 +83,7 @@ pub fn collision_event<T: CustomFloat>(
             let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
             let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
             for reaction_idx in 0..n_reactions {
+                //println!("current XS: {current_xsection}");
                 current_xsection -= macroscopic_cross_section(
                     mcco,
                     reaction_idx,
@@ -91,18 +92,18 @@ pub fn collision_event<T: CustomFloat>(
                     iso_idx,
                     particle.energy_group,
                 );
-                if current_xsection.is_sign_negative() {
+                if current_xsection < zero() {
                     selected_iso = iso_idx;
                     selected_unique_n = unique_n;
                     selected_react = reaction_idx;
                     break;
                 }
             }
-            if current_xsection.is_sign_negative() {
+            if current_xsection < zero() {
                 break;
             }
         }
-        if current_xsection.is_sign_negative() {
+        if current_xsection < zero() {
             break;
         }
     }

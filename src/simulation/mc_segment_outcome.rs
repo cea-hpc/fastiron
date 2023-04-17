@@ -15,10 +15,7 @@ use std::fmt::Debug;
 use num::{zero, FromPrimitive};
 
 use crate::{
-    constants::{
-        sim::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT},
-        CustomFloat,
-    },
+    constants::CustomFloat,
     data::tallies::MCTallyEvent,
     geometry::facets::MCNearestFacet,
     montecarlo::MonteCarlo,
@@ -55,19 +52,15 @@ pub fn outcome<T: CustomFloat>(
     // initialize distances and constants
     const N_EVENTS: usize = 3;
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
-    let huge_f: T = FromPrimitive::from_f64(HUGE_FLOAT).unwrap();
-    let small_f: T = FromPrimitive::from_f64(SMALL_FLOAT).unwrap();
-    let tiny_f: T = FromPrimitive::from_f64(TINY_FLOAT).unwrap();
+    let huge_f: T = FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap();
+    let small_f: T = FromPrimitive::from_f64(T::SMALL_FLOAT).unwrap();
+    let tiny_f: T = FromPrimitive::from_f64(T::TINY_FLOAT).unwrap();
     let mut distance: [T; N_EVENTS] = [huge_f; N_EVENTS];
 
     let particle_speed = particle.base_particle.velocity.length();
 
     let mut force_collision = false;
-    if particle
-        .base_particle
-        .num_mean_free_paths
-        .is_sign_negative()
-    {
+    if particle.base_particle.num_mean_free_paths < zero() {
         force_collision = true;
         particle.base_particle.num_mean_free_paths = small_f;
     }
@@ -123,7 +116,11 @@ pub fn outcome<T: CustomFloat>(
 
     let segment_outcome = find_min(&distance);
 
-    if distance[segment_outcome as usize].is_sign_negative() {
+    if distance[segment_outcome as usize] < zero() {
+        println!(
+            "Distance to {segment_outcome:?} negative: {}",
+            distance[segment_outcome as usize]
+        );
         panic!()
     }
     particle.segment_path_length = distance[segment_outcome as usize];

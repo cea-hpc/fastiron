@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Debug, fs::File, io::Write};
 
 use crate::{
-    constants::{sim::TINY_FLOAT, CustomFloat, Tuple3},
+    constants::{CustomFloat, Tuple3},
     data::{
         material_database::{Isotope, Material},
         mc_vector::MCVector,
@@ -359,13 +359,13 @@ pub fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
     (0..n_groups).for_each(|ii| {
         write!(file, "{:>5} |  {:>15.12} |   ", ii, energies[ii]).unwrap();
         xc_table.values_mut().for_each(|xc_vec| {
-            if xc_vec[ii].abs < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
+            if xc_vec[ii].abs < FromPrimitive::from_f64(T::TINY_FLOAT).unwrap() {
                 xc_vec[ii].abs = zero();
             }
-            if xc_vec[ii].fis < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
+            if xc_vec[ii].fis < FromPrimitive::from_f64(T::TINY_FLOAT).unwrap() {
                 xc_vec[ii].fis = zero();
             }
-            if xc_vec[ii].sca < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
+            if xc_vec[ii].sca < FromPrimitive::from_f64(T::TINY_FLOAT).unwrap() {
                 xc_vec[ii].sca = zero();
             }
             write!(
