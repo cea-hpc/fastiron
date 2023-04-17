@@ -336,6 +336,10 @@ impl<T: CustomFloat> NuclearData<T> {
         let mut total_xsection: T = zero();
 
         (0..num_reactions).for_each(|r_idx| {
+            println!(
+                "reac XS: {}",
+                self.isotopes[isotope_index][0].reactions[r_idx].cross_section[group]
+            );
             total_xsection += self.isotopes[isotope_index][0].reactions[r_idx].cross_section[group];
         });
 

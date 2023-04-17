@@ -68,10 +68,8 @@ pub fn collision_event<T: CustomFloat>(
 
     let rdm_number: T = rng_sample(&mut particle.base_particle.random_number_seed);
     let total_xsection: T = particle.total_cross_section;
-    println!("total XS: {total_xsection}");
 
     let mut current_xsection: T = total_xsection * rdm_number;
-    println!("current XS: {current_xsection}");
 
     // sort of a magic value but using an option seems to be overkill
     let mut selected_iso: usize = usize::MAX;
