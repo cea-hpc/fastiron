@@ -389,6 +389,7 @@ impl<T: CustomFloat> SimulationParameters<T> {
         fetch_from_cli!(cross_sections_out);
         fetch_from_cli!(dt);
         simulation_params.load_balance = cli.load_balance;
+
         simulation_params.debug_threads = cli.debug_threads;
         fetch_from_cli!(lx);
         fetch_from_cli!(ly);

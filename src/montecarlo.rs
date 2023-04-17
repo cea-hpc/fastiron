@@ -25,19 +25,26 @@ use crate::utils::mc_time_info::MCTimeInfo;
 #[derive(Debug)]
 pub struct MonteCarlo<T: CustomFloat> {
     /// List of spatial domains.
+    /// List of spatial domains.
     pub domain: Vec<MCDomain<T>>,
     /// Parameters of the problem.
+    /// Parameters of the problem.
     pub params: Parameters<T>,
+    /// Object storing all data related to particles.
     /// Object storing all data related to particles.
     pub nuclear_data: NuclearData<T>,
     /// Object storing all data related to materials.
     pub material_database: MaterialDatabase<T>,
     /// Object storing all tallies of the simulation.
+    /// Object storing all tallies of the simulation.
     pub tallies: Tallies<T>,
+    /// Object storing data related to the advancement of the simulation.
     /// Object storing data related to the advancement of the simulation.
     pub time_info: MCTimeInfo<T>,
     /// Container for the timers used for performance measurements.
+    /// Container for the timers used for performance measurements.
     pub fast_timer: MCFastTimerContainer,
+    /// Object storing data related to the processor and execution mode.
     /// Object storing data related to the processor and execution mode.
     pub processor_info: MCProcessorInfo,
     /// Weight of the particles at creation in a source zone
@@ -45,6 +52,7 @@ pub struct MonteCarlo<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> MonteCarlo<T> {
+    /// Constructor.
     /// Constructor.
     pub fn new(params: Parameters<T>) -> Self {
         let tallies: Tallies<T> = Tallies::new(

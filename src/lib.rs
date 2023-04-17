@@ -96,6 +96,7 @@ pub mod init;
 pub mod montecarlo;
 pub mod parameters;
 /// Particle-related code
+/// Particle-related code
 pub mod particles;
 pub mod simulation;
 pub mod utils;

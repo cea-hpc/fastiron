@@ -10,7 +10,6 @@ use crate::{
 };
 
 use super::mc_vector::MCVector;
-
 /// Structure used to model a direction.
 ///
 /// Alpha, beta and gamma are just a normalized (x, y, z) vector, not Euler

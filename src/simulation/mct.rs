@@ -63,6 +63,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
 
     let center: MCVector<T> = cell_position_3dg(mesh, cell_idx);
+
     let rdm_number: T = rng_sample(seed);
     let which_volume = rdm_number * six * cell_volume;
 
