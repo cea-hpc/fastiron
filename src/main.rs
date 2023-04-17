@@ -20,7 +20,7 @@ fn main() {
 
     let n_steps = params.simulation_params.n_steps;
 
-    let mut mcco_obj: MonteCarlo<f32> = init_mc(params);
+    let mut mcco_obj: MonteCarlo<f64> = init_mc(params);
     let mcco = &mut mcco_obj;
 
     let mut containers = init_particle_containers(&mcco.params, &mcco.processor_info);
