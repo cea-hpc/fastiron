@@ -97,6 +97,7 @@ pub fn cycle_tracking<T: CustomFloat>(
                 .processing_particles
                 .iter_mut()
                 .for_each(|base_particle| {
+                    println!("{base_particle:#?}");
                     cycle_tracking_guts(
                         mcco,
                         base_particle,

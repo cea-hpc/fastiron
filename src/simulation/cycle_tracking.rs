@@ -64,6 +64,7 @@ fn cycle_tracking_function<T: CustomFloat>(
     loop {
         // compute event for segment & update # of segments
         let segment_outcome = outcome(mcco, particle);
+        println!("outcome found: {segment_outcome:?}");
         mcco.tallies.balance_cycle.num_segments += 1; // atomic in original code
 
         particle.base_particle.num_segments += one();
@@ -71,6 +72,7 @@ fn cycle_tracking_function<T: CustomFloat>(
         match segment_outcome {
             MCSegmentOutcome::Collision => {
                 keep_tracking = collision_event(mcco, particle, extra);
+                println!("collision done");
                 if !keep_tracking {
                     particle.base_particle.species = Species::Unknown;
                 }
