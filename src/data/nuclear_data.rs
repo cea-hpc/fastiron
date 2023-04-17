@@ -11,7 +11,7 @@ use crate::{
 };
 
 /// Enum used to represent a reaction type.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ReactionType {
     /// Value for a scattering reaction.
     Scatter,
@@ -86,13 +86,13 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
             let energy: T = (energies[ii] + energies[ii + 1]) / factor;
             // 10^(Poly(log10(energy)))
             let base: T = FromPrimitive::from_f64(10.0).unwrap();
+            // this here gives a value too big for f32
             xsection[ii] = base.powf(polynomial.val(energy.log10()));
 
             if (energies[ii + 1] >= one) & normal_value.is_zero() {
                 normal_value = xsection[ii];
             }
         });
-
         let scale = reaction_cross_section / normal_value;
         (0..n_groups).for_each(|ii| {
             xsection[ii] *= scale;
@@ -336,10 +336,6 @@ impl<T: CustomFloat> NuclearData<T> {
         let mut total_xsection: T = zero();
 
         (0..num_reactions).for_each(|r_idx| {
-            println!(
-                "reac XS: {} for reaction idx: {r_idx}",
-                self.isotopes[isotope_index][0].reactions[r_idx].cross_section[group]
-            );
             total_xsection += self.isotopes[isotope_index][0].reactions[r_idx].cross_section[group];
         });
 
