@@ -161,10 +161,6 @@ pub struct SubfacetAdjacency {
 pub struct MCFacetAdjacency {
     /// Adjacency data.
     pub subfacet: SubfacetAdjacency,
-    /// Number of points of the facet. See [N_POINTS_PER_FACET] for more
-    /// information. **Since the point list is a static array, this may be
-    /// removed**.
-    pub num_points: usize,
     /// Point indexes for this facet. The points are defined in a private constant
     /// in the [mc_domain][super::mc_domain] module.
     pub point: [Option<usize>; N_POINTS_PER_FACET],
@@ -174,7 +170,6 @@ impl Default for MCFacetAdjacency {
     fn default() -> Self {
         Self {
             subfacet: Default::default(),
-            num_points: N_POINTS_PER_FACET,
             point: [None; N_POINTS_PER_FACET],
         }
     }
