@@ -4,8 +4,6 @@
 
 use std::fmt::Debug;
 
-use num::FromPrimitive;
-
 use crate::constants::CustomFloat;
 
 /// Custom type for vector representation.
@@ -39,7 +37,7 @@ impl<T: CustomFloat> MCVector<T> {
     /// Returns true if the vector is almost the zero element. This method is
     /// necessary because of floating-point errors.
     pub fn is_almost_zero(&self) -> bool {
-        let threshold: T = FromPrimitive::from_f64(T::TINY_FLOAT).unwrap();
+        let threshold: T = T::tiny_float();
         (self.x.abs() < threshold) & (self.y.abs() < threshold) & (self.z.abs() < threshold)
     }
 

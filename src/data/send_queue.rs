@@ -7,7 +7,7 @@ use crate::{constants::CustomFloat, particles::mc_particle::MCParticle};
 
 /// Structure to record which particles need to be sent to
 /// which neighbor process during tracking.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct SendQueueTuple<T: CustomFloat> {
     pub neighbor: usize,
     pub particle: MCParticle<T>,
@@ -132,7 +132,14 @@ mod tests {
         queue.push(3, &pp);
 
         assert_eq!(queue.data.len(), 5);
-        assert_eq!(queue.data[queue.data.len() - 1], ttt);
+        assert_eq!(queue.data[queue.data.len() - 1].neighbor, ttt.neighbor);
+        assert_eq!(
+            queue.data[queue.data.len() - 1]
+                .particle
+                .base_particle
+                .identifier,
+            ttt.particle.base_particle.identifier
+        );
 
         queue.clear();
 

@@ -24,35 +24,21 @@ use super::energy_spectrum::EnergySpectrum;
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum MCTallyEvent {
     /// Value for a collision event.
-    /// Value for a collision event.
     Collision,
     /// Value for a facet crossing event resulting in a cell exit.
-    /// Value for a facet crossing event resulting in a cell exit.
     FacetCrossingTransitExit,
-    /// Value for a census event.
     /// Value for a census event.
     #[default]
     Census,
     /// Value for a facet crossing event resulting in an escape from the problem.
     FacetCrossingEscape,
     /// Value for a facet crossing event resulting in a reflection on the facet.
-    /// Value for a facet crossing event resulting in a reflection on the facet.
     FacetCrossingReflection,
-    /// Value for a facet crossing event resulting in a cell exit to an
-    /// off-processor cell.
     /// Value for a facet crossing event resulting in a cell exit to an
     /// off-processor cell.
     FacetCrossingCommunication,
 }
 
-//========
-// Fluence
-//========
-
-/// Structure used to compute fluence.
-///
-/// The data of each cell is grouped by domains using the [FluenceDomain]
-/// sub-structure.
 //========
 // Fluence
 //========
@@ -97,48 +83,34 @@ impl<T: CustomFloat> FluenceDomain<T> {
 #[derive(Debug, Default, Clone)]
 pub struct Balance {
     /// Number of particles absorbed.
-    /// Number of particles absorbed.
     pub absorb: u64,
-    /// Number of particles that enter census.
     /// Number of particles that enter census.
     pub census: u64,
     /// Number of particles that escape.
-    /// Number of particles that escape.
     pub escape: u64,
-    /// Number of collisions.
     /// Number of collisions.
     pub collision: u64,
     /// Number of particles at end of cycle.
-    /// Number of particles at end of cycle.
     pub end: u64,
-    /// Number of fission events.
     /// Number of fission events.
     pub fission: u64,
     /// Number of particles created by collisions.
-    /// Number of particles created by collisions.
     pub produce: u64,
-    /// Number of scatters.
     /// Number of scatters.
     pub scatter: u64,
     /// Number of particles at beginning of cycle.
-    /// Number of particles at beginning of cycle.
     pub start: u64,
-    /// Number of particles sourced in.
     /// Number of particles sourced in.
     pub source: u64,
     /// Number of particles Russian Rouletted in population control.
-    /// Number of particles Russian Rouletted in population control.
     pub rr: u64,
     /// Number of particles split in population control.
-    /// Number of particles split in population control.
     pub split: u64,
-    /// Number of segements.
     /// Number of segements.
     pub num_segments: u64,
 }
 
 impl Balance {
-    /// Reset fields to their default value i.e. `0`.
     /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
         *self = Self::default(); // is the old value correctly dropped or just shadowed?
@@ -169,13 +141,6 @@ impl Balance {
 /// Cell-specific scalar flux data.
 ///
 /// Each element of the vector is corresponds to a cell's data.
-//=================
-// Scalar flux data
-//=================
-
-/// Cell-specific scalar flux data.
-///
-/// Each element of the vector is corresponds to a cell's data.
 type ScalarFluxCell<T> = Vec<T>;
 
 /// Domain-sorted _scalar-flux-data-holding_ sub-structure.
@@ -192,7 +157,6 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
         Self { cell }
     }
 
-    /// Reset fields to their default value i.e. `0`.
     /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
         self.cell.iter_mut().for_each(|sf_cell| {
@@ -250,14 +214,8 @@ impl<T: CustomFloat> CellTallyDomain<T> {
 //========
 
 /// Super-structure holding all recorded data besides time statistics.
-//========
-// Tallies
-//========
-
-/// Super-structure holding all recorded data besides time statistics.
 #[derive(Debug)]
 pub struct Tallies<T: CustomFloat> {
-    /// Balance used for cumulative and centralized statistics.
     /// Balance used for cumulative and centralized statistics.
     pub balance_cumulative: Balance,
     /// Cyclic balances.
@@ -265,12 +223,9 @@ pub struct Tallies<T: CustomFloat> {
     /// Top-level structure holding scalar flux data.
     pub scalar_flux_domain: Vec<ScalarFluxDomain<T>>,
     /// Top-level structure holding cell tallied data.
-    /// Top-level structure holding cell tallied data.
     pub cell_tally_domain: Vec<CellTallyDomain<T>>,
     /// Top-level structure used to compute fluence data.
-    /// Top-level structure used to compute fluence data.
     pub fluence: Fluence<T>,
-    /// Energy spectrum of the problem.
     /// Energy spectrum of the problem.
     pub spectrum: EnergySpectrum,
 }

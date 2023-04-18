@@ -70,10 +70,3 @@ impl<T: CustomFloat> MCParticle<T> {
         self.base_particle.coordinate += self.direction_cosine.dir * distance;
     }
 }
-
-impl<T: CustomFloat> PartialEq for MCParticle<T> {
-    fn eq(&self, other: &Self) -> bool {
-        // is this enough?
-        self.base_particle.identifier == other.base_particle.identifier
-    }
-}
