@@ -52,9 +52,9 @@ pub fn outcome<T: CustomFloat>(
     // initialize distances and constants
     const N_EVENTS: usize = 3;
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
-    let huge_f: T = FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap();
-    let small_f: T = FromPrimitive::from_f64(T::SMALL_FLOAT).unwrap();
-    let tiny_f: T = FromPrimitive::from_f64(T::TINY_FLOAT).unwrap();
+    let huge_f: T = T::huge_float();
+    let small_f: T = T::small_float();
+    let tiny_f: T = T::tiny_float();
     let mut distance: [T; N_EVENTS] = [huge_f; N_EVENTS];
 
     let particle_speed = particle.base_particle.velocity.length();

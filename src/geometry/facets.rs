@@ -102,7 +102,7 @@ impl<T: CustomFloat> Default for MCNearestFacet<T> {
     fn default() -> Self {
         Self {
             facet: 0,
-            distance_to_facet: FromPrimitive::from_f64(T::HUGE_FLOAT).unwrap(),
+            distance_to_facet: T::huge_float(),
             dot_product: zero(),
         }
     }
