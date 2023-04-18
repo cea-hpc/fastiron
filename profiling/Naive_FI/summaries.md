@@ -1,6 +1,8 @@
 # Fastiron - Naive version
 
-## Homogeneous7 - 10,000 Particles
+**The shortest and longest cycle measures here were done using erroneous logic. The average and total are correct though.**
+
+## Homogeneous7 - 10,000 Particles
 
 ```
 [Timer Report]
@@ -13,7 +15,7 @@ Section::CycleTrackingComm       |                   120              1.73e2    
 Section::CycleFinalize           |                    20              2.04e2                    2.52e2                    3e2                  2.525e3                      84.1
 ```
 
-## Homogeneous7 - 100,000 Particles
+## Homogeneous7 - 100,000 Particles
 
 ```
 [Timer Report]
@@ -26,7 +28,7 @@ Section::CycleTrackingComm       |                   120             2.036e3    
 Section::CycleFinalize           |                    20             1.478e3                   1.551e3                 1.62e3                 1.5512e4                      95.7
 ```
 
-## CTS2_1 - 40960 Particles
+## CTS2_1 - 40960 Particles
 
 The performance scaling of the naive version being very poor, the simulation wasn't completed all 
 the way through. The flamegraph was done using data gathered in the first 3 and 6 cycles of the 

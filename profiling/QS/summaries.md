@@ -1,6 +1,6 @@
 # Quicksilver
 
-## Homogeneous7 - 10,000 Particles
+## Homogeneous7 - 10,000 Particles
 
 ```
 Timer                       Cumulative   Cumulative   Cumulative   Cumulative   Cumulative   Cumulative
@@ -15,7 +15,7 @@ cycleTracking_Test_Done              0    0.000e+00    0.000e+00    0.000e+00   
 cycleFinalize                       20    2.408e+03    2.408e+03    2.408e+03    0.000e+00       100.00
 ```
 
-## Homogeneous7 - 100,000 Particles
+## Homogeneous7 - 100,000 Particles
 
 ```
 Timer                       Cumulative   Cumulative   Cumulative   Cumulative   Cumulative   Cumulative
@@ -30,7 +30,7 @@ cycleTracking_Test_Done              0    0.000e+00    0.000e+00    0.000e+00   
 cycleFinalize                       20    4.677e+03    4.677e+03    4.677e+03    0.000e+00       100.00
 ```
 
-## CTS2_1 - 40960 Particles
+## CTS2_1 - 40960 Particles
 
 ```
 Timer                       Cumulative   Cumulative   Cumulative   Cumulative   Cumulative   Cumulative

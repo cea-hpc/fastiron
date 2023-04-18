@@ -8,12 +8,6 @@ use crate::constants::CustomFloat;
 pub struct MCTimeInfo<T: CustomFloat> {
     /// Current cycle number.
     pub cycle: u32,
-    /// Unused. **May be removed**.
-    pub initial_time: T,
-    /// Unused. **May be removed**.
-    pub final_time: T,
-    /// Unused. **May be removed**.
-    pub time: T,
     /// Time step of the simulation in seconds.
     pub time_step: T,
 }

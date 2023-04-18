@@ -33,7 +33,7 @@ pub enum ParameterError {
 }
 
 /// Enum used to run additional tests according to the input benchmark
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum BenchType {
     /// No additional tests are executed. This is the default mode.
     #[default]
@@ -213,7 +213,7 @@ impl<T: CustomFloat> Default for MaterialParameters<T> {
     fn default() -> Self {
         Self {
             name: Default::default(),
-            mass: T::from_f32(1000.0).unwrap(),
+            mass: T::from_f64(1000.0).unwrap(),
             total_cross_section: T::one(),
             n_isotopes: 10,
             n_reactions: 9,
@@ -318,17 +318,13 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub boundary_condition: String,
     /// Switch to enable or disable load balancing during execution.
     pub load_balance: bool,
-    /// Switch to enable cyclic timer reports. **May be removed**.
-    pub cycle_timers: bool,
-    /// Switch used to print debug information. **May be removed or repurposed**.
+    /// Switch used to print thread-debugging information. Currently unused.
     pub debug_threads: bool,
     /// Target number of particle for the simulation. Population will be controled
     /// according to this value.
     pub n_particles: u64,
-    /// Size of the batches of particles. **May be removed**.
-    pub batch_size: u64,
-    /// Number of batches. **May be removed**.
-    pub n_batches: u64,
+    /// Number of threads that should be used to run the simulation.
+    pub n_threads: u64,
     /// Number of steps simulated by the program.
     pub n_steps: usize,
     /// Number of cells along the x axis.
@@ -341,8 +337,6 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub seed: u64,
     /// Value of the time step in seconds.
     pub dt: T,
-    /// Unused? **May be removed**.
-    pub f_max: T,
     /// Size of the simulation along the x axis.
     pub lx: T,
     /// Size of the simulation along the y axis.
@@ -357,12 +351,6 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub n_groups: usize,
     /// Low statistical weight cutoff used for population control.
     pub low_weight_cutoff: T,
-    /// Number of balance tallies for parallel processing. `1` means no replication.
-    pub balance_tally_replications: u32,
-    /// Number of flux tallies for parallel processing. `1` means no replication.
-    pub flux_tally_replications: u32,
-    /// Number of cell tallies for parallel processing. `1` means no replication.
-    pub cell_tally_replications: u32,
     /// Benchmark type of the input problem. See [BenchType] for more information.
     pub coral_benchmark: BenchType,
 }
@@ -400,24 +388,19 @@ impl<T: CustomFloat> SimulationParameters<T> {
         fetch_from_cli!(energy_spectrum);
         fetch_from_cli!(cross_sections_out);
         fetch_from_cli!(dt);
-        fetch_from_cli!(f_max);
         simulation_params.load_balance = cli.load_balance;
-        simulation_params.cycle_timers = cli.cycle_timers;
+
         simulation_params.debug_threads = cli.debug_threads;
         fetch_from_cli!(lx);
         fetch_from_cli!(ly);
         fetch_from_cli!(lz);
         fetch_from_cli!(n_particles);
-        fetch_from_cli!(batch_size);
-        fetch_from_cli!(n_batches);
+        fetch_from_cli!(n_threads);
         fetch_from_cli!(n_steps);
         fetch_from_cli!(nx);
         fetch_from_cli!(ny);
         fetch_from_cli!(nz);
         fetch_from_cli!(seed);
-        fetch_from_cli!(balance_tally_replications);
-        fetch_from_cli!(flux_tally_replications);
-        fetch_from_cli!(cell_tally_replications);
 
         simulation_params
     }
@@ -431,18 +414,15 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             cross_sections_out: "".to_string(),
             boundary_condition: "reflect".to_string(),
             load_balance: false,
-            cycle_timers: false,
             debug_threads: false,
             n_particles: 1000000,
-            batch_size: 0,
-            n_batches: 10,
+            n_threads: 1,
             n_steps: 10,
             nx: 10,
             ny: 10,
             nz: 10,
             seed: 1029384756,
             dt: T::from_f64(1e-8).unwrap(),
-            f_max: T::from_f64(0.1).unwrap(),
             lx: T::from_f64(100.0).unwrap(),
             ly: T::from_f64(100.0).unwrap(),
             lz: T::from_f64(100.0).unwrap(),
@@ -450,9 +430,6 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             e_max: T::from_f64(20.0).unwrap(),
             n_groups: 230,
             low_weight_cutoff: T::from_f64(0.001).unwrap(),
-            balance_tally_replications: 1,
-            flux_tally_replications: 1,
-            cell_tally_replications: 1,
             coral_benchmark: BenchType::Standard,
         }
     }
@@ -636,10 +613,6 @@ impl<T: CustomFloat> Parameters<T> {
                     let chars: Vec<char> = val.chars().collect();
                     fetch_bool!(load_balance, chars[0]);
                 }
-                "cycleTimers" => {
-                    let chars: Vec<char> = val.chars().collect();
-                    fetch_bool!(cycle_timers, chars[0]);
-                }
                 "debugThreads" => {
                     let chars: Vec<char> = val.chars().collect();
                     fetch_bool!(debug_threads, chars[0]);
@@ -654,15 +627,12 @@ impl<T: CustomFloat> Parameters<T> {
                     }
                 }
                 "nParticles" => fetch_data!(n_particles, val),
-                "batchSize" => fetch_data!(batch_size, val),
-                "nBatches" => fetch_data!(n_batches, val),
                 "nSteps" => fetch_data!(n_steps, val),
                 "nx" => fetch_data!(nx, val),
                 "ny" => fetch_data!(ny, val),
                 "nz" => fetch_data!(nz, val),
                 "seed" => fetch_data!(seed, val),
                 "dt" => fetch_data!(dt, val),
-                "fMax" => fetch_data!(f_max, val),
                 "lx" => fetch_data!(lx, val),
                 "ly" => fetch_data!(ly, val),
                 "lz" => fetch_data!(lz, val),
@@ -670,13 +640,14 @@ impl<T: CustomFloat> Parameters<T> {
                 "eMax" => fetch_data!(e_max, val),
                 "nGroups" => fetch_data!(n_groups, val),
                 "lowWeightCutoff" => fetch_data!(low_weight_cutoff, val),
-                "balanceTallyReplications" | "bTally" => {
-                    fetch_data!(balance_tally_replications, val)
-                }
-                "fluxTallyReplications" | "fTally" => fetch_data!(flux_tally_replications, val),
-                "cellTallyReplications" | "cTally" => fetch_data!(cell_tally_replications, val),
 
-                "xDom" | "yDom" | "zDom" => (),
+                // Unused in fastiron;
+                "cycleTimers" => (),
+                "batchSize" | "nBatches" => (),
+                "balanceTallyReplications" | "bTally" => (),
+                "fluxTallyReplications" | "fTally" => (),
+                "cellTallyReplications" | "cTally" => (),
+                "xDom" | "yDom" | "zDom" | "fMax" => (),
                 "mpiThreadMultiple" => (),
                 _ => return Err(InputError::BadSimulationBlock),
             }

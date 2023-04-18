@@ -42,10 +42,6 @@ pub struct Cli {
     #[arg(short = 'D', long = "dt", num_args(1), allow_negative_numbers(false))]
     pub dt: Option<f32>,
 
-    /// max random mesh node displacement
-    #[arg(short = 'f', long = "f-max", num_args(1))]
-    pub f_max: Option<f32>,
-
     /// enable load balancing if present
     #[arg(short = 'l', long = "load-balance", num_args(0))]
     pub load_balance: bool,
@@ -79,23 +75,14 @@ pub struct Cli {
     )]
     pub n_particles: Option<u64>,
 
-    /// number of particles in a vault/batch
-    #[arg(
-        short = 'g',
-        long = "batch-size",
-        num_args(1),
-        allow_negative_numbers(false)
-    )]
-    pub batch_size: Option<u64>,
-
-    /// number of vault/batch to start; sets batch-size automatically if specified
+    /// number of threads that should be used to run the simulation
     #[arg(
         short = 'b',
-        long = "n-batches",
+        long = "n-thread",
         num_args(1),
         allow_negative_numbers(false)
     )]
-    pub n_batches: Option<u64>,
+    pub n_threads: Option<u64>,
 
     /// number of steps simulated
     #[arg(
@@ -121,33 +108,6 @@ pub struct Cli {
     /// random number seed
     #[arg(short = 's', long = "seed", num_args(1), allow_negative_numbers(false))]
     pub seed: Option<u64>, //maybe allow negative values ? need to test QS behavior
-
-    /// number of balance tally replications
-    #[arg(
-        short = 'B',
-        long = "b-tally",
-        num_args(1),
-        allow_negative_numbers(false)
-    )]
-    pub balance_tally_replications: Option<u32>,
-
-    /// number of scalar flux tally replications
-    #[arg(
-        short = 'F',
-        long = "f-tally",
-        num_args(1),
-        allow_negative_numbers(false)
-    )]
-    pub flux_tally_replications: Option<u32>,
-
-    /// number of scalar cell tally replications
-    #[arg(
-        short = 'C',
-        long = "c-tally",
-        num_args(1),
-        allow_negative_numbers(false)
-    )]
-    pub cell_tally_replications: Option<u32>,
 }
 
 /// Updates the Parameters structure passed as argument using the

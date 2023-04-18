@@ -31,12 +31,8 @@
 //!           name of cross-section output file
 //!   -D, --dt <DT>
 //!           time step in seconds
-//!   -f, --f-max <F_MAX>
-//!           max random mesh node displacement
 //!   -l, --load-balance
 //!           enable load balancing if present
-//!   -c, --cycle-timers
-//!           enable cycle timers if present
 //!   -t, --debug-threads
 //!           enable thread debugging if present
 //!   -X, --lx <LX>
@@ -47,10 +43,8 @@
 //!           z-size of simulation in cm
 //!   -n, --n-particles <N_PARTICLES>
 //!           total number of particules
-//!   -g, --batch-size <BATCH_SIZE>
-//!           number of particles in a vault/batch
-//!   -b, --n-batches <N_BATCHES>
-//!           number of vault/batch to start; sets batch-size automatically if specified
+//!   -b, --n-thread <N_THREADS>
+//!           number of threads that should be used to run the simulation
 //!   -N, --n-steps <N_STEPS>
 //!           number of steps simulated
 //!   -x, --nx <NX>
@@ -61,12 +55,6 @@
 //!           number of mesh elements along z
 //!   -s, --seed <SEED>
 //!           random number seed
-//!   -B, --b-tally <BALANCE_TALLY_REPLICATIONS>
-//!           number of balance tally replications
-//!   -F, --f-tally <FLUX_TALLY_REPLICATIONS>
-//!           number of scalar flux tally replications
-//!   -C, --c-tally <CELL_TALLY_REPLICATIONS>
-//!           number of scalar cell tally replications
 //!   -h, --help
 //!          Print help
 //!   -V, --version
@@ -87,10 +75,10 @@
 //! be printed at run-time and, if file names are specified, two files will be
 //! created. These four outputs contain data such as event counts, timers value,
 //! or final state of the system. To see more about these reports:
-//! - link to tallies print summary
-//! - link to cycle timers report
-//! - link to energy spectrum
-//! - link to cross section?
+//! - [`Tallies::print_summary()`][crate::data::tallies::Tallies::print_summary()]
+//! - [`MCFastTimerContainer::cumulative_report()`][crate::utils::mc_fast_timer::MCFastTimerContainer::cumulative_report()]
+//! - [`EnergySpectrum`][crate::data::energy_spectrum::EnergySpectrum]
+//! - [`init::check_cross_sections()`]
 //!
 //! # Useful Links
 //!
@@ -104,9 +92,10 @@ pub mod constants;
 pub mod data;
 pub mod geometry;
 /// Initialization code for the problem
-pub mod init_mc;
+pub mod init;
 pub mod montecarlo;
 pub mod parameters;
+/// Particle-related code
 /// Particle-related code
 pub mod particles;
 pub mod simulation;

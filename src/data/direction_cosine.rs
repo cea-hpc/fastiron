@@ -9,18 +9,15 @@ use crate::{
     utils::mc_rng_state::rng_sample,
 };
 
+use super::mc_vector::MCVector;
 /// Structure used to model a direction.
 ///
 /// Alpha, beta and gamma are just a normalized (x, y, z) vector, not Euler
 /// angles.
 #[derive(Debug, Clone, Default)]
 pub struct DirectionCosine<T: CustomFloat> {
-    /// Normalized x coordinate.
-    pub alpha: T,
-    /// Normalized y coordinate.
-    pub beta: T,
-    /// Normalized z coordinate.
-    pub gamma: T,
+    /// Normalized `(x, y, z)` direction vector.
+    pub dir: MCVector<T>,
 }
 
 impl<T: CustomFloat> DirectionCosine<T> {
@@ -31,14 +28,14 @@ impl<T: CustomFloat> DirectionCosine<T> {
         let pi: T = FromPrimitive::from_f64(PI).unwrap();
 
         // sample gamma
-        self.gamma = one - two * rng_sample(seed);
-        let sine_gamma = (one - self.gamma * self.gamma).sqrt();
+        self.dir.z = one - two * rng_sample(seed);
+        let sine_gamma = (one - self.dir.z * self.dir.z).sqrt();
 
         // sample phi and set the other angles using it
         let phi = pi * (two * rng_sample(seed) - one);
 
-        self.alpha = sine_gamma * phi.cos();
-        self.beta = sine_gamma * phi.sin();
+        self.dir.x = sine_gamma * phi.cos();
+        self.dir.y = sine_gamma * phi.sin();
     }
 
     /// Rotates a 3D vector that is defined by the angles Theta and Phi
@@ -57,25 +54,25 @@ impl<T: CustomFloat> DirectionCosine<T> {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let threshold: T = FromPrimitive::from_f64(1e-6).unwrap(); // order of TINY_FLOAT.sqrt()
 
-        let cos_theta_zero = self.gamma;
+        let cos_theta_zero = self.dir.z;
         let sin_theta_zero = (one - cos_theta_zero * cos_theta_zero).sqrt();
 
         let (cos_phi_zero, sin_phi_zero): (T, T) = if sin_theta_zero < threshold {
             (one, zero())
         } else {
-            (self.alpha / sin_theta_zero, self.beta / sin_theta_zero)
+            (self.dir.x / sin_theta_zero, self.dir.y / sin_theta_zero)
         };
 
         // compute the rotation
-        self.alpha = cos_theta_zero * cos_phi_zero * (sine_theta * cosine_phi)
+        self.dir.x = cos_theta_zero * cos_phi_zero * (sine_theta * cosine_phi)
             - sin_phi_zero * (sine_theta * sine_phi)
             + sin_theta_zero * cos_phi_zero * cosine_theta;
 
-        self.beta = cos_theta_zero * sin_phi_zero * (sine_theta * cosine_phi)
+        self.dir.y = cos_theta_zero * sin_phi_zero * (sine_theta * cosine_phi)
             + cos_phi_zero * (sine_theta * sine_phi)
             + sin_theta_zero * sin_phi_zero * cosine_theta;
 
-        self.gamma =
+        self.dir.z =
             -sin_theta_zero * (sine_theta * cosine_phi) + zero() + cos_theta_zero * cosine_theta;
     }
 }
@@ -91,30 +88,31 @@ mod tests {
 
     #[test]
     fn sample_isotropic() {
-        let mut dd: DirectionCosine<f64> = DirectionCosine {
-            alpha: 0.2140,
-            beta: 0.8621,
-            gamma: 0.7821,
-        };
+        let mut dd: DirectionCosine<f64> = DirectionCosine::default();
         let mut seed: u64 = 90374384094798327;
         dd.sample_isotropic(&mut seed);
 
-        assert_eq!(dd.alpha, 0.9083218129645693);
-        assert_eq!(dd.beta, -0.3658911896631176);
-        assert_eq!(dd.gamma, 0.2026699815455325);
+        assert_eq!(dd.dir.x, 0.9083218129645693);
+        assert_eq!(dd.dir.y, -0.3658911896631176);
+        assert_eq!(dd.dir.z, 0.2026699815455325);
     }
 
     #[test]
     fn rotate_vector() {
+        let alpha = 0.2140;
+        let beta = 0.8621;
+        let gamma = 0.7821;
         let mut dd: DirectionCosine<f64> = DirectionCosine {
-            alpha: 0.2140,
-            beta: 0.8621,
-            gamma: 0.7821,
+            dir: MCVector {
+                x: alpha,
+                y: beta,
+                z: gamma,
+            },
         };
         dd.rotate_3d_vector(1.0.sin(), 1.0.cos(), 2.0.sin(), 2.0.cos());
 
-        assert_eq!(dd.alpha, -1.0369691350703922);
-        assert_eq!(dd.beta, 0.3496694784021821);
-        assert_eq!(dd.gamma, 0.6407833194623658);
+        assert_eq!(dd.dir.x, -1.0369691350703922);
+        assert_eq!(dd.dir.y, 0.3496694784021821);
+        assert_eq!(dd.dir.z, 0.6407833194623658);
     }
 }

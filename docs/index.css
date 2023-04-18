@@ -14,14 +14,17 @@ body {
 }
 
 h1 {
+    font-family: Helvetica;
     color: #39BAE6;
 }
 
 h2 {
+    font-family: Helvetica;
     color: #39BAE6;
 }
 
 p {
+    font-family: Helvetica;
     color: #BFBDB6;
 }
 

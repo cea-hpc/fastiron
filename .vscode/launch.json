@@ -40,13 +40,11 @@
             },
             "args": [
                 "-i",
-                "input_files/QS_originals/NoFission/noFission.inp",
+                "input_files/QS_originals/AllEscape/allEscape.inp",
                 "-e",
                 "energy",
                 "-S",
                 "section",
-                "-n",
-                "10000"
             ],
             "cwd": "${workspaceFolder}"
         },

@@ -14,11 +14,15 @@ rand = {version="0.8.5", features=["small_rng"]}
 
 [profile.release]
 lto = true
-codegen-units = 1
+#codegen-units = 1
 
 [dev-dependencies]
 criterion = {version="0.3.4", features=["html_reports"]}
 
 [[bench]]
 name = "rng_benchmark"
+harness = false
+
+[[bench]]
+name = "mct_cross_product"
 harness = false

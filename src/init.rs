@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Debug, fs::File, io::Write};
 
 use crate::{
-    constants::{sim::TINY_FLOAT, CustomFloat, Tuple3},
+    constants::{CustomFloat, Tuple3},
     data::{
         material_database::{Isotope, Material},
         mc_vector::MCVector,
@@ -12,12 +12,45 @@ use crate::{
     },
     montecarlo::MonteCarlo,
     parameters::Parameters,
+    particles::particle_container::ParticleContainer,
     utils::{
         comm_object::CommObject, decomposition_object::DecompositionObject,
-        mc_rng_state::rng_sample,
+        mc_processor_info::MCProcessorInfo, mc_rng_state::rng_sample,
     },
 };
 use num::{one, zero, Float, FromPrimitive};
+
+/// Creates the correct number of particle containers for simulation.
+///
+/// The correct number is determined according to simulation parameters & execution policy.
+pub fn init_particle_containers<T: CustomFloat>(
+    params: &Parameters<T>,
+    proc_info: &MCProcessorInfo, // may be removed if we add it to parameters
+) -> Vec<ParticleContainer<T>> {
+    // compute the capacities using number of threads, target number of particles & fission statistical offset
+    let target_n_particles = params.simulation_params.n_particles as usize;
+
+    let regular_capacity_per_container = target_n_particles / proc_info.num_threads; // equivalent of batch size
+    let regular_capacity = regular_capacity_per_container + regular_capacity_per_container / 10; // approximate 10% margin
+
+    let max_nu_bar: usize = params
+        .material_params
+        .values()
+        .map(|mp| {
+            params.cross_section_params[&mp.fission_cross_section]
+                .nu_bar
+                .ceil()
+                .to_usize()
+                .unwrap()
+        })
+        .max()
+        .unwrap();
+
+    let extra_capacity = regular_capacity_per_container * max_nu_bar.max(2);
+
+    let container = ParticleContainer::new(regular_capacity, extra_capacity);
+    vec![container; proc_info.num_threads]
+}
 
 /// Creates a [MonteCarlo] object using the specified parameters.
 pub fn init_mc<T: CustomFloat>(params: Parameters<T>) -> MonteCarlo<T> {
@@ -33,6 +66,10 @@ pub fn init_mc<T: CustomFloat>(params: Parameters<T>) -> MonteCarlo<T> {
 
     mcco
 }
+
+//==================
+// Private functions
+//==================
 
 fn init_proc_info<T: CustomFloat>(_mcco: &mut MonteCarlo<T>) {}
 
@@ -69,8 +106,6 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         n_isotopes += mat_params.n_isotopes;
     }
 
-    // These should be of capacity 0 by default, using directly the count is correct
-    // What did I mean by this ^
     mcco.nuclear_data.isotopes.reserve(n_isotopes);
     mcco.material_database.mat.reserve(n_materials);
 
@@ -78,10 +113,8 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         let mut material: Material<T> = Material {
             name: mp.name.to_owned(),
             mass: mp.mass,
-            ..Default::default()
+            iso: Vec::with_capacity(mp.n_isotopes),
         };
-
-        material.iso.reserve(mp.n_isotopes);
 
         (0..mp.n_isotopes).for_each(|_| {
             let isotope_gid = mcco.nuclear_data.add_isotope(
@@ -99,11 +132,11 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     }
 }
 
-fn consistency_check<T: CustomFloat>(
-    my_rank: usize,
-    domain: &[MCDomain<T>],
-    params: &Parameters<T>,
-) {
+/// Check the consistency of the domain list passed as argument.
+///
+/// This function goes through the given domain list and check for inconsistencies
+/// by checking adjacencies coherence.
+pub fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>]) {
     if my_rank == 0 {
         println!("Starting consistency check");
     }
@@ -116,12 +149,7 @@ fn consistency_check<T: CustomFloat>(
             .for_each(|(cell_idx, cc)| {
                 cc.facet.iter().enumerate().for_each(|(facet_idx, ff)| {
                     let current = ff.subfacet.current;
-                    if params.simulation_params.debug_threads {
-                        println!(
-                            "current.cell == cell_idx: {}",
-                            current.cell.unwrap() == cell_idx
-                        );
-                    }
+                    assert_eq!(current.cell.unwrap(), cell_idx);
                     let adjacent = ff.subfacet.adjacent;
                     // These can hold none as a correct value e.g. if the current cell is on the border of the problem
                     if adjacent.domain.is_some()
@@ -135,12 +163,11 @@ fn consistency_check<T: CustomFloat>(
                             .facet[facet_idx_adj]
                             .subfacet;
 
-                        if !((backside.adjacent.domain.unwrap() == domain_idx)
-                            | (backside.adjacent.cell.unwrap() == cell_idx)
-                            | (backside.adjacent.facet.unwrap() == facet_idx))
-                        {
-                            panic!()
-                        }
+                        assert!(
+                            (backside.adjacent.domain.unwrap() == domain_idx)
+                                & (backside.adjacent.cell.unwrap() == cell_idx)
+                                & (backside.adjacent.facet.unwrap() == facet_idx)
+                        )
                     }
                 });
             });
@@ -245,7 +272,7 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     });
 
     if n_ranks == 1 {
-        consistency_check(my_rank, &mcco.domain, &mcco.params);
+        consistency_check(my_rank, &mcco.domain);
     }
 }
 
@@ -254,9 +281,7 @@ fn init_tallies<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     mcco.tallies.initialize_tallies(
         &mcco.domain,
         params.simulation_params.n_groups,
-        params.simulation_params.balance_tally_replications,
-        params.simulation_params.flux_tally_replications,
-        params.simulation_params.cell_tally_replications,
+        params.simulation_params.coral_benchmark,
     )
 }
 
@@ -267,12 +292,15 @@ struct XSData<T: Float> {
     sca: T,
 }
 
-fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
+/// Prints cross-section data of the problem.
+///
+/// TODO: add a model of the produced output
+pub fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
     let params = &mcco.params;
     if params.simulation_params.cross_sections_out.is_empty() {
         return;
     }
-    // pass these directly as arguments?
+
     let nucdb = &mcco.nuclear_data;
     let matdb = &mcco.material_database;
 
@@ -308,7 +336,6 @@ fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
                         ReactionType::Fission => {
                             xc_vec[group_idx].fis += reaction.cross_section[group_idx] / n_isotopes;
                         }
-                        ReactionType::Undefined => unreachable!(),
                     });
                 });
         });
@@ -332,13 +359,13 @@ fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
     (0..n_groups).for_each(|ii| {
         write!(file, "{:>5} |  {:>15.12} |   ", ii, energies[ii]).unwrap();
         xc_table.values_mut().for_each(|xc_vec| {
-            if xc_vec[ii].abs < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
+            if xc_vec[ii].abs < T::tiny_float() {
                 xc_vec[ii].abs = zero();
             }
-            if xc_vec[ii].fis < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
+            if xc_vec[ii].fis < T::tiny_float() {
                 xc_vec[ii].fis = zero();
             }
-            if xc_vec[ii].sca < FromPrimitive::from_f64(TINY_FLOAT).unwrap() {
+            if xc_vec[ii].sca < T::tiny_float() {
                 xc_vec[ii].sca = zero();
             }
             write!(

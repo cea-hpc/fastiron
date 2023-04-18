@@ -6,7 +6,7 @@
 //! Note that this module isn't used to compute time-related data, this is done in
 //! the [utils::mc_fast_timer][crate::utils::mc_fast_timer] module.
 
-use std::fmt::Debug;
+use std::{fmt::Debug, iter::zip};
 
 use num::zero;
 
@@ -14,6 +14,7 @@ use crate::{
     constants::CustomFloat,
     geometry::mc_domain::MCDomain,
     montecarlo::MonteCarlo,
+    parameters::BenchType,
     utils::mc_fast_timer::{self, Section},
 };
 
@@ -29,8 +30,6 @@ pub enum MCTallyEvent {
     /// Value for a census event.
     #[default]
     Census,
-    /// Value for a facet crossing event resulting in an error.
-    FacetCrossingTrackingError,
     /// Value for a facet crossing event resulting in an escape from the problem.
     FacetCrossingEscape,
     /// Value for a facet crossing event resulting in a reflection on the facet.
@@ -53,27 +52,6 @@ pub struct Fluence<T: CustomFloat> {
     pub domain: Vec<FluenceDomain<T>>,
 }
 
-impl<T: CustomFloat> Fluence<T> {
-    pub fn compute(&mut self, domain_idx: usize, scalar_flux_domain: &ScalarFluxDomain<T>) {
-        let n_cells = scalar_flux_domain.task[0].cell.len();
-        while self.domain.len() <= domain_idx {
-            let new_domain: FluenceDomain<T> = FluenceDomain {
-                cell: vec![zero(); n_cells],
-            };
-            self.domain.push(new_domain);
-        }
-        (0..n_cells).for_each(|cell_idx| {
-            let n_groups = scalar_flux_domain.task[0].cell[cell_idx].len();
-            (0..n_groups).for_each(|group_idx| {
-                self.domain[domain_idx].add_cell(
-                    cell_idx,
-                    scalar_flux_domain.task[0].cell[cell_idx][group_idx],
-                );
-            });
-        });
-    }
-}
-
 /// Domain-sorted fluence-data-holding sub-structure.
 #[derive(Debug, Default)]
 pub struct FluenceDomain<T: CustomFloat> {
@@ -81,12 +59,11 @@ pub struct FluenceDomain<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> FluenceDomain<T> {
-    pub fn add_cell(&mut self, index: usize, val: T) {
-        self.cell[index] += val;
-    }
-
-    pub fn get_cell(&self, index: usize) -> T {
-        self.cell[index]
+    pub fn compute(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
+        let cell_iter = zip(self.cell.iter_mut(), scalar_flux_domain.cell.iter());
+        cell_iter.for_each(|(fl_cell, sf_cell)| {
+            *fl_cell += sf_cell.iter().copied().sum();
+        })
     }
 
     pub fn size(&self) -> usize {
@@ -166,13 +143,13 @@ impl Balance {
 /// Each element of the vector is corresponds to a cell's data.
 type ScalarFluxCell<T> = Vec<T>;
 
-/// Task-sorted _scalar-flux-data-holding_ sub-structure.
+/// Domain-sorted _scalar-flux-data-holding_ sub-structure.
 #[derive(Debug, Clone)]
-pub struct ScalarFluxTask<T: CustomFloat> {
+pub struct ScalarFluxDomain<T: CustomFloat> {
     pub cell: Vec<ScalarFluxCell<T>>,
 }
 
-impl<T: CustomFloat> ScalarFluxTask<T> {
+impl<T: CustomFloat> ScalarFluxDomain<T> {
     /// Constructor.
     pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
@@ -187,28 +164,16 @@ impl<T: CustomFloat> ScalarFluxTask<T> {
         });
     }
 
-    /// Add another [ScalarFluxTask]'s value to its own.
-    pub fn add(&mut self, scalar_flux_task: &ScalarFluxTask<T>) {
-        let n_groups = self.cell[0].len();
-        (0..self.cell.len()).for_each(|cell_idx| {
-            (0..n_groups).for_each(|group_idx| {
-                self.cell[cell_idx][group_idx] += scalar_flux_task.cell[cell_idx][group_idx];
-            })
-        });
-    }
-}
-
-/// Domain-sorted _scalar-flux-data-holding_ sub-structure.
-#[derive(Debug)]
-pub struct ScalarFluxDomain<T: CustomFloat> {
-    pub task: Vec<ScalarFluxTask<T>>,
-}
-
-impl<T: CustomFloat> ScalarFluxDomain<T> {
-    // Constructor.
-    pub fn new(domain: &MCDomain<T>, num_groups: usize, flux_replications: usize) -> Self {
-        let task = vec![ScalarFluxTask::new(domain, num_groups); flux_replications];
-        Self { task }
+    /// Add another [ScalarFluxDomain]'s value to its own.
+    pub fn add(&mut self, other: &ScalarFluxDomain<T>) {
+        // zip iterators from the two objects' values.
+        let cell_iter = zip(self.cell.iter_mut(), other.cell.iter());
+        cell_iter.for_each(|(cell_lhs, cell_rhs)| {
+            // zip iterators from the two objects' values.
+            let group_iter = zip(cell_lhs.iter_mut(), cell_rhs.iter());
+            // sum other to self
+            group_iter.for_each(|(group_lhs, group_rhs)| *group_lhs += *group_rhs);
+        })
     }
 }
 
@@ -216,13 +181,13 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
 // Cell tally data
 //================
 
-/// Task-specific _cell-tallied-data-holding_ sub-structure.
+/// Domain-specific _cell-tallied-data-holding_ sub-structure.
 #[derive(Debug, Default, Clone)]
-pub struct CellTallyTask<T: CustomFloat> {
+pub struct CellTallyDomain<T: CustomFloat> {
     pub cell: Vec<T>,
 }
 
-impl<T: CustomFloat> CellTallyTask<T> {
+impl<T: CustomFloat> CellTallyDomain<T> {
     /// Constructor.
     pub fn new(domain: &MCDomain<T>) -> Self {
         Self {
@@ -235,24 +200,12 @@ impl<T: CustomFloat> CellTallyTask<T> {
         self.cell = vec![zero(); self.cell.len()];
     }
 
-    /// Add another [CellTallyTask]'s value to its own.
-    pub fn add(&mut self, cell_tally_task: &CellTallyTask<T>) {
-        //assert_eq!(self.cell.len(), cell_tally_task.cell.len());
-        (0..self.cell.len()).for_each(|ii| self.cell[ii] += cell_tally_task.cell[ii]);
-    }
-}
-
-/// Domain-sorted _cell-tallied-data-holding_ sub-structure.
-#[derive(Debug)]
-pub struct CellTallyDomain<T: CustomFloat> {
-    pub task: Vec<CellTallyTask<T>>,
-}
-
-impl<T: CustomFloat> CellTallyDomain<T> {
-    /// Constructor.
-    pub fn new(domain: &MCDomain<T>, cell_tally_replications: usize) -> Self {
-        let task = vec![CellTallyTask::new(domain); cell_tally_replications];
-        Self { task }
+    /// Add another [CellTallyDomain]'s value to its own.
+    pub fn add(&mut self, other: &CellTallyDomain<T>) {
+        // zip iterators from the two objects' values.
+        let iter = zip(self.cell.iter_mut(), other.cell.iter());
+        // sum other to self
+        iter.for_each(|(lhs, rhs)| *lhs += *rhs);
     }
 }
 
@@ -265,8 +218,8 @@ impl<T: CustomFloat> CellTallyDomain<T> {
 pub struct Tallies<T: CustomFloat> {
     /// Balance used for cumulative and centralized statistics.
     pub balance_cumulative: Balance,
-    /// Task-specific cyclic balances.
-    pub balance_task: Vec<Balance>,
+    /// Cyclic balances.
+    pub balance_cycle: Balance,
     /// Top-level structure holding scalar flux data.
     pub scalar_flux_domain: Vec<ScalarFluxDomain<T>>,
     /// Top-level structure holding cell tallied data.
@@ -275,34 +228,19 @@ pub struct Tallies<T: CustomFloat> {
     pub fluence: Fluence<T>,
     /// Energy spectrum of the problem.
     pub spectrum: EnergySpectrum,
-    /// Number of balance tallies for parallel processing. `1` means no replication.
-    pub num_balance_replications: u32,
-    /// Number of flux tallies for parallel processing. `1` means no replication.
-    pub num_flux_replications: u32,
-    /// Number of cell tallies for parallel processing. `1` means no replication.
-    pub num_cell_tally_replications: u32,
 }
 
 impl<T: CustomFloat> Tallies<T> {
     /// Constructor.
-    pub fn new(
-        bal_rep: u32,
-        flux_rep: u32,
-        cell_rep: u32,
-        spectrum_name: String,
-        spectrum_size: usize,
-    ) -> Self {
+    pub fn new(spectrum_name: String, spectrum_size: usize) -> Self {
         let spectrum = EnergySpectrum::new(spectrum_name, spectrum_size);
         Self {
             balance_cumulative: Default::default(),
-            balance_task: Default::default(),
+            balance_cycle: Default::default(),
             scalar_flux_domain: Default::default(),
             cell_tally_domain: Default::default(),
             fluence: Default::default(),
             spectrum,
-            num_balance_replications: bal_rep,
-            num_flux_replications: flux_rep,
-            num_cell_tally_replications: cell_rep,
         }
     }
 
@@ -311,80 +249,74 @@ impl<T: CustomFloat> Tallies<T> {
         &mut self,
         domain: &[MCDomain<T>],
         num_energy_groups: usize,
-        balance_replications: u32,
-        flux_replications: u32,
-        cell_replications: u32,
+        bench_type: BenchType,
     ) {
-        self.num_balance_replications = balance_replications;
-        self.num_flux_replications = flux_replications;
-        self.num_cell_tally_replications = cell_replications;
-
-        // Initialize the balance tallies
-        if self.balance_task.is_empty() {
-            if self.balance_task.capacity() == 0 {
-                self.balance_task
-                    .reserve(self.num_balance_replications as usize);
-            }
-
-            (0..self.num_balance_replications).for_each(|_| {
-                self.balance_task.push(Balance::default());
-            });
-        }
-
-        // Initialize the cell tallies
-        if self.cell_tally_domain.is_empty() {
-            if self.cell_tally_domain.capacity() == 0 {
-                self.cell_tally_domain.reserve(domain.len());
-            }
-
-            (0..domain.len()).for_each(|domain_idx| {
-                self.cell_tally_domain.push(CellTallyDomain::new(
-                    &domain[domain_idx],
-                    self.num_cell_tally_replications as usize,
-                ));
-            });
-        }
-
-        // Initialize the scalar flux tallies
-        if self.scalar_flux_domain.is_empty() {
-            if self.scalar_flux_domain.capacity() == 0 {
-                self.scalar_flux_domain.reserve(domain.len());
-            }
-
-            (0..domain.len()).for_each(|domain_idx| {
-                self.scalar_flux_domain.push(ScalarFluxDomain::new(
-                    &domain[domain_idx],
-                    num_energy_groups,
-                    self.num_flux_replications as usize,
-                ));
-            });
-        }
-    }
-
-    /// Sums the task-level data. This is used when replications
-    /// is active.
-    pub fn sum_tasks(&mut self) {
-        (1..self.num_balance_replications).for_each(|rep_idx| {
-            let bal = self.balance_task[rep_idx as usize].clone(); // is there a cheaper way?
-            self.balance_task[0].add(&bal);
-            self.balance_task[rep_idx as usize].reset();
+        self.cell_tally_domain.reserve(domain.len());
+        self.scalar_flux_domain.reserve(domain.len());
+        domain.iter().for_each(|dom| {
+            // Initialize the cell tallies
+            self.cell_tally_domain.push(CellTallyDomain::new(dom));
+            // Initialize the scalar flux tallies
+            self.scalar_flux_domain
+                .push(ScalarFluxDomain::new(dom, num_energy_groups));
         });
+
+        // Initialize Fluence if necessary
+        if bench_type != BenchType::Standard {
+            self.scalar_flux_domain
+                .iter()
+                .map(|dom| dom.cell.len())
+                .for_each(|n_cells| {
+                    self.fluence.domain.push(FluenceDomain {
+                        cell: vec![zero(); n_cells],
+                    })
+                });
+        }
     }
 
     /// Prints summarized data recorded by the tallies.
+    ///
+    /// This function prints the number of recorded events & additionnal data
+    /// at each cycle of the simulation. After five cycle, the printed output
+    /// would look like the following:
+    ///
+    /// ```shell
+    /// cycle   |    start     source         rr        split       absorb      scatter      fission      produce    collision       escape       census      num_seg   scalar_flux   cycleInit (s)  cycleTracking (s)  cycleFinalize (s)
+    ///       0 |        0      10000          0        90000        97237       711673        86904        86904       895814            0         2763      2245733    8.984036e11   1.4745e-2         1.088409e0                0e0
+    ///       1 |     2763      10000          0        87202        97576       715193        86951        86951       899720            0         2389      2250433    9.191721e11   1.1338e-2         1.114024e0                0e0
+    ///       2 |     2389      10000          0        87625        97569       717781        87733        87733       903083            0         2445      2262159    9.303649e11     8.45e-3         1.125107e0                0e0
+    ///       3 |     2445      10000       1468        87569        96180       704095        85839        85839       886114            0         2366      2217454    9.227719e11    9.499e-3         1.106859e0                0e0
+    ///       4 |     2366      10000        331        87599        97132       716577        87708        87708       901417            0         2502      2256889    9.255832e11    9.701e-3         1.129408e0                0e0
+    /// ```
+    ///
+    /// - `cycle` column gives the cycle number.
+    /// - `start` column gives the number of particle at the start of the cycle,
+    ///   before population control algorithms.
+    /// - `source`, `rr`, `split` columns count
+    ///   [`population_control`][crate::simulation::population_control] events.
+    /// - `absorb`, `scatter`, `fission`, `produce`, `collision` columns count
+    ///   [collision_event][crate::simulation::collision_event] events.
+    /// - `escape`, `census` columns count the remaining possible
+    ///   [`outcomes`][crate::simulation::mc_segment_outcome].
+    /// - `num_seg` column counts the total number of computed segments.
+    /// - `scalar_flux` is the total scalar flux of the problem.
+    /// - The last three columns indicate the time spent in each section.
     pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
         if mcco.time_info.cycle == 0 {
             // print header
             println!("[Tally Summary]");
-            print!("cycle   |    start     source         rr        split       absorb      scatter      fission ");
-            println!("     produce    collision       escape       census      num_seg   scalar_flux   cycleInit (s)  cycleTracking (s)  cycleFinalize (s)");
+            println!(
+                "{:<7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>13} {:>15} {:>18} {:>18}",
+                "cycle", "start", "source", "rr", "split", "absorb", "scatter", "fission", "produce", "collision", 
+                "escape", "census", "num_seg", "scalar_flux", "cycleInit (s)", "cycleTracking (s)", "cycleFinalize (s)"
+            );
         }
         let cy_init = mc_fast_timer::get_last_cycle(mcco, Section::CycleInit);
         let cy_track = mc_fast_timer::get_last_cycle(mcco, Section::CycleTracking);
         let cy_fin = mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize);
         let sf_sum = self.scalar_flux_sum();
-        let bal = &self.balance_task[0];
-        println!("{:>7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>11e} {:>18e} {:>18e}",
+        let bal = &self.balance_cycle;
+        println!("{:>7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>11.3e} {:>18.5e} {:>18.3e}",
             mcco.time_info.cycle,
             bal.start,
             bal.source,
@@ -405,32 +337,47 @@ impl<T: CustomFloat> Tallies<T> {
         );
     }
 
-    /// Computes the global scalar flux value in the problem.
+    /// Computes the global scalar flux value of the problem.
     pub fn scalar_flux_sum(&self) -> T {
-        let mut sum: T = zero();
-
-        let n_domain = self.scalar_flux_domain.len();
-        // for all domains
-        (0..n_domain).for_each(|domain_idx| {
-            // for each (replicated) tally
-            (0..self.num_flux_replications).for_each(|rep_idx| {
-                let n_cells = self.scalar_flux_domain[domain_idx].task[rep_idx as usize]
+        let summ: T = self
+            .scalar_flux_domain
+            .iter()
+            .map(|sf_domain| {
+                sf_domain
                     .cell
-                    .len();
-                // for each cell
-                (0..n_cells).for_each(|cell_idx| {
-                    let n_groups = self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
-                        [cell_idx]
-                        .len();
-                    // for each energy group
-                    (0..n_groups).for_each(|group_idx| {
-                        sum += self.scalar_flux_domain[domain_idx].task[rep_idx as usize].cell
-                            [cell_idx][group_idx];
-                    })
-                })
+                    .iter()
+                    .map(|sf_cell| sf_cell.iter().copied().sum())
+                    .sum()
             })
-        });
+            .sum();
+        summ
+    }
 
-        sum
+    /// Print stats of the current cycle and update the cumulative counters.
+    pub fn cycle_finalize(&mut self, bench_type: BenchType) {
+        self.balance_cumulative.add(&self.balance_cycle);
+
+        let new_start: u64 = self.balance_cycle.end;
+        self.balance_cycle.reset();
+        self.balance_cycle.start = new_start;
+
+        if bench_type != BenchType::Standard {
+            let fluence_computation_iter = zip(
+                self.fluence.domain.iter_mut(),
+                self.scalar_flux_domain.iter(),
+            );
+            fluence_computation_iter.for_each(|(fl_domain, sf_domain)| {
+                fl_domain.compute(sf_domain);
+            })
+        }
+
+        let dom_iter = zip(
+            self.cell_tally_domain.iter_mut(),
+            self.scalar_flux_domain.iter_mut(),
+        );
+        dom_iter.for_each(|(ct_domain, sf_domain)| {
+            ct_domain.reset();
+            sf_domain.reset();
+        });
     }
 }

@@ -5,7 +5,7 @@
 This folder contains summaries & flamegraphes of the different version of fastiron as they progress. It also 
 contains Quicksilver's data for reference. 
 
-## Test problems
+## Test problems
 
 The following problems are used in order to compare the versions of the program. Note that these can (and will)
 change in the future to fit our needs.
@@ -14,7 +14,7 @@ change in the future to fit our needs.
   respectively with `10000`, `100000`
 - `CTS2_1`, corresponding to the file `CTS2_Benchmark/CTS2_1.inp`.
 
-## Hardware used for execution
+## Hardware used for execution
 
 This section contains the hardware specifications of the machine used to obtain this data. 
 

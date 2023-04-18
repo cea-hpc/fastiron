@@ -3,13 +3,16 @@
 //! This module contains the function individually tracking particles during the
 //! main simulation section.
 
-use num::one;
+use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::MCTallyEvent,
+    data::{send_queue::SendQueue, tallies::MCTallyEvent},
     montecarlo::MonteCarlo,
-    particles::{load_particle::load_particle, mc_particle::MCParticle},
+    particles::{
+        mc_base_particle::{MCBaseParticle, Species},
+        mc_particle::MCParticle,
+    },
     simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
 };
 
@@ -25,99 +28,86 @@ use super::{
 /// invalidated.
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
-    particle_idx: usize,
-    processing_vault_idx: usize,
+    base_particle: &mut MCBaseParticle<T>,
+    extra: &mut Vec<MCBaseParticle<T>>,
+    send_queue: &mut SendQueue<T>,
 ) {
-    // A major change to be done is to do every computation using a reference to the particles
-    // instead of loading a copy & overwriting it; This would also mean propagating the
-    // "keep_tracking" result to the top level functions where it can be used to update the
-    // particle's status accordingly
-    if let Some(mut particle) = load_particle(
-        &mcco.particle_vault_container.processing_vaults[processing_vault_idx],
-        particle_idx,
-        mcco.time_info.time_step,
-    ) {
-        particle.energy_group = mcco.nuclear_data.get_energy_groups(particle.kinetic_energy);
-        particle.task = 0;
+    // load particle, track it & update the original
+    // next step is to refactor MCParticle / MCBaseParticle to lighten conversion between the types
+    let mut particle = MCParticle::new(base_particle);
 
-        let keep_tracking_next_cycle =
-            cycle_tracking_function(mcco, &mut particle, particle_idx, processing_vault_idx);
-
-        // necessary overwrite
-        mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-            .put_particle(particle.clone(), particle_idx);
-
-        // These functions operate using indexes, i.e. the version of the particle that is
-        // in the vault, not the copy we loaded & updated, hence the overwrite above
-        if keep_tracking_next_cycle {
-            mcco.particle_vault_container
-                .set_as_processed(processing_vault_idx, particle_idx);
-        } else {
-            mcco.particle_vault_container.processing_vaults[processing_vault_idx]
-                .invalidate_particle(particle_idx);
-        }
+    // set age & time to census
+    if particle.base_particle.time_to_census <= zero() {
+        particle.base_particle.time_to_census += mcco.time_info.time_step;
     }
+    if particle.base_particle.age < zero() {
+        particle.base_particle.age = zero();
+    }
+    // update energy & task
+    particle.energy_group = mcco
+        .nuclear_data
+        .get_energy_groups(particle.base_particle.kinetic_energy);
+
+    cycle_tracking_function(mcco, &mut particle, extra, send_queue);
+
+    *base_particle = MCBaseParticle::new(&particle);
 }
 
 fn cycle_tracking_function<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     particle: &mut MCParticle<T>,
-    particle_idx: usize,
-    processing_vault_idx: usize,
-) -> bool {
+    extra: &mut Vec<MCBaseParticle<T>>,
+    send_queue: &mut SendQueue<T>,
+) {
     let mut keep_tracking: bool;
-    let mut keep_tracking_next_cycle: bool;
-    let tally_idx: usize = particle_idx % mcco.tallies.num_balance_replications as usize;
-    let flux_tally_idx: usize = particle_idx % mcco.tallies.num_flux_replications as usize;
 
     loop {
         // compute event for segment & update # of segments
-        let segment_outcome = outcome(mcco, particle, flux_tally_idx);
-        mcco.tallies.balance_task[tally_idx].num_segments += 1; // atomic in original code
+        let segment_outcome = outcome(mcco, particle);
+        mcco.tallies.balance_cycle.num_segments += 1; // atomic in original code
 
-        particle.num_segments += one();
+        particle.base_particle.num_segments += one();
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                keep_tracking = collision_event(mcco, particle, tally_idx);
-                keep_tracking_next_cycle = keep_tracking;
+                keep_tracking = collision_event(mcco, particle, extra);
+                if !keep_tracking {
+                    particle.base_particle.species = Species::Unknown;
+                }
             }
             MCSegmentOutcome::FacetCrossing => {
-                let facet_crossing_type =
-                    facet_crossing_event(particle, mcco, particle_idx, processing_vault_idx);
+                facet_crossing_event(particle, mcco, send_queue);
 
-                keep_tracking = match facet_crossing_type {
+                keep_tracking = match particle.base_particle.last_event {
                     MCTallyEvent::FacetCrossingTransitExit => true,
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
-                        mcco.tallies.balance_task[tally_idx].escape += 1;
-                        particle.last_event = MCTallyEvent::FacetCrossingEscape;
+                        mcco.tallies.balance_cycle.escape += 1;
+                        particle.base_particle.last_event = MCTallyEvent::FacetCrossingEscape;
+                        particle.base_particle.species = Species::Unknown;
                         false
                     }
                     MCTallyEvent::FacetCrossingReflection => {
                         reflect_particle(mcco, particle);
                         true
                     }
-                    _ => false, // transit to off-cluster domain
+                    _ => {
+                        // transit to off-cluster domain
+                        particle.base_particle.species = Species::Unknown;
+                        false
+                    }
                 };
-
-                keep_tracking_next_cycle = keep_tracking;
             }
             MCSegmentOutcome::Census => {
                 // atomic in original code
-                mcco.tallies.balance_task[tally_idx].census += 1;
-
+                mcco.tallies.balance_cycle.census += 1;
                 // we're done tracking the particle FOR THIS STEP
                 keep_tracking = false;
-                keep_tracking_next_cycle = true;
             }
-            MCSegmentOutcome::Initialize => unreachable!(),
         }
 
         if !keep_tracking {
             break;
         }
     }
-
-    keep_tracking_next_cycle
 }

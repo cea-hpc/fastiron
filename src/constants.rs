@@ -31,15 +31,52 @@ pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
 /// Custom trait for floatting point number
 pub trait UtilsFloat: Default + Debug + Display + LowerExp + FromStr + From<f32> + Sum {}
 /// Custom super-trait for floatting point number
-pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {}
+pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {
+    /// Threshold upper-value for decimal number.
+    fn huge_float<T: CustomFloat>() -> T;
+    /// Threshold low-ish-value for decimal number.
+    fn small_float<T: CustomFloat>() -> T;
+    /// Threshold lower-value for decimal number.
+    fn tiny_float<T: CustomFloat>() -> T;
+}
 
 impl OpsFloat for f32 {}
 impl UtilsFloat for f32 {}
-impl CustomFloat for f32 {}
+impl CustomFloat for f32 {
+    /// Threshold value for decimal number when using [f32]. May need adjustment.
+    fn huge_float<T: CustomFloat>() -> T {
+        FromPrimitive::from_f32(10e35_f32).unwrap()
+    }
+
+    /// Threshold value for decimal number when using [f32]. May need adjustment.
+    fn small_float<T: CustomFloat>() -> T {
+        FromPrimitive::from_f32(1e-10_f32).unwrap()
+    }
+
+    /// Threshold value for decimal number when using [f32]. May need adjustment.
+    fn tiny_float<T: CustomFloat>() -> T {
+        FromPrimitive::from_f32(1e-13_f32).unwrap()
+    }
+}
 
 impl OpsFloat for f64 {}
 impl UtilsFloat for f64 {}
-impl CustomFloat for f64 {}
+impl CustomFloat for f64 {
+    /// Threshold value for decimal number when using [f64].
+    fn huge_float<T: CustomFloat>() -> T {
+        FromPrimitive::from_f64(10e75_f64).unwrap()
+    }
+
+    /// Threshold value for decimal number when using [f64].
+    fn small_float<T: CustomFloat>() -> T {
+        FromPrimitive::from_f64(1e-10).unwrap()
+    }
+
+    /// Threshold value for decimal number when using [f64].
+    fn tiny_float<T: CustomFloat>() -> T {
+        FromPrimitive::from_f64(1e-13).unwrap()
+    }
+}
 
 //===================
 // constants modules
@@ -55,11 +92,11 @@ pub mod sim {
     pub const N_TIMERS: usize = 6;
     /// Number of particle species
     pub const N_SPECIES: usize = 1;
-    /// Threshold value for decimal number
+    /// Threshold value for decimal number in tests
     pub const TINY_FLOAT: f64 = 1e-13;
-    /// Threshold value for decimal number
+    /// Threshold value for decimal number in tests
     pub const SMALL_FLOAT: f64 = 1e-10;
-    /// Threshold value for decimal number
+    /// Threshold value for decimal number in tests
     pub const HUGE_FLOAT: f64 = 1e75;
 }
 
