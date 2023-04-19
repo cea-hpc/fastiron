@@ -7,15 +7,13 @@ use core::panic;
 use num::{one, zero, FromPrimitive};
 
 use crate::{
-    constants::{
-        mesh::{N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
-        CustomFloat,
-    },
+    constants::CustomFloat,
     data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
     geometry::{
         facets::{MCDistanceToFacet, MCGeneralPlane, MCNearestFacet},
         mc_domain::{MCDomain, MCMeshDomain},
         mc_location::MCLocation,
+        N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET,
     },
     montecarlo::MonteCarlo,
     particles::mc_particle::MCParticle,

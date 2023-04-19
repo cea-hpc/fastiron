@@ -7,10 +7,7 @@ use std::collections::HashMap;
 use num::{one, zero, FromPrimitive};
 
 use crate::{
-    constants::{
-        mesh::{N_FACES, N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
-        CustomFloat,
-    },
+    constants::CustomFloat,
     data::{material_database::MaterialDatabase, mc_vector::MCVector},
     parameters::{GeometryParameters, Parameters, Shape},
     simulation::mct::cell_position_3dg,
@@ -24,6 +21,7 @@ use super::{
     mc_cell_state::MCCellState,
     mc_location::MCLocation,
     mesh_partition::{CellInfo, MeshPartition},
+    N_FACES, N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET,
 };
 
 /// Structure used to hold information related a cell's face.

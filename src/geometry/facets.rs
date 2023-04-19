@@ -3,14 +3,8 @@
 //! This module contains the code used for the modelling and computations
 //! related to the facets of the mesh.
 
-use super::mc_location::MCLocation;
-use crate::{
-    constants::{
-        mesh::{N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
-        CustomFloat,
-    },
-    data::mc_vector::MCVector,
-};
+use super::{mc_location::MCLocation, N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET};
+use crate::{constants::CustomFloat, data::mc_vector::MCVector};
 use num::{zero, FromPrimitive};
 
 //==================
