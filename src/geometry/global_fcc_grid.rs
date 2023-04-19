@@ -1,11 +1,9 @@
 //! Code used to build and navigate the basis of the mesh
 use num::{zero, FromPrimitive};
 
+use super::{CORNER_OFFSET, FACE_OFFSET, N_FACES, N_POINTS_INTERSEC};
 use crate::{
-    constants::{
-        mesh::{CORNER_OFFSET, FACE_OFFSET, N_FACES, N_POINTS_INTERSEC},
-        CustomFloat, Tuple3, Tuple4,
-    },
+    constants::{CustomFloat, Tuple3, Tuple4},
     data::mc_vector::MCVector,
 };
 
