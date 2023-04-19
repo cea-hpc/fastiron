@@ -21,5 +21,5 @@ This section contains the hardware specifications of the machine used to obtain 
 ## Quicksilver modification
 
 In a sequential context, Quicksilver has received a small tweak to guarantee coherence of the results. The random
-number generator function used to initialize centers randomly, `drand48`, has been replaced with the program'function,
+number generator function used to initialize centers randomly, `drand48`, has been replaced with the program's function,
 `rngSample`.
