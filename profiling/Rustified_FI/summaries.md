@@ -1,4 +1,4 @@
-# Fastiron - `ParticleContainer` version
+# Fastiron - Rustified edition
 
 ## Homogeneous7 - 10,000 Particles
 
@@ -62,18 +62,18 @@ Section::CycleTrackingComm       |                  5262              7.67e2    
 Section::CycleFinalize           |                   100                 0e0                       0e0                    0e0                      3e0                      73.2
 ```
 
-## Figure of merit comparison
+## Figure of merit comparison
 
 This table contains for each test and simulation version the number of segments computed per 
-second. The highest figure is **highlighted**. All tests beside the CTS2 benchmark were ran with 
+second. The highest figure is _highlighted_. All tests beside the CTS2 benchmark were ran with 
 100,000 particles. 
 
 Test          | Quicksilver | `ParticleContainer` Fastiron - `f64` | `ParticleContainer` Fastiron - `f32`
 --------------|-------------|--------------------------------------|-------------------------------------
-CTS2_1        | 9.835e5     | **1.072e6**                          | 8.192e5
-AllAbsorb     | 1.278e6     | 1.857e6                              | **1.904e6**
-AllEscape     | **4.439e6** | 4.009e6                              | 3.214e6
-AllScattering | 2.083e6     | 2.091e6                              | **2.132e6**
-NoCollision   | 3.178e6     | **3.199e6**                          | 2.564e6
-NoFission     | 1.794e6     | 1.873e6                              | **1.998e6**
-Homogeneous   | 1.995e+06   | 2.030e6                              | **2.160e6**
+CTS2_1        | 9.835e5     | _1.072e6_                            | 8.192e5
+AllAbsorb     | 1.278e6     | 1.857e6                              | _1.904e6_
+AllEscape     | _4.439e6_   | 4.009e6                              | 3.214e6
+AllScattering | 2.083e6     | 2.091e6                              | _2.132e6_
+NoCollision   | 3.178e6     | _3.199e6_                            | 2.564e6
+NoFission     | 1.794e6     | 1.873e6                              | _1.998e6_
+Homogeneous   | 1.995e+06   | 2.030e6                              | _2.160e6_
