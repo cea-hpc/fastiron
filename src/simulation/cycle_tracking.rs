@@ -104,7 +104,12 @@ fn cycle_tracking_function<T: CustomFloat>(
                         false
                     }
                     MCTallyEvent::FacetCrossingReflection => {
-                        reflect_particle(mcunit, particle);
+                        // plane on which particle is reflected
+                        let plane = &mcunit.domain[particle.base_particle.domain]
+                            .mesh
+                            .cell_geometry[particle.base_particle.cell][particle.facet];
+
+                        reflect_particle(particle, plane);
                         true
                     }
                     _ => {

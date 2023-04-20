@@ -22,12 +22,11 @@ pub fn facet_crossing_event<T: CustomFloat>(
     mcunit: &MonteCarloUnit<T>,
     send_queue: &mut SendQueue<T>,
 ) {
-    let location = particle.get_location();
-    let facet_adjacency = &mcunit.domain[location.domain.unwrap()]
+    let facet_adjacency = &mcunit.domain[particle.base_particle.domain]
         .mesh
-        .cell_connectivity[location.cell.unwrap()]
-    .facet[location.facet.unwrap()]
-    .subfacet;
+        .cell_connectivity[particle.base_particle.cell]
+        .facet[particle.facet]
+        .subfacet;
 
     match facet_adjacency.event {
         MCSubfacetAdjacencyEvent::TransitOnProcessor => {
