@@ -301,8 +301,8 @@ impl<T: CustomFloat> Tallies<T> {
     /// - `num_seg` column counts the total number of computed segments.
     /// - `scalar_flux` is the total scalar flux of the problem.
     /// - The last three columns indicate the time spent in each section.
-    pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
-        if mcco.time_info.cycle == 0 {
+    pub fn print_summary(&self, mcco: &MonteCarlo<T>, step: usize) {
+        if step == 0 {
             // print header
             println!("[Tally Summary]");
             println!(
@@ -317,7 +317,7 @@ impl<T: CustomFloat> Tallies<T> {
         let sf_sum = self.scalar_flux_sum();
         let bal = &self.balance_cycle;
         println!("{:>7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>11.3e} {:>18.5e} {:>18.3e}",
-            mcco.time_info.cycle,
+            step,
             bal.start,
             bal.source,
             bal.rr,

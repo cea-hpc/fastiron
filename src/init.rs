@@ -57,7 +57,6 @@ pub fn init_mc<T: CustomFloat>(params: Parameters<T>) -> MonteCarlo<T> {
     let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
 
     init_proc_info(&mut mcco);
-    init_time_info(&mut mcco);
     init_nuclear_data(&mut mcco);
     init_mesh(&mut mcco);
     init_tallies(&mut mcco);
@@ -72,11 +71,6 @@ pub fn init_mc<T: CustomFloat>(params: Parameters<T>) -> MonteCarlo<T> {
 //==================
 
 fn init_proc_info<T: CustomFloat>(_mcco: &mut MonteCarlo<T>) {}
-
-fn init_time_info<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
-    let params = &mcco.params;
-    mcco.time_info.time_step = params.simulation_params.dt;
-}
 
 fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
     let params = &mcco.params;

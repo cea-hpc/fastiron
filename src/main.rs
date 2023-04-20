@@ -31,10 +31,10 @@ fn main() {
 
             mc_fast_timer::start(mcco, Section::Main);
 
-            for _ in 0..n_steps {
+            for step in 0..n_steps {
                 cycle_init(mcco, container);
                 cycle_tracking(mcco, container);
-                cycle_finalize(mcco, container);
+                cycle_finalize(mcco, container, step);
             }
 
             mc_fast_timer::stop(mcco, Section::Main);
@@ -132,6 +132,7 @@ pub fn cycle_tracking<T: CustomFloat>(
 pub fn cycle_finalize<T: CustomFloat>(
     mcco: &mut MonteCarlo<T>,
     container: &mut ParticleContainer<T>,
+    step: usize,
 ) {
     mc_fast_timer::start(mcco, Section::CycleFinalize);
 
@@ -141,13 +142,12 @@ pub fn cycle_finalize<T: CustomFloat>(
     mc_fast_timer::stop(mcco, Section::CycleFinalize);
 
     // print summary
-    mcco.tallies.print_summary(mcco);
+    mcco.tallies.print_summary(mcco, step);
 
     // record / process data for the next cycle
     mcco.tallies
         .cycle_finalize(mcco.params.simulation_params.coral_benchmark);
     mcco.update_spectrum(container);
-    mcco.time_info.cycle += 1;
 
     mcco.fast_timer.clear_last_cycle_timers();
 }

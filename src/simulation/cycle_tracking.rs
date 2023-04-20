@@ -38,7 +38,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
 
     // set age & time to census
     if particle.base_particle.time_to_census <= zero() {
-        particle.base_particle.time_to_census += mcco.time_info.time_step;
+        particle.base_particle.time_to_census += mcco.params.simulation_params.dt;
     }
     if particle.base_particle.age < zero() {
         particle.base_particle.age = zero();

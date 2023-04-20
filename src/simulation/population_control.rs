@@ -145,7 +145,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 /// spawned. _Where_ they are spawned depends on both deterministic factors and
 /// randomness.
 pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut ParticleContainer<T>) {
-    let time_step = mcco.time_info.time_step;
+    let time_step = mcco.params.simulation_params.dt;
 
     // this is a constant; add it to mcco ?
     let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];

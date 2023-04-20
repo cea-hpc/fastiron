@@ -19,7 +19,6 @@ use crate::particles::mc_particle::MCParticle;
 use crate::particles::particle_container::ParticleContainer;
 use crate::utils::mc_fast_timer::MCFastTimerContainer;
 use crate::utils::mc_processor_info::MCProcessorInfo;
-use crate::utils::mc_time_info::MCTimeInfo;
 
 /// Super-structure used to contain all the problem's objects and data.
 #[derive(Debug)]
@@ -34,8 +33,6 @@ pub struct MonteCarlo<T: CustomFloat> {
     pub material_database: MaterialDatabase<T>,
     /// Object storing all tallies of the simulation.
     pub tallies: Tallies<T>,
-    /// Object storing data related to the advancement of the simulation.
-    pub time_info: MCTimeInfo<T>,
     /// Container for the timers used for performance measurements.
     pub fast_timer: MCFastTimerContainer,
     /// Object storing data related to the processor and execution mode.
@@ -52,7 +49,6 @@ impl<T: CustomFloat> MonteCarlo<T> {
             params.simulation_params.n_groups,
         );
         let processor_info = MCProcessorInfo::new(&params.simulation_params);
-        let time_info = MCTimeInfo::<T>::default();
         let fast_timer: MCFastTimerContainer = MCFastTimerContainer::default();
 
         Self {
@@ -61,7 +57,6 @@ impl<T: CustomFloat> MonteCarlo<T> {
             nuclear_data: Default::default(),
             material_database: Default::default(),
             tallies,
-            time_info,
             fast_timer,
             processor_info,
             source_particle_weight: zero(),
