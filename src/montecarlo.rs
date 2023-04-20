@@ -20,6 +20,35 @@ use crate::particles::particle_container::ParticleContainer;
 use crate::utils::mc_fast_timer::MCFastTimerContainer;
 use crate::utils::mc_processor_info::MCProcessorInfo;
 
+/// Super-structure used to contain all the problem's data.
+///
+/// This structure is used to store read-only data, i.e. after initialization,
+/// its content does not change until the end of the simulation.
+#[derive(Debug, Default)]
+pub struct MonteCarloData<T: CustomFloat> {
+    /// Parameters of the problem.
+    pub params: Parameters<T>,
+    /// Object storing all data related to particles.
+    pub nuclear_data: NuclearData<T>,
+    /// Object storing all data related to materials.
+    pub material_database: MaterialDatabase<T>,
+    /// Object storing data related to the processor and execution mode.
+    pub exec_info: MCProcessorInfo,
+}
+
+impl<T: CustomFloat> MonteCarloData<T> {
+    /// Constructor.
+    pub fn new(params: Parameters<T>) -> Self {
+        let exec_info = MCProcessorInfo::new(&params.simulation_params);
+
+        Self {
+            params,
+            exec_info,
+            ..Default::default()
+        }
+    }
+}
+
 /// Super-structure used to contain all the problem's objects and data.
 #[derive(Debug)]
 pub struct MonteCarlo<T: CustomFloat> {
