@@ -11,8 +11,8 @@ use crate::{
         physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
         CustomFloat,
     },
-    data::nuclear_data::ReactionType,
-    montecarlo::{MonteCarloData, MonteCarloUnit},
+    data::{nuclear_data::ReactionType, tallies::Balance},
+    montecarlo::MonteCarloData,
     particles::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
     simulation::macro_cross_section::macroscopic_cross_section,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
@@ -57,14 +57,12 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
 /// - Scattering reaction: no additional modifications occur.
 pub fn collision_event<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
+    mat_gid: usize,
+    cell_nb_density: T,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCBaseParticle<T>>,
+    balance: &mut Balance,
 ) -> bool {
-    let mat_gidx = mcunit.domain[particle.base_particle.domain].cell_state
-        [particle.base_particle.cell]
-        .material;
-
     // ==========================
     // Pick an isotope & reaction
 
@@ -78,20 +76,18 @@ pub fn collision_event<T: CustomFloat>(
     let mut selected_unique_n: usize = usize::MAX;
     let mut selected_react: usize = usize::MAX;
 
-    let n_iso: usize = mcdata.material_database.mat[mat_gidx].iso.len();
+    let n_iso: usize = mcdata.material_database.mat[mat_gid].iso.len();
 
     loop {
         for iso_idx in 0..n_iso {
-            let unique_n: usize = mcdata.material_database.mat[mat_gidx].iso[iso_idx].gid;
+            let unique_n: usize = mcdata.material_database.mat[mat_gid].iso[iso_idx].gid;
             let n_reactions: usize = mcdata.nuclear_data.get_number_reactions(unique_n);
             for reaction_idx in 0..n_reactions {
-                //println!("current XS: {current_xsection}");
                 current_xsection -= macroscopic_cross_section(
                     mcdata,
-                    mcunit,
                     reaction_idx,
-                    particle.base_particle.domain,
-                    particle.base_particle.cell,
+                    mat_gid,
+                    cell_nb_density,
                     iso_idx,
                     particle.energy_group,
                 );
@@ -115,7 +111,7 @@ pub fn collision_event<T: CustomFloat>(
     // ================
     // Do the collision
 
-    let mat_mass = mcdata.material_database.mat[mat_gidx].mass;
+    let mat_mass = mcdata.material_database.mat[mat_gid].mass;
     let (energy_out, angle_out) = mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions
         [selected_react]
         .sample_collision(
@@ -130,14 +126,14 @@ pub fn collision_event<T: CustomFloat>(
     // ===================
     // Tally the collision
 
-    mcunit.tallies.balance_cycle.collision += 1; // atomic in original code
+    balance.collision += 1; // atomic in original code
     match mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react].reaction_type
     {
-        ReactionType::Scatter => mcunit.tallies.balance_cycle.scatter += 1,
-        ReactionType::Absorption => mcunit.tallies.balance_cycle.absorb += 1,
+        ReactionType::Scatter => balance.scatter += 1,
+        ReactionType::Absorption => balance.absorb += 1,
         ReactionType::Fission => {
-            mcunit.tallies.balance_cycle.fission += 1;
-            mcunit.tallies.balance_cycle.produce += n_out as u64;
+            balance.fission += 1;
+            balance.produce += n_out as u64;
         }
     }
 

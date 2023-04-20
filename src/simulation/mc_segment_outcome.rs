@@ -68,13 +68,34 @@ pub fn outcome<T: CustomFloat>(
 
     // randomly determines the distance to the next collision
     // based upon the current cell data
-    let macroscopic_total_xsection = weighted_macroscopic_cross_section(
-        mcdata,
-        mcunit,
-        particle.base_particle.domain,
-        particle.base_particle.cell,
-        particle.energy_group,
-    );
+    let precomputed_cross_section = mcunit.domain[particle.base_particle.domain].cell_state
+        [particle.base_particle.cell]
+        .total[particle.energy_group];
+    let macroscopic_total_xsection = if precomputed_cross_section > zero() {
+        // XS was already cached
+        precomputed_cross_section
+    } else {
+        // compute XS
+        let mat_gid: usize = mcunit.domain[particle.base_particle.domain].cell_state
+            [particle.base_particle.cell]
+            .material;
+        let cell_nb_density: T = mcunit.domain[particle.base_particle.domain].cell_state
+            [particle.base_particle.cell]
+            .cell_number_density;
+
+        let tmp = weighted_macroscopic_cross_section(
+            mcdata,
+            mat_gid,
+            cell_nb_density,
+            particle.energy_group,
+        );
+
+        // cache the XS
+        mcunit.domain[particle.base_particle.domain].cell_state[particle.base_particle.cell]
+            .total[particle.energy_group] = tmp;
+
+        tmp
+    };
 
     particle.total_cross_section = macroscopic_total_xsection;
     if macroscopic_total_xsection == zero() {
@@ -103,7 +124,8 @@ pub fn outcome<T: CustomFloat>(
         particle_speed * particle.base_particle.time_to_census;
 
     // nearest facet
-    let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, mcunit);
+    let nearest_facet: MCNearestFacet<T> =
+        nearest_facet(particle, &mcunit.domain[particle.base_particle.domain]);
     particle.normal_dot = nearest_facet.dot_product;
     distance[MCSegmentOutcome::FacetCrossing as usize] = nearest_facet.distance_to_facet;
 
