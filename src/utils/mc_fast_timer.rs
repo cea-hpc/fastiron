@@ -7,10 +7,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{
-    constants::{sim::N_TIMERS, CustomFloat},
-    montecarlo::MonteCarlo,
-};
+use crate::constants::sim::N_TIMERS;
 
 /// Enum used to identify sections and their corresponding
 /// timers.
@@ -189,26 +186,26 @@ impl Default for MCFastTimerContainer {
 }
 
 /// Start the specified timer.
-pub fn start<T: CustomFloat>(mcco: &mut MonteCarlo<T>, section: Section) {
+pub fn start(timer_container: &mut MCFastTimerContainer, section: Section) {
     let index = section as usize;
-    mcco.fast_timer.timers[index].start_clock = Instant::now();
+    timer_container.timers[index].start_clock = Instant::now();
 }
 
 /// Stop the specified timer and record internally the duration sicne start.
-pub fn stop<T: CustomFloat>(mcco: &mut MonteCarlo<T>, section: Section) {
+pub fn stop(timer_container: &mut MCFastTimerContainer, section: Section) {
     let index = section as usize;
-    mcco.fast_timer.timers[index].end_clock = Instant::now();
-    mcco.fast_timer.timers[index].last_cycle_clock += mcco.fast_timer.timers[index]
+    timer_container.timers[index].end_clock = Instant::now();
+    timer_container.timers[index].last_cycle_clock += timer_container.timers[index]
         .end_clock
-        .duration_since(mcco.fast_timer.timers[index].start_clock);
-    mcco.fast_timer.timers[index].cumulative_clock += mcco.fast_timer.timers[index]
+        .duration_since(timer_container.timers[index].start_clock);
+    timer_container.timers[index].cumulative_clock += timer_container.timers[index]
         .end_clock
-        .duration_since(mcco.fast_timer.timers[index].start_clock);
-    mcco.fast_timer.timers[index].num_calls += 1;
+        .duration_since(timer_container.timers[index].start_clock);
+    timer_container.timers[index].num_calls += 1;
 }
 
 /// Returns the duration of the last cycle of the specified timer.
-pub fn get_last_cycle<T: CustomFloat>(mcco: &MonteCarlo<T>, section: Section) -> f64 {
+pub fn get_last_cycle(timer_container: &mut MCFastTimerContainer, section: Section) -> f64 {
     let index = section as usize;
-    mcco.fast_timer.timers[index].last_cycle_clock.as_secs_f64()
+    timer_container.timers[index].last_cycle_clock.as_secs_f64()
 }

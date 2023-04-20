@@ -7,7 +7,7 @@ use crate::{
     constants::CustomFloat,
     data::{send_queue::SendQueue, tallies::MCTallyEvent},
     geometry::facets::MCSubfacetAdjacencyEvent,
-    montecarlo::MonteCarlo,
+    montecarlo::MonteCarloUnit,
     particles::mc_particle::MCParticle,
 };
 
@@ -19,12 +19,13 @@ use crate::{
 /// transit.
 pub fn facet_crossing_event<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    mcco: &mut MonteCarlo<T>,
+    mcunit: &MonteCarloUnit<T>,
     send_queue: &mut SendQueue<T>,
 ) {
     let location = particle.get_location();
-    let facet_adjacency = &mcco.domain[location.domain.unwrap()].mesh.cell_connectivity
-        [location.cell.unwrap()]
+    let facet_adjacency = &mcunit.domain[location.domain.unwrap()]
+        .mesh
+        .cell_connectivity[location.cell.unwrap()]
     .facet[location.facet.unwrap()]
     .subfacet;
 
@@ -52,7 +53,7 @@ pub fn facet_crossing_event<T: CustomFloat>(
             particle.facet = facet_adjacency.adjacent.facet.unwrap();
             particle.base_particle.last_event = MCTallyEvent::FacetCrossingCommunication;
 
-            let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
+            let neighbor_rank: usize = mcunit.domain[facet_adjacency.current.domain.unwrap()]
                 .mesh
                 .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
 

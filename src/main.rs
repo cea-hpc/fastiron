@@ -1,7 +1,7 @@
 use clap::Parser;
 use fastiron::constants::CustomFloat;
-use fastiron::init::{init_mc, init_particle_containers};
-use fastiron::montecarlo::MonteCarlo;
+use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers};
+use fastiron::montecarlo::{MonteCarloData, MonteCarloUnit};
 use fastiron::parameters::Parameters;
 use fastiron::particles::mc_base_particle::Species;
 use fastiron::particles::particle_container::ParticleContainer;
@@ -15,82 +15,92 @@ use fastiron::utils::mc_processor_info::ExecPolicy;
 fn main() {
     let cli = Cli::parse();
 
-    let params = Parameters::get_parameters(cli).unwrap();
+    let params: Parameters<f64> = Parameters::get_parameters(cli).unwrap();
     println!("Printing Parameters:\n{params:#?}");
 
     let n_steps = params.simulation_params.n_steps;
 
-    let mut mcco_obj: MonteCarlo<f64> = init_mc(params);
-    let mcco = &mut mcco_obj;
+    let mcdata = init_mcdata(params);
+    let mut containers = init_particle_containers(&mcdata.params, &mcdata.exec_info);
+    let mut mcunits = init_mcunits(&mcdata);
 
-    let mut containers = init_particle_containers(&mcco.params, &mcco.processor_info);
-
-    match mcco.processor_info.exec_policy {
+    match mcdata.exec_info.exec_policy {
         ExecPolicy::Sequential => {
             let container = &mut containers[0];
+            let mcunit = &mut mcunits[0];
 
-            mc_fast_timer::start(mcco, Section::Main);
+            mc_fast_timer::start(&mut mcunit.fast_timer, Section::Main);
 
-            for _ in 0..n_steps {
-                cycle_init(mcco, container);
-                cycle_tracking(mcco, container);
-                cycle_finalize(mcco, container);
+            for step in 0..n_steps {
+                cycle_init(&mcdata, mcunit, container);
+                cycle_tracking(&mcdata, mcunit, container);
+                cycle_finalize(&mcdata, mcunit, container, step);
             }
 
-            mc_fast_timer::stop(mcco, Section::Main);
+            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::Main);
         }
         ExecPolicy::Parallel => {
             todo!()
         }
     }
 
-    game_over(mcco);
+    game_over(&mcdata, &mut mcunits[0]);
 
-    coral_benchmark_correctness(mcco.params.simulation_params.coral_benchmark, &mcco.tallies);
+    // need to sum all tallies or already done before when in parallel?
+    coral_benchmark_correctness(
+        mcdata.params.simulation_params.coral_benchmark,
+        &mcunits[0].tallies,
+    );
 }
 
-pub fn game_over<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
-    mcco.fast_timer.update_main_stats();
+pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteCarloUnit<T>) {
+    mcunit.fast_timer.update_main_stats();
 
-    mcco.fast_timer
-        .cumulative_report(mcco.tallies.balance_cumulative.num_segments);
+    mcunit
+        .fast_timer
+        .cumulative_report(mcunit.tallies.balance_cumulative.num_segments);
 
-    mcco.tallies.spectrum.print_spectrum(mcco);
+    mcunit.tallies.spectrum.print_spectrum(mcdata);
 }
 
-pub fn cycle_init<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut ParticleContainer<T>) {
-    mc_fast_timer::start(mcco, Section::CycleInit);
+pub fn cycle_init<T: CustomFloat>(
+    mcdata: &MonteCarloData<T>,
+    mcunit: &mut MonteCarloUnit<T>,
+    container: &mut ParticleContainer<T>,
+) {
+    mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleInit);
 
-    mcco.clear_cross_section_cache();
+    mcunit.clear_cross_section_cache();
 
     container.swap_processing_processed();
 
     let tmp = container.processing_particles.len() as u64;
-    mcco.tallies.balance_cycle.start = tmp;
+    mcunit.tallies.balance_cycle.start = tmp;
 
-    population_control::source_now(mcco, container);
+    population_control::source_now(mcdata, mcunit, container);
 
-    population_control::population_control(mcco, container);
+    population_control::population_control(mcdata, mcunit, container);
 
     population_control::roulette_low_weight_particles(
-        mcco.params.simulation_params.low_weight_cutoff,
-        mcco.source_particle_weight,
+        mcdata.params.simulation_params.low_weight_cutoff,
+        mcunit.source_particle_weight,
         container,
-        &mut mcco.tallies.balance_cycle,
+        &mut mcunit.tallies.balance_cycle,
     );
 
-    mc_fast_timer::stop(mcco, Section::CycleInit);
+    mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleInit);
 }
 
 pub fn cycle_tracking<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
+    mcdata: &MonteCarloData<T>,
+    mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
 ) {
-    mc_fast_timer::start(mcco, Section::CycleTracking);
+    mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
     let mut done = false;
     loop {
         while !done {
-            mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
+            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
 
             // track particles
             container
@@ -98,7 +108,8 @@ pub fn cycle_tracking<T: CustomFloat>(
                 .iter_mut()
                 .for_each(|base_particle| {
                     cycle_tracking_guts(
-                        mcco,
+                        mcdata,
+                        mcunit,
                         base_particle,
                         &mut container.extra_particles,
                         &mut container.send_queue,
@@ -109,8 +120,8 @@ pub fn cycle_tracking<T: CustomFloat>(
                 });
             container.processing_particles.clear();
 
-            mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
-            mc_fast_timer::start(mcco, Section::CycleTrackingComm);
+            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
+            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingComm);
 
             // clean extra here
             container.process_sq();
@@ -118,7 +129,7 @@ pub fn cycle_tracking<T: CustomFloat>(
 
             done = container.test_done_new();
 
-            mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
+            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingComm);
         }
         done = container.test_done_new();
 
@@ -126,28 +137,30 @@ pub fn cycle_tracking<T: CustomFloat>(
             break;
         }
     }
-    mc_fast_timer::stop(mcco, Section::CycleTracking);
+    mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTracking);
 }
 
 pub fn cycle_finalize<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
+    mcdata: &MonteCarloData<T>,
+    mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
+    step: usize,
 ) {
-    mc_fast_timer::start(mcco, Section::CycleFinalize);
+    mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleFinalize);
 
     // prepare data for summary; this would be a sync phase in parallel exec
-    mcco.tallies.balance_cycle.end = container.processed_particles.len() as u64;
+    mcunit.tallies.balance_cycle.end = container.processed_particles.len() as u64;
 
-    mc_fast_timer::stop(mcco, Section::CycleFinalize);
+    mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleFinalize);
 
     // print summary
-    mcco.tallies.print_summary(mcco);
+    mcunit.tallies.print_summary(&mut mcunit.fast_timer, step);
 
     // record / process data for the next cycle
-    mcco.tallies
-        .cycle_finalize(mcco.params.simulation_params.coral_benchmark);
-    mcco.update_spectrum(container);
-    mcco.time_info.cycle += 1;
+    mcunit
+        .tallies
+        .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
+    mcunit.update_spectrum(container, mcdata);
 
-    mcco.fast_timer.clear_last_cycle_timers();
+    mcunit.fast_timer.clear_last_cycle_timers();
 }

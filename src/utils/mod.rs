@@ -7,4 +7,3 @@ pub mod io_utils;
 pub mod mc_fast_timer;
 pub mod mc_processor_info;
 pub mod mc_rng_state;
-pub mod mc_time_info;
