@@ -12,7 +12,7 @@ use crate::{
         CustomFloat,
     },
     data::nuclear_data::ReactionType,
-    montecarlo::MonteCarlo,
+    montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
     simulation::macro_cross_section::macroscopic_cross_section,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
@@ -56,12 +56,14 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
 /// - Fission reaction: offspring particles are created from the colliding one.
 /// - Scattering reaction: no additional modifications occur.
 pub fn collision_event<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
+    mcdata: &MonteCarloData<T>,
+    mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCBaseParticle<T>>,
 ) -> bool {
-    let mat_gidx =
-        mcco.domain[particle.base_particle.domain].cell_state[particle.base_particle.cell].material;
+    let mat_gidx = mcunit.domain[particle.base_particle.domain].cell_state
+        [particle.base_particle.cell]
+        .material;
 
     // ==========================
     // Pick an isotope & reaction
@@ -76,16 +78,17 @@ pub fn collision_event<T: CustomFloat>(
     let mut selected_unique_n: usize = usize::MAX;
     let mut selected_react: usize = usize::MAX;
 
-    let n_iso: usize = mcco.material_database.mat[mat_gidx].iso.len();
+    let n_iso: usize = mcdata.material_database.mat[mat_gidx].iso.len();
 
     loop {
         for iso_idx in 0..n_iso {
-            let unique_n: usize = mcco.material_database.mat[mat_gidx].iso[iso_idx].gid;
-            let n_reactions: usize = mcco.nuclear_data.get_number_reactions(unique_n);
+            let unique_n: usize = mcdata.material_database.mat[mat_gidx].iso[iso_idx].gid;
+            let n_reactions: usize = mcdata.nuclear_data.get_number_reactions(unique_n);
             for reaction_idx in 0..n_reactions {
                 //println!("current XS: {current_xsection}");
                 current_xsection -= macroscopic_cross_section(
-                    mcco,
+                    mcdata,
+                    mcunit,
                     reaction_idx,
                     particle.base_particle.domain,
                     particle.base_particle.cell,
@@ -112,8 +115,8 @@ pub fn collision_event<T: CustomFloat>(
     // ================
     // Do the collision
 
-    let mat_mass = mcco.material_database.mat[mat_gidx].mass;
-    let (energy_out, angle_out) = mcco.nuclear_data.isotopes[selected_unique_n][0].reactions
+    let mat_mass = mcdata.material_database.mat[mat_gidx].mass;
+    let (energy_out, angle_out) = mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions
         [selected_react]
         .sample_collision(
             particle.base_particle.kinetic_energy,
@@ -127,13 +130,14 @@ pub fn collision_event<T: CustomFloat>(
     // ===================
     // Tally the collision
 
-    mcco.tallies.balance_cycle.collision += 1; // atomic in original code
-    match mcco.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react].reaction_type {
-        ReactionType::Scatter => mcco.tallies.balance_cycle.scatter += 1,
-        ReactionType::Absorption => mcco.tallies.balance_cycle.absorb += 1,
+    mcunit.tallies.balance_cycle.collision += 1; // atomic in original code
+    match mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react].reaction_type
+    {
+        ReactionType::Scatter => mcunit.tallies.balance_cycle.scatter += 1,
+        ReactionType::Absorption => mcunit.tallies.balance_cycle.absorb += 1,
         ReactionType::Fission => {
-            mcco.tallies.balance_cycle.fission += 1;
-            mcco.tallies.balance_cycle.produce += n_out as u64;
+            mcunit.tallies.balance_cycle.fission += 1;
+            mcunit.tallies.balance_cycle.produce += n_out as u64;
         }
     }
 
@@ -162,7 +166,7 @@ pub fn collision_event<T: CustomFloat>(
     }
 
     update_trajectory(energy_out[0], angle_out[0], particle);
-    particle.energy_group = mcco
+    particle.energy_group = mcdata
         .nuclear_data
         .get_energy_groups(particle.base_particle.kinetic_energy);
 

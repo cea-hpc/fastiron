@@ -65,7 +65,7 @@ fn cycle_tracking_function<T: CustomFloat>(
 
     loop {
         // compute event for segment & update # of segments
-        let segment_outcome = outcome(mcco, particle);
+        let segment_outcome = outcome(mcdata, mcunit, particle);
         mcunit.tallies.balance_cycle.num_segments += 1; // atomic in original code
 
         particle.base_particle.num_segments += one();
