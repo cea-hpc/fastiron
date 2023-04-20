@@ -141,8 +141,6 @@ pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MC
         new_d_cos.dir -= facet_normal * dot;
         particle.direction_cosine = new_d_cos;
     }
-    let particle_speed = particle.base_particle.velocity.length();
-    particle.base_particle.velocity = particle.direction_cosine.dir * particle_speed;
 }
 
 // ==============================

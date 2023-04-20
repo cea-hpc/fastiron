@@ -2,8 +2,13 @@
 //!
 //! This module contains the code of the basic particle structure.
 
+use num::FromPrimitive;
+
 use crate::{
-    constants::CustomFloat,
+    constants::{
+        physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY},
+        CustomFloat,
+    },
     data::{mc_vector::MCVector, tallies::MCTallyEvent},
 };
 
@@ -61,5 +66,36 @@ impl<T: CustomFloat> MCBaseParticle<T> {
     /// [MCBaseParticle] object, we derive the [Clone] trait.
     pub fn new(particle: &MCParticle<T>) -> Self {
         particle.base_particle.clone()
+    }
+
+    pub fn get_speed(&self) -> T {
+        let rest_mass_energy: T = FromPrimitive::from_f64(NEUTRON_REST_MASS_ENERGY).unwrap();
+        let speed_of_light: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+        speed_of_light
+            * (self.kinetic_energy * (self.kinetic_energy + two * (rest_mass_energy))
+                / ((self.kinetic_energy + rest_mass_energy)
+                    * (self.kinetic_energy + rest_mass_energy)))
+                .sqrt()
+    }
+}
+
+//=============
+// Unit tests
+//=============
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_speed_from_e() {
+        let energy = 15.032;
+        let pp = MCBaseParticle {
+            kinetic_energy: energy,
+            ..Default::default()
+        };
+        let speed = pp.get_speed();
+        assert_eq!(speed, 5299286790.50638);
     }
 }

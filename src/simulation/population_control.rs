@@ -7,10 +7,7 @@
 use num::{one, zero, FromPrimitive};
 
 use crate::{
-    constants::{
-        physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY},
-        CustomFloat,
-    },
+    constants::CustomFloat,
     data::{direction_cosine::DirectionCosine, tallies::Balance},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{mc_base_particle::MCBaseParticle, particle_container::ParticleContainer},
@@ -233,7 +230,7 @@ pub fn source_now<T: CustomFloat>(
                         base_particle.kinetic_energy =
                             sample * range + mcdata.params.simulation_params.e_min;
 
-                        let speed: T = speed_from_energy(base_particle.kinetic_energy);
+                        let speed: T = base_particle.get_speed();
                         base_particle.velocity = direction_cosine.dir * speed;
 
                         base_particle.domain = domain_idx;
@@ -253,30 +250,4 @@ pub fn source_now<T: CustomFloat>(
                     container.processing_particles.extend(sourced);
                 });
         });
-}
-
-fn speed_from_energy<T: CustomFloat>(energy: T) -> T {
-    let rest_mass_energy: T = FromPrimitive::from_f64(NEUTRON_REST_MASS_ENERGY).unwrap();
-    let speed_of_light: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
-    let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    speed_of_light
-        * (energy * (energy + two * (rest_mass_energy))
-            / ((energy + rest_mass_energy) * (energy + rest_mass_energy)))
-            .sqrt()
-}
-
-//=============
-// Unit tests
-//=============
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn get_speed_from_e() {
-        let energy = 15.032;
-        let speed = speed_from_energy(energy);
-        assert_eq!(speed, 5299286790.50638);
-    }
 }
