@@ -21,10 +21,10 @@ fn main() {
     let n_steps = params.simulation_params.n_steps;
 
     let mcdata = init_mcdata(params);
-    let mut containers = init_particle_containers(&mcco.params, &mcco.processor_info);
+    let mut containers = init_particle_containers(&mcdata.params, &mcdata.exec_info);
     let mut mcunits = init_mcunits(&mcdata);
 
-    match mcco.processor_info.exec_policy {
+    match mcdata.exec_info.exec_policy {
         ExecPolicy::Sequential => {
             let container = &mut containers[0];
             let mcunit = &mut mcunits[0];
@@ -44,19 +44,23 @@ fn main() {
         }
     }
 
-    game_over(&mcunits);
+    game_over(&mcdata, &mut mcunits[0]);
 
-    coral_benchmark_correctness(mcco.params.simulation_params.coral_benchmark, &mcco.tallies);
+    // need to sum all tallies or already done before when in parallel?
+    coral_benchmark_correctness(
+        mcdata.params.simulation_params.coral_benchmark,
+        &mcunits[0].tallies,
+    );
 }
 
-pub fn game_over<T: CustomFloat>(mc_units: &[MonteCarloUnit<T>]) {
-    mc_units.fast_timer.update_main_stats();
+pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteCarloUnit<T>) {
+    mcunit.fast_timer.update_main_stats();
 
-    mc_units
+    mcunit
         .fast_timer
-        .cumulative_report(mcco.tallies.balance_cumulative.num_segments);
+        .cumulative_report(mcunit.tallies.balance_cumulative.num_segments);
 
-    mc_units.tallies.spectrum.print_spectrum(mcco);
+    mcunit.tallies.spectrum.print_spectrum(mcdata);
 }
 
 pub fn cycle_init<T: CustomFloat>(
@@ -78,8 +82,8 @@ pub fn cycle_init<T: CustomFloat>(
     population_control::population_control(mcdata, mcunit, container);
 
     population_control::roulette_low_weight_particles(
-        mcco.params.simulation_params.low_weight_cutoff,
-        mcco.source_particle_weight,
+        mcdata.params.simulation_params.low_weight_cutoff,
+        mcunit.source_particle_weight,
         container,
         &mut mcunit.tallies.balance_cycle,
     );
@@ -145,17 +149,18 @@ pub fn cycle_finalize<T: CustomFloat>(
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleFinalize);
 
     // prepare data for summary; this would be a sync phase in parallel exec
-    mcco.tallies.balance_cycle.end = container.processed_particles.len() as u64;
+    mcunit.tallies.balance_cycle.end = container.processed_particles.len() as u64;
 
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleFinalize);
 
     // print summary
-    mcco.tallies.print_summary(mcco, step);
+    mcunit.tallies.print_summary(&mut mcunit.fast_timer, step);
 
     // record / process data for the next cycle
-    mcco.tallies
-        .cycle_finalize(mcco.params.simulation_params.coral_benchmark);
-    mcco.update_spectrum(container);
+    mcunit
+        .tallies
+        .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
+    mcunit.update_spectrum(container, mcdata);
 
-    mcco.fast_timer.clear_last_cycle_timers();
+    mcunit.fast_timer.clear_last_cycle_timers();
 }
