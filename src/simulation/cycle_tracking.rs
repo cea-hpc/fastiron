@@ -72,7 +72,21 @@ fn cycle_tracking_function<T: CustomFloat>(
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                keep_tracking = collision_event(mcdata, mcunit, particle, extra);
+                let mat_gid = mcunit.domain[particle.base_particle.domain].cell_state
+                    [particle.base_particle.cell]
+                    .material;
+                let cell_nb_density = mcunit.domain[particle.base_particle.domain].cell_state
+                    [particle.base_particle.cell]
+                    .cell_number_density;
+
+                keep_tracking = collision_event(
+                    mcdata,
+                    mat_gid,
+                    cell_nb_density,
+                    particle,
+                    extra,
+                    &mut mcunit.tallies.balance_cycle,
+                );
                 if !keep_tracking {
                     particle.base_particle.species = Species::Unknown;
                 }
