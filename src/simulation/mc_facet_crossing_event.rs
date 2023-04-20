@@ -5,9 +5,8 @@
 
 use crate::{
     constants::CustomFloat,
-    data::{send_queue::SendQueue, tallies::MCTallyEvent},
-    geometry::facets::MCSubfacetAdjacencyEvent,
-    montecarlo::MonteCarloUnit,
+    data::tallies::MCTallyEvent,
+    geometry::facets::{MCSubfacetAdjacencyEvent, SubfacetAdjacency},
     particles::mc_particle::MCParticle,
 };
 
@@ -19,15 +18,8 @@ use crate::{
 /// transit.
 pub fn facet_crossing_event<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    mcunit: &MonteCarloUnit<T>,
-    send_queue: &mut SendQueue<T>,
+    facet_adjacency: &SubfacetAdjacency,
 ) {
-    let facet_adjacency = &mcunit.domain[particle.base_particle.domain]
-        .mesh
-        .cell_connectivity[particle.base_particle.cell]
-        .facet[particle.facet]
-        .subfacet;
-
     match facet_adjacency.event {
         MCSubfacetAdjacencyEvent::TransitOnProcessor => {
             // particle enters an adjacent cell
@@ -51,12 +43,6 @@ pub fn facet_crossing_event<T: CustomFloat>(
             particle.base_particle.cell = facet_adjacency.adjacent.cell.unwrap();
             particle.facet = facet_adjacency.adjacent.facet.unwrap();
             particle.base_particle.last_event = MCTallyEvent::FacetCrossingCommunication;
-
-            let neighbor_rank: usize = mcunit.domain[facet_adjacency.current.domain.unwrap()]
-                .mesh
-                .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
-
-            send_queue.push(neighbor_rank, particle);
         }
         MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
     }

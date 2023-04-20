@@ -92,7 +92,13 @@ fn cycle_tracking_function<T: CustomFloat>(
                 }
             }
             MCSegmentOutcome::FacetCrossing => {
-                facet_crossing_event(particle, mcunit, send_queue);
+                let facet_adjacency = &mcunit.domain[particle.base_particle.domain]
+                    .mesh
+                    .cell_connectivity[particle.base_particle.cell]
+                    .facet[particle.facet]
+                    .subfacet;
+
+                facet_crossing_event(particle, facet_adjacency);
 
                 keep_tracking = match particle.base_particle.last_event {
                     MCTallyEvent::FacetCrossingTransitExit => true,
@@ -112,11 +118,18 @@ fn cycle_tracking_function<T: CustomFloat>(
                         reflect_particle(particle, plane);
                         true
                     }
-                    _ => {
-                        // transit to off-cluster domain
+                    MCTallyEvent::FacetCrossingCommunication => {
+                        // get destination neighbor
+                        let neighbor_rank: usize = mcunit.domain
+                            [facet_adjacency.current.domain.unwrap()]
+                        .mesh
+                        .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
+                        // add to sendqueue
+                        send_queue.push(neighbor_rank, particle);
                         particle.base_particle.species = Species::Unknown;
                         false
                     }
+                    _ => unreachable!(), // other values are for collision & census
                 };
             }
             MCSegmentOutcome::Census => {
