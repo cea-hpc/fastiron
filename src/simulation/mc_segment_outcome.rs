@@ -76,11 +76,17 @@ pub fn outcome<T: CustomFloat>(
         precomputed_cross_section
     } else {
         // compute XS
+        let mat_gid: usize = mcunit.domain[particle.base_particle.domain].cell_state
+            [particle.base_particle.cell]
+            .material;
+        let cell_nb_density: T = mcunit.domain[particle.base_particle.domain].cell_state
+            [particle.base_particle.cell]
+            .cell_number_density;
+
         let tmp = weighted_macroscopic_cross_section(
             mcdata,
-            mcunit,
-            particle.base_particle.domain,
-            particle.base_particle.cell,
+            mat_gid,
+            cell_nb_density,
             particle.energy_group,
         );
 

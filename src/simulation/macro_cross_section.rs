@@ -52,30 +52,25 @@ pub fn macroscopic_cross_section<T: CustomFloat>(
 /// only accounts for simulation of a single isotope type.
 fn macroscopic_total_cross_section<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &MonteCarloUnit<T>,
-    domain_idx: usize,
-    cell_idx: usize,
+    mat_gid: usize,
     isotope_idx: usize,
+    cell_nb_density: T,
     energy_group: usize,
 ) -> T {
-    let global_mat_idx = mcunit.domain[domain_idx].cell_state[cell_idx].material;
+    let atom_fraction: T = mcdata.material_database.mat[mat_gid].iso[isotope_idx].atom_fraction;
 
-    let atom_fraction: T =
-        mcdata.material_database.mat[global_mat_idx].iso[isotope_idx].atom_fraction;
-    let cell_number_density: T = mcunit.domain[domain_idx].cell_state[cell_idx].cell_number_density;
-
-    if (atom_fraction == zero()) | (cell_number_density == zero()) {
+    if (atom_fraction == zero()) | (cell_nb_density == zero()) {
         // one of the two is 0
         let res: T = FromPrimitive::from_f64(1e-20).unwrap();
         return res;
     }
 
-    let isotope_gid = mcdata.material_database.mat[global_mat_idx].iso[isotope_idx].gid;
+    let isotope_gid = mcdata.material_database.mat[mat_gid].iso[isotope_idx].gid;
     let micro_cross_section: T = mcdata
         .nuclear_data
         .get_total_cross_section(isotope_gid, energy_group);
 
-    atom_fraction * cell_number_density * micro_cross_section
+    atom_fraction * cell_nb_density * micro_cross_section
 }
 
 /// Computes the number-density-weighted macroscopic cross section
@@ -85,28 +80,24 @@ fn macroscopic_total_cross_section<T: CustomFloat>(
 /// choice of Quicksilver to leave material weighting out of the proxy-app.
 pub fn weighted_macroscopic_cross_section<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
-    domain_idx: usize,
-    cell_idx: usize,
+    mat_gid: usize,
+    cell_nb_density: T,
     energy_group: usize,
 ) -> T {
     let mut sum: T = zero();
-    let global_material_idx: usize = mcunit.domain[domain_idx].cell_state[cell_idx].material;
-    let n_isotopes: usize = mcdata.material_database.mat[global_material_idx].iso.len();
+    //let global_material_idx: usize = mcunit.domain[domain_idx].cell_state[cell_idx].material;
+    let n_isotopes: usize = mcdata.material_database.mat[mat_gid].iso.len();
+    //let cnd: T = mcunit.domain[domain_idx].cell_state[cell_idx].cell_number_density;
 
     (0..n_isotopes).for_each(|isotope_idx| {
         sum += macroscopic_total_cross_section(
             mcdata,
-            mcunit,
-            domain_idx,
-            cell_idx,
+            mat_gid,
             isotope_idx,
+            cell_nb_density,
             energy_group,
         )
     });
-
-    // atomic in original code
-    mcunit.domain[domain_idx].cell_state[cell_idx].total[energy_group] = sum;
 
     sum
 }
