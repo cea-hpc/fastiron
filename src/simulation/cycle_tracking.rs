@@ -28,7 +28,7 @@ use super::{
 /// invalidated.
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &MonteCarloUnit<T>,
+    mcunit: &mut MonteCarloUnit<T>,
     base_particle: &mut MCBaseParticle<T>,
     extra: &mut Vec<MCBaseParticle<T>>,
     send_queue: &mut SendQueue<T>,
@@ -56,7 +56,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
 
 fn cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &MonteCarloUnit<T>,
+    mcunit: &mut MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCBaseParticle<T>>,
     send_queue: &mut SendQueue<T>,
@@ -72,13 +72,13 @@ fn cycle_tracking_function<T: CustomFloat>(
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                keep_tracking = collision_event(mcco, particle, extra);
+                keep_tracking = collision_event(mcdata, mcunit, particle, extra);
                 if !keep_tracking {
                     particle.base_particle.species = Species::Unknown;
                 }
             }
             MCSegmentOutcome::FacetCrossing => {
-                facet_crossing_event(particle, mcco, send_queue);
+                facet_crossing_event(particle, mcunit, send_queue);
 
                 keep_tracking = match particle.base_particle.last_event {
                     MCTallyEvent::FacetCrossingTransitExit => true,
@@ -90,7 +90,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                         false
                     }
                     MCTallyEvent::FacetCrossingReflection => {
-                        reflect_particle(mcco, particle);
+                        reflect_particle(mcunit, particle);
                         true
                     }
                     _ => {
