@@ -8,7 +8,7 @@ use num::{one, zero};
 use crate::{
     constants::CustomFloat,
     data::{send_queue::SendQueue, tallies::MCTallyEvent},
-    montecarlo::MonteCarlo,
+    montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{
         mc_base_particle::{MCBaseParticle, Species},
         mc_particle::MCParticle,
@@ -27,7 +27,8 @@ use super::{
 /// Depeding on the outcome of the tracking, it is either set as processed or
 /// invalidated.
 pub fn cycle_tracking_guts<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
+    mcdata: &MonteCarloData<T>,
+    mcunit: &MonteCarloUnit<T>,
     base_particle: &mut MCBaseParticle<T>,
     extra: &mut Vec<MCBaseParticle<T>>,
     send_queue: &mut SendQueue<T>,
@@ -38,23 +39,24 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
 
     // set age & time to census
     if particle.base_particle.time_to_census <= zero() {
-        particle.base_particle.time_to_census += mcco.params.simulation_params.dt;
+        particle.base_particle.time_to_census += mcdata.params.simulation_params.dt;
     }
     if particle.base_particle.age < zero() {
         particle.base_particle.age = zero();
     }
     // update energy & task
-    particle.energy_group = mcco
+    particle.energy_group = mcdata
         .nuclear_data
         .get_energy_groups(particle.base_particle.kinetic_energy);
 
-    cycle_tracking_function(mcco, &mut particle, extra, send_queue);
+    cycle_tracking_function(mcdata, mcunit, &mut particle, extra, send_queue);
 
     *base_particle = MCBaseParticle::new(&particle);
 }
 
 fn cycle_tracking_function<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
+    mcdata: &MonteCarloData<T>,
+    mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCBaseParticle<T>>,
     send_queue: &mut SendQueue<T>,
@@ -64,7 +66,7 @@ fn cycle_tracking_function<T: CustomFloat>(
     loop {
         // compute event for segment & update # of segments
         let segment_outcome = outcome(mcco, particle);
-        mcco.tallies.balance_cycle.num_segments += 1; // atomic in original code
+        mcunit.tallies.balance_cycle.num_segments += 1; // atomic in original code
 
         particle.base_particle.num_segments += one();
 
@@ -82,7 +84,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                     MCTallyEvent::FacetCrossingTransitExit => true,
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
-                        mcco.tallies.balance_cycle.escape += 1;
+                        mcunit.tallies.balance_cycle.escape += 1;
                         particle.base_particle.last_event = MCTallyEvent::FacetCrossingEscape;
                         particle.base_particle.species = Species::Unknown;
                         false
@@ -100,7 +102,7 @@ fn cycle_tracking_function<T: CustomFloat>(
             }
             MCSegmentOutcome::Census => {
                 // atomic in original code
-                mcco.tallies.balance_cycle.census += 1;
+                mcunit.tallies.balance_cycle.census += 1;
                 // we're done tracking the particle FOR THIS STEP
                 keep_tracking = false;
             }
