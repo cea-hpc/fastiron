@@ -5,7 +5,10 @@
 
 use num::{zero, FromPrimitive};
 
-use crate::{constants::CustomFloat, montecarlo::MonteCarlo};
+use crate::{
+    constants::CustomFloat,
+    montecarlo::{MonteCarlo, MonteCarloData, MonteCarloUnit},
+};
 
 /// Computes the reaction-specific number-density-weighted
 /// macroscopic cross section in the cell.
@@ -78,7 +81,8 @@ fn macroscopic_total_cross_section<T: CustomFloat>(
 /// Note that there is not really any weighting, this comes from the original
 /// choice of Quicksilver to leave material weighting out of the proxy-app.
 pub fn weighted_macroscopic_cross_section<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
+    mcdata: &MonteCarloData<T>,
+    mcunit: &MonteCarloUnit<T>,
     domain_idx: usize,
     cell_idx: usize,
     energy_group: usize,

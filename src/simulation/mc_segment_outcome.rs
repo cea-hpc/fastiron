@@ -18,7 +18,7 @@ use crate::{
     constants::CustomFloat,
     data::tallies::MCTallyEvent,
     geometry::facets::MCNearestFacet,
-    montecarlo::MonteCarlo,
+    montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::mc_particle::MCParticle,
     simulation::{macro_cross_section::weighted_macroscopic_cross_section, mct::nearest_facet},
     utils::mc_rng_state::rng_sample,
@@ -46,7 +46,8 @@ pub enum MCSegmentOutcome {
 ///   [`nearest_facet()`].
 /// - Collision: The distance is computed using probabilities.
 pub fn outcome<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
+    mcdata: &MonteCarloData<T>,
+    mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
 ) -> MCSegmentOutcome {
     // initialize distances and constants
@@ -68,7 +69,8 @@ pub fn outcome<T: CustomFloat>(
     // randomly determines the distance to the next collision
     // based upon the current cell data
     let macroscopic_total_xsection = weighted_macroscopic_cross_section(
-        mcco,
+        mcdata,
+        mcunit,
         particle.base_particle.domain,
         particle.base_particle.cell,
         particle.energy_group,
@@ -101,7 +103,7 @@ pub fn outcome<T: CustomFloat>(
         particle_speed * particle.base_particle.time_to_census;
 
     // nearest facet
-    let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, mcco);
+    let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, mcunit);
     particle.normal_dot = nearest_facet.dot_product;
     distance[MCSegmentOutcome::FacetCrossing as usize] = nearest_facet.distance_to_facet;
 
@@ -166,7 +168,7 @@ pub fn outcome<T: CustomFloat>(
 
     // update scalar flux tally
     // atomic in original code
-    mcco.tallies.scalar_flux_domain[particle.base_particle.domain].cell
+    mcunit.tallies.scalar_flux_domain[particle.base_particle.domain].cell
         [particle.base_particle.cell][particle.energy_group] +=
         particle.segment_path_length * particle.base_particle.weight;
 

@@ -15,7 +15,7 @@ use crate::{
         mc_location::MCLocation,
         N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET,
     },
-    montecarlo::MonteCarlo,
+    montecarlo::MonteCarloUnit,
     particles::mc_particle::MCParticle,
     utils::mc_rng_state::rng_sample,
 };
@@ -29,13 +29,13 @@ use crate::{
 /// case, a facet crossing. See [MCNearestFacet] for more information.
 pub fn nearest_facet<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    mcco: &MonteCarlo<T>,
+    mcunit: &MonteCarloUnit<T>,
 ) -> MCNearestFacet<T> {
     let location = particle.get_location();
     if location.domain.is_none() | location.cell.is_none() {
         panic!()
     }
-    let domain = &mcco.domain[location.domain.unwrap()];
+    let domain = &mcunit.domain[location.domain.unwrap()];
 
     let mut nearest_facet = mct_nf_3dg(particle, domain);
 
@@ -132,11 +132,11 @@ pub fn cell_position_3dg<T: CustomFloat>(mesh: &MCMeshDomain<T>, cell_idx: usize
 /// This function is called when a particle undergo a reflectionevent at the
 /// boundary of the problem. Note that the reflection does not result in a
 /// loss of energy.
-pub fn reflect_particle<T: CustomFloat>(mcco: &MonteCarlo<T>, particle: &mut MCParticle<T>) {
+pub fn reflect_particle<T: CustomFloat>(mcunit: &MonteCarloUnit<T>, particle: &mut MCParticle<T>) {
     let mut new_d_cos = particle.direction_cosine.clone();
     let location = particle.get_location();
 
-    let domain = &mcco.domain[location.domain.unwrap()];
+    let domain = &mcunit.domain[location.domain.unwrap()];
     let plane = &domain.mesh.cell_geometry[location.cell.unwrap()][location.facet.unwrap()];
 
     let facet_normal: MCVector<T> = MCVector {
