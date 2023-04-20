@@ -155,7 +155,11 @@ fn mct_nf_3dg<T: CustomFloat>(
 ) -> MCNearestFacet<T> {
     let huge_f: T = T::huge_float();
 
-    let mut location = particle.get_location();
+    let mut location = MCLocation {
+        domain: Some(particle.base_particle.domain),
+        cell: Some(particle.base_particle.cell),
+        facet: Some(particle.facet),
+    };
     let coords = particle.base_particle.coordinate;
     let direction_cosine = particle.direction_cosine.clone();
 

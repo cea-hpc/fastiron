@@ -5,10 +5,7 @@
 
 use num::zero;
 
-use crate::{
-    constants::CustomFloat, data::direction_cosine::DirectionCosine,
-    geometry::mc_location::MCLocation,
-};
+use crate::{constants::CustomFloat, data::direction_cosine::DirectionCosine};
 
 use super::mc_base_particle::MCBaseParticle;
 
@@ -52,15 +49,6 @@ impl<T: CustomFloat> MCParticle<T> {
             energy_group: 0,
             facet: 0,
             normal_dot: zero(),
-        }
-    }
-
-    /// Returns the location of the particle as a [MCLocation] object.
-    pub fn get_location(&self) -> MCLocation {
-        MCLocation {
-            domain: Some(self.base_particle.domain),
-            cell: Some(self.base_particle.cell),
-            facet: Some(self.facet),
         }
     }
 
