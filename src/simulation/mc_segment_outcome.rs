@@ -47,7 +47,7 @@ pub enum MCSegmentOutcome {
 /// - Collision: The distance is computed using probabilities.
 pub fn outcome<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &MonteCarloUnit<T>,
+    mcunit: &mut MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
 ) -> MCSegmentOutcome {
     // initialize distances and constants

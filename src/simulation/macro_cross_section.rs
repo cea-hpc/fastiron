@@ -85,7 +85,7 @@ fn macroscopic_total_cross_section<T: CustomFloat>(
 /// choice of Quicksilver to leave material weighting out of the proxy-app.
 pub fn weighted_macroscopic_cross_section<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &MonteCarloUnit<T>,
+    mcunit: &mut MonteCarloUnit<T>,
     domain_idx: usize,
     cell_idx: usize,
     energy_group: usize,

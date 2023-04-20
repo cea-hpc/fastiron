@@ -57,7 +57,7 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
 /// - Scattering reaction: no additional modifications occur.
 pub fn collision_event<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &MonteCarloUnit<T>,
+    mcunit: &mut MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCBaseParticle<T>>,
 ) -> bool {
