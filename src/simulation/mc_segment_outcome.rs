@@ -68,13 +68,28 @@ pub fn outcome<T: CustomFloat>(
 
     // randomly determines the distance to the next collision
     // based upon the current cell data
-    let macroscopic_total_xsection = weighted_macroscopic_cross_section(
-        mcdata,
-        mcunit,
-        particle.base_particle.domain,
-        particle.base_particle.cell,
-        particle.energy_group,
-    );
+    let precomputed_cross_section = mcunit.domain[particle.base_particle.domain].cell_state
+        [particle.base_particle.cell]
+        .total[particle.energy_group];
+    let macroscopic_total_xsection = if precomputed_cross_section > zero() {
+        // XS was already cached
+        precomputed_cross_section
+    } else {
+        // compute XS
+        let tmp = weighted_macroscopic_cross_section(
+            mcdata,
+            mcunit,
+            particle.base_particle.domain,
+            particle.base_particle.cell,
+            particle.energy_group,
+        );
+
+        // cache the XS
+        mcunit.domain[particle.base_particle.domain].cell_state[particle.base_particle.cell]
+            .total[particle.energy_group] = tmp;
+
+        tmp
+    };
 
     particle.total_cross_section = macroscopic_total_xsection;
     if macroscopic_total_xsection == zero() {

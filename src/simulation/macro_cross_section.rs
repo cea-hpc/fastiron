@@ -90,14 +90,6 @@ pub fn weighted_macroscopic_cross_section<T: CustomFloat>(
     cell_idx: usize,
     energy_group: usize,
 ) -> T {
-    // early return
-    // this willbe moved before the call to this fucntion
-    let precomputed_cross_section =
-        mcunit.domain[domain_idx].cell_state[cell_idx].total[energy_group];
-    if precomputed_cross_section > zero() {
-        return precomputed_cross_section;
-    }
-
     let mut sum: T = zero();
     let global_material_idx: usize = mcunit.domain[domain_idx].cell_state[cell_idx].material;
     let n_isotopes: usize = mcdata.material_database.mat[global_material_idx].iso.len();
