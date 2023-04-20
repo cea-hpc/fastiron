@@ -15,7 +15,7 @@ use crate::{
 /// This functions update a particle's locational data according to one of the
 /// four defined adjacency events ([MCSubfacetAdjacencyEvent]). Note that in a
 /// sequential or a memory-shared parallelism context, there are no off-processor
-/// transit.
+/// transit as the mesh is not divided for management.
 pub fn facet_crossing_event<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     facet_adjacency: &SubfacetAdjacency,

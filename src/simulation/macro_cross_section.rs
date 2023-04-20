@@ -20,10 +20,7 @@ pub fn macroscopic_cross_section<T: CustomFloat>(
     isotope_idx: usize,
     energy_group: usize,
 ) -> T {
-    //let global_mat_idx = mcunit.domain[domain_idx].cell_state[cell_idx].material;
-
     let atom_fraction: T = mcdata.material_database.mat[mat_gid].iso[isotope_idx].atom_fraction;
-    //let cell_number_density: T = mcunit.domain[domain_idx].cell_state[cell_idx].cell_number_density;
 
     if (atom_fraction == zero()) | (cell_nb_density == zero()) {
         // one of the two is 0
@@ -80,9 +77,7 @@ pub fn weighted_macroscopic_cross_section<T: CustomFloat>(
     energy_group: usize,
 ) -> T {
     let mut sum: T = zero();
-    //let global_material_idx: usize = mcunit.domain[domain_idx].cell_state[cell_idx].material;
     let n_isotopes: usize = mcdata.material_database.mat[mat_gid].iso.len();
-    //let cnd: T = mcunit.domain[domain_idx].cell_state[cell_idx].cell_number_density;
 
     (0..n_isotopes).for_each(|isotope_idx| {
         sum += macroscopic_total_cross_section(

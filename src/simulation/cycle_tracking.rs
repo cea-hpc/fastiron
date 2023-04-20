@@ -64,10 +64,10 @@ fn cycle_tracking_function<T: CustomFloat>(
     let mut keep_tracking: bool;
 
     loop {
-        // compute event for segment & update # of segments
+        // compute event for segment
         let segment_outcome = outcome(mcdata, mcunit, particle);
+        // update # of segments
         mcunit.tallies.balance_cycle.num_segments += 1; // atomic in original code
-
         particle.base_particle.num_segments += one();
 
         match segment_outcome {
@@ -92,6 +92,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                 }
             }
             MCSegmentOutcome::FacetCrossing => {
+                // crossed facet data
                 let facet_adjacency = &mcunit.domain[particle.base_particle.domain]
                     .mesh
                     .cell_connectivity[particle.base_particle.cell]
@@ -101,14 +102,10 @@ fn cycle_tracking_function<T: CustomFloat>(
                 facet_crossing_event(particle, facet_adjacency);
 
                 keep_tracking = match particle.base_particle.last_event {
+                    // ~~~ on unit case
+                    // on-unit transit
                     MCTallyEvent::FacetCrossingTransitExit => true,
-                    MCTallyEvent::FacetCrossingEscape => {
-                        // atomic in original code
-                        mcunit.tallies.balance_cycle.escape += 1;
-                        particle.base_particle.last_event = MCTallyEvent::FacetCrossingEscape;
-                        particle.base_particle.species = Species::Unknown;
-                        false
-                    }
+                    // bound reflection
                     MCTallyEvent::FacetCrossingReflection => {
                         // plane on which particle is reflected
                         let plane = &mcunit.domain[particle.base_particle.domain]
@@ -118,6 +115,8 @@ fn cycle_tracking_function<T: CustomFloat>(
                         reflect_particle(particle, plane);
                         true
                     }
+                    // ~~~ off unit case
+                    // off-unit transit
                     MCTallyEvent::FacetCrossingCommunication => {
                         // get destination neighbor
                         let neighbor_rank: usize = mcunit.domain
@@ -129,13 +128,22 @@ fn cycle_tracking_function<T: CustomFloat>(
                         particle.base_particle.species = Species::Unknown;
                         false
                     }
-                    _ => unreachable!(), // other values are for collision & census
+                    // bound escape
+                    MCTallyEvent::FacetCrossingEscape => {
+                        // atomic in original code
+                        mcunit.tallies.balance_cycle.escape += 1;
+                        particle.base_particle.last_event = MCTallyEvent::FacetCrossingEscape;
+                        particle.base_particle.species = Species::Unknown;
+                        false
+                    }
+                    // ~~~ other enum values are for collision & census, not facet crossing
+                    _ => unreachable!(),
                 };
             }
             MCSegmentOutcome::Census => {
                 // atomic in original code
                 mcunit.tallies.balance_cycle.census += 1;
-                // we're done tracking the particle FOR THIS STEP
+                // we're done tracking the particle FOR THIS STEP; Species stays valid
                 keep_tracking = false;
             }
         }
