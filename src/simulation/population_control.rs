@@ -12,7 +12,7 @@ use crate::{
         CustomFloat,
     },
     data::{direction_cosine::DirectionCosine, tallies::Balance},
-    montecarlo::MonteCarlo,
+    montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{mc_base_particle::MCBaseParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
@@ -27,18 +27,19 @@ use crate::{
 /// if it is striclty superior to one, there are too little. Particles are
 /// then either randomly killed or spawned to get to the desired number.
 pub fn population_control<T: CustomFloat>(
-    mcco: &mut MonteCarlo<T>,
+    mcdata: &MonteCarloData<T>,
+    mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
 ) {
-    let mut target_n_particles: usize = mcco.params.simulation_params.n_particles as usize;
+    let mut target_n_particles: usize = mcdata.params.simulation_params.n_particles as usize;
     let mut global_n_particles: usize = 0;
     let local_n_particles: usize = container.processing_particles.len();
-    let load_balance = mcco.params.simulation_params.load_balance;
+    let load_balance = mcdata.params.simulation_params.load_balance;
 
     if load_balance {
         // Spread the target number of particle among the processors
         let tmp: T = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
-            / FromPrimitive::from_usize(mcco.processor_info.num_threads).unwrap();
+            / FromPrimitive::from_usize(mcdata.exec_info.num_threads).unwrap();
         target_n_particles = tmp.ceil().to_usize().unwrap();
     } else {
         global_n_particles = local_n_particles;
@@ -57,7 +58,11 @@ pub fn population_control<T: CustomFloat>(
     }
 
     if split_rr_factor != one() {
-        population_control_guts(split_rr_factor, container, &mut mcco.tallies.balance_cycle);
+        population_control_guts(
+            split_rr_factor,
+            container,
+            &mut mcunit.tallies.balance_cycle,
+        );
     }
 }
 
@@ -113,7 +118,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
     low_weight_cutoff: T,
     source_particle_weight: T,
     container: &mut ParticleContainer<T>,
-    task_balance: &mut Balance,
+    balance: &mut Balance,
 ) {
     if low_weight_cutoff > zero() {
         let weight_cutoff = low_weight_cutoff * source_particle_weight;
@@ -127,7 +132,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
                     true
                 } else {
                     // particle dies
-                    task_balance.rr += 1;
+                    balance.rr += 1;
                     false
                 }
             } else {
@@ -144,21 +149,25 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 /// is called (once per cycle), 10% of the target number of particles are
 /// spawned. _Where_ they are spawned depends on both deterministic factors and
 /// randomness.
-pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut ParticleContainer<T>) {
-    let time_step = mcco.params.simulation_params.dt;
+pub fn source_now<T: CustomFloat>(
+    mcdata: &MonteCarloData<T>,
+    mcunit: &mut MonteCarloUnit<T>,
+    container: &mut ParticleContainer<T>,
+) {
+    let time_step = mcdata.params.simulation_params.dt;
 
     // this is a constant; add it to mcco ?
-    let mut source_rate: Vec<T> = vec![zero(); mcco.material_database.mat.len()];
+    let mut source_rate: Vec<T> = vec![zero(); mcdata.material_database.mat.len()];
     source_rate
         .iter_mut()
-        .zip(mcco.material_database.mat.iter())
+        .zip(mcdata.material_database.mat.iter())
         .for_each(|(lhs, mat)| {
-            let rhs = mcco.params.material_params[&mat.name].source_rate;
+            let rhs = mcdata.params.material_params[&mat.name].source_rate;
             *lhs = rhs;
         });
 
     let mut total_weight_particles: T = zero();
-    mcco.domain.iter().for_each(|dom| {
+    mcunit.domain.iter().for_each(|dom| {
         dom.cell_state.iter().for_each(|cell| {
             // constant because cell volume is constant in our program
             let cell_weight_particles: T = cell.volume * source_rate[cell.material] * time_step;
@@ -166,7 +175,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
         });
     });
 
-    let n_particles = mcco.params.simulation_params.n_particles as usize;
+    let n_particles = mcdata.params.simulation_params.n_particles as usize;
 
     let source_fraction: T = FromPrimitive::from_f64(0.1).unwrap();
 
@@ -174,10 +183,11 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
         / (source_fraction * FromPrimitive::from_usize(n_particles).unwrap());
     assert_ne!(source_particle_weight, zero());
 
-    mcco.source_particle_weight = source_particle_weight;
+    mcunit.source_particle_weight = source_particle_weight;
 
     // on each domain
-    mcco.domain
+    mcunit
+        .domain
         .iter_mut()
         .enumerate()
         .for_each(|(domain_idx, dom)| {
@@ -217,11 +227,11 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
                         direction_cosine.sample_isotropic(&mut base_particle.random_number_seed);
 
                         // sample energy uniformly in [emin; emax] MeV
-                        let range = mcco.params.simulation_params.e_max
-                            - mcco.params.simulation_params.e_min;
+                        let range = mcdata.params.simulation_params.e_max
+                            - mcdata.params.simulation_params.e_min;
                         let sample: T = rng_sample(&mut base_particle.random_number_seed);
                         base_particle.kinetic_energy =
-                            sample * range + mcco.params.simulation_params.e_min;
+                            sample * range + mcdata.params.simulation_params.e_min;
 
                         let speed: T = speed_from_energy(base_particle.kinetic_energy);
                         base_particle.velocity = direction_cosine.dir * speed;
@@ -236,7 +246,7 @@ pub fn source_now<T: CustomFloat>(mcco: &mut MonteCarlo<T>, container: &mut Part
                         base_particle.time_to_census = time_step * rand_f;
 
                         // atomic in original code
-                        mcco.tallies.balance_cycle.source += 1;
+                        mcunit.tallies.balance_cycle.source += 1;
 
                         base_particle
                     });

@@ -65,11 +65,11 @@ pub fn init_particle_containers<T: CustomFloat>(
     vec![container; proc_info.num_threads]
 }
 
-pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> MonteCarloUnit<T> {
+pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarloUnit<T>> {
     let mut mcunit = MonteCarloUnit::new(&mcdata.params);
     init_mesh(&mut mcunit, mcdata);
     init_tallies(&mut mcunit, &mcdata.params);
-    mcunit
+    vec![mcunit]
 }
 
 //==================
