@@ -13,7 +13,7 @@ use num::zero;
 use crate::{
     constants::CustomFloat,
     geometry::mc_domain::MCDomain,
-    montecarlo::MonteCarlo,
+    montecarlo::MonteCarloUnit,
     parameters::BenchType,
     utils::mc_fast_timer::{self, Section},
 };
@@ -301,7 +301,7 @@ impl<T: CustomFloat> Tallies<T> {
     /// - `num_seg` column counts the total number of computed segments.
     /// - `scalar_flux` is the total scalar flux of the problem.
     /// - The last three columns indicate the time spent in each section.
-    pub fn print_summary(&self, mcco: &MonteCarlo<T>, step: usize) {
+    pub fn print_summary(&self, mcunit: &MonteCarloUnit<T>, step: usize) {
         if step == 0 {
             // print header
             println!("[Tally Summary]");
@@ -311,9 +311,10 @@ impl<T: CustomFloat> Tallies<T> {
                 "escape", "census", "num_seg", "scalar_flux", "cycleInit (s)", "cycleTracking (s)", "cycleFinalize (s)"
             );
         }
-        let cy_init = mc_fast_timer::get_last_cycle(mcco, Section::CycleInit);
-        let cy_track = mc_fast_timer::get_last_cycle(mcco, Section::CycleTracking);
-        let cy_fin = mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize);
+        let cy_init = mc_fast_timer::get_last_cycle(&mut mcunit.fast_timer, Section::CycleInit);
+        let cy_track =
+            mc_fast_timer::get_last_cycle(&mut mcunit.fast_timer, Section::CycleTracking);
+        let cy_fin = mc_fast_timer::get_last_cycle(&mut mcunit.fast_timer, Section::CycleFinalize);
         let sf_sum = self.scalar_flux_sum();
         let bal = &self.balance_cycle;
         println!("{:>7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>11.3e} {:>18.5e} {:>18.3e}",

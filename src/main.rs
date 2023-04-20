@@ -64,27 +64,27 @@ pub fn cycle_init<T: CustomFloat>(
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
 ) {
-    mc_fast_timer::start(mcco, Section::CycleInit);
+    mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleInit);
 
-    mcco.clear_cross_section_cache();
+    mcunit.clear_cross_section_cache();
 
     container.swap_processing_processed();
 
     let tmp = container.processing_particles.len() as u64;
-    mcco.tallies.balance_cycle.start = tmp;
+    mcunit.tallies.balance_cycle.start = tmp;
 
-    population_control::source_now(mcco, container);
+    population_control::source_now(mcdata, mcunit, container);
 
-    population_control::population_control(mcco, container);
+    population_control::population_control(mcdata, mcunit, container);
 
     population_control::roulette_low_weight_particles(
         mcco.params.simulation_params.low_weight_cutoff,
         mcco.source_particle_weight,
         container,
-        &mut mcco.tallies.balance_cycle,
+        &mut mcunit.tallies.balance_cycle,
     );
 
-    mc_fast_timer::stop(mcco, Section::CycleInit);
+    mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleInit);
 }
 
 pub fn cycle_tracking<T: CustomFloat>(
@@ -92,11 +92,11 @@ pub fn cycle_tracking<T: CustomFloat>(
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
 ) {
-    mc_fast_timer::start(mcco, Section::CycleTracking);
+    mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
     let mut done = false;
     loop {
         while !done {
-            mc_fast_timer::start(mcco, Section::CycleTrackingKernel);
+            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
 
             // track particles
             container
@@ -115,8 +115,8 @@ pub fn cycle_tracking<T: CustomFloat>(
                 });
             container.processing_particles.clear();
 
-            mc_fast_timer::stop(mcco, Section::CycleTrackingKernel);
-            mc_fast_timer::start(mcco, Section::CycleTrackingComm);
+            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
+            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingComm);
 
             // clean extra here
             container.process_sq();
@@ -124,7 +124,7 @@ pub fn cycle_tracking<T: CustomFloat>(
 
             done = container.test_done_new();
 
-            mc_fast_timer::stop(mcco, Section::CycleTrackingComm);
+            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingComm);
         }
         done = container.test_done_new();
 
@@ -132,7 +132,7 @@ pub fn cycle_tracking<T: CustomFloat>(
             break;
         }
     }
-    mc_fast_timer::stop(mcco, Section::CycleTracking);
+    mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTracking);
 }
 
 pub fn cycle_finalize<T: CustomFloat>(
@@ -141,12 +141,12 @@ pub fn cycle_finalize<T: CustomFloat>(
     container: &mut ParticleContainer<T>,
     step: usize,
 ) {
-    mc_fast_timer::start(mcco, Section::CycleFinalize);
+    mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleFinalize);
 
     // prepare data for summary; this would be a sync phase in parallel exec
     mcco.tallies.balance_cycle.end = container.processed_particles.len() as u64;
 
-    mc_fast_timer::stop(mcco, Section::CycleFinalize);
+    mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleFinalize);
 
     // print summary
     mcco.tallies.print_summary(mcco, step);
