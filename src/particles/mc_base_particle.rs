@@ -5,7 +5,6 @@
 use crate::{
     constants::CustomFloat,
     data::{mc_vector::MCVector, tallies::MCTallyEvent},
-    geometry::mc_location::MCLocation,
 };
 
 use super::mc_particle::MCParticle;
@@ -62,14 +61,5 @@ impl<T: CustomFloat> MCBaseParticle<T> {
     /// [MCBaseParticle] object, we derive the [Clone] trait.
     pub fn new(particle: &MCParticle<T>) -> Self {
         particle.base_particle.clone()
-    }
-
-    /// Return the current particle's location.
-    pub fn get_location(&self) -> MCLocation {
-        MCLocation {
-            domain: Some(self.domain),
-            cell: Some(self.cell),
-            facet: Some(0),
-        }
     }
 }
