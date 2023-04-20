@@ -10,7 +10,7 @@ use crate::{
     geometry::{
         global_fcc_grid::GlobalFccGrid, mc_domain::MCDomain, mesh_partition::MeshPartition,
     },
-    montecarlo::MonteCarlo,
+    montecarlo::{MonteCarloData, MonteCarloUnit},
     parameters::Parameters,
     particles::particle_container::ParticleContainer,
     utils::{
@@ -19,6 +19,19 @@ use crate::{
     },
 };
 use num::{one, zero, Float, FromPrimitive};
+
+/// Creates a [MonteCarloData] object using the specified parameters.
+pub fn init_mcdata<T: CustomFloat>(params: Parameters<T>) -> MonteCarloData<T> {
+    let mut mcdata: MonteCarloData<T> = MonteCarloData::new(params);
+
+    init_nuclear_data(&mut mcdata);
+    //init_mesh(&mut mcco);
+    //init_tallies(&mut mcco);
+
+    check_cross_sections(&mcdata);
+
+    mcdata
+}
 
 /// Creates the correct number of particle containers for simulation.
 ///
@@ -52,31 +65,22 @@ pub fn init_particle_containers<T: CustomFloat>(
     vec![container; proc_info.num_threads]
 }
 
-/// Creates a [MonteCarlo] object using the specified parameters.
-pub fn init_mc<T: CustomFloat>(params: Parameters<T>) -> MonteCarlo<T> {
-    let mut mcco: MonteCarlo<T> = MonteCarlo::new(params);
-
-    init_proc_info(&mut mcco);
-    init_nuclear_data(&mut mcco);
-    init_mesh(&mut mcco);
-    init_tallies(&mut mcco);
-
-    check_cross_sections(&mcco);
-
-    mcco
+pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> MonteCarloUnit<T> {
+    let mut mcunit = MonteCarloUnit::new(&mcdata.params);
+    init_mesh(&mut mcunit, mcdata);
+    init_tallies(&mut mcunit, &mcdata.params);
+    mcunit
 }
 
 //==================
 // Private functions
 //==================
 
-fn init_proc_info<T: CustomFloat>(_mcco: &mut MonteCarlo<T>) {}
-
-fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
-    let params = &mcco.params;
+fn init_nuclear_data<T: CustomFloat>(mcdata: &mut MonteCarloData<T>) {
+    let params = &mcdata.params;
     let energy_low: T = params.simulation_params.e_min;
     let energy_high: T = params.simulation_params.e_max;
-    mcco.nuclear_data =
+    mcdata.nuclear_data =
         NuclearData::new(params.simulation_params.n_groups, energy_low, energy_high);
 
     let mut cross_section: HashMap<String, Polynomial<T>> = Default::default();
@@ -100,8 +104,8 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         n_isotopes += mat_params.n_isotopes;
     }
 
-    mcco.nuclear_data.isotopes.reserve(n_isotopes);
-    mcco.material_database.mat.reserve(n_materials);
+    mcdata.nuclear_data.isotopes.reserve(n_isotopes);
+    mcdata.material_database.mat.reserve(n_materials);
 
     for mp in params.material_params.values() {
         let mut material: Material<T> = Material {
@@ -111,7 +115,7 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         };
 
         (0..mp.n_isotopes).for_each(|_| {
-            let isotope_gid = mcco.nuclear_data.add_isotope(
+            let isotope_gid = mcdata.nuclear_data.add_isotope(
                 &cross_section,
                 mp,
                 params.cross_section_params[&mp.fission_cross_section].nu_bar,
@@ -122,7 +126,7 @@ fn init_nuclear_data<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
                 atom_fraction: one::<T>() / FromPrimitive::from_usize(mp.n_isotopes).unwrap(),
             })
         });
-        mcco.material_database.add_material(material);
+        mcdata.material_database.add_material(material);
     }
 }
 
@@ -199,8 +203,9 @@ fn initialize_centers_rand<T: CustomFloat>(
     centers
 }
 
-fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
-    let params = &mcco.params;
+fn init_mesh<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, mcdata: &MonteCarloData<T>) {
+    let params = &mcdata.params;
+    let mat_db = &mcdata.material_database;
 
     let nx: usize = params.simulation_params.nx;
     let ny: usize = params.simulation_params.ny;
@@ -254,26 +259,21 @@ fn init_mesh<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
         }
     });
 
-    mcco.domain.reserve(my_domain_gids.len());
+    mcunit.domain.reserve(my_domain_gids.len());
     comm.partition.iter().for_each(|mesh_p| {
-        mcco.domain.push(MCDomain::new(
-            mesh_p,
-            &global_grid,
-            &ddc,
-            params,
-            &mcco.material_database,
-        ))
+        mcunit
+            .domain
+            .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, mat_db))
     });
 
     if n_ranks == 1 {
-        consistency_check(my_rank, &mcco.domain);
+        consistency_check(my_rank, &mcunit.domain);
     }
 }
 
-fn init_tallies<T: CustomFloat>(mcco: &mut MonteCarlo<T>) {
-    let params = &mcco.params;
-    mcco.tallies.initialize_tallies(
-        &mcco.domain,
+fn init_tallies<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, params: &Parameters<T>) {
+    mcunit.tallies.initialize_tallies(
+        &mcunit.domain,
         params.simulation_params.n_groups,
         params.simulation_params.coral_benchmark,
     )
@@ -289,14 +289,14 @@ struct XSData<T: Float> {
 /// Prints cross-section data of the problem.
 ///
 /// TODO: add a model of the produced output
-pub fn check_cross_sections<T: CustomFloat>(mcco: &MonteCarlo<T>) {
-    let params = &mcco.params;
+pub fn check_cross_sections<T: CustomFloat>(mcdata: &MonteCarloData<T>) {
+    let params = &mcdata.params;
     if params.simulation_params.cross_sections_out.is_empty() {
         return;
     }
 
-    let nucdb = &mcco.nuclear_data;
-    let matdb = &mcco.material_database;
+    let nucdb = &mcdata.nuclear_data;
+    let matdb = &mcdata.material_database;
 
     let n_groups = params.simulation_params.n_groups;
 

@@ -49,45 +49,33 @@ impl<T: CustomFloat> MonteCarloData<T> {
     }
 }
 
-/// Super-structure used to contain all the problem's objects and data.
+/// Super-structure used to contain unit-specific data of the Monte-Carlo problem.
+/// The notion of unit is specified ....
 #[derive(Debug)]
-pub struct MonteCarlo<T: CustomFloat> {
+pub struct MonteCarloUnit<T: CustomFloat> {
     /// List of spatial domains.
     pub domain: Vec<MCDomain<T>>,
-    /// Parameters of the problem.
-    pub params: Parameters<T>,
-    /// Object storing all data related to particles.
-    pub nuclear_data: NuclearData<T>,
-    /// Object storing all data related to materials.
-    pub material_database: MaterialDatabase<T>,
     /// Object storing all tallies of the simulation.
     pub tallies: Tallies<T>,
     /// Container for the timers used for performance measurements.
     pub fast_timer: MCFastTimerContainer,
-    /// Object storing data related to the processor and execution mode.
-    pub processor_info: MCProcessorInfo,
     /// Weight of the particles at creation in a source zone
     pub source_particle_weight: T,
 }
 
-impl<T: CustomFloat> MonteCarlo<T> {
+impl<T: CustomFloat> MonteCarloUnit<T> {
     /// Constructor.
-    pub fn new(params: Parameters<T>) -> Self {
+    pub fn new(params: &Parameters<T>) -> Self {
         let tallies: Tallies<T> = Tallies::new(
             params.simulation_params.energy_spectrum.to_owned(),
             params.simulation_params.n_groups,
         );
-        let processor_info = MCProcessorInfo::new(&params.simulation_params);
         let fast_timer: MCFastTimerContainer = MCFastTimerContainer::default();
 
         Self {
             domain: Default::default(),
-            params,
-            nuclear_data: Default::default(),
-            material_database: Default::default(),
             tallies,
             fast_timer,
-            processor_info,
             source_particle_weight: zero(),
         }
     }
@@ -100,7 +88,11 @@ impl<T: CustomFloat> MonteCarlo<T> {
     }
 
     /// Update the energy spectrum by going over all the currently valid particles.
-    pub fn update_spectrum(&mut self, container: &ParticleContainer<T>) {
+    pub fn update_spectrum(
+        &mut self,
+        container: &ParticleContainer<T>,
+        mcdata: &MonteCarloData<T>,
+    ) {
         if self.tallies.spectrum.file_name.is_empty() {
             return;
         }
@@ -109,7 +101,7 @@ impl<T: CustomFloat> MonteCarlo<T> {
             particle_list.iter().for_each(|pp| {
                 // load particle & update energy group
                 let mut particle = MCParticle::new(pp);
-                particle.energy_group = self
+                particle.energy_group = mcdata
                     .nuclear_data
                     .get_energy_groups(particle.base_particle.kinetic_energy);
                 spectrum[particle.energy_group] += 1;
