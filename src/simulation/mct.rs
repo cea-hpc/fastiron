@@ -15,7 +15,6 @@ use crate::{
         mc_location::MCLocation,
         N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET,
     },
-    montecarlo::MonteCarloUnit,
     particles::mc_particle::MCParticle,
     utils::mc_rng_state::rng_sample,
 };
@@ -29,14 +28,8 @@ use crate::{
 /// case, a facet crossing. See [MCNearestFacet] for more information.
 pub fn nearest_facet<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    mcunit: &MonteCarloUnit<T>,
+    domain: &MCDomain<T>,
 ) -> MCNearestFacet<T> {
-    let location = particle.get_location();
-    if location.domain.is_none() | location.cell.is_none() {
-        panic!()
-    }
-    let domain = &mcunit.domain[location.domain.unwrap()];
-
     let mut nearest_facet = mct_nf_3dg(particle, domain);
 
     if nearest_facet.distance_to_facet < zero() {
