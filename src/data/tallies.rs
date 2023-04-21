@@ -14,6 +14,7 @@ use crate::{
     constants::CustomFloat,
     geometry::mc_domain::MCDomain,
     parameters::BenchType,
+    particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     utils::mc_fast_timer::{self, MCFastTimerContainer, Section},
 };
 
@@ -350,6 +351,30 @@ impl<T: CustomFloat> Tallies<T> {
             })
             .sum();
         summ
+    }
+
+    /// Update the energy spectrum by going over all the currently valid particles.
+    pub fn update_spectrum(&mut self, container: &ParticleContainer<T>) {
+        if self.spectrum.file_name.is_empty() {
+            return;
+        }
+
+        let update_function = |particle_list: &[MCParticle<T>], spectrum: &mut [u64]| {
+            particle_list.iter().for_each(|particle| {
+                spectrum[particle.energy_group] += 1;
+            });
+        };
+
+        // Iterate on processing particles
+        update_function(
+            &container.processing_particles,
+            &mut self.spectrum.census_energy_spectrum,
+        );
+        // Iterate on processed particles
+        update_function(
+            &container.processed_particles,
+            &mut self.spectrum.census_energy_spectrum,
+        );
     }
 
     /// Print stats of the current cycle and update the cumulative counters.

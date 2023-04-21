@@ -112,20 +112,20 @@ fn population_control_guts<T: CustomFloat>(
 /// This function regulates the number of low (statistica) weight particle to
 /// prevent clusters of low energy particle from falsifying the results.
 pub fn roulette_low_weight_particles<T: CustomFloat>(
-    low_weight_cutoff: T,
+    relative_weight_cutoff: T,
     source_particle_weight: T,
     container: &mut ParticleContainer<T>,
     balance: &mut Balance,
 ) {
-    if low_weight_cutoff > zero() {
-        let weight_cutoff = low_weight_cutoff * source_particle_weight;
+    if relative_weight_cutoff > zero() {
+        let weight_cutoff = relative_weight_cutoff * source_particle_weight;
 
         container.processing_particles.retain_mut(|pp| {
             if pp.weight <= weight_cutoff {
                 let rand_f: T = rng_sample(&mut pp.random_number_seed);
-                if rand_f <= low_weight_cutoff {
+                if rand_f <= relative_weight_cutoff {
                     // particle survives with increased weight
-                    pp.weight /= low_weight_cutoff;
+                    pp.weight /= relative_weight_cutoff;
                     true
                 } else {
                     // particle dies
@@ -152,6 +152,7 @@ pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
+    source_particle_weight: T,
 ) {
     let time_step = mcdata.params.simulation_params.dt;
 
@@ -161,25 +162,6 @@ pub fn source_now<T: CustomFloat>(
         .iter()
         .map(|mat| mcdata.params.material_params[&mat.name].source_rate)
         .collect();
-
-    let mut total_weight_particles: T = zero();
-    mcunit.domain.iter().for_each(|dom| {
-        dom.cell_state.iter().for_each(|cell| {
-            // constant because cell volume is constant in our program
-            let cell_weight_particles: T = cell.volume * source_rate[cell.material] * time_step;
-            total_weight_particles += cell_weight_particles;
-        });
-    });
-
-    let n_particles = mcdata.params.simulation_params.n_particles as usize;
-
-    let source_fraction: T = FromPrimitive::from_f64(0.1).unwrap();
-
-    let source_particle_weight: T = total_weight_particles
-        / (source_fraction * FromPrimitive::from_usize(n_particles).unwrap());
-    assert_ne!(source_particle_weight, zero());
-
-    mcunit.source_particle_weight = source_particle_weight;
 
     // on each domain
     mcunit
@@ -193,25 +175,28 @@ pub fn source_now<T: CustomFloat>(
                 .enumerate()
                 .for_each(|(cell_idx, cell)| {
                     // compute number of particles to be created in the cell
-                    let cell_weight_particle: T =
-                        cell.volume * source_rate[cell.material] * time_step;
-                    let cell_n_particles: usize = (cell_weight_particle / source_particle_weight)
+                    let cell_weight: T = cell.volume * source_rate[cell.material] * time_step;
+                    let cell_n_particles: usize = (cell_weight / source_particle_weight)
                         .floor()
                         .to_usize()
                         .unwrap();
 
-                    // create cell_n_particles
-                    let sourced = (0..cell_n_particles).map(|_| {
+                    let mut seeds: Vec<u64> = Vec::with_capacity(cell_n_particles);
+                    for _ in 0..cell_n_particles {
                         // source_tally is fetched & incr atomically in original code
-                        let mut rand_n_seed = (cell.source_tally + cell.id) as u64;
+                        let rand_n_seed = (cell.source_tally + cell.id) as u64;
                         cell.source_tally += 1;
+                        seeds.push(rand_n_seed);
+                    }
 
+                    // create cell_n_particles
+                    let sourced = seeds.iter_mut().map(|rand_n_seed| {
                         // ~~~ init particle
 
                         let mut particle: MCParticle<T> = MCParticle::default();
 
-                        particle.random_number_seed = spawn_rn_seed::<T>(&mut rand_n_seed);
-                        particle.identifier = rand_n_seed;
+                        particle.random_number_seed = spawn_rn_seed::<T>(rand_n_seed);
+                        particle.identifier = *rand_n_seed;
                         particle.coordinate = generate_coordinate_3dg(
                             &mut particle.random_number_seed,
                             &dom.mesh,

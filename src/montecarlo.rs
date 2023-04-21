@@ -14,8 +14,6 @@ use crate::data::nuclear_data::NuclearData;
 use crate::data::tallies::Tallies;
 use crate::geometry::mc_domain::MCDomain;
 use crate::parameters::Parameters;
-use crate::particles::mc_particle::MCParticle;
-use crate::particles::particle_container::ParticleContainer;
 use crate::utils::mc_fast_timer::MCFastTimerContainer;
 use crate::utils::mc_processor_info::MCProcessorInfo;
 
@@ -59,7 +57,7 @@ pub struct MonteCarloUnit<T: CustomFloat> {
     /// Container for the timers used for performance measurements.
     pub fast_timer: MCFastTimerContainer,
     /// Weight of the particles at creation in a source zone
-    pub source_particle_weight: T,
+    pub unit_weight: T,
 }
 
 impl<T: CustomFloat> MonteCarloUnit<T> {
@@ -75,7 +73,7 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
             domain: Default::default(),
             tallies,
             fast_timer,
-            source_particle_weight: zero(),
+            unit_weight: zero(),
         }
     }
 
@@ -86,35 +84,29 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
         })
     }
 
-    /// Update the energy spectrum by going over all the currently valid particles.
-    pub fn update_spectrum(
-        &mut self,
-        container: &mut ParticleContainer<T>,
-        mcdata: &MonteCarloData<T>,
-    ) {
-        if self.tallies.spectrum.file_name.is_empty() {
-            return;
-        }
+    pub fn update_unit_weight(&mut self, mcdata: &MonteCarloData<T>) {
+        let source_rate: Vec<T> = mcdata
+            .material_database
+            .mat
+            .iter()
+            .map(|mat| mcdata.params.material_params[&mat.name].source_rate)
+            .collect();
 
-        let update_function = |particle_list: &mut [MCParticle<T>], spectrum: &mut [u64]| {
-            particle_list.iter_mut().for_each(|particle| {
-                // load particle & update energy group
-                particle.energy_group = mcdata
-                    .nuclear_data
-                    .get_energy_groups(particle.kinetic_energy);
-                spectrum[particle.energy_group] += 1;
-            });
-        };
-
-        // Iterate on processing particles
-        update_function(
-            &mut container.processing_particles,
-            &mut self.tallies.spectrum.census_energy_spectrum,
-        );
-        // Iterate on processed particles
-        update_function(
-            &mut container.processed_particles,
-            &mut self.tallies.spectrum.census_energy_spectrum,
-        );
+        self.unit_weight = self
+            .domain
+            .iter()
+            .map(|dom| {
+                dom.cell_state
+                    .iter()
+                    .map(|cell| {
+                        // constant because cell volume is constant in our program
+                        let cell_weight: T = cell.volume
+                            * source_rate[cell.material]
+                            * mcdata.params.simulation_params.dt;
+                        cell_weight
+                    })
+                    .sum()
+            })
+            .sum();
     }
 }
