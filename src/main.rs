@@ -134,16 +134,16 @@ pub fn cycle_process<T: CustomFloat>(
             container
                 .processing_particles
                 .iter_mut()
-                .for_each(|base_particle| {
+                .for_each(|particle| {
                     cycle_tracking_guts(
                         mcdata,
                         mcunit,
-                        base_particle,
+                        particle,
                         &mut container.extra_particles,
                         &mut container.send_queue,
                     );
-                    if base_particle.species != Species::Unknown {
-                        container.processed_particles.push(base_particle.clone());
+                    if particle.species != Species::Unknown {
+                        container.processed_particles.push(particle.clone());
                     }
                 });
             container.processing_particles.clear();

@@ -112,20 +112,20 @@ fn population_control_guts<T: CustomFloat>(
 /// This function regulates the number of low (statistica) weight particle to
 /// prevent clusters of low energy particle from falsifying the results.
 pub fn roulette_low_weight_particles<T: CustomFloat>(
-    low_weight_cutoff: T,
+    relative_weight_cutoff: T,
     source_particle_weight: T,
     container: &mut ParticleContainer<T>,
     balance: &mut Balance,
 ) {
-    if low_weight_cutoff > zero() {
-        let weight_cutoff = low_weight_cutoff * source_particle_weight;
+    if relative_weight_cutoff > zero() {
+        let weight_cutoff = relative_weight_cutoff * source_particle_weight;
 
         container.processing_particles.retain_mut(|pp| {
             if pp.weight <= weight_cutoff {
                 let rand_f: T = rng_sample(&mut pp.random_number_seed);
-                if rand_f <= low_weight_cutoff {
+                if rand_f <= relative_weight_cutoff {
                     // particle survives with increased weight
-                    pp.weight /= low_weight_cutoff;
+                    pp.weight /= relative_weight_cutoff;
                     true
                 } else {
                     // particle dies
