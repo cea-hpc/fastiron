@@ -32,10 +32,10 @@ fn main() {
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::Main);
 
             for step in 0..n_steps {
-                cycle_init(&mcdata, mcunit, container);
-                cycle_tracking(&mcdata, mcunit, container);
-                cycle_finalize(&mcdata, mcunit, container, step);
+                cycle_sync(&mcdata, mcunit, container, step);
+                cycle_process(&mcdata, mcunit, container);
             }
+            cycle_sync(&mcdata, mcunit, container, n_steps);
 
             mc_fast_timer::stop(&mut mcunit.fast_timer, Section::Main);
         }
@@ -46,7 +46,6 @@ fn main() {
 
     game_over(&mcdata, &mut mcunits[0]);
 
-    // need to sum all tallies or already done before when in parallel?
     coral_benchmark_correctness(
         mcdata.params.simulation_params.coral_benchmark,
         &mcunits[0].tallies,
@@ -63,23 +62,40 @@ pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteC
     mcunit.tallies.spectrum.print_spectrum(mcdata);
 }
 
-pub fn cycle_init<T: CustomFloat>(
+//============================
+// Sync node of the simulation
+//============================
+
+pub fn cycle_sync<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
+    step: usize,
 ) {
+    if step != 0 {
+        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleFinalize);
+
+        mcunit.tallies.balance_cycle.end = container.processed_particles.len() as u64;
+        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleFinalize);
+        mcunit
+            .tallies
+            .print_summary(&mut mcunit.fast_timer, step - 1);
+        mcunit
+            .tallies
+            .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
+        mcunit.update_spectrum(container, mcdata);
+        mcunit.fast_timer.clear_last_cycle_timers();
+    }
+
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleInit);
 
     mcunit.clear_cross_section_cache();
-
     container.swap_processing_processed();
 
     mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
 
     population_control::source_now(mcdata, mcunit, container);
-
     population_control::population_control(mcdata, mcunit, container);
-
     population_control::roulette_low_weight_particles(
         mcdata.params.simulation_params.low_weight_cutoff,
         mcunit.source_particle_weight,
@@ -90,7 +106,11 @@ pub fn cycle_init<T: CustomFloat>(
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleInit);
 }
 
-pub fn cycle_tracking<T: CustomFloat>(
+//==================================
+// Processing core of the simulation
+//==================================
+
+pub fn cycle_process<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
@@ -132,29 +152,4 @@ pub fn cycle_tracking<T: CustomFloat>(
         }
     }
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTracking);
-}
-
-pub fn cycle_finalize<T: CustomFloat>(
-    mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
-    container: &mut ParticleContainer<T>,
-    step: usize,
-) {
-    mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleFinalize);
-
-    // prepare data for summary; this would be a sync phase in parallel exec
-    mcunit.tallies.balance_cycle.end = container.processed_particles.len() as u64;
-
-    mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleFinalize);
-
-    // print summary
-    mcunit.tallies.print_summary(&mut mcunit.fast_timer, step);
-
-    // record / process data for the next cycle
-    mcunit
-        .tallies
-        .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
-    mcunit.update_spectrum(container, mcdata);
-
-    mcunit.fast_timer.clear_last_cycle_timers();
 }
