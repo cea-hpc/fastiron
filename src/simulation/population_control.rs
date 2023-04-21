@@ -146,6 +146,8 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 /// is called (once per cycle), 10% of the target number of particles are
 /// spawned. _Where_ they are spawned depends on both deterministic factors and
 /// randomness.
+///
+/// TODO: Detail the weight system
 pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
@@ -153,15 +155,12 @@ pub fn source_now<T: CustomFloat>(
 ) {
     let time_step = mcdata.params.simulation_params.dt;
 
-    // this is a constant; add it to mcco ?
-    let mut source_rate: Vec<T> = vec![zero(); mcdata.material_database.mat.len()];
-    source_rate
-        .iter_mut()
-        .zip(mcdata.material_database.mat.iter())
-        .for_each(|(lhs, mat)| {
-            let rhs = mcdata.params.material_params[&mat.name].source_rate;
-            *lhs = rhs;
-        });
+    let source_rate: Vec<T> = mcdata
+        .material_database
+        .mat
+        .iter()
+        .map(|mat| mcdata.params.material_params[&mat.name].source_rate)
+        .collect();
 
     let mut total_weight_particles: T = zero();
     mcunit.domain.iter().for_each(|dom| {
@@ -201,7 +200,7 @@ pub fn source_now<T: CustomFloat>(
                         .to_usize()
                         .unwrap();
 
-                    // create cell_n_particles and add them to the vaults
+                    // create cell_n_particles
                     let sourced = (0..cell_n_particles).map(|_| {
                         // source_tally is fetched & incr atomically in original code
                         let mut rand_n_seed = (cell.source_tally + cell.id) as u64;
@@ -236,11 +235,12 @@ pub fn source_now<T: CustomFloat>(
                         particle.time_to_census =
                             time_step * rng_sample::<T>(&mut particle.random_number_seed);
 
-                        // atomic in original code
-                        mcunit.tallies.balance_cycle.source += 1;
-
                         particle
                     });
+
+                    // atomic in original code
+                    mcunit.tallies.balance_cycle.source += sourced.len() as u64;
+
                     container.processing_particles.extend(sourced);
                 });
         });
