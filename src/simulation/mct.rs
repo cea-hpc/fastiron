@@ -154,11 +154,11 @@ fn mct_nf_3dg<T: CustomFloat>(
     let huge_f: T = T::huge_float();
 
     let mut location = MCLocation {
-        domain: Some(particle.base_particle.domain),
-        cell: Some(particle.base_particle.cell),
+        domain: Some(particle.domain),
+        cell: Some(particle.cell),
         facet: Some(particle.facet),
     };
-    let coords = particle.base_particle.coordinate;
+    let coords = particle.coordinate;
     let direction_cosine = particle.direction_cosine.clone();
 
     let mut facet_coords: [MCVector<T>; N_POINTS_PER_FACET] = Default::default();
@@ -294,7 +294,7 @@ fn mct_nf_find_nearest<T: CustomFloat>(
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
     let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
 
-    let coord = &mut particle.base_particle.coordinate;
+    let coord = &mut particle.coordinate;
 
     const MAX_ALLOWED_SEGMENTS: usize = 10000000;
     const MAX_ITERATION: usize = 1000;
@@ -304,8 +304,7 @@ fn mct_nf_find_nearest<T: CustomFloat>(
 
     // take an option as arg and check if is_some ?
     if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
-        | ((particle.base_particle.num_segments > max)
-            & (nearest_facet.distance_to_facet <= zero()))
+        | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
     {
         mct_nf_3dg_move_particle(domain, location, coord, *move_factor);
         *iteration += 1;

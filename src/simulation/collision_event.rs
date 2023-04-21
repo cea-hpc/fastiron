@@ -13,7 +13,7 @@ use crate::{
     },
     data::{nuclear_data::ReactionType, tallies::Balance},
     montecarlo::MonteCarloData,
-    particles::{mc_base_particle::MCBaseParticle, mc_particle::MCParticle},
+    particles::mc_particle::MCParticle,
     simulation::macro_cross_section::macroscopic_cross_section,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
@@ -29,20 +29,20 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
     // value for update
     let cos_theta: T = angle;
     let sin_theta: T = (one - cos_theta * cos_theta).sqrt();
-    let mut rdm_number: T = rng_sample(&mut particle.base_particle.random_number_seed);
+    let mut rdm_number: T = rng_sample(&mut particle.random_number_seed);
     let phi = two * pi * rdm_number;
     let sin_phi: T = phi.sin();
     let cos_phi: T = phi.cos();
     let speed: T = c * (one - ((nrm * nrm) / ((energy + nrm) * (energy + nrm)))).sqrt();
 
     // update
-    particle.base_particle.kinetic_energy = energy;
+    particle.kinetic_energy = energy;
     particle
         .direction_cosine
         .rotate_3d_vector(sin_theta, cos_theta, sin_phi, cos_phi);
-    particle.base_particle.velocity = particle.direction_cosine.dir * speed;
-    rdm_number = rng_sample(&mut particle.base_particle.random_number_seed);
-    particle.base_particle.num_mean_free_paths = -one * rdm_number.ln();
+    particle.velocity = particle.direction_cosine.dir * speed;
+    rdm_number = rng_sample(&mut particle.random_number_seed);
+    particle.num_mean_free_paths = -one * rdm_number.ln();
 }
 
 /// Transforms a given particle according to an internally drawn type of collision.
@@ -60,13 +60,13 @@ pub fn collision_event<T: CustomFloat>(
     mat_gid: usize,
     cell_nb_density: T,
     particle: &mut MCParticle<T>,
-    extra: &mut Vec<MCBaseParticle<T>>,
+    extra: &mut Vec<MCParticle<T>>,
     balance: &mut Balance,
 ) -> bool {
     // ==========================
     // Pick an isotope & reaction
 
-    let rdm_number: T = rng_sample(&mut particle.base_particle.random_number_seed);
+    let rdm_number: T = rng_sample(&mut particle.random_number_seed);
     let total_xsection: T = particle.total_cross_section;
 
     let mut current_xsection: T = total_xsection * rdm_number;
@@ -115,9 +115,9 @@ pub fn collision_event<T: CustomFloat>(
     let (energy_out, angle_out) = mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions
         [selected_react]
         .sample_collision(
-            particle.base_particle.kinetic_energy,
+            particle.kinetic_energy,
             mat_mass,
-            &mut particle.base_particle.random_number_seed,
+            &mut particle.random_number_seed,
         );
     // number of particles resulting from the collision, including the original
     // e.g. zero means the original particle was absorbed or invalidated in some way
@@ -149,25 +149,24 @@ pub fn collision_event<T: CustomFloat>(
     if n_out > 1 {
         for secondary_idx in 1..n_out {
             let mut sec_particle = particle.clone();
-            sec_particle.base_particle.random_number_seed =
-                spawn_rn_seed::<T>(&mut particle.base_particle.random_number_seed);
-            sec_particle.base_particle.identifier = sec_particle.base_particle.random_number_seed;
+            sec_particle.random_number_seed = spawn_rn_seed::<T>(&mut particle.random_number_seed);
+            sec_particle.identifier = sec_particle.random_number_seed;
             update_trajectory(
                 energy_out[secondary_idx],
                 angle_out[secondary_idx],
                 &mut sec_particle,
             );
-            extra.push(MCBaseParticle::new(&sec_particle));
+            extra.push(sec_particle);
         }
     }
 
     update_trajectory(energy_out[0], angle_out[0], particle);
     particle.energy_group = mcdata
         .nuclear_data
-        .get_energy_groups(particle.base_particle.kinetic_energy);
+        .get_energy_groups(particle.kinetic_energy);
 
     if n_out > 1 {
-        extra.push(MCBaseParticle::new(particle));
+        extra.push(particle.clone());
     }
 
     n_out == 1
@@ -203,9 +202,9 @@ mod tests {
             },
         };
         let e: f64 = 1.0;
-        pp.base_particle.velocity = vv;
+        pp.velocity = vv;
         pp.direction_cosine = d_cos;
-        pp.base_particle.kinetic_energy = e;
+        pp.kinetic_energy = e;
         let mut seed: u64 = 90374384094798327;
         let energy = rng_sample(&mut seed);
         let angle = rng_sample(&mut seed);
@@ -216,6 +215,6 @@ mod tests {
         assert!((pp.direction_cosine.dir.x - 0.620283).abs() < 1.0e-6);
         assert!((pp.direction_cosine.dir.y - 0.620283).abs() < 1.0e-6);
         assert!((pp.direction_cosine.dir.z - (-0.480102)).abs() < 1.0e-6);
-        assert!((pp.base_particle.kinetic_energy - energy).abs() < TINY_FLOAT);
+        assert!((pp.kinetic_energy - energy).abs() < TINY_FLOAT);
     }
 }

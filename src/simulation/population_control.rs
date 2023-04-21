@@ -10,7 +10,7 @@ use crate::{
     constants::CustomFloat,
     data::{direction_cosine::DirectionCosine, tallies::Balance},
     montecarlo::{MonteCarloData, MonteCarloUnit},
-    particles::{mc_base_particle::MCBaseParticle, particle_container::ParticleContainer},
+    particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
@@ -203,7 +203,7 @@ pub fn source_now<T: CustomFloat>(
 
                     // create cell_n_particles and add them to the vaults
                     let sourced = (0..cell_n_particles).map(|_| {
-                        let mut base_particle: MCBaseParticle<T> = MCBaseParticle::default();
+                        let mut particle: MCParticle<T> = MCParticle::default();
 
                         // atomic in original code
                         let mut rand_n_seed = cell.source_tally as u64;
@@ -211,41 +211,42 @@ pub fn source_now<T: CustomFloat>(
 
                         rand_n_seed += cell.id as u64;
 
-                        base_particle.random_number_seed = spawn_rn_seed::<T>(&mut rand_n_seed);
-                        base_particle.identifier = rand_n_seed;
+                        particle.random_number_seed = spawn_rn_seed::<T>(&mut rand_n_seed);
+                        particle.identifier = rand_n_seed;
 
-                        base_particle.coordinate = generate_coordinate_3dg(
-                            &mut base_particle.random_number_seed,
+                        particle.coordinate = generate_coordinate_3dg(
+                            &mut particle.random_number_seed,
                             &dom.mesh,
                             cell_idx,
                             cell.volume,
                         );
                         let mut direction_cosine = DirectionCosine::default();
-                        direction_cosine.sample_isotropic(&mut base_particle.random_number_seed);
+                        direction_cosine.sample_isotropic(&mut particle.random_number_seed);
+                        particle.direction_cosine = direction_cosine;
 
                         // sample energy uniformly in [emin; emax] MeV
                         let range = mcdata.params.simulation_params.e_max
                             - mcdata.params.simulation_params.e_min;
-                        let sample: T = rng_sample(&mut base_particle.random_number_seed);
-                        base_particle.kinetic_energy =
+                        let sample: T = rng_sample(&mut particle.random_number_seed);
+                        particle.kinetic_energy =
                             sample * range + mcdata.params.simulation_params.e_min;
 
-                        let speed: T = base_particle.get_speed();
-                        base_particle.velocity = direction_cosine.dir * speed;
+                        let speed: T = particle.get_speed();
+                        particle.velocity = particle.direction_cosine.dir * speed;
 
-                        base_particle.domain = domain_idx;
-                        base_particle.cell = cell_idx;
-                        base_particle.weight = source_particle_weight;
+                        particle.domain = domain_idx;
+                        particle.cell = cell_idx;
+                        particle.weight = source_particle_weight;
 
-                        let mut rand_f: T = rng_sample(&mut base_particle.random_number_seed);
-                        base_particle.num_mean_free_paths = -one::<T>() * rand_f.ln();
-                        rand_f = rng_sample(&mut base_particle.random_number_seed);
-                        base_particle.time_to_census = time_step * rand_f;
+                        let mut rand_f: T = rng_sample(&mut particle.random_number_seed);
+                        particle.num_mean_free_paths = -one::<T>() * rand_f.ln();
+                        rand_f = rng_sample(&mut particle.random_number_seed);
+                        particle.time_to_census = time_step * rand_f;
 
                         // atomic in original code
                         mcunit.tallies.balance_cycle.source += 1;
 
-                        base_particle
+                        particle
                     });
                     container.processing_particles.extend(sourced);
                 });

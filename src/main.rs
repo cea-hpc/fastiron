@@ -3,7 +3,7 @@ use fastiron::constants::CustomFloat;
 use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers};
 use fastiron::montecarlo::{MonteCarloData, MonteCarloUnit};
 use fastiron::parameters::Parameters;
-use fastiron::particles::mc_base_particle::Species;
+use fastiron::particles::mc_particle::Species;
 use fastiron::particles::particle_container::ParticleContainer;
 use fastiron::simulation::cycle_tracking::cycle_tracking_guts;
 use fastiron::simulation::population_control;
