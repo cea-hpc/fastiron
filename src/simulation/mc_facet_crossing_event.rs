@@ -23,26 +23,26 @@ pub fn facet_crossing_event<T: CustomFloat>(
     match facet_adjacency.event {
         MCSubfacetAdjacencyEvent::TransitOnProcessor => {
             // particle enters an adjacent cell
-            particle.base_particle.domain = facet_adjacency.adjacent.domain.unwrap();
-            particle.base_particle.cell = facet_adjacency.adjacent.cell.unwrap();
+            particle.domain = facet_adjacency.adjacent.domain.unwrap();
+            particle.cell = facet_adjacency.adjacent.cell.unwrap();
             particle.facet = facet_adjacency.adjacent.facet.unwrap();
-            particle.base_particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
+            particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
         }
         MCSubfacetAdjacencyEvent::BoundaryEscape => {
             // particle escape the system
-            particle.base_particle.last_event = MCTallyEvent::FacetCrossingEscape;
+            particle.last_event = MCTallyEvent::FacetCrossingEscape;
         }
         MCSubfacetAdjacencyEvent::BoundaryReflection => {
             // particle reflect off a system boundary
-            particle.base_particle.last_event = MCTallyEvent::FacetCrossingReflection
+            particle.last_event = MCTallyEvent::FacetCrossingReflection
         }
         MCSubfacetAdjacencyEvent::TransitOffProcessor => {
             // particle enters an adjacent cell that belongs to
             // a domain managed by another processor.
-            particle.base_particle.domain = facet_adjacency.adjacent.domain.unwrap();
-            particle.base_particle.cell = facet_adjacency.adjacent.cell.unwrap();
+            particle.domain = facet_adjacency.adjacent.domain.unwrap();
+            particle.cell = facet_adjacency.adjacent.cell.unwrap();
             particle.facet = facet_adjacency.adjacent.facet.unwrap();
-            particle.base_particle.last_event = MCTallyEvent::FacetCrossingCommunication;
+            particle.last_event = MCTallyEvent::FacetCrossingCommunication;
         }
         MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
     }

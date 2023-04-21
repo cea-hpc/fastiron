@@ -7,13 +7,10 @@
 use num::{one, zero, FromPrimitive};
 
 use crate::{
-    constants::{
-        physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY},
-        CustomFloat,
-    },
-    data::{direction_cosine::DirectionCosine, tallies::Balance},
+    constants::CustomFloat,
+    data::tallies::Balance,
     montecarlo::{MonteCarloData, MonteCarloUnit},
-    particles::{mc_base_particle::MCBaseParticle, particle_container::ParticleContainer},
+    particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
@@ -149,6 +146,8 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 /// is called (once per cycle), 10% of the target number of particles are
 /// spawned. _Where_ they are spawned depends on both deterministic factors and
 /// randomness.
+///
+/// TODO: Detail the weight system
 pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
@@ -156,15 +155,12 @@ pub fn source_now<T: CustomFloat>(
 ) {
     let time_step = mcdata.params.simulation_params.dt;
 
-    // this is a constant; add it to mcco ?
-    let mut source_rate: Vec<T> = vec![zero(); mcdata.material_database.mat.len()];
-    source_rate
-        .iter_mut()
-        .zip(mcdata.material_database.mat.iter())
-        .for_each(|(lhs, mat)| {
-            let rhs = mcdata.params.material_params[&mat.name].source_rate;
-            *lhs = rhs;
-        });
+    let source_rate: Vec<T> = mcdata
+        .material_database
+        .mat
+        .iter()
+        .map(|mat| mcdata.params.material_params[&mat.name].source_rate)
+        .collect();
 
     let mut total_weight_particles: T = zero();
     mcunit.domain.iter().for_each(|dom| {
@@ -204,79 +200,48 @@ pub fn source_now<T: CustomFloat>(
                         .to_usize()
                         .unwrap();
 
-                    // create cell_n_particles and add them to the vaults
+                    // create cell_n_particles
                     let sourced = (0..cell_n_particles).map(|_| {
-                        let mut base_particle: MCBaseParticle<T> = MCBaseParticle::default();
-
-                        // atomic in original code
-                        let mut rand_n_seed = cell.source_tally as u64;
+                        // source_tally is fetched & incr atomically in original code
+                        let mut rand_n_seed = (cell.source_tally + cell.id) as u64;
                         cell.source_tally += 1;
 
-                        rand_n_seed += cell.id as u64;
+                        // ~~~ init particle
 
-                        base_particle.random_number_seed = spawn_rn_seed::<T>(&mut rand_n_seed);
-                        base_particle.identifier = rand_n_seed;
+                        let mut particle: MCParticle<T> = MCParticle::default();
 
-                        base_particle.coordinate = generate_coordinate_3dg(
-                            &mut base_particle.random_number_seed,
+                        particle.random_number_seed = spawn_rn_seed::<T>(&mut rand_n_seed);
+                        particle.identifier = rand_n_seed;
+                        particle.coordinate = generate_coordinate_3dg(
+                            &mut particle.random_number_seed,
                             &dom.mesh,
                             cell_idx,
                             cell.volume,
                         );
-                        let mut direction_cosine = DirectionCosine::default();
-                        direction_cosine.sample_isotropic(&mut base_particle.random_number_seed);
+                        particle.domain = domain_idx;
+                        particle.cell = cell_idx;
+                        particle.weight = source_particle_weight;
 
+                        // ~~~ random sampling
+
+                        particle.sample_isotropic();
                         // sample energy uniformly in [emin; emax] MeV
                         let range = mcdata.params.simulation_params.e_max
                             - mcdata.params.simulation_params.e_min;
-                        let sample: T = rng_sample(&mut base_particle.random_number_seed);
-                        base_particle.kinetic_energy =
-                            sample * range + mcdata.params.simulation_params.e_min;
+                        particle.kinetic_energy = rng_sample::<T>(&mut particle.random_number_seed)
+                            * range
+                            + mcdata.params.simulation_params.e_min;
+                        particle.sample_num_mfp();
+                        particle.time_to_census =
+                            time_step * rng_sample::<T>(&mut particle.random_number_seed);
 
-                        let speed: T = speed_from_energy(base_particle.kinetic_energy);
-                        base_particle.velocity = direction_cosine.dir * speed;
-
-                        base_particle.domain = domain_idx;
-                        base_particle.cell = cell_idx;
-                        base_particle.weight = source_particle_weight;
-
-                        let mut rand_f: T = rng_sample(&mut base_particle.random_number_seed);
-                        base_particle.num_mean_free_paths = -one::<T>() * rand_f.ln();
-                        rand_f = rng_sample(&mut base_particle.random_number_seed);
-                        base_particle.time_to_census = time_step * rand_f;
-
-                        // atomic in original code
-                        mcunit.tallies.balance_cycle.source += 1;
-
-                        base_particle
+                        particle
                     });
+
+                    // atomic in original code
+                    mcunit.tallies.balance_cycle.source += sourced.len() as u64;
+
                     container.processing_particles.extend(sourced);
                 });
         });
-}
-
-fn speed_from_energy<T: CustomFloat>(energy: T) -> T {
-    let rest_mass_energy: T = FromPrimitive::from_f64(NEUTRON_REST_MASS_ENERGY).unwrap();
-    let speed_of_light: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
-    let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    speed_of_light
-        * (energy * (energy + two * (rest_mass_energy))
-            / ((energy + rest_mass_energy) * (energy + rest_mass_energy)))
-            .sqrt()
-}
-
-//=============
-// Unit tests
-//=============
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn get_speed_from_e() {
-        let energy = 15.032;
-        let speed = speed_from_energy(energy);
-        assert_eq!(speed, 5299286790.50638);
-    }
 }

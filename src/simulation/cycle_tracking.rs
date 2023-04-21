@@ -9,10 +9,7 @@ use crate::{
     constants::CustomFloat,
     data::{send_queue::SendQueue, tallies::MCTallyEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
-    particles::{
-        mc_base_particle::{MCBaseParticle, Species},
-        mc_particle::MCParticle,
-    },
+    particles::mc_particle::{MCParticle, Species},
     simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
 };
 
@@ -29,36 +26,33 @@ use super::{
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
-    base_particle: &mut MCBaseParticle<T>,
-    extra: &mut Vec<MCBaseParticle<T>>,
+    particle: &mut MCParticle<T>,
+    extra: &mut Vec<MCParticle<T>>,
     send_queue: &mut SendQueue<T>,
 ) {
     // load particle, track it & update the original
     // next step is to refactor MCParticle / MCBaseParticle to lighten conversion between the types
-    let mut particle = MCParticle::new(base_particle);
 
     // set age & time to census
-    if particle.base_particle.time_to_census <= zero() {
-        particle.base_particle.time_to_census += mcdata.params.simulation_params.dt;
+    if particle.time_to_census <= zero() {
+        particle.time_to_census += mcdata.params.simulation_params.dt;
     }
-    if particle.base_particle.age < zero() {
-        particle.base_particle.age = zero();
+    if particle.age < zero() {
+        particle.age = zero();
     }
     // update energy & task
     particle.energy_group = mcdata
         .nuclear_data
-        .get_energy_groups(particle.base_particle.kinetic_energy);
+        .get_energy_groups(particle.kinetic_energy);
 
-    cycle_tracking_function(mcdata, mcunit, &mut particle, extra, send_queue);
-
-    *base_particle = MCBaseParticle::new(&particle);
+    cycle_tracking_function(mcdata, mcunit, particle, extra, send_queue);
 }
 
 fn cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: &mut Vec<MCBaseParticle<T>>,
+    extra: &mut Vec<MCParticle<T>>,
     send_queue: &mut SendQueue<T>,
 ) {
     let mut keep_tracking: bool;
@@ -68,16 +62,13 @@ fn cycle_tracking_function<T: CustomFloat>(
         let segment_outcome = outcome(mcdata, mcunit, particle);
         // update # of segments
         mcunit.tallies.balance_cycle.num_segments += 1; // atomic in original code
-        particle.base_particle.num_segments += one();
+        particle.num_segments += one();
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                let mat_gid = mcunit.domain[particle.base_particle.domain].cell_state
-                    [particle.base_particle.cell]
-                    .material;
-                let cell_nb_density = mcunit.domain[particle.base_particle.domain].cell_state
-                    [particle.base_particle.cell]
-                    .cell_number_density;
+                let mat_gid = mcunit.domain[particle.domain].cell_state[particle.cell].material;
+                let cell_nb_density =
+                    mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
 
                 keep_tracking = collision_event(
                     mcdata,
@@ -88,29 +79,27 @@ fn cycle_tracking_function<T: CustomFloat>(
                     &mut mcunit.tallies.balance_cycle,
                 );
                 if !keep_tracking {
-                    particle.base_particle.species = Species::Unknown;
+                    particle.species = Species::Unknown;
                 }
             }
             MCSegmentOutcome::FacetCrossing => {
                 // crossed facet data
-                let facet_adjacency = &mcunit.domain[particle.base_particle.domain]
-                    .mesh
-                    .cell_connectivity[particle.base_particle.cell]
+                let facet_adjacency = &mcunit.domain[particle.domain].mesh.cell_connectivity
+                    [particle.cell]
                     .facet[particle.facet]
                     .subfacet;
 
                 facet_crossing_event(particle, facet_adjacency);
 
-                keep_tracking = match particle.base_particle.last_event {
+                keep_tracking = match particle.last_event {
                     // ~~~ on unit case
                     // on-unit transit
                     MCTallyEvent::FacetCrossingTransitExit => true,
                     // bound reflection
                     MCTallyEvent::FacetCrossingReflection => {
                         // plane on which particle is reflected
-                        let plane = &mcunit.domain[particle.base_particle.domain]
-                            .mesh
-                            .cell_geometry[particle.base_particle.cell][particle.facet];
+                        let plane = &mcunit.domain[particle.domain].mesh.cell_geometry
+                            [particle.cell][particle.facet];
 
                         reflect_particle(particle, plane);
                         true
@@ -125,15 +114,15 @@ fn cycle_tracking_function<T: CustomFloat>(
                         .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
                         // add to sendqueue
                         send_queue.push(neighbor_rank, particle);
-                        particle.base_particle.species = Species::Unknown;
+                        particle.species = Species::Unknown;
                         false
                     }
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
                         mcunit.tallies.balance_cycle.escape += 1;
-                        particle.base_particle.last_event = MCTallyEvent::FacetCrossingEscape;
-                        particle.base_particle.species = Species::Unknown;
+                        particle.last_event = MCTallyEvent::FacetCrossingEscape;
+                        particle.species = Species::Unknown;
                         false
                     }
                     // ~~~ other enum values are for collision & census, not facet crossing

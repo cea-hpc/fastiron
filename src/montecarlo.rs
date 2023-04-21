@@ -14,7 +14,6 @@ use crate::data::nuclear_data::NuclearData;
 use crate::data::tallies::Tallies;
 use crate::geometry::mc_domain::MCDomain;
 use crate::parameters::Parameters;
-use crate::particles::mc_base_particle::MCBaseParticle;
 use crate::particles::mc_particle::MCParticle;
 use crate::particles::particle_container::ParticleContainer;
 use crate::utils::mc_fast_timer::MCFastTimerContainer;
@@ -90,32 +89,31 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
     /// Update the energy spectrum by going over all the currently valid particles.
     pub fn update_spectrum(
         &mut self,
-        container: &ParticleContainer<T>,
+        container: &mut ParticleContainer<T>,
         mcdata: &MonteCarloData<T>,
     ) {
         if self.tallies.spectrum.file_name.is_empty() {
             return;
         }
 
-        let update_function = |particle_list: &[MCBaseParticle<T>], spectrum: &mut [u64]| {
-            particle_list.iter().for_each(|pp| {
+        let update_function = |particle_list: &mut [MCParticle<T>], spectrum: &mut [u64]| {
+            particle_list.iter_mut().for_each(|particle| {
                 // load particle & update energy group
-                let mut particle = MCParticle::new(pp);
                 particle.energy_group = mcdata
                     .nuclear_data
-                    .get_energy_groups(particle.base_particle.kinetic_energy);
+                    .get_energy_groups(particle.kinetic_energy);
                 spectrum[particle.energy_group] += 1;
             });
         };
 
         // Iterate on processing particles
         update_function(
-            &container.processing_particles,
+            &mut container.processing_particles,
             &mut self.tallies.spectrum.census_energy_spectrum,
         );
         // Iterate on processed particles
         update_function(
-            &container.processed_particles,
+            &mut container.processed_particles,
             &mut self.tallies.spectrum.census_energy_spectrum,
         );
     }

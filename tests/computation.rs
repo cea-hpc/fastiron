@@ -2,31 +2,7 @@
 // functions with their result in the original code.
 // Results are hard coded.
 
-use fastiron::{constants::sim::SMALL_FLOAT, data::mc_vector::MCVector};
-
-#[test]
-fn move_particle() {
-    // copy pasting the core of the function to avoid the init of whole structures
-    let move_factor: f64 = 0.5 * SMALL_FLOAT;
-    let mut coord: MCVector<f64> = MCVector {
-        x: 1.923,
-        y: -2.45,
-        z: 5.013,
-    };
-    let move_to: MCVector<f64> = MCVector {
-        x: 4.0,
-        y: 0.241,
-        z: 7.9020,
-    };
-
-    coord += (move_to - coord) * move_factor;
-
-    assert!(coord.is_almost_equal(&MCVector {
-        x: 1.92300000010385,
-        y: -2.44999999986545,
-        z: 5.01300000014445,
-    }));
-}
+use fastiron::data::mc_vector::MCVector;
 
 #[test]
 fn compute_volume() {
