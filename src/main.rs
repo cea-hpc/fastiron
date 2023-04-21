@@ -86,7 +86,7 @@ pub fn cycle_sync<T: CustomFloat>(
         mcunit
             .tallies
             .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
-        mcunit.update_spectrum(container, mcdata);
+        mcunit.tallies.update_spectrum(container);
         mcunit.fast_timer.clear_last_cycle_timers();
     }
 
