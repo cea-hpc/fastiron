@@ -10,7 +10,7 @@ use crate::{
         physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
         CustomFloat,
     },
-    data::{direction_cosine::DirectionCosine, mc_vector::MCVector, tallies::MCTallyEvent},
+    data::{mc_vector::MCVector, tallies::MCTallyEvent},
     utils::mc_rng_state::rng_sample,
 };
 
@@ -33,8 +33,6 @@ pub struct MCParticle<T: CustomFloat> {
     pub coordinate: MCVector<T>,
     /// Direction of the particle as a normalized `(x, y, z)` vector.
     pub direction: MCVector<T>,
-    /// Direction of the particle as a normalized `(x, y, z)` vector.
-    pub direction_cosine: DirectionCosine<T>,
     /// Kinetic energy.
     pub kinetic_energy: T,
     /// Current energy group the particle belong to.
