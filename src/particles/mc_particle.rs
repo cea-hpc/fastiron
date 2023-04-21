@@ -30,8 +30,6 @@ pub enum Species {
 pub struct MCParticle<T: CustomFloat> {
     /// Current position.
     pub coordinate: MCVector<T>,
-    /// Current velocity.
-    pub velocity: MCVector<T>,
     /// Kinetic energy.
     pub kinetic_energy: T,
     /// Weight.

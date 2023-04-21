@@ -7,10 +7,7 @@
 use num::{zero, FromPrimitive};
 
 use crate::{
-    constants::{
-        physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
-        CustomFloat,
-    },
+    constants::{physical::PI, CustomFloat},
     data::{nuclear_data::ReactionType, tallies::Balance},
     montecarlo::MonteCarloData,
     particles::mc_particle::MCParticle,
@@ -21,8 +18,6 @@ use crate::{
 fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParticle<T>) {
     // constants
     let pi: T = FromPrimitive::from_f64(PI).unwrap();
-    let c: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
-    let nrm: T = FromPrimitive::from_f64(NEUTRON_REST_MASS_ENERGY).unwrap();
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
 
@@ -33,14 +28,12 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
     let phi = two * pi * rdm_number;
     let sin_phi: T = phi.sin();
     let cos_phi: T = phi.cos();
-    let speed: T = c * (one - ((nrm * nrm) / ((energy + nrm) * (energy + nrm)))).sqrt();
 
     // update
     particle.kinetic_energy = energy;
     particle
         .direction_cosine
         .rotate_3d_vector(sin_theta, cos_theta, sin_phi, cos_phi);
-    particle.velocity = particle.direction_cosine.dir * speed;
     rdm_number = rng_sample(&mut particle.random_number_seed);
     particle.num_mean_free_paths = -one * rdm_number.ln();
 }
@@ -189,11 +182,6 @@ mod tests {
     fn trajectory() {
         let mut pp: MCParticle<f64> = MCParticle::default();
         // init data
-        let vv: MCVector<f64> = MCVector {
-            x: 1.0,
-            y: 1.0,
-            z: 1.0,
-        };
         let d_cos: DirectionCosine<f64> = DirectionCosine {
             dir: MCVector {
                 x: 1.0 / 3.0.sqrt(),
@@ -202,7 +190,6 @@ mod tests {
             },
         };
         let e: f64 = 1.0;
-        pp.velocity = vv;
         pp.direction_cosine = d_cos;
         pp.kinetic_energy = e;
         let mut seed: u64 = 90374384094798327;

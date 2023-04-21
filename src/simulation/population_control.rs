@@ -231,9 +231,6 @@ pub fn source_now<T: CustomFloat>(
                         particle.kinetic_energy =
                             sample * range + mcdata.params.simulation_params.e_min;
 
-                        let speed: T = particle.get_speed();
-                        particle.velocity = particle.direction_cosine.dir * speed;
-
                         particle.domain = domain_idx;
                         particle.cell = cell_idx;
                         particle.weight = source_particle_weight;
