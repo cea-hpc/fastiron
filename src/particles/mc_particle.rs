@@ -76,12 +76,14 @@ pub struct MCParticle<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> MCParticle<T> {
-    /// Update the particle's field to model its movement along the specified
-    /// direction and distance
+    /// Update the particle's field to model its movement along its
+    /// direction, for the segment length.
     pub fn move_particle_along_segment(&mut self) {
         self.coordinate += self.direction * self.segment_path_length;
     }
 
+    /// Computes the particle speed from its energy. Note that this computation
+    /// should be species-specific.
     pub fn get_speed(&self) -> T {
         let rest_mass_energy: T = FromPrimitive::from_f64(NEUTRON_REST_MASS_ENERGY).unwrap();
         let speed_of_light: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
