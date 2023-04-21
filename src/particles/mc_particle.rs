@@ -81,7 +81,7 @@ impl<T: CustomFloat> MCParticle<T> {
     /// Update the particle's field to model its movement along the specified
     /// direction and distance
     pub fn move_particle_along_segment(&mut self) {
-        self.coordinate += self.direction_cosine.dir * self.segment_path_length;
+        self.coordinate += self.direction * self.segment_path_length;
     }
 
     pub fn get_speed(&self) -> T {

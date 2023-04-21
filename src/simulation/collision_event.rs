@@ -31,9 +31,7 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
 
     // update
     particle.kinetic_energy = energy;
-    particle
-        .direction_cosine
-        .rotate_3d_vector(sin_theta, cos_theta, sin_phi, cos_phi);
+    particle.rotate_direction(sin_theta, cos_theta, sin_phi, cos_phi);
     rdm_number = rng_sample(&mut particle.random_number_seed);
     particle.num_mean_free_paths = -one * rdm_number.ln();
 }
@@ -172,25 +170,19 @@ pub fn collision_event<T: CustomFloat>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        constants::sim::TINY_FLOAT,
-        data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
-    };
+    use crate::{constants::sim::TINY_FLOAT, data::mc_vector::MCVector};
     use num::Float;
 
     #[test]
     fn trajectory() {
         let mut pp: MCParticle<f64> = MCParticle::default();
         // init data
-        let d_cos: DirectionCosine<f64> = DirectionCosine {
-            dir: MCVector {
-                x: 1.0 / 3.0.sqrt(),
-                y: 1.0 / 3.0.sqrt(),
-                z: 1.0 / 3.0.sqrt(),
-            },
-        };
         let e: f64 = 1.0;
-        pp.direction_cosine = d_cos;
+        pp.direction = MCVector {
+            x: 1.0 / 3.0.sqrt(),
+            y: 1.0 / 3.0.sqrt(),
+            z: 1.0 / 3.0.sqrt(),
+        };
         pp.kinetic_energy = e;
         let mut seed: u64 = 90374384094798327;
         let energy = rng_sample(&mut seed);
@@ -199,9 +191,9 @@ mod tests {
         // update & print result
         update_trajectory(energy, angle, &mut pp);
 
-        assert!((pp.direction_cosine.dir.x - 0.620283).abs() < 1.0e-6);
-        assert!((pp.direction_cosine.dir.y - 0.620283).abs() < 1.0e-6);
-        assert!((pp.direction_cosine.dir.z - (-0.480102)).abs() < 1.0e-6);
+        assert!((pp.direction.x - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction.y - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction.z - (-0.480102)).abs() < 1.0e-6);
         assert!((pp.kinetic_energy - energy).abs() < TINY_FLOAT);
     }
 }

@@ -8,7 +8,7 @@ use num::{one, zero, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
-    data::{direction_cosine::DirectionCosine, tallies::Balance},
+    data::tallies::Balance,
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
@@ -220,9 +220,7 @@ pub fn source_now<T: CustomFloat>(
                             cell_idx,
                             cell.volume,
                         );
-                        let mut direction_cosine = DirectionCosine::default();
-                        direction_cosine.sample_isotropic(&mut particle.random_number_seed);
-                        particle.direction_cosine = direction_cosine;
+                        particle.sample_isotropic();
 
                         // sample energy uniformly in [emin; emax] MeV
                         let range = mcdata.params.simulation_params.e_max

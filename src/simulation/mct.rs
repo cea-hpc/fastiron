@@ -8,7 +8,7 @@ use num::{one, zero, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
-    data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
+    data::mc_vector::MCVector,
     geometry::{
         facets::{MCDistanceToFacet, MCGeneralPlane, MCNearestFacet},
         mc_domain::{MCDomain, MCMeshDomain},
@@ -126,7 +126,7 @@ pub fn cell_position_3dg<T: CustomFloat>(mesh: &MCMeshDomain<T>, cell_idx: usize
 /// boundary of the problem. Note that the reflection does not result in a
 /// loss of energy.
 pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MCGeneralPlane<T>) {
-    let mut new_d_cos = particle.direction_cosine.clone();
+    let mut new_direction = particle.direction;
 
     let facet_normal: MCVector<T> = MCVector {
         x: plane.a,
@@ -135,11 +135,11 @@ pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MC
     };
 
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    let dot: T = two * new_d_cos.dir.dot(&facet_normal);
+    let dot: T = two * new_direction.dot(&facet_normal);
 
     if dot > zero() {
-        new_d_cos.dir -= facet_normal * dot;
-        particle.direction_cosine = new_d_cos;
+        new_direction -= facet_normal * dot;
+        particle.direction = new_direction;
     }
 }
 
@@ -159,7 +159,7 @@ fn mct_nf_3dg<T: CustomFloat>(
         facet: Some(particle.facet),
     };
     let coords = particle.coordinate;
-    let direction_cosine = particle.direction_cosine.clone();
+    let direction = particle.direction;
 
     let mut facet_coords: [MCVector<T>; N_POINTS_PER_FACET] = Default::default();
     let mut iteration: usize = 0;
@@ -178,9 +178,8 @@ fn mct_nf_3dg<T: CustomFloat>(
 
             let plane = &domain.mesh.cell_geometry[location.cell.unwrap()][facet_idx];
 
-            let facet_normal_dot_dcos: T = plane.a * direction_cosine.dir.x
-                + plane.b * direction_cosine.dir.y
-                + plane.c * direction_cosine.dir.z;
+            let facet_normal_dot_dcos: T =
+                plane.a * direction.x + plane.b * direction.y + plane.c * direction.z;
 
             if facet_normal_dot_dcos <= zero() {
                 return;
@@ -199,7 +198,7 @@ fn mct_nf_3dg<T: CustomFloat>(
                 *plane,
                 &facet_coords,
                 &coords,
-                &direction_cosine,
+                &direction,
                 false,
             );
 
@@ -344,7 +343,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     plane: MCGeneralPlane<T>,
     facet_coords: &[MCVector<T>],
     coords: &MCVector<T>,
-    d_cos: &DirectionCosine<T>,
+    direction: &MCVector<T>,
     allow_enter: bool,
 ) -> T {
     let huge_f: T = T::huge_float();
@@ -360,7 +359,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
 
     let distance: T = numerator / facet_normal_dot_dcos;
 
-    let intersection_pt: MCVector<T> = *coords + d_cos.dir * distance;
+    let intersection_pt: MCVector<T> = *coords + *direction * distance;
 
     // if the point doesn't belong to the facet, returns huge_f
     macro_rules! belongs_or_return {
