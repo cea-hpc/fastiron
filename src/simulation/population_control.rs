@@ -152,6 +152,7 @@ pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
+    source_particle_weight: T,
 ) {
     let time_step = mcdata.params.simulation_params.dt;
 
@@ -161,27 +162,6 @@ pub fn source_now<T: CustomFloat>(
         .iter()
         .map(|mat| mcdata.params.material_params[&mat.name].source_rate)
         .collect();
-
-    let mut total_unit_weight: T = zero();
-    mcunit.domain.iter().for_each(|dom| {
-        dom.cell_state.iter().for_each(|cell| {
-            // constant because cell volume is constant in our program
-            let cell_weight: T = cell.volume * source_rate[cell.material] * time_step;
-            total_unit_weight += cell_weight;
-        });
-    });
-
-    let n_particles = mcdata.params.simulation_params.n_particles as usize;
-
-    let source_fraction: T = FromPrimitive::from_f64(0.1).unwrap();
-
-    // single particle weight for the number of particle to be spawned in the unit
-    // to be source_fraction*n_particles
-    let source_particle_weight: T =
-        total_unit_weight / (source_fraction * FromPrimitive::from_usize(n_particles).unwrap());
-    assert_ne!(source_particle_weight, zero());
-
-    mcunit.source_particle_weight = source_particle_weight;
 
     // on each domain
     mcunit

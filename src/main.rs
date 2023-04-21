@@ -11,6 +11,7 @@ use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
 use fastiron::utils::io_utils::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
+use num::FromPrimitive;
 
 fn main() {
     let cli = Cli::parse();
@@ -73,6 +74,7 @@ pub fn cycle_sync<T: CustomFloat>(
     step: usize,
 ) {
     if step != 0 {
+        // Finalize after processing; centralize data at each step or just use as it progress?
         mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleFinalize);
 
         mcunit.tallies.balance_cycle.end = container.processed_particles.len() as u64;
@@ -94,11 +96,19 @@ pub fn cycle_sync<T: CustomFloat>(
 
     mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
 
-    population_control::source_now(mcdata, mcunit, container);
+    // compute total weight of the problem to source correctly when using multiple units
+    mcunit.update_unit_weight(mcdata); // call this on all units
+    let total_problem_weight: T = mcunit.unit_weight; // sum on all units
+    let source_fraction: T = FromPrimitive::from_f64(0.1).unwrap();
+    let source_particle_weight: T = total_problem_weight
+        / (source_fraction
+            * FromPrimitive::from_u64(mcdata.params.simulation_params.n_particles).unwrap());
+
+    population_control::source_now(mcdata, mcunit, container, source_particle_weight);
     population_control::population_control(mcdata, mcunit, container);
     population_control::roulette_low_weight_particles(
         mcdata.params.simulation_params.low_weight_cutoff,
-        mcunit.source_particle_weight,
+        source_particle_weight,
         container,
         &mut mcunit.tallies.balance_cycle,
     );

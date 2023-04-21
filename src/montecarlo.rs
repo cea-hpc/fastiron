@@ -59,7 +59,7 @@ pub struct MonteCarloUnit<T: CustomFloat> {
     /// Container for the timers used for performance measurements.
     pub fast_timer: MCFastTimerContainer,
     /// Weight of the particles at creation in a source zone
-    pub source_particle_weight: T,
+    pub unit_weight: T,
 }
 
 impl<T: CustomFloat> MonteCarloUnit<T> {
@@ -75,7 +75,7 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
             domain: Default::default(),
             tallies,
             fast_timer,
-            source_particle_weight: zero(),
+            unit_weight: zero(),
         }
     }
 
@@ -84,6 +84,32 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
         self.domain.iter_mut().for_each(|dd| {
             dd.clear_cross_section_cache();
         })
+    }
+
+    pub fn update_unit_weight(&mut self, mcdata: &MonteCarloData<T>) {
+        let source_rate: Vec<T> = mcdata
+            .material_database
+            .mat
+            .iter()
+            .map(|mat| mcdata.params.material_params[&mat.name].source_rate)
+            .collect();
+
+        self.unit_weight = self
+            .domain
+            .iter()
+            .map(|dom| {
+                dom.cell_state
+                    .iter()
+                    .map(|cell| {
+                        // constant because cell volume is constant in our program
+                        let cell_weight: T = cell.volume
+                            * source_rate[cell.material]
+                            * mcdata.params.simulation_params.dt;
+                        cell_weight
+                    })
+                    .sum()
+            })
+            .sum();
     }
 
     /// Update the energy spectrum by going over all the currently valid particles.
