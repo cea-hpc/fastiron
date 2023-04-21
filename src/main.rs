@@ -1,3 +1,5 @@
+use std::iter::zip;
+
 use clap::Parser;
 use fastiron::constants::sim::SRC_FRACTION;
 use fastiron::constants::CustomFloat;
@@ -28,18 +30,18 @@ fn main() {
 
     match mcdata.exec_info.exec_policy {
         ExecPolicy::Sequential => {
-            let container = &mut containers[0];
-            let mcunit = &mut mcunits[0];
+            //let container = &mut containers[0];
+            //let mcunit = &mut mcunits[0];
 
-            mc_fast_timer::start(&mut mcunit.fast_timer, Section::Main);
+            mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::Main);
 
             for step in 0..n_steps {
-                cycle_sync(&mcdata, mcunit, container, step);
-                cycle_process(&mcdata, mcunit, container);
+                cycle_sync(&mcdata, &mut mcunits, &mut containers, step);
+                cycle_process(&mcdata, &mut mcunits[0], &mut containers[0]);
             }
-            cycle_sync(&mcdata, mcunit, container, n_steps);
+            cycle_sync(&mcdata, &mut mcunits, &mut containers, n_steps);
 
-            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::Main);
+            mc_fast_timer::stop(&mut mcunits[0].fast_timer, Section::Main);
         }
         ExecPolicy::Parallel => {
             todo!()
@@ -70,54 +72,68 @@ pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteC
 
 pub fn cycle_sync<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
-    container: &mut ParticleContainer<T>,
+    mcunits: &mut [MonteCarloUnit<T>],
+    containers: &mut [ParticleContainer<T>],
     step: usize,
 ) {
     if step != 0 {
         // Finalize after processing; centralize data at each step or just use as it progress?
-        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleFinalize);
 
-        mcunit.tallies.balance_cycle.end = container.processed_particles.len() as u64;
-        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleFinalize);
-        mcunit
-            .tallies
-            .print_summary(&mut mcunit.fast_timer, step - 1);
-        mcunit
-            .tallies
-            .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
-        mcunit.tallies.update_spectrum(container);
-        mcunit.fast_timer.clear_last_cycle_timers();
+        match mcdata.exec_info.exec_policy {
+            ExecPolicy::Sequential => {
+                mcunits[0].tallies.balance_cycle.end =
+                    containers[0].processed_particles.len() as u64;
+                mcunits[0]
+                    .tallies
+                    .print_summary(&mut mcunits[0].fast_timer, step - 1);
+                mcunits[0]
+                    .tallies
+                    .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
+                mcunits[0].tallies.update_spectrum(&containers[0]);
+                mcunits[0].fast_timer.clear_last_cycle_timers();
+            }
+            ExecPolicy::Parallel => {
+                todo!()
+            }
+        }
 
         if step == mcdata.params.simulation_params.n_steps + 1 {
             return;
         }
     }
 
-    mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleInit);
-
-    mcunit.clear_cross_section_cache();
-    container.swap_processing_processed();
-
-    mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
-
     // compute total weight of the problem to source correctly when using multiple units
-    mcunit.update_unit_weight(mcdata); // call this on all units
-    let total_problem_weight: T = mcunit.unit_weight; // sum on all units
+    let total_problem_weight: T = mcunits
+        .iter_mut()
+        .map(|mcunit| {
+            mcunit.update_unit_weight(mcdata);
+            mcunit.unit_weight
+        })
+        .sum();
     let source_particle_weight: T = total_problem_weight
         / (<T as FromPrimitive>::from_f64(SRC_FRACTION).unwrap()
             * FromPrimitive::from_u64(mcdata.params.simulation_params.n_particles).unwrap());
 
-    population_control::source_now(mcdata, mcunit, container, source_particle_weight);
-    population_control::population_control(mcdata, mcunit, container);
-    population_control::roulette_low_weight_particles(
-        mcdata.params.simulation_params.low_weight_cutoff,
-        source_particle_weight,
-        container,
-        &mut mcunit.tallies.balance_cycle,
-    );
+    // this is the part that might be partially movable to cycle_process
+    let joint_iterators = zip(mcunits.iter_mut(), containers.iter_mut());
+    joint_iterators.for_each(|(mcunit, container)| {
+        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleInit);
 
-    mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleInit);
+        mcunit.clear_cross_section_cache();
+        container.swap_processing_processed();
+        mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
+
+        population_control::source_now(mcdata, mcunit, container, source_particle_weight);
+        population_control::population_control(mcdata, mcunit, container);
+        population_control::roulette_low_weight_particles(
+            mcdata.params.simulation_params.low_weight_cutoff,
+            source_particle_weight,
+            container,
+            &mut mcunit.tallies.balance_cycle,
+        );
+
+        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleInit);
+    });
 }
 
 //==================================

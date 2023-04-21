@@ -354,25 +354,25 @@ impl<T: CustomFloat> Tallies<T> {
     }
 
     /// Update the energy spectrum by going over all the currently valid particles.
-    pub fn update_spectrum(&mut self, container: &mut ParticleContainer<T>) {
+    pub fn update_spectrum(&mut self, container: &ParticleContainer<T>) {
         if self.spectrum.file_name.is_empty() {
             return;
         }
 
-        let update_function = |particle_list: &mut [MCParticle<T>], spectrum: &mut [u64]| {
-            particle_list.iter_mut().for_each(|particle| {
+        let update_function = |particle_list: &[MCParticle<T>], spectrum: &mut [u64]| {
+            particle_list.iter().for_each(|particle| {
                 spectrum[particle.energy_group] += 1;
             });
         };
 
         // Iterate on processing particles
         update_function(
-            &mut container.processing_particles,
+            &container.processing_particles,
             &mut self.spectrum.census_energy_spectrum,
         );
         // Iterate on processed particles
         update_function(
-            &mut container.processed_particles,
+            &container.processed_particles,
             &mut self.spectrum.census_energy_spectrum,
         );
     }
