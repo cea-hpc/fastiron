@@ -96,9 +96,8 @@ pub fn cycle_tracking<T: CustomFloat>(
     container: &mut ParticleContainer<T>,
 ) {
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
-    let mut done = false;
     loop {
-        while !done {
+        while !container.test_done_new() {
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
 
             // track particles
@@ -126,13 +125,9 @@ pub fn cycle_tracking<T: CustomFloat>(
             container.process_sq();
             container.clean_extra_vaults();
 
-            done = container.test_done_new();
-
             mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingComm);
         }
-        done = container.test_done_new();
-
-        if done {
+        if container.test_done_new() {
             break;
         }
     }
