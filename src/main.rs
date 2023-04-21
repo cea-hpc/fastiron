@@ -74,8 +74,7 @@ pub fn cycle_init<T: CustomFloat>(
 
     container.swap_processing_processed();
 
-    let tmp = container.processing_particles.len() as u64;
-    mcunit.tallies.balance_cycle.start = tmp;
+    mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
 
     population_control::source_now(mcdata, mcunit, container);
 

@@ -200,18 +200,22 @@ pub fn source_now<T: CustomFloat>(
                         .to_usize()
                         .unwrap();
 
-                    // create cell_n_particles
-                    let sourced = (0..cell_n_particles).map(|_| {
+                    let mut seeds: Vec<u64> = Vec::with_capacity(cell_n_particles);
+                    for _ in 0..cell_n_particles {
                         // source_tally is fetched & incr atomically in original code
-                        let mut rand_n_seed = (cell.source_tally + cell.id) as u64;
+                        let rand_n_seed = (cell.source_tally + cell.id) as u64;
                         cell.source_tally += 1;
+                        seeds.push(rand_n_seed);
+                    }
 
+                    // create cell_n_particles
+                    let sourced = seeds.iter_mut().map(|rand_n_seed| {
                         // ~~~ init particle
 
                         let mut particle: MCParticle<T> = MCParticle::default();
 
-                        particle.random_number_seed = spawn_rn_seed::<T>(&mut rand_n_seed);
-                        particle.identifier = rand_n_seed;
+                        particle.random_number_seed = spawn_rn_seed::<T>(rand_n_seed);
+                        particle.identifier = *rand_n_seed;
                         particle.coordinate = generate_coordinate_3dg(
                             &mut particle.random_number_seed,
                             &dom.mesh,
