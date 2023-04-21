@@ -95,6 +95,7 @@ impl<T: CustomFloat> MCParticle<T> {
                 .sqrt()
     }
 
+    /// Return the starting cross section for reaction sampling
     pub fn get_current_xs(&mut self) -> T {
         self.total_cross_section * rng_sample::<T>(&mut self.random_number_seed)
     }
