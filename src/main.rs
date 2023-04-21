@@ -88,6 +88,10 @@ pub fn cycle_sync<T: CustomFloat>(
             .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
         mcunit.tallies.update_spectrum(container);
         mcunit.fast_timer.clear_last_cycle_timers();
+
+        if step == mcdata.params.simulation_params.n_steps + 1 {
+            return;
+        }
     }
 
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleInit);
