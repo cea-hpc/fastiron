@@ -162,12 +162,12 @@ pub fn source_now<T: CustomFloat>(
         .map(|mat| mcdata.params.material_params[&mat.name].source_rate)
         .collect();
 
-    let mut total_weight_particles: T = zero();
+    let mut total_unit_weight: T = zero();
     mcunit.domain.iter().for_each(|dom| {
         dom.cell_state.iter().for_each(|cell| {
             // constant because cell volume is constant in our program
-            let cell_weight_particles: T = cell.volume * source_rate[cell.material] * time_step;
-            total_weight_particles += cell_weight_particles;
+            let cell_weight: T = cell.volume * source_rate[cell.material] * time_step;
+            total_unit_weight += cell_weight;
         });
     });
 
@@ -175,8 +175,10 @@ pub fn source_now<T: CustomFloat>(
 
     let source_fraction: T = FromPrimitive::from_f64(0.1).unwrap();
 
-    let source_particle_weight: T = total_weight_particles
-        / (source_fraction * FromPrimitive::from_usize(n_particles).unwrap());
+    // single particle weight for the number of particle to be spawned in the unit
+    // to be source_fraction*n_particles
+    let source_particle_weight: T =
+        total_unit_weight / (source_fraction * FromPrimitive::from_usize(n_particles).unwrap());
     assert_ne!(source_particle_weight, zero());
 
     mcunit.source_particle_weight = source_particle_weight;
@@ -193,9 +195,8 @@ pub fn source_now<T: CustomFloat>(
                 .enumerate()
                 .for_each(|(cell_idx, cell)| {
                     // compute number of particles to be created in the cell
-                    let cell_weight_particle: T =
-                        cell.volume * source_rate[cell.material] * time_step;
-                    let cell_n_particles: usize = (cell_weight_particle / source_particle_weight)
+                    let cell_weight: T = cell.volume * source_rate[cell.material] * time_step;
+                    let cell_n_particles: usize = (cell_weight / source_particle_weight)
                         .floor()
                         .to_usize()
                         .unwrap();
