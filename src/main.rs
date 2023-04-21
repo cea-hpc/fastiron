@@ -1,4 +1,5 @@
 use clap::Parser;
+use fastiron::constants::sim::SRC_FRACTION;
 use fastiron::constants::CustomFloat;
 use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers};
 use fastiron::montecarlo::{MonteCarloData, MonteCarloUnit};
@@ -99,9 +100,8 @@ pub fn cycle_sync<T: CustomFloat>(
     // compute total weight of the problem to source correctly when using multiple units
     mcunit.update_unit_weight(mcdata); // call this on all units
     let total_problem_weight: T = mcunit.unit_weight; // sum on all units
-    let source_fraction: T = FromPrimitive::from_f64(0.1).unwrap();
     let source_particle_weight: T = total_problem_weight
-        / (source_fraction
+        / (<T as FromPrimitive>::from_f64(SRC_FRACTION).unwrap()
             * FromPrimitive::from_u64(mcdata.params.simulation_params.n_particles).unwrap());
 
     population_control::source_now(mcdata, mcunit, container, source_particle_weight);
