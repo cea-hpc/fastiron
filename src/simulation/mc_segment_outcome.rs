@@ -21,7 +21,6 @@ use crate::{
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::mc_particle::MCParticle,
     simulation::{macro_cross_section::weighted_macroscopic_cross_section, mct::nearest_facet},
-    utils::mc_rng_state::rng_sample,
 };
 
 /// Enum representing the outcome of the current segment.
@@ -101,8 +100,7 @@ pub fn outcome<T: CustomFloat>(
 
     // if zero
     if particle.num_mean_free_paths == zero() {
-        let rdm_number: T = rng_sample(&mut particle.random_number_seed);
-        particle.num_mean_free_paths = -one * rdm_number.ln();
+        particle.sample_num_mfp();
     }
 
     // sets distance to collision, nearest facet and census

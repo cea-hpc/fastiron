@@ -24,7 +24,7 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
     // value for update
     let cos_theta: T = angle;
     let sin_theta: T = (one - cos_theta * cos_theta).sqrt();
-    let mut rdm_number: T = rng_sample(&mut particle.random_number_seed);
+    let rdm_number: T = rng_sample(&mut particle.random_number_seed);
     let phi = two * pi * rdm_number;
     let sin_phi: T = phi.sin();
     let cos_phi: T = phi.cos();
@@ -32,8 +32,7 @@ fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParti
     // update
     particle.kinetic_energy = energy;
     particle.rotate_direction(sin_theta, cos_theta, sin_phi, cos_phi);
-    rdm_number = rng_sample(&mut particle.random_number_seed);
-    particle.num_mean_free_paths = -one * rdm_number.ln();
+    particle.sample_num_mfp();
 }
 
 /// Transforms a given particle according to an internally drawn type of collision.
@@ -57,10 +56,7 @@ pub fn collision_event<T: CustomFloat>(
     // ==========================
     // Pick an isotope & reaction
 
-    let rdm_number: T = rng_sample(&mut particle.random_number_seed);
-    let total_xsection: T = particle.total_cross_section;
-
-    let mut current_xsection: T = total_xsection * rdm_number;
+    let mut current_xsection: T = particle.get_current_xs();
 
     // sort of a magic value but using an option seems to be overkill
     let mut selected_iso: usize = usize::MAX;

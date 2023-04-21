@@ -203,40 +203,38 @@ pub fn source_now<T: CustomFloat>(
 
                     // create cell_n_particles and add them to the vaults
                     let sourced = (0..cell_n_particles).map(|_| {
-                        let mut particle: MCParticle<T> = MCParticle::default();
-
-                        // atomic in original code
-                        let mut rand_n_seed = cell.source_tally as u64;
+                        // source_tally is fetched & incr atomically in original code
+                        let mut rand_n_seed = (cell.source_tally + cell.id) as u64;
                         cell.source_tally += 1;
 
-                        rand_n_seed += cell.id as u64;
+                        // ~~~ init particle
+
+                        let mut particle: MCParticle<T> = MCParticle::default();
 
                         particle.random_number_seed = spawn_rn_seed::<T>(&mut rand_n_seed);
                         particle.identifier = rand_n_seed;
-
                         particle.coordinate = generate_coordinate_3dg(
                             &mut particle.random_number_seed,
                             &dom.mesh,
                             cell_idx,
                             cell.volume,
                         );
-                        particle.sample_isotropic();
-
-                        // sample energy uniformly in [emin; emax] MeV
-                        let range = mcdata.params.simulation_params.e_max
-                            - mcdata.params.simulation_params.e_min;
-                        let sample: T = rng_sample(&mut particle.random_number_seed);
-                        particle.kinetic_energy =
-                            sample * range + mcdata.params.simulation_params.e_min;
-
                         particle.domain = domain_idx;
                         particle.cell = cell_idx;
                         particle.weight = source_particle_weight;
 
-                        let mut rand_f: T = rng_sample(&mut particle.random_number_seed);
-                        particle.num_mean_free_paths = -one::<T>() * rand_f.ln();
-                        rand_f = rng_sample(&mut particle.random_number_seed);
-                        particle.time_to_census = time_step * rand_f;
+                        // ~~~ random sampling
+
+                        particle.sample_isotropic();
+                        // sample energy uniformly in [emin; emax] MeV
+                        let range = mcdata.params.simulation_params.e_max
+                            - mcdata.params.simulation_params.e_min;
+                        particle.kinetic_energy = rng_sample::<T>(&mut particle.random_number_seed)
+                            * range
+                            + mcdata.params.simulation_params.e_min;
+                        particle.sample_num_mfp();
+                        particle.time_to_census =
+                            time_step * rng_sample::<T>(&mut particle.random_number_seed);
 
                         // atomic in original code
                         mcunit.tallies.balance_cycle.source += 1;

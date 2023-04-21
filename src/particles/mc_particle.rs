@@ -3,7 +3,7 @@
 //! This module contains code of an extended particle structure used
 //! for computations.
 
-use num::{zero, FromPrimitive};
+use num::{one, zero, FromPrimitive};
 
 use crate::{
     constants::{
@@ -93,6 +93,15 @@ impl<T: CustomFloat> MCParticle<T> {
                 / ((self.kinetic_energy + rest_mass_energy)
                     * (self.kinetic_energy + rest_mass_energy)))
                 .sqrt()
+    }
+
+    pub fn get_current_xs(&mut self) -> T {
+        self.total_cross_section * rng_sample::<T>(&mut self.random_number_seed)
+    }
+
+    /// Sample the number of mean free paths to a collision.
+    pub fn sample_num_mfp(&mut self) {
+        self.num_mean_free_paths = -one::<T>() * rng_sample::<T>(&mut self.random_number_seed).ln();
     }
 
     /// Sample a random direction for the particle to face.
