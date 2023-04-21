@@ -153,3 +153,47 @@ impl<T: CustomFloat> MCParticle<T> {
             -sin_theta_zero * (sine_theta * cosine_phi) + zero() + cos_theta_zero * cosine_theta;
     }
 }
+
+//=============
+// Unit tests
+//=============
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use num::Float;
+
+    #[test]
+    fn sample_isotropic() {
+        let mut particle: MCParticle<f64> = MCParticle {
+            random_number_seed: 90374384094798327,
+            ..Default::default()
+        };
+
+        particle.sample_isotropic();
+
+        assert_eq!(particle.direction.x, 0.9083218129645693);
+        assert_eq!(particle.direction.y, -0.3658911896631176);
+        assert_eq!(particle.direction.z, 0.2026699815455325);
+    }
+
+    #[test]
+    fn rotate_direction() {
+        let alpha = 0.2140;
+        let beta = 0.8621;
+        let gamma = 0.7821;
+        let mut particle: MCParticle<f64> = MCParticle {
+            direction: MCVector {
+                x: alpha,
+                y: beta,
+                z: gamma,
+            },
+            ..Default::default()
+        };
+        particle.rotate_direction(1.0.sin(), 1.0.cos(), 2.0.sin(), 2.0.cos());
+
+        assert_eq!(particle.direction.x, -1.0369691350703922);
+        assert_eq!(particle.direction.y, 0.3496694784021821);
+        assert_eq!(particle.direction.z, 0.6407833194623658);
+    }
+}
