@@ -3,14 +3,15 @@
 //! This module contains code of an extended particle structure used
 //! for computations.
 
-use num::FromPrimitive;
+use num::{zero, FromPrimitive};
 
 use crate::{
     constants::{
-        physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY},
+        physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
         CustomFloat,
     },
     data::{direction_cosine::DirectionCosine, mc_vector::MCVector, tallies::MCTallyEvent},
+    utils::mc_rng_state::rng_sample,
 };
 
 /// Custom enum used to model a particle's species.
@@ -30,6 +31,8 @@ pub enum Species {
 pub struct MCParticle<T: CustomFloat> {
     /// Current position.
     pub coordinate: MCVector<T>,
+    /// Direction of the particle as a normalized `(x, y, z)` vector.
+    pub direction: MCVector<T>,
     /// Direction of the particle as a normalized `(x, y, z)` vector.
     pub direction_cosine: DirectionCosine<T>,
     /// Kinetic energy.
@@ -90,5 +93,63 @@ impl<T: CustomFloat> MCParticle<T> {
                 / ((self.kinetic_energy + rest_mass_energy)
                     * (self.kinetic_energy + rest_mass_energy)))
                 .sqrt()
+    }
+
+    /// Sample a random direction for the particle to face.
+    pub fn sample_isotropic(&mut self) {
+        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+        let pi: T = FromPrimitive::from_f64(PI).unwrap();
+
+        // sample gamma
+        self.direction.z = one - two * rng_sample(&mut self.random_number_seed);
+        let sine_gamma = (one - self.direction.z * self.direction.z).sqrt();
+
+        // sample phi and set the other angles using it
+        let phi = pi * (two * rng_sample(&mut self.random_number_seed) - one);
+
+        self.direction.x = sine_gamma * phi.cos();
+        self.direction.y = sine_gamma * phi.sin();
+    }
+
+    /// Rotates a 3D vector that is defined by the angles Theta and Phi
+    /// in a local coordinate frame about a polar angle and azimuthal angle
+    /// described by the direction cosine. Hence, caller passes in
+    /// `sin_Theta` and `cos_Theta` referenced from the local z-axis and `sin_Phi`
+    /// and `cos_Phi` referenced from the local x-axis to describe the vector V
+    /// to be rotated. The direction cosine describes global theta and phi
+    /// angles that the vector V is to be rotated about.
+    /// `cos_theta_zero`/`sin_theta_zero` and `cos_phi_zero`/`sin_phi_zero`
+    /// model the initial position while the arguments of the method caracterize
+    /// the rotation. See [this][1] for explanation on the formula.
+    ///
+    /// [1]: https://en.wikipedia.org/wiki/Spherical_coordinate_system#Integration_and_differentiation_in_spherical_coordinates
+    pub fn rotate_direction(&mut self, sine_theta: T, cosine_theta: T, sine_phi: T, cosine_phi: T) {
+        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let threshold: T = FromPrimitive::from_f64(1e-6).unwrap(); // order of TINY_FLOAT.sqrt()
+
+        let cos_theta_zero = self.direction.z;
+        let sin_theta_zero = (one - cos_theta_zero * cos_theta_zero).sqrt();
+
+        let (cos_phi_zero, sin_phi_zero): (T, T) = if sin_theta_zero < threshold {
+            (one, zero())
+        } else {
+            (
+                self.direction.x / sin_theta_zero,
+                self.direction.y / sin_theta_zero,
+            )
+        };
+
+        // compute the rotation
+        self.direction.x = cos_theta_zero * cos_phi_zero * (sine_theta * cosine_phi)
+            - sin_phi_zero * (sine_theta * sine_phi)
+            + sin_theta_zero * cos_phi_zero * cosine_theta;
+
+        self.direction.y = cos_theta_zero * sin_phi_zero * (sine_theta * cosine_phi)
+            + cos_phi_zero * (sine_theta * sine_phi)
+            + sin_theta_zero * sin_phi_zero * cosine_theta;
+
+        self.direction.z =
+            -sin_theta_zero * (sine_theta * cosine_phi) + zero() + cos_theta_zero * cosine_theta;
     }
 }
