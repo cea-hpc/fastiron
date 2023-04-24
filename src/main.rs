@@ -12,7 +12,7 @@ use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
 use fastiron::utils::io_utils::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
-use num::FromPrimitive;
+use num::{one, FromPrimitive};
 
 fn main() {
     let cli = Cli::parse();
@@ -128,13 +128,19 @@ pub fn cycle_process<T: CustomFloat>(
     mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
 
     population_control::source_now(mcdata, mcunit, container);
-    population_control::population_control(
-        mcunit,
+    let split_rr_factor: T = population_control::compute_split_factor(
         container,
         mcdata.params.simulation_params.n_particles as usize,
         mcdata.exec_info.num_threads,
         mcdata.params.simulation_params.load_balance,
     );
+    if split_rr_factor != one() {
+        population_control::regulate(
+            split_rr_factor,
+            container,
+            &mut mcunit.tallies.balance_cycle,
+        )
+    }
     population_control::roulette_low_weight_particles(
         mcdata.params.simulation_params.low_weight_cutoff,
         mcdata.source_particle_weight,

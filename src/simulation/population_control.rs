@@ -25,13 +25,12 @@ use crate::{
 /// If the split factor is strictly below one, there are too many particles,
 /// if it is striclty superior to one, there are too little. Particles are
 /// then either randomly killed or spawned to get to the desired number.
-pub fn population_control<T: CustomFloat>(
-    mcunit: &mut MonteCarloUnit<T>,
+pub fn compute_split_factor<T: CustomFloat>(
     container: &mut ParticleContainer<T>,
     global_target_n_particles: usize,
     num_threads: usize,
     load_balance: bool,
-) {
+) -> T {
     let mut split_rr_factor: T = one();
     let local_n_particles: usize = container.processing_particles.len();
     let global_n_particles: usize = local_n_particles; // need to change that
@@ -51,16 +50,10 @@ pub fn population_control<T: CustomFloat>(
             / FromPrimitive::from_usize(global_n_particles).unwrap();
     }
 
-    if split_rr_factor != one() {
-        population_control_guts(
-            split_rr_factor,
-            container,
-            &mut mcunit.tallies.balance_cycle,
-        );
-    }
+    split_rr_factor
 }
 
-fn population_control_guts<T: CustomFloat>(
+pub fn regulate<T: CustomFloat>(
     split_rr_factor: T,
     container: &mut ParticleContainer<T>,
     balance: &mut Balance,
