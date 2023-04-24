@@ -1,3 +1,5 @@
+use std::iter::zip;
+
 use clap::Parser;
 use fastiron::constants::sim::SRC_FRACTION;
 use fastiron::constants::CustomFloat;
@@ -12,7 +14,7 @@ use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
 use fastiron::utils::io_utils::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
-use num::{one, FromPrimitive};
+use num::{one, zero, FromPrimitive};
 
 fn main() {
     let cli = Cli::parse();
@@ -102,16 +104,23 @@ pub fn cycle_sync<T: CustomFloat>(
     }
 
     // compute total weight of the problem to source correctly when using multiple units
-    let total_problem_weight: T = mcunits
-        .iter_mut()
-        .map(|mcunit| {
-            mcunit.update_unit_weight(mcdata);
-            mcunit.unit_weight
-        })
-        .sum();
+    // & prepare structures for next processing cycle
+    let iter = zip(mcunits.iter_mut(), containers.iter_mut());
+    let mut current_n_particles: usize = 0;
+    let mut total_problem_weight: T = zero();
+    iter.for_each(|(mcunit, container)| {
+        mcunit.update_unit_weight(mcdata);
+        mcunit.clear_cross_section_cache();
+        container.swap_processing_processed();
+        let local_n_particles = container.processing_particles.len();
+        mcunit.tallies.balance_cycle.start = local_n_particles as u64;
+        current_n_particles += local_n_particles;
+        total_problem_weight += mcunit.unit_weight;
+    });
     let n_particles_to_spawn: T = <T as FromPrimitive>::from_f64(SRC_FRACTION).unwrap()
         * FromPrimitive::from_u64(mcdata.params.simulation_params.n_particles).unwrap();
     mcdata.source_particle_weight = total_problem_weight / n_particles_to_spawn;
+    mcdata.global_n_particles = current_n_particles + n_particles_to_spawn.to_usize().unwrap();
 }
 
 //==================================
@@ -123,14 +132,13 @@ pub fn cycle_process<T: CustomFloat>(
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
 ) {
-    mcunit.clear_cross_section_cache();
-    container.swap_processing_processed();
-    mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
-
+    // source 10% of target number of particles
     population_control::source_now(mcdata, mcunit, container);
+    // compute split factor & regulate accordingly
     let split_rr_factor: T = population_control::compute_split_factor(
-        container,
         mcdata.params.simulation_params.n_particles as usize,
+        mcdata.global_n_particles,
+        container.processing_particles.len(),
         mcdata.exec_info.num_threads,
         mcdata.params.simulation_params.load_balance,
     );
@@ -141,6 +149,7 @@ pub fn cycle_process<T: CustomFloat>(
             &mut mcunit.tallies.balance_cycle,
         )
     }
+    // go over low weight particle & eliminate them randomly
     population_control::roulette_low_weight_particles(
         mcdata.params.simulation_params.low_weight_cutoff,
         mcdata.source_particle_weight,

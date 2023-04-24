@@ -26,14 +26,13 @@ use crate::{
 /// if it is striclty superior to one, there are too little. Particles are
 /// then either randomly killed or spawned to get to the desired number.
 pub fn compute_split_factor<T: CustomFloat>(
-    container: &mut ParticleContainer<T>,
     global_target_n_particles: usize,
+    global_n_particles: usize,
+    local_n_particles: usize,
     num_threads: usize,
     load_balance: bool,
 ) -> T {
     let mut split_rr_factor: T = one();
-    let local_n_particles: usize = container.processing_particles.len();
-    let global_n_particles: usize = local_n_particles; // need to change that
 
     if load_balance {
         if local_n_particles != 0 {
