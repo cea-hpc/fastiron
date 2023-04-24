@@ -28,32 +28,26 @@ use crate::{
 pub fn population_control<T: CustomFloat>(
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
-    target_n_particles: usize,
+    global_target_n_particles: usize,
     num_threads: usize,
     load_balance: bool,
 ) {
-    let mut local_target_n_particles: usize = target_n_particles;
-    let mut global_n_particles: usize = 0;
-    let local_n_particles: usize = container.processing_particles.len();
-
-    if load_balance {
-        // Spread the target number of particle among the processors
-        let tmp: T = <T as FromPrimitive>::from_usize(local_target_n_particles).unwrap()
-            / FromPrimitive::from_usize(num_threads).unwrap();
-        local_target_n_particles = tmp.ceil().to_usize().unwrap();
-    } else {
-        global_n_particles = local_n_particles;
-    }
-
     let mut split_rr_factor: T = one();
+    let local_n_particles: usize = container.processing_particles.len();
+    let global_n_particles: usize = local_n_particles; // need to change that
+
     if load_balance {
-        // Compute processor-specific split factor
         if local_n_particles != 0 {
+            let local_target_n_particles: usize = {
+                let tmp: T = <T as FromPrimitive>::from_usize(global_target_n_particles).unwrap()
+                    / FromPrimitive::from_usize(num_threads).unwrap();
+                tmp.ceil().to_usize().unwrap()
+            };
             split_rr_factor = <T as FromPrimitive>::from_usize(local_target_n_particles).unwrap()
                 / FromPrimitive::from_usize(local_n_particles).unwrap();
         }
     } else {
-        split_rr_factor = <T as FromPrimitive>::from_usize(local_target_n_particles).unwrap()
+        split_rr_factor = <T as FromPrimitive>::from_usize(global_target_n_particles).unwrap()
             / FromPrimitive::from_usize(global_n_particles).unwrap();
     }
 

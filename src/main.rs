@@ -79,6 +79,7 @@ pub fn cycle_sync<T: CustomFloat>(
 
         match mcdata.exec_info.exec_policy {
             ExecPolicy::Sequential => {
+                // if sequential, just use the single Monte-Carlo unit
                 mcunits[0].tallies.balance_cycle.end =
                     containers[0].processed_particles.len() as u64;
                 mcunits[0]
@@ -108,9 +109,9 @@ pub fn cycle_sync<T: CustomFloat>(
             mcunit.unit_weight
         })
         .sum();
-    mcdata.source_particle_weight = total_problem_weight
-        / (<T as FromPrimitive>::from_f64(SRC_FRACTION).unwrap()
-            * FromPrimitive::from_u64(mcdata.params.simulation_params.n_particles).unwrap());
+    let n_particles_to_spawn: T = <T as FromPrimitive>::from_f64(SRC_FRACTION).unwrap()
+        * FromPrimitive::from_u64(mcdata.params.simulation_params.n_particles).unwrap();
+    mcdata.source_particle_weight = total_problem_weight / n_particles_to_spawn;
 }
 
 //==================================
