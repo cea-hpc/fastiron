@@ -24,20 +24,21 @@ use crate::{
 /// if it is striclty superior to one, there are too little. Particles are
 /// then either randomly killed or spawned to get to the desired number.
 pub fn population_control<T: CustomFloat>(
-    mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
+    target_n_particles: usize,
+    num_threads: usize,
+    load_balance: bool,
 ) {
-    let mut target_n_particles: usize = mcdata.params.simulation_params.n_particles as usize;
+    let mut local_target_n_particles: usize = target_n_particles;
     let mut global_n_particles: usize = 0;
     let local_n_particles: usize = container.processing_particles.len();
-    let load_balance = mcdata.params.simulation_params.load_balance;
 
     if load_balance {
         // Spread the target number of particle among the processors
-        let tmp: T = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
-            / FromPrimitive::from_usize(mcdata.exec_info.num_threads).unwrap();
-        target_n_particles = tmp.ceil().to_usize().unwrap();
+        let tmp: T = <T as FromPrimitive>::from_usize(local_target_n_particles).unwrap()
+            / FromPrimitive::from_usize(num_threads).unwrap();
+        local_target_n_particles = tmp.ceil().to_usize().unwrap();
     } else {
         global_n_particles = local_n_particles;
     }
@@ -46,11 +47,11 @@ pub fn population_control<T: CustomFloat>(
     if load_balance {
         // Compute processor-specific split factor
         if local_n_particles != 0 {
-            split_rr_factor = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
+            split_rr_factor = <T as FromPrimitive>::from_usize(local_target_n_particles).unwrap()
                 / FromPrimitive::from_usize(local_n_particles).unwrap();
         }
     } else {
-        split_rr_factor = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
+        split_rr_factor = <T as FromPrimitive>::from_usize(local_target_n_particles).unwrap()
             / FromPrimitive::from_usize(global_n_particles).unwrap();
     }
 

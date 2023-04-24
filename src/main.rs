@@ -124,7 +124,13 @@ pub fn cycle_sync<T: CustomFloat>(
         mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
 
         population_control::source_now(mcdata, mcunit, container, source_particle_weight);
-        population_control::population_control(mcdata, mcunit, container);
+        population_control::population_control(
+            mcunit,
+            container,
+            mcdata.params.simulation_params.n_particles as usize,
+            mcdata.exec_info.num_threads,
+            mcdata.params.simulation_params.load_balance,
+        );
         population_control::roulette_low_weight_particles(
             mcdata.params.simulation_params.low_weight_cutoff,
             source_particle_weight,
