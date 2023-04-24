@@ -63,12 +63,12 @@ pub fn regulate<T: CustomFloat>(
     container: &mut ParticleContainer<T>,
     balance: &mut Balance,
 ) {
+    let old_len = container.processing_particles.len();
     if split_rr_factor < one() {
         // too many particles; roll for a kill
         container.processing_particles.retain_mut(|pp| {
             if rng_sample::<T>(&mut pp.random_number_seed) > split_rr_factor {
                 // particle dies
-                balance.rr += 1;
                 false
             } else {
                 // particle survives with increased weight
@@ -76,6 +76,7 @@ pub fn regulate<T: CustomFloat>(
                 true
             }
         });
+        balance.rr += (old_len - container.processing_particles.len()) as u64;
     } else if split_rr_factor > one() {
         // not enough particles; create new ones by splitting
         container.processing_particles.iter_mut().for_each(|pp| {
@@ -88,7 +89,6 @@ pub fn regulate<T: CustomFloat>(
             let n_split: usize = split_factor.to_usize().unwrap();
             (0..n_split).for_each(|_| {
                 let mut split_pp = pp.clone();
-                balance.split += 1;
                 split_pp.random_number_seed = spawn_rn_seed::<T>(&mut pp.random_number_seed);
                 split_pp.identifier = split_pp.random_number_seed;
 
@@ -96,6 +96,7 @@ pub fn regulate<T: CustomFloat>(
             })
         });
         container.clean_extra_vaults();
+        balance.split += (container.processing_particles.len() - old_len) as u64;
     }
 }
 
@@ -112,7 +113,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 ) {
     if relative_weight_cutoff > zero() {
         let weight_cutoff = relative_weight_cutoff * source_particle_weight;
-
+        let old_len = container.processing_particles.len();
         container.processing_particles.retain_mut(|pp| {
             if pp.weight <= weight_cutoff {
                 if rng_sample::<T>(&mut pp.random_number_seed) <= relative_weight_cutoff {
@@ -121,7 +122,6 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
                     true
                 } else {
                     // particle dies
-                    balance.rr += 1;
                     false
                 }
             } else {
@@ -129,6 +129,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
                 true
             }
         });
+        balance.rr += (old_len - container.processing_particles.len()) as u64;
     }
 }
 
