@@ -18,8 +18,10 @@ use crate::{
 /// Routine used to monitor and regulate population level.
 ///
 /// If load balancing is enabled, the spawned particle will be spread
-/// throughout the processors. Using the current number of particle and
-/// the target number of particles, the function computes a split factor.
+/// throughout the threads to reach an even distribution. Else, the spawning/killing
+/// of particles will be uniform across threads. Using the current
+/// number of particle and the target number of particles, the function
+/// computes a split factor.
 /// If the split factor is strictly below one, there are too many particles,
 /// if it is striclty superior to one, there are too little. Particles are
 /// then either randomly killed or spawned to get to the desired number.
@@ -153,7 +155,6 @@ pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
-    source_particle_weight: T,
 ) {
     let time_step = mcdata.params.simulation_params.dt;
 
@@ -177,7 +178,7 @@ pub fn source_now<T: CustomFloat>(
                 .for_each(|(cell_idx, cell)| {
                     // compute number of particles to be created in the cell
                     let cell_weight: T = cell.volume * source_rate[cell.material] * time_step;
-                    let cell_n_particles: usize = (cell_weight / source_particle_weight)
+                    let cell_n_particles: usize = (cell_weight / mcdata.source_particle_weight)
                         .floor()
                         .to_usize()
                         .unwrap();
@@ -206,7 +207,7 @@ pub fn source_now<T: CustomFloat>(
                         );
                         particle.domain = domain_idx;
                         particle.cell = cell_idx;
-                        particle.weight = source_particle_weight;
+                        particle.weight = mcdata.source_particle_weight;
 
                         // ~~~ random sampling
 

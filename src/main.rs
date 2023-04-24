@@ -1,5 +1,3 @@
-use std::iter::zip;
-
 use clap::Parser;
 use fastiron::constants::sim::SRC_FRACTION;
 use fastiron::constants::CustomFloat;
@@ -24,7 +22,7 @@ fn main() {
 
     let n_steps = params.simulation_params.n_steps;
 
-    let mcdata = init_mcdata(params);
+    let mut mcdata = init_mcdata(params);
     let mut containers = init_particle_containers(&mcdata.params, &mcdata.exec_info);
     let mut mcunits = init_mcunits(&mcdata);
 
@@ -36,10 +34,10 @@ fn main() {
             mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::Main);
 
             for step in 0..n_steps {
-                cycle_sync(&mcdata, &mut mcunits, &mut containers, step);
+                cycle_sync(&mut mcdata, &mut mcunits, &mut containers, step);
                 cycle_process(&mcdata, &mut mcunits[0], &mut containers[0]);
             }
-            cycle_sync(&mcdata, &mut mcunits, &mut containers, n_steps);
+            cycle_sync(&mut mcdata, &mut mcunits, &mut containers, n_steps);
 
             mc_fast_timer::stop(&mut mcunits[0].fast_timer, Section::Main);
         }
@@ -71,7 +69,7 @@ pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteC
 //============================
 
 pub fn cycle_sync<T: CustomFloat>(
-    mcdata: &MonteCarloData<T>,
+    mcdata: &mut MonteCarloData<T>,
     mcunits: &mut [MonteCarloUnit<T>],
     containers: &mut [ParticleContainer<T>],
     step: usize,
@@ -110,36 +108,9 @@ pub fn cycle_sync<T: CustomFloat>(
             mcunit.unit_weight
         })
         .sum();
-    let source_particle_weight: T = total_problem_weight
+    mcdata.source_particle_weight = total_problem_weight
         / (<T as FromPrimitive>::from_f64(SRC_FRACTION).unwrap()
             * FromPrimitive::from_u64(mcdata.params.simulation_params.n_particles).unwrap());
-
-    // this is the part that might be partially movable to cycle_process
-    let joint_iterators = zip(mcunits.iter_mut(), containers.iter_mut());
-    joint_iterators.for_each(|(mcunit, container)| {
-        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleInit);
-
-        mcunit.clear_cross_section_cache();
-        container.swap_processing_processed();
-        mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
-
-        population_control::source_now(mcdata, mcunit, container, source_particle_weight);
-        population_control::population_control(
-            mcunit,
-            container,
-            mcdata.params.simulation_params.n_particles as usize,
-            mcdata.exec_info.num_threads,
-            mcdata.params.simulation_params.load_balance,
-        );
-        population_control::roulette_low_weight_particles(
-            mcdata.params.simulation_params.low_weight_cutoff,
-            source_particle_weight,
-            container,
-            &mut mcunit.tallies.balance_cycle,
-        );
-
-        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleInit);
-    });
 }
 
 //==================================
@@ -151,6 +122,25 @@ pub fn cycle_process<T: CustomFloat>(
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
 ) {
+    mcunit.clear_cross_section_cache();
+    container.swap_processing_processed();
+    mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
+
+    population_control::source_now(mcdata, mcunit, container);
+    population_control::population_control(
+        mcunit,
+        container,
+        mcdata.params.simulation_params.n_particles as usize,
+        mcdata.exec_info.num_threads,
+        mcdata.params.simulation_params.load_balance,
+    );
+    population_control::roulette_low_weight_particles(
+        mcdata.params.simulation_params.low_weight_cutoff,
+        mcdata.source_particle_weight,
+        container,
+        &mut mcunit.tallies.balance_cycle,
+    );
+
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
     loop {
         while !container.test_done_new() {
