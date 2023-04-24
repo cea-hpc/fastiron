@@ -94,6 +94,7 @@ pub fn cycle_sync<T: CustomFloat>(
                 mcunits[0].fast_timer.clear_last_cycle_timers();
             }
             ExecPolicy::Parallel => {
+                // centralize / finalize
                 todo!()
             }
         }
@@ -103,8 +104,7 @@ pub fn cycle_sync<T: CustomFloat>(
         }
     }
 
-    // compute total weight of the problem to source correctly when using multiple units
-    // & prepare structures for next processing cycle
+    // prepare structures for next processing cycle
     let iter = zip(mcunits.iter_mut(), containers.iter_mut());
     let mut current_n_particles: usize = 0;
     let mut total_problem_weight: T = zero();
@@ -120,6 +120,8 @@ pub fn cycle_sync<T: CustomFloat>(
     let n_particles_to_spawn: T = <T as FromPrimitive>::from_f64(SRC_FRACTION).unwrap()
         * FromPrimitive::from_u64(mcdata.params.simulation_params.n_particles).unwrap();
     mcdata.source_particle_weight = total_problem_weight / n_particles_to_spawn;
+    // current number of particle + the one that will be sourced asap
+    // i.e. number of particles before population control:
     mcdata.global_n_particles = current_n_particles + n_particles_to_spawn.to_usize().unwrap();
 }
 

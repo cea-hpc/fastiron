@@ -15,16 +15,13 @@ use crate::{
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
-/// Routine used to monitor and regulate population level.
+/// Routine used to compute a split factor, value used to regulate population
+/// of the problem.
 ///
 /// If load balancing is enabled, the spawned particle will be spread
 /// throughout the threads to reach an even distribution. Else, the spawning/killing
-/// of particles will be uniform across threads. Using the current
-/// number of particle and the target number of particles, the function
-/// computes a split factor.
-/// If the split factor is strictly below one, there are too many particles,
-/// if it is striclty superior to one, there are too little. Particles are
-/// then either randomly killed or spawned to get to the desired number.
+/// of particles will be uniform across threads, ignoring the local population.
+/// This is reflected in the split factor computation.
 pub fn compute_split_factor<T: CustomFloat>(
     global_target_n_particles: usize,
     global_n_particles: usize,
@@ -35,6 +32,7 @@ pub fn compute_split_factor<T: CustomFloat>(
     let mut split_rr_factor: T = one();
 
     if load_balance {
+        // unit-specific modifications to reach uniform distribution
         if local_n_particles != 0 {
             let local_target_n_particles: usize = {
                 let tmp: T = <T as FromPrimitive>::from_usize(global_target_n_particles).unwrap()
@@ -45,6 +43,7 @@ pub fn compute_split_factor<T: CustomFloat>(
                 / FromPrimitive::from_usize(local_n_particles).unwrap();
         }
     } else {
+        // uniform modifications across units without regards to distribution
         split_rr_factor = <T as FromPrimitive>::from_usize(global_target_n_particles).unwrap()
             / FromPrimitive::from_usize(global_n_particles).unwrap();
     }
@@ -52,6 +51,13 @@ pub fn compute_split_factor<T: CustomFloat>(
     split_rr_factor
 }
 
+/// Routine used to monitor and regulate population level according to the specified
+/// split factor.
+///
+///
+/// If the split factor is strictly below one, there are too many particles,
+/// if it is striclty superior to one, there are too little: Particles are
+/// either randomly killed or spawned to get to the target number of particle.
 pub fn regulate<T: CustomFloat>(
     split_rr_factor: T,
     container: &mut ParticleContainer<T>,
