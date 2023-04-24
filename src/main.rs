@@ -132,6 +132,8 @@ pub fn cycle_process<T: CustomFloat>(
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
 ) {
+    mc_fast_timer::start(&mut mcunit.fast_timer, Section::PopulationControl);
+
     // source 10% of target number of particles
     population_control::source_now(mcdata, mcunit, container);
     // compute split factor & regulate accordingly
@@ -157,7 +159,9 @@ pub fn cycle_process<T: CustomFloat>(
         &mut mcunit.tallies.balance_cycle,
     );
 
+    mc_fast_timer::stop(&mut mcunit.fast_timer, Section::PopulationControl);
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
+
     loop {
         while !container.test_done_new() {
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
@@ -193,5 +197,6 @@ pub fn cycle_process<T: CustomFloat>(
             break;
         }
     }
+
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTracking);
 }
