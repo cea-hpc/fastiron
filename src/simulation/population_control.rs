@@ -74,8 +74,7 @@ fn population_control_guts<T: CustomFloat>(
     if split_rr_factor < one() {
         // too many particles; roll for a kill
         container.processing_particles.retain_mut(|pp| {
-            let rand_f: T = rng_sample(&mut pp.random_number_seed);
-            if rand_f > split_rr_factor {
+            if rng_sample::<T>(&mut pp.random_number_seed) > split_rr_factor {
                 // particle dies
                 balance.rr += 1;
                 false
@@ -88,9 +87,8 @@ fn population_control_guts<T: CustomFloat>(
     } else if split_rr_factor > one() {
         // not enough particles; create new ones by splitting
         container.processing_particles.iter_mut().for_each(|pp| {
-            let rand_f: T = rng_sample(&mut pp.random_number_seed);
             let mut split_factor = split_rr_factor.floor();
-            if rand_f > split_rr_factor - split_factor {
+            if rng_sample::<T>(&mut pp.random_number_seed) > split_rr_factor - split_factor {
                 split_factor -= one();
             }
             pp.weight /= split_rr_factor;
@@ -125,8 +123,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 
         container.processing_particles.retain_mut(|pp| {
             if pp.weight <= weight_cutoff {
-                let rand_f: T = rng_sample(&mut pp.random_number_seed);
-                if rand_f <= relative_weight_cutoff {
+                if rng_sample::<T>(&mut pp.random_number_seed) <= relative_weight_cutoff {
                     // particle survives with increased weight
                     pp.weight /= relative_weight_cutoff;
                     true
