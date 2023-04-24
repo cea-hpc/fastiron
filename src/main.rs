@@ -154,12 +154,14 @@ pub fn cycle_process<T: CustomFloat>(
         )
     }
     // go over low weight particle & eliminate them randomly
-    population_control::roulette_low_weight_particles(
-        mcdata.params.simulation_params.low_weight_cutoff,
-        mcdata.source_particle_weight,
-        container,
-        &mut mcunit.tallies.balance_cycle,
-    );
+    if mcdata.params.simulation_params.low_weight_cutoff > zero() {
+        population_control::roulette_low_weight_particles(
+            mcdata.params.simulation_params.low_weight_cutoff,
+            mcdata.source_particle_weight,
+            container,
+            &mut mcunit.tallies.balance_cycle,
+        );
+    }
 
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::PopulationControl);
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);

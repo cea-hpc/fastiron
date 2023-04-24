@@ -4,7 +4,7 @@
 //! of particles in the simulation as well as two internal functions used by
 //! those.
 
-use num::{one, zero, FromPrimitive};
+use num::{one, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
@@ -54,7 +54,6 @@ pub fn compute_split_factor<T: CustomFloat>(
 /// Routine used to monitor and regulate population level according to the specified
 /// split factor.
 ///
-///
 /// If the split factor is strictly below one, there are too many particles,
 /// if it is striclty superior to one, there are too little: Particles are
 /// either randomly killed or spawned to get to the target number of particle.
@@ -86,7 +85,7 @@ pub fn regulate<T: CustomFloat>(
 /// Play russian-roulette with low-weight particles relative
 /// to the source particle weight.
 ///
-/// This function regulates the number of low (statistica) weight particle to
+/// This function regulates the number of low (statistical) weight particle to
 /// prevent clusters of low energy particle from falsifying the results.
 pub fn roulette_low_weight_particles<T: CustomFloat>(
     relative_weight_cutoff: T,
@@ -94,13 +93,11 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
     container: &mut ParticleContainer<T>,
     balance: &mut Balance,
 ) {
-    if relative_weight_cutoff > zero() {
-        let old_len = container.processing_particles.len();
-        container
-            .processing_particles
-            .retain_mut(|pp| pp.low_weight_rr(relative_weight_cutoff, source_particle_weight));
-        balance.rr += (old_len - container.processing_particles.len()) as u64;
-    }
+    let old_len = container.processing_particles.len();
+    container
+        .processing_particles
+        .retain_mut(|pp| pp.low_weight_rr(relative_weight_cutoff, source_particle_weight));
+    balance.rr += (old_len - container.processing_particles.len()) as u64;
 }
 
 /// Simulates the sources according to the problem's parameters.
