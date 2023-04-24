@@ -66,34 +66,17 @@ pub fn regulate<T: CustomFloat>(
     let old_len = container.processing_particles.len();
     if split_rr_factor < one() {
         // too many particles; roll for a kill
-        container.processing_particles.retain_mut(|pp| {
-            if rng_sample::<T>(&mut pp.random_number_seed) > split_rr_factor {
-                // particle dies
-                false
-            } else {
-                // particle survives with increased weight
-                pp.weight /= split_rr_factor;
-                true
-            }
-        });
+        container
+            .processing_particles
+            .retain_mut(|pp| pp.over_populated_rr(split_rr_factor));
+        // deduce number of killed particle from length diff
         balance.rr += (old_len - container.processing_particles.len()) as u64;
     } else if split_rr_factor > one() {
         // not enough particles; create new ones by splitting
         container.processing_particles.iter_mut().for_each(|pp| {
-            let mut split_factor = split_rr_factor.floor();
-            if rng_sample::<T>(&mut pp.random_number_seed) > split_rr_factor - split_factor {
-                split_factor -= one();
-            }
-            pp.weight /= split_rr_factor;
-
-            let n_split: usize = split_factor.to_usize().unwrap();
-            (0..n_split).for_each(|_| {
-                let mut split_pp = pp.clone();
-                split_pp.random_number_seed = spawn_rn_seed::<T>(&mut pp.random_number_seed);
-                split_pp.identifier = split_pp.random_number_seed;
-
-                container.extra_particles.push(split_pp);
-            })
+            container
+                .extra_particles
+                .extend(pp.under_populated_split(split_rr_factor));
         });
         container.clean_extra_vaults();
         balance.split += (container.processing_particles.len() - old_len) as u64;
@@ -112,23 +95,10 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
     balance: &mut Balance,
 ) {
     if relative_weight_cutoff > zero() {
-        let weight_cutoff = relative_weight_cutoff * source_particle_weight;
         let old_len = container.processing_particles.len();
-        container.processing_particles.retain_mut(|pp| {
-            if pp.weight <= weight_cutoff {
-                if rng_sample::<T>(&mut pp.random_number_seed) <= relative_weight_cutoff {
-                    // particle survives with increased weight
-                    pp.weight /= relative_weight_cutoff;
-                    true
-                } else {
-                    // particle dies
-                    false
-                }
-            } else {
-                // particle survives
-                true
-            }
-        });
+        container
+            .processing_particles
+            .retain_mut(|pp| pp.low_weight_rr(relative_weight_cutoff, source_particle_weight));
         balance.rr += (old_len - container.processing_particles.len()) as u64;
     }
 }

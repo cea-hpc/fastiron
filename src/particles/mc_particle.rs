@@ -177,11 +177,9 @@ impl<T: CustomFloat> MCParticle<T> {
         // return an iterating object so we can use .flat_map() method
         (0..n_split).map(|_| {
             let mut split_pp = self.clone();
-            //balance.split += 1;
             split_pp.random_number_seed = spawn_rn_seed::<T>(&mut self.random_number_seed);
             split_pp.identifier = split_pp.random_number_seed;
 
-            //container.extra_particles.push(split_pp);
             split_pp
         })
     }
@@ -189,7 +187,6 @@ impl<T: CustomFloat> MCParticle<T> {
     pub fn over_populated_rr(&mut self, split_rr_factor: T) -> bool {
         if rng_sample::<T>(&mut self.random_number_seed) > split_rr_factor {
             // particle dies
-            //balance.rr += 1;
             false
         } else {
             // particle survives with increased weight
@@ -207,7 +204,6 @@ impl<T: CustomFloat> MCParticle<T> {
                 true
             } else {
                 // particle dies
-                //balance.rr += 1;
                 false
             }
         } else {
