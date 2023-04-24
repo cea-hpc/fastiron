@@ -308,10 +308,10 @@ impl<T: CustomFloat> Tallies<T> {
             println!(
                 "{:<7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>13} {:>15} {:>18} {:>18}",
                 "cycle", "start", "source", "rr", "split", "absorb", "scatter", "fission", "produce", "collision", 
-                "escape", "census", "num_seg", "scalar_flux", "cycleInit (s)", "cycleTracking (s)", "cycleFinalize (s)"
+                "escape", "census", "num_seg", "scalar_flux", "ppControl (s)", "cycleTracking (s)", "cycleFinalize (s)"
             );
         }
-        let cy_init = mc_fast_timer::get_last_cycle(timer_container, Section::CycleInit);
+        let cy_init = mc_fast_timer::get_last_cycle(timer_container, Section::PopulationControl);
         let cy_track = mc_fast_timer::get_last_cycle(timer_container, Section::CycleTracking);
         let cy_fin = mc_fast_timer::get_last_cycle(timer_container, Section::CycleFinalize);
         let sf_sum = self.scalar_flux_sum();

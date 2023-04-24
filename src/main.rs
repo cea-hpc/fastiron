@@ -14,7 +14,7 @@ use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
 use fastiron::utils::io_utils::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
-use num::FromPrimitive;
+use num::{one, zero, FromPrimitive};
 
 fn main() {
     let cli = Cli::parse();
@@ -24,7 +24,7 @@ fn main() {
 
     let n_steps = params.simulation_params.n_steps;
 
-    let mcdata = init_mcdata(params);
+    let mut mcdata = init_mcdata(params);
     let mut containers = init_particle_containers(&mcdata.params, &mcdata.exec_info);
     let mut mcunits = init_mcunits(&mcdata);
 
@@ -36,10 +36,10 @@ fn main() {
             mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::Main);
 
             for step in 0..n_steps {
-                cycle_sync(&mcdata, &mut mcunits, &mut containers, step);
+                cycle_sync(&mut mcdata, &mut mcunits, &mut containers, step);
                 cycle_process(&mcdata, &mut mcunits[0], &mut containers[0]);
             }
-            cycle_sync(&mcdata, &mut mcunits, &mut containers, n_steps);
+            cycle_sync(&mut mcdata, &mut mcunits, &mut containers, n_steps);
 
             mc_fast_timer::stop(&mut mcunits[0].fast_timer, Section::Main);
         }
@@ -71,7 +71,7 @@ pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteC
 //============================
 
 pub fn cycle_sync<T: CustomFloat>(
-    mcdata: &MonteCarloData<T>,
+    mcdata: &mut MonteCarloData<T>,
     mcunits: &mut [MonteCarloUnit<T>],
     containers: &mut [ParticleContainer<T>],
     step: usize,
@@ -81,6 +81,7 @@ pub fn cycle_sync<T: CustomFloat>(
 
         match mcdata.exec_info.exec_policy {
             ExecPolicy::Sequential => {
+                // if sequential, just use the single Monte-Carlo unit
                 mcunits[0].tallies.balance_cycle.end =
                     containers[0].processed_particles.len() as u64;
                 mcunits[0]
@@ -93,6 +94,7 @@ pub fn cycle_sync<T: CustomFloat>(
                 mcunits[0].fast_timer.clear_last_cycle_timers();
             }
             ExecPolicy::Parallel => {
+                // centralize / finalize
                 todo!()
             }
         }
@@ -102,38 +104,25 @@ pub fn cycle_sync<T: CustomFloat>(
         }
     }
 
-    // compute total weight of the problem to source correctly when using multiple units
-    let total_problem_weight: T = mcunits
-        .iter_mut()
-        .map(|mcunit| {
-            mcunit.update_unit_weight(mcdata);
-            mcunit.unit_weight
-        })
-        .sum();
-    let source_particle_weight: T = total_problem_weight
-        / (<T as FromPrimitive>::from_f64(SRC_FRACTION).unwrap()
-            * FromPrimitive::from_u64(mcdata.params.simulation_params.n_particles).unwrap());
-
-    // this is the part that might be partially movable to cycle_process
-    let joint_iterators = zip(mcunits.iter_mut(), containers.iter_mut());
-    joint_iterators.for_each(|(mcunit, container)| {
-        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleInit);
-
+    // prepare structures for next processing cycle
+    let iter = zip(mcunits.iter_mut(), containers.iter_mut());
+    let mut current_n_particles: usize = 0;
+    let mut total_problem_weight: T = zero();
+    iter.for_each(|(mcunit, container)| {
+        mcunit.update_unit_weight(mcdata);
         mcunit.clear_cross_section_cache();
         container.swap_processing_processed();
-        mcunit.tallies.balance_cycle.start = container.processing_particles.len() as u64;
-
-        population_control::source_now(mcdata, mcunit, container, source_particle_weight);
-        population_control::population_control(mcdata, mcunit, container);
-        population_control::roulette_low_weight_particles(
-            mcdata.params.simulation_params.low_weight_cutoff,
-            source_particle_weight,
-            container,
-            &mut mcunit.tallies.balance_cycle,
-        );
-
-        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleInit);
+        let local_n_particles = container.processing_particles.len();
+        mcunit.tallies.balance_cycle.start = local_n_particles as u64;
+        current_n_particles += local_n_particles;
+        total_problem_weight += mcunit.unit_weight;
     });
+    let n_particles_to_spawn: T = <T as FromPrimitive>::from_f64(SRC_FRACTION).unwrap()
+        * FromPrimitive::from_u64(mcdata.params.simulation_params.n_particles).unwrap();
+    mcdata.source_particle_weight = total_problem_weight / n_particles_to_spawn;
+    // current number of particle + the one that will be sourced asap
+    // i.e. number of particles before population control:
+    mcdata.global_n_particles = current_n_particles + n_particles_to_spawn.to_usize().unwrap();
 }
 
 //==================================
@@ -145,7 +134,36 @@ pub fn cycle_process<T: CustomFloat>(
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
 ) {
+    mc_fast_timer::start(&mut mcunit.fast_timer, Section::PopulationControl);
+
+    // source 10% of target number of particles
+    population_control::source_now(mcdata, mcunit, container);
+    // compute split factor & regulate accordingly
+    let split_rr_factor: T = population_control::compute_split_factor(
+        mcdata.params.simulation_params.n_particles as usize,
+        mcdata.global_n_particles,
+        container.processing_particles.len(),
+        mcdata.exec_info.num_threads,
+        mcdata.params.simulation_params.load_balance,
+    );
+    if split_rr_factor != one() {
+        population_control::regulate(
+            split_rr_factor,
+            container,
+            &mut mcunit.tallies.balance_cycle,
+        )
+    }
+    // go over low weight particle & eliminate them randomly
+    population_control::roulette_low_weight_particles(
+        mcdata.params.simulation_params.low_weight_cutoff,
+        mcdata.source_particle_weight,
+        container,
+        &mut mcunit.tallies.balance_cycle,
+    );
+
+    mc_fast_timer::stop(&mut mcunit.fast_timer, Section::PopulationControl);
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
+
     loop {
         while !container.test_done_new() {
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
@@ -181,5 +199,6 @@ pub fn cycle_process<T: CustomFloat>(
             break;
         }
     }
+
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTracking);
 }

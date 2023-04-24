@@ -15,55 +15,50 @@ use crate::{
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
-/// Routine used to monitor and regulate population level.
+/// Routine used to compute a split factor, value used to regulate population
+/// of the problem.
 ///
 /// If load balancing is enabled, the spawned particle will be spread
-/// throughout the processors. Using the current number of particle and
-/// the target number of particles, the function computes a split factor.
-/// If the split factor is strictly below one, there are too many particles,
-/// if it is striclty superior to one, there are too little. Particles are
-/// then either randomly killed or spawned to get to the desired number.
-pub fn population_control<T: CustomFloat>(
-    mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
-    container: &mut ParticleContainer<T>,
-) {
-    let mut target_n_particles: usize = mcdata.params.simulation_params.n_particles as usize;
-    let mut global_n_particles: usize = 0;
-    let local_n_particles: usize = container.processing_particles.len();
-    let load_balance = mcdata.params.simulation_params.load_balance;
-
-    if load_balance {
-        // Spread the target number of particle among the processors
-        let tmp: T = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
-            / FromPrimitive::from_usize(mcdata.exec_info.num_threads).unwrap();
-        target_n_particles = tmp.ceil().to_usize().unwrap();
-    } else {
-        global_n_particles = local_n_particles;
-    }
-
+/// throughout the threads to reach an even distribution. Else, the spawning/killing
+/// of particles will be uniform across threads, ignoring the local population.
+/// This is reflected in the split factor computation.
+pub fn compute_split_factor<T: CustomFloat>(
+    global_target_n_particles: usize,
+    global_n_particles: usize,
+    local_n_particles: usize,
+    num_threads: usize,
+    load_balance: bool,
+) -> T {
     let mut split_rr_factor: T = one();
+
     if load_balance {
-        // Compute processor-specific split factor
+        // unit-specific modifications to reach uniform distribution
         if local_n_particles != 0 {
-            split_rr_factor = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
+            let local_target_n_particles: usize = {
+                let tmp: T = <T as FromPrimitive>::from_usize(global_target_n_particles).unwrap()
+                    / FromPrimitive::from_usize(num_threads).unwrap();
+                tmp.ceil().to_usize().unwrap()
+            };
+            split_rr_factor = <T as FromPrimitive>::from_usize(local_target_n_particles).unwrap()
                 / FromPrimitive::from_usize(local_n_particles).unwrap();
         }
     } else {
-        split_rr_factor = <T as FromPrimitive>::from_usize(target_n_particles).unwrap()
+        // uniform modifications across units without regards to distribution
+        split_rr_factor = <T as FromPrimitive>::from_usize(global_target_n_particles).unwrap()
             / FromPrimitive::from_usize(global_n_particles).unwrap();
     }
 
-    if split_rr_factor != one() {
-        population_control_guts(
-            split_rr_factor,
-            container,
-            &mut mcunit.tallies.balance_cycle,
-        );
-    }
+    split_rr_factor
 }
 
-fn population_control_guts<T: CustomFloat>(
+/// Routine used to monitor and regulate population level according to the specified
+/// split factor.
+///
+///
+/// If the split factor is strictly below one, there are too many particles,
+/// if it is striclty superior to one, there are too little: Particles are
+/// either randomly killed or spawned to get to the target number of particle.
+pub fn regulate<T: CustomFloat>(
     split_rr_factor: T,
     container: &mut ParticleContainer<T>,
     balance: &mut Balance,
@@ -71,8 +66,7 @@ fn population_control_guts<T: CustomFloat>(
     if split_rr_factor < one() {
         // too many particles; roll for a kill
         container.processing_particles.retain_mut(|pp| {
-            let rand_f: T = rng_sample(&mut pp.random_number_seed);
-            if rand_f > split_rr_factor {
+            if rng_sample::<T>(&mut pp.random_number_seed) > split_rr_factor {
                 // particle dies
                 balance.rr += 1;
                 false
@@ -85,9 +79,8 @@ fn population_control_guts<T: CustomFloat>(
     } else if split_rr_factor > one() {
         // not enough particles; create new ones by splitting
         container.processing_particles.iter_mut().for_each(|pp| {
-            let rand_f: T = rng_sample(&mut pp.random_number_seed);
             let mut split_factor = split_rr_factor.floor();
-            if rand_f > split_rr_factor - split_factor {
+            if rng_sample::<T>(&mut pp.random_number_seed) > split_rr_factor - split_factor {
                 split_factor -= one();
             }
             pp.weight /= split_rr_factor;
@@ -122,8 +115,7 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 
         container.processing_particles.retain_mut(|pp| {
             if pp.weight <= weight_cutoff {
-                let rand_f: T = rng_sample(&mut pp.random_number_seed);
-                if rand_f <= relative_weight_cutoff {
+                if rng_sample::<T>(&mut pp.random_number_seed) <= relative_weight_cutoff {
                     // particle survives with increased weight
                     pp.weight /= relative_weight_cutoff;
                     true
@@ -152,7 +144,6 @@ pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
-    source_particle_weight: T,
 ) {
     let time_step = mcdata.params.simulation_params.dt;
 
@@ -176,7 +167,7 @@ pub fn source_now<T: CustomFloat>(
                 .for_each(|(cell_idx, cell)| {
                     // compute number of particles to be created in the cell
                     let cell_weight: T = cell.volume * source_rate[cell.material] * time_step;
-                    let cell_n_particles: usize = (cell_weight / source_particle_weight)
+                    let cell_n_particles: usize = (cell_weight / mcdata.source_particle_weight)
                         .floor()
                         .to_usize()
                         .unwrap();
@@ -205,7 +196,7 @@ pub fn source_now<T: CustomFloat>(
                         );
                         particle.domain = domain_idx;
                         particle.cell = cell_idx;
-                        particle.weight = source_particle_weight;
+                        particle.weight = mcdata.source_particle_weight;
 
                         // ~~~ random sampling
 

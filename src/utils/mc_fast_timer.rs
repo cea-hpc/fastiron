@@ -16,7 +16,7 @@ pub enum Section {
     /// Full execution time.
     Main = 0,
     /// `cycle_init()` execution time.
-    CycleInit,
+    PopulationControl,
     /// `cycle_tracking()` execution time.
     CycleTracking,
     /// Tracking loop of `cycle_tracking()` execution time.
@@ -31,7 +31,7 @@ impl Display for Section {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Section::Main => write!(f, "Section::Main                 "),
-            Section::CycleInit => write!(f, "Section::CycleInit            "),
+            Section::PopulationControl => write!(f, "Section::PopulationControl    "),
             Section::CycleTracking => write!(f, "Section::CycleTracking        "),
             Section::CycleTrackingKernel => write!(f, "Section::CycleTrackingKernel  "),
             Section::CycleTrackingComm => write!(f, "Section::CycleTrackingComm    "),
@@ -106,7 +106,7 @@ impl MCFastTimerContainer {
             .for_each(|(timer_idx, timer)| {
                 let section = match timer_idx {
                     0 => Section::Main,
-                    1 => Section::CycleInit,
+                    1 => Section::PopulationControl,
                     2 => Section::CycleTracking,
                     3 => Section::CycleTrackingKernel,
                     4 => Section::CycleTrackingComm,

@@ -31,6 +31,12 @@ pub struct MonteCarloData<T: CustomFloat> {
     pub material_database: MaterialDatabase<T>,
     /// Object storing data related to the processor and execution mode.
     pub exec_info: MCProcessorInfo,
+    /// Weight of a particle to be spawned. This is a constant in our case but
+    /// isn't in more flexible simulation.
+    pub source_particle_weight: T,
+    /// Current total number of particles in the simulation. This value is updated at
+    /// each cycle for ease of access by all [MonteCarloUnit].
+    pub global_n_particles: usize,
 }
 
 impl<T: CustomFloat> MonteCarloData<T> {
