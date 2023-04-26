@@ -24,7 +24,7 @@ pub enum Section {
     /// Communication phase of `cycle_tracking()` execution time.
     CycleTrackingComm,
     /// `cycle_finalize()` execution time.
-    CycleFinalize,
+    CycleSync,
 }
 
 impl Display for Section {
@@ -35,7 +35,7 @@ impl Display for Section {
             Section::CycleTracking => write!(f, "Section::CycleTracking        "),
             Section::CycleTrackingKernel => write!(f, "Section::CycleTrackingKernel  "),
             Section::CycleTrackingComm => write!(f, "Section::CycleTrackingComm    "),
-            Section::CycleFinalize => write!(f, "Section::CycleFinalize        "),
+            Section::CycleSync => write!(f, "Section::CycleSync            "),
         }
     }
 }
@@ -94,7 +94,22 @@ impl MCFastTimerContainer {
     /// total column should be compared to Quicksilver's cumulative report despite
     /// what its header says.
     ///
-    /// TODO: add a model of the produced output
+    /// Here is an example output:
+    ///
+    /// ```shell
+    /// Timer Name                       | Total number of calls      Shortest cycle (µs)    Average per cycle (µs)     Longest cycle (µs)    Total in section (µs)    Efficiency rating (%)
+    /// Section::Main                    |                     1          9.995582e6                9.995582e6             9.995582e6               9.995582e6                     100.0
+    /// Section::PopulationControl       |                    10             9.147e3                  1.1792e4               1.7115e4                1.17921e5                      68.9
+    /// Section::CycleTracking           |                    10           9.58225e5                 9.87051e5             1.006316e6               9.870513e6                      98.1
+    /// Section::CycleTrackingKernel     |                    10           9.58224e5                  9.8705e5             1.006315e6               9.870504e6                      98.1
+    /// Section::CycleTrackingComm       |                    10                 0e0                       0e0                    0e0                      2e0                      35.8
+    /// Section::CycleSync               |                    11                 2e2                    6.44e2                 7.47e2                  6.446e3                      86.2
+    /// Figure of merit: 2.264e6 [segments / cycle tracking time]
+    /// ```
+    ///
+    /// [`Section::PopulationControl`] and [`Section::CycleSync`] do not really have an
+    /// equivalent in Quicksilver, the comparable values are those of [`Section::Main`]
+    /// and [`Section::CycleTracking`] as well as the figure of merit.
     pub fn cumulative_report(&self, num_segments: u64) {
         // Print header
         println!("[Timer Report]");
@@ -110,7 +125,7 @@ impl MCFastTimerContainer {
                     2 => Section::CycleTracking,
                     3 => Section::CycleTrackingKernel,
                     4 => Section::CycleTrackingComm,
-                    5 => Section::CycleFinalize,
+                    5 => Section::CycleSync,
                     _ => unreachable!(),
                 };
                 println!(

@@ -71,6 +71,8 @@ pub fn cycle_sync<T: CustomFloat>(
     containers: &mut [ParticleContainer<T>],
     step: usize,
 ) {
+    mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::CycleSync);
+
     if step != 0 {
         // Finalize after processing; centralize data at each step or just use as it progress?
 
@@ -95,6 +97,7 @@ pub fn cycle_sync<T: CustomFloat>(
         }
 
         if step == mcdata.params.simulation_params.n_steps + 1 {
+            mc_fast_timer::stop(&mut mcunits[0].fast_timer, Section::CycleSync);
             return;
         }
     }
@@ -118,6 +121,8 @@ pub fn cycle_sync<T: CustomFloat>(
     // current number of particle + the one that will be sourced asap
     // i.e. number of particles before population control:
     mcdata.global_n_particles = current_n_particles + n_particles_to_spawn.to_usize().unwrap();
+
+    mc_fast_timer::stop(&mut mcunits[0].fast_timer, Section::CycleSync);
 }
 
 //==================================
