@@ -25,10 +25,15 @@ pub fn init_mcdata<T: CustomFloat>(params: Parameters<T>) -> MonteCarloData<T> {
     let mut mcdata: MonteCarloData<T> = MonteCarloData::new(params);
 
     init_nuclear_data(&mut mcdata);
-    //init_mesh(&mut mcco);
-    //init_tallies(&mut mcco);
 
-    check_cross_sections(&mcdata);
+    if !mcdata
+        .params
+        .simulation_params
+        .cross_sections_out
+        .is_empty()
+    {
+        check_cross_sections(&mcdata);
+    }
 
     mcdata
 }
@@ -288,17 +293,29 @@ struct XSData<T: Float> {
 
 /// Prints cross-section data of the problem.
 ///
-/// TODO: add a model of the produced output
+/// The data is simply presented in a table sorted by energy levels. Here is a snippet
+/// of the first ten lines of a possible output:
+///
+/// ```shell
+/// group |           energy |  sourceMaterial_absorb |  sourceMaterial_fission |  sourceMaterial_scatter
+///     0 |   0.000000001054 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     1 |   0.000000001168 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     2 |   0.000000001294 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     3 |   0.000000001434 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     4 |   0.000000001589 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     5 |   0.000000001761 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     6 |   0.000000001952 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     7 |   0.000000002163 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     8 |   0.000000002397 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     9 |   0.000000002656 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+/// ```
+///
+/// The energy scale is logarithmic, hence the way it is printed.
 pub fn check_cross_sections<T: CustomFloat>(mcdata: &MonteCarloData<T>) {
-    let params = &mcdata.params;
-    if params.simulation_params.cross_sections_out.is_empty() {
-        return;
-    }
-
     let nucdb = &mcdata.nuclear_data;
     let matdb = &mcdata.material_database;
 
-    let n_groups = params.simulation_params.n_groups;
+    let n_groups = mcdata.params.simulation_params.n_groups;
 
     let mut energies: Vec<T> = Vec::with_capacity(n_groups);
     for ii in 0..n_groups {
@@ -337,7 +354,12 @@ pub fn check_cross_sections<T: CustomFloat>(mcdata: &MonteCarloData<T>) {
     });
 
     // build an output file
-    let file_name = params.simulation_params.cross_sections_out.to_owned() + ".dat";
+    let file_name = mcdata
+        .params
+        .simulation_params
+        .cross_sections_out
+        .to_owned()
+        + ".dat";
     let mut file = File::create(file_name).unwrap();
     // header
     write!(file, "group |           energy |  ").unwrap();
@@ -364,7 +386,7 @@ pub fn check_cross_sections<T: CustomFloat>(mcdata: &MonteCarloData<T>) {
             }
             write!(
                 file,
-                "{} |  {:>22} |  {:>22}",
+                "{:>20.13} |  {:>22.13} |  {:>22.13}",
                 xc_vec[ii].abs, xc_vec[ii].fis, xc_vec[ii].sca
             )
             .unwrap();
