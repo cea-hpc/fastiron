@@ -163,6 +163,8 @@ impl<T: CustomFloat> MCParticle<T> {
             -sin_theta_zero * (sine_theta * cosine_phi) + zero() + cos_theta_zero * cosine_theta;
     }
 
+    /// Returns an iterator over particles created from a split of the original one (caller).
+    /// This is used in the population control algorithm.
     pub fn under_populated_split(
         &mut self,
         split_rr_factor: T,
@@ -184,6 +186,9 @@ impl<T: CustomFloat> MCParticle<T> {
         })
     }
 
+    /// Play russian-roulette with the particle, returning true if the particle survives,
+    /// false otherwise. This function is meant to be used along the [`Vec::retain_mut()`]
+    /// method.
     pub fn over_populated_rr(&mut self, split_rr_factor: T) -> bool {
         if rng_sample::<T>(&mut self.random_number_seed) > split_rr_factor {
             // particle dies
@@ -195,6 +200,9 @@ impl<T: CustomFloat> MCParticle<T> {
         }
     }
 
+    /// Play russian-roulette with particle of low statistical weight, returning true if
+    /// the particle survives, false otherwise. This function is meant to be used along
+    /// the [`Vec::retain_mut()`] method.
     pub fn low_weight_rr(&mut self, relative_weight_cutoff: T, source_particle_weight: T) -> bool {
         let weight_cutoff = relative_weight_cutoff * source_particle_weight;
         if self.weight <= weight_cutoff {
