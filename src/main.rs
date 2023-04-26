@@ -28,9 +28,6 @@ fn main() {
 
     match mcdata.exec_info.exec_policy {
         ExecPolicy::Sequential => {
-            //let container = &mut containers[0];
-            //let mcunit = &mut mcunits[0];
-
             mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::Main);
 
             for step in 0..n_steps {
@@ -136,7 +133,7 @@ pub fn cycle_process<T: CustomFloat>(
 
     // source 10% of target number of particles
     population_control::source_now(mcdata, mcunit, container);
-    // compute split factor & regulate accordingly
+    // compute split factor & regulate accordingly; regulation include the low weight rr
     let split_rr_factor: T = population_control::compute_split_factor(
         mcdata.params.simulation_params.n_particles as usize,
         mcdata.global_n_particles,
@@ -179,7 +176,7 @@ pub fn cycle_process<T: CustomFloat>(
 
             mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingComm);
         }
-        // change this if in parallel to use
+        // change this if in parallel to also check pending/buffered particles
         if container.test_done_new() {
             break;
         }

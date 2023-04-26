@@ -49,6 +49,8 @@ impl<T: CustomFloat> ParticleContainer<T> {
         );
     }
 
+    /// Randomly delete particles to reach the desired number of particles for
+    /// simulation. Low weight particles are, then, randomly deleted.
     pub fn regulate_population(
         &mut self,
         split_rr_factor: T,
@@ -65,6 +67,8 @@ impl<T: CustomFloat> ParticleContainer<T> {
         balance.rr += (old_len - self.processing_particles.len()) as u64;
     }
 
+    /// Split particles to reach the desired number of particles for
+    /// simulation. Low weight particles are, then, randomly deleted.
     pub fn split_population(
         &mut self,
         split_rr_factor: T,
