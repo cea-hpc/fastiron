@@ -3,6 +3,25 @@
 //! Constants are sorted in sub-modules according to their nature.
 //! Are also included aliases, as well as the custom trait used to
 //! introduce a generic floatting point type in the code.
+//!
+//! The below text is taken directly from a Quicksilver [source file][1]:
+//!
+//! The values of all physical constants are taken from
+//! 2006 CODATA which is located [here][2].
+//!
+//! The units of physical quantities used by the code are:
+//!
+//! |   Quantity     |  Unit
+//! |----------------|---------------------------------------------------
+//! |   Mass         |  gram (g)
+//! |   Length       |  centimeter (cm)
+//! |   Time         |  second (s)
+//! |   Energy       |  million electron-volts (MeV) : of a particle
+//! |   Energy       |  erg (g cm^2/s^2): in some background calculation
+//! |   Temperature  |  thousand electron-volts (keV)
+//!
+//! [1]: https://github.com/LLNL/Quicksilver/blob/master/src/PhysicalConstants.cc
+//! [2]: http://physics.nist.gov/cuu/Constants/codata.pdf
 
 use std::iter::Sum;
 use std::str::FromStr;
@@ -132,36 +151,4 @@ pub mod sim {
     pub const N_TIMERS: usize = 6;
     /// Number of particle species
     pub const N_SPECIES: usize = 1;
-}
-
-/// Physics-related constants
-pub mod physical {
-    //!
-    //! The below text is taken directly from a Quicksilver [source file][1]:
-    //!
-    //! The values of all physical constants are taken from
-    //! 2006 CODATA which is located [here][2].
-    //!
-    //! The units of physical quantities used by the code are:
-    //!
-    //! |   Quantity     |  Unit
-    //! |----------------|---------------------------------------------------
-    //! |   Mass         |  gram (g)
-    //! |   Length       |  centimeter (cm)
-    //! |   Time         |  second (s)
-    //! |   Energy       |  million electron-volts (MeV) : of a particle
-    //! |   Energy       |  erg (g cm^2/s^2): in some background calculation
-    //! |   Temperature  |  thousand electron-volts (keV)
-    //!
-    //! [1]: https://github.com/LLNL/Quicksilver/blob/master/src/PhysicalConstants.cc
-    //! [2]: http://physics.nist.gov/cuu/Constants/codata.pdf
-
-    /// Neutron rest energy (MeV)
-    pub const NEUTRON_REST_MASS_ENERGY: f64 = 9.395656981095e+2;
-    /// [Pick your definition][3]
-    ///
-    /// [3]: https://en.wikipedia.org/wiki/Pi
-    pub const PI: f64 = std::f64::consts::PI;
-    /// Light speed (cm/s)
-    pub const LIGHT_SPEED: f64 = 2.99792458e+10;
 }

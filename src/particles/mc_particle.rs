@@ -6,10 +6,7 @@
 use num::{one, zero, FromPrimitive};
 
 use crate::{
-    constants::{
-        physical::{LIGHT_SPEED, NEUTRON_REST_MASS_ENERGY, PI},
-        CustomFloat,
-    },
+    constants::CustomFloat,
     data::{mc_vector::MCVector, tallies::MCTallyEvent},
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
@@ -85,8 +82,8 @@ impl<T: CustomFloat> MCParticle<T> {
     /// Computes the particle speed from its energy. Note that this computation
     /// should be species-specific.
     pub fn get_speed(&self) -> T {
-        let rest_mass_energy: T = FromPrimitive::from_f64(NEUTRON_REST_MASS_ENERGY).unwrap();
-        let speed_of_light: T = FromPrimitive::from_f64(LIGHT_SPEED).unwrap();
+        let rest_mass_energy: T = T::neutron_mass_energy();
+        let speed_of_light: T = T::light_speed();
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
         speed_of_light
             * (self.kinetic_energy * (self.kinetic_energy + two * (rest_mass_energy))
@@ -109,7 +106,7 @@ impl<T: CustomFloat> MCParticle<T> {
     pub fn sample_isotropic(&mut self) {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
-        let pi: T = FromPrimitive::from_f64(PI).unwrap();
+        let pi: T = T::pi();
 
         // sample gamma
         self.direction.z = one - two * rng_sample(&mut self.random_number_seed);

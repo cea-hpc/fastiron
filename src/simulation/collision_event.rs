@@ -7,7 +7,7 @@
 use num::{zero, FromPrimitive};
 
 use crate::{
-    constants::{physical::PI, CustomFloat},
+    constants::CustomFloat,
     data::{nuclear_data::ReactionType, tallies::Balance},
     montecarlo::MonteCarloData,
     particles::mc_particle::MCParticle,
@@ -17,7 +17,7 @@ use crate::{
 
 fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParticle<T>) {
     // constants
-    let pi: T = FromPrimitive::from_f64(PI).unwrap();
+    let pi: T = T::pi();
     let one: T = FromPrimitive::from_f64(1.0).unwrap();
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
 
