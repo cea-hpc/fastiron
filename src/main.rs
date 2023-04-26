@@ -144,21 +144,20 @@ pub fn cycle_process<T: CustomFloat>(
         mcdata.exec_info.num_threads,
         mcdata.params.simulation_params.load_balance,
     );
-    if split_rr_factor != one() {
-        population_control::regulate(
+    if split_rr_factor < one() {
+        container.regulate_population(
             split_rr_factor,
-            container,
-            &mut mcunit.tallies.balance_cycle,
-        )
-    }
-    // go over low weight particle & eliminate them randomly
-    if mcdata.params.simulation_params.low_weight_cutoff > zero() {
-        population_control::roulette_low_weight_particles(
             mcdata.params.simulation_params.low_weight_cutoff,
             mcdata.source_particle_weight,
-            container,
             &mut mcunit.tallies.balance_cycle,
         );
+    } else if split_rr_factor > one() {
+        container.split_population(
+            split_rr_factor,
+            mcdata.params.simulation_params.low_weight_cutoff,
+            mcdata.source_particle_weight,
+            &mut mcunit.tallies.balance_cycle,
+        )
     }
 
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::PopulationControl);

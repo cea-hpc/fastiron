@@ -8,7 +8,6 @@ use num::{one, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::Balance,
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
@@ -51,55 +50,6 @@ pub fn compute_split_factor<T: CustomFloat>(
     split_rr_factor
 }
 
-/// Routine used to monitor and regulate population level according to the specified
-/// split factor.
-///
-/// If the split factor is strictly below one, there are too many particles,
-/// if it is striclty superior to one, there are too little: Particles are
-/// either randomly killed or spawned to get to the target number of particle.
-pub fn regulate<T: CustomFloat>(
-    split_rr_factor: T,
-    container: &mut ParticleContainer<T>,
-    balance: &mut Balance,
-) {
-    let old_len = container.processing_particles.len();
-    if split_rr_factor < one() {
-        // too many particles; roll for a kill
-        container
-            .processing_particles
-            .retain_mut(|pp| pp.over_populated_rr(split_rr_factor));
-        // deduce number of killed particle from length diff
-        balance.rr += (old_len - container.processing_particles.len()) as u64;
-    } else if split_rr_factor > one() {
-        // not enough particles; create new ones by splitting
-        container.processing_particles.iter_mut().for_each(|pp| {
-            container
-                .extra_particles
-                .extend(pp.under_populated_split(split_rr_factor));
-        });
-        container.clean_extra_vaults();
-        balance.split += (container.processing_particles.len() - old_len) as u64;
-    }
-}
-
-/// Play russian-roulette with low-weight particles relative
-/// to the source particle weight.
-///
-/// This function regulates the number of low (statistical) weight particle to
-/// prevent clusters of low energy particle from falsifying the results.
-pub fn roulette_low_weight_particles<T: CustomFloat>(
-    relative_weight_cutoff: T,
-    source_particle_weight: T,
-    container: &mut ParticleContainer<T>,
-    balance: &mut Balance,
-) {
-    let old_len = container.processing_particles.len();
-    container
-        .processing_particles
-        .retain_mut(|pp| pp.low_weight_rr(relative_weight_cutoff, source_particle_weight));
-    balance.rr += (old_len - container.processing_particles.len()) as u64;
-}
-
 /// Simulates the sources according to the problem's parameters.
 ///
 /// This function spawns particle is source regions. Each time this function
@@ -107,7 +57,15 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 /// spawned. _Where_ they are spawned depends on both deterministic factors and
 /// randomness.
 ///
-/// TODO: Detail the weight system
+/// Each cell is given a weight, computed according to source rate of its
+/// material, volume and time step: The weight is directly proportional to
+/// the number of particle that should be spawned in the cell, during a time
+/// interval equal to the time step. Given this weight, and the weight of a
+/// fresh particle at sourcing, we can compute the number of particle the cell
+/// should spawn to get the overall desired number.
+///
+/// The amount of particle spawned is a consequence of the source particle weight
+/// computation as the value is adjusted according to the problem's total weight.
 pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,

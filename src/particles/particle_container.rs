@@ -4,7 +4,7 @@
 
 use crate::{
     constants::CustomFloat,
-    data::send_queue::SendQueue,
+    data::{send_queue::SendQueue, tallies::Balance},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     simulation::cycle_tracking::cycle_tracking_guts,
 };
@@ -49,6 +49,43 @@ impl<T: CustomFloat> ParticleContainer<T> {
         );
     }
 
+    pub fn regulate_population(
+        &mut self,
+        split_rr_factor: T,
+        relative_weight_cutoff: T,
+        source_particle_weight: T,
+        balance: &mut Balance,
+    ) {
+        let old_len = self.processing_particles.len();
+        self.processing_particles.retain_mut(|pp| {
+            let survive_once = pp.over_populated_rr(split_rr_factor);
+            let survive_twice = pp.low_weight_rr(relative_weight_cutoff, source_particle_weight);
+            survive_once & survive_twice
+        });
+        balance.rr += (old_len - self.processing_particles.len()) as u64;
+    }
+
+    pub fn split_population(
+        &mut self,
+        split_rr_factor: T,
+        relative_weight_cutoff: T,
+        source_particle_weight: T,
+        balance: &mut Balance,
+    ) {
+        let mut old_len = self.processing_particles.len();
+        self.processing_particles.iter_mut().for_each(|pp| {
+            self.extra_particles
+                .extend(pp.under_populated_split(split_rr_factor));
+        });
+        self.clean_extra_vaults();
+        balance.split += (self.processing_particles.len() - old_len) as u64;
+        old_len = self.processing_particles.len();
+        self.processing_particles
+            .retain_mut(|pp| pp.low_weight_rr(relative_weight_cutoff, source_particle_weight));
+        balance.rr += (old_len - self.processing_particles.len()) as u64;
+    }
+
+    /// Track particles and transfer them to the processed storage when done.
     pub fn process_particles(
         &mut self,
         mcdata: &MonteCarloData<T>,
