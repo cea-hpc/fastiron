@@ -14,8 +14,10 @@ use crate::{
     parameters::Parameters,
     particles::particle_container::ParticleContainer,
     utils::{
-        comm_object::CommObject, decomposition_object::DecompositionObject,
-        mc_processor_info::MCProcessorInfo, mc_rng_state::rng_sample,
+        comm_object::CommObject,
+        decomposition_object::DecompositionObject,
+        mc_processor_info::{ExecPolicy, MCProcessorInfo},
+        mc_rng_state::rng_sample,
     },
 };
 use num::{one, zero, Float, FromPrimitive};
@@ -67,14 +69,36 @@ pub fn init_particle_containers<T: CustomFloat>(
     let extra_capacity = regular_capacity_per_container * max_nu_bar.max(2);
 
     let container = ParticleContainer::new(regular_capacity, extra_capacity);
-    vec![container; proc_info.num_threads]
+    let n_container: usize = match proc_info.exec_policy {
+        ExecPolicy::Sequential => 1,
+        ExecPolicy::Parallel => todo!(),
+    };
+    vec![container; n_container]
 }
 
 pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarloUnit<T>> {
-    let mut mcunit = MonteCarloUnit::new(&mcdata.params);
-    init_mesh(&mut mcunit, mcdata);
-    init_tallies(&mut mcunit, &mcdata.params);
-    vec![mcunit]
+    let mut units: Vec<MonteCarloUnit<T>> = Vec::new();
+
+    // inits
+    match mcdata.exec_info.exec_policy {
+        ExecPolicy::Sequential => {
+            // MAY CHANGE; the init of multiple units might directly be done in the functions, not here
+            let mut mcunit = MonteCarloUnit::new(&mcdata.params);
+            init_mesh(&mut mcunit, mcdata);
+            init_tallies(&mut mcunit, &mcdata.params);
+            units.push(mcunit);
+        }
+        ExecPolicy::Parallel => todo!(),
+    }
+
+    // checks
+    println!("Starting consistency check");
+    units
+        .iter()
+        .for_each(|mcunit| consistency_check(&mcunit.domain));
+    println!("Finished consistency check");
+
+    units
 }
 
 //==================
@@ -139,11 +163,7 @@ fn init_nuclear_data<T: CustomFloat>(mcdata: &mut MonteCarloData<T>) {
 ///
 /// This function goes through the given domain list and check for inconsistencies
 /// by checking adjacencies coherence.
-pub fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>]) {
-    if my_rank == 0 {
-        println!("Starting consistency check");
-    }
-
+pub fn consistency_check<T: CustomFloat>(domain: &[MCDomain<T>]) {
     domain.iter().enumerate().for_each(|(domain_idx, dd)| {
         dd.mesh
             .cell_connectivity
@@ -175,10 +195,6 @@ pub fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>])
                 });
             });
     });
-
-    if my_rank == 0 {
-        println!("Finished consistency check");
-    }
 }
 
 fn initialize_centers_rand<T: CustomFloat>(
@@ -270,10 +286,6 @@ fn init_mesh<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, mcdata: &MonteCarlo
             .domain
             .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, mat_db))
     });
-
-    if n_ranks == 1 {
-        consistency_check(my_rank, &mcunit.domain);
-    }
 }
 
 fn init_tallies<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, params: &Parameters<T>) {
