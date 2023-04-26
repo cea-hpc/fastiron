@@ -210,15 +210,14 @@ fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::constants::sim::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT};
     use num::zero;
 
     #[test]
     fn find_min_dist() {
         let mut distance: [f64; 3] = [zero(); 3];
-        distance[MCSegmentOutcome::Collision as usize] = HUGE_FLOAT;
-        distance[MCSegmentOutcome::FacetCrossing as usize] = SMALL_FLOAT;
-        distance[MCSegmentOutcome::Census as usize] = TINY_FLOAT;
+        distance[MCSegmentOutcome::Collision as usize] = f64::huge_float();
+        distance[MCSegmentOutcome::FacetCrossing as usize] = f64::small_float();
+        distance[MCSegmentOutcome::Census as usize] = f64::tiny_float();
 
         let outcome = find_min(&distance);
         assert_eq!(outcome, MCSegmentOutcome::Census);

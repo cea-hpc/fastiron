@@ -166,7 +166,7 @@ pub fn collision_event<T: CustomFloat>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{constants::sim::TINY_FLOAT, data::mc_vector::MCVector};
+    use crate::data::mc_vector::MCVector;
     use num::Float;
 
     #[test]
@@ -190,6 +190,6 @@ mod tests {
         assert!((pp.direction.x - 0.620283).abs() < 1.0e-6);
         assert!((pp.direction.y - 0.620283).abs() < 1.0e-6);
         assert!((pp.direction.z - (-0.480102)).abs() < 1.0e-6);
-        assert!((pp.kinetic_energy - energy).abs() < TINY_FLOAT);
+        assert!((pp.kinetic_energy - energy).abs() < f64::tiny_float());
     }
 }
