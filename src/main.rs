@@ -6,9 +6,7 @@ use fastiron::constants::CustomFloat;
 use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers};
 use fastiron::montecarlo::{MonteCarloData, MonteCarloUnit};
 use fastiron::parameters::Parameters;
-use fastiron::particles::mc_particle::Species;
 use fastiron::particles::particle_container::ParticleContainer;
-use fastiron::simulation::cycle_tracking::cycle_tracking_guts;
 use fastiron::simulation::population_control;
 use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
 use fastiron::utils::io_utils::Cli;
@@ -171,22 +169,7 @@ pub fn cycle_process<T: CustomFloat>(
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
 
             // track particles
-            container
-                .processing_particles
-                .iter_mut()
-                .for_each(|particle| {
-                    cycle_tracking_guts(
-                        mcdata,
-                        mcunit,
-                        particle,
-                        &mut container.extra_particles,
-                        &mut container.send_queue,
-                    );
-                    if particle.species != Species::Unknown {
-                        container.processed_particles.push(particle.clone());
-                    }
-                });
-            container.processing_particles.clear();
+            container.process_particles(mcdata, mcunit);
 
             mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingComm);
@@ -197,6 +180,7 @@ pub fn cycle_process<T: CustomFloat>(
 
             mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingComm);
         }
+        // change this if in parallel to use
         if container.test_done_new() {
             break;
         }

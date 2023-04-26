@@ -2,9 +2,14 @@
 //!
 //! This module contains code used for the main structure holding particles.
 
-use crate::{constants::CustomFloat, data::send_queue::SendQueue};
+use crate::{
+    constants::CustomFloat,
+    data::send_queue::SendQueue,
+    montecarlo::{MonteCarloData, MonteCarloUnit},
+    simulation::cycle_tracking::cycle_tracking_guts,
+};
 
-use super::mc_particle::MCParticle;
+use super::mc_particle::{MCParticle, Species};
 
 #[derive(Debug, Clone)]
 /// Structure used as a container for all particles.
@@ -42,6 +47,26 @@ impl<T: CustomFloat> ParticleContainer<T> {
             &mut self.processing_particles,
             &mut self.processed_particles,
         );
+    }
+
+    pub fn process_particles(
+        &mut self,
+        mcdata: &MonteCarloData<T>,
+        mcunit: &mut MonteCarloUnit<T>,
+    ) {
+        self.processing_particles.iter_mut().for_each(|particle| {
+            cycle_tracking_guts(
+                mcdata,
+                mcunit,
+                particle,
+                &mut self.extra_particles,
+                &mut self.send_queue,
+            )
+        });
+        self.processing_particles
+            .retain(|particle| particle.species != Species::Unknown);
+        self.processed_particles
+            .append(&mut self.processing_particles);
     }
 
     /// Processes the particles stored in the send queue.
