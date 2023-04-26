@@ -104,7 +104,7 @@ impl<T: CustomFloat> MCParticle<T> {
 
     /// Sample a random direction for the particle to face.
     pub fn sample_isotropic(&mut self) {
-        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let one: T = one();
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
         let pi: T = T::pi();
 
@@ -132,7 +132,7 @@ impl<T: CustomFloat> MCParticle<T> {
     ///
     /// [1]: https://en.wikipedia.org/wiki/Spherical_coordinate_system#Integration_and_differentiation_in_spherical_coordinates
     pub fn rotate_direction(&mut self, sine_theta: T, cosine_theta: T, sine_phi: T, cosine_phi: T) {
-        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let one: T = one();
         let threshold: T = FromPrimitive::from_f64(1e-6).unwrap(); // order of TINY_FLOAT.sqrt()
 
         let cos_theta_zero = self.direction.z;

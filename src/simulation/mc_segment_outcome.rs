@@ -12,7 +12,7 @@
 use core::panic;
 use std::fmt::Debug;
 
-use num::{zero, FromPrimitive};
+use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
@@ -51,7 +51,7 @@ pub fn outcome<T: CustomFloat>(
 ) -> MCSegmentOutcome {
     // initialize distances and constants
     const N_EVENTS: usize = 3;
-    let one: T = FromPrimitive::from_f64(1.0).unwrap();
+    let one: T = one();
     let huge_f: T = T::huge_float();
     let small_f: T = T::small_float();
     let tiny_f: T = T::tiny_float();

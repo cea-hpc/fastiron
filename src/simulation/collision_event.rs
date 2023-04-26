@@ -4,7 +4,7 @@
 //! from beginning to end. Note that _collision_ refers to reaction with the
 //! particle's environment, not in-between particles.
 
-use num::{zero, FromPrimitive};
+use num::{one, zero, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
@@ -18,7 +18,7 @@ use crate::{
 fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParticle<T>) {
     // constants
     let pi: T = T::pi();
-    let one: T = FromPrimitive::from_f64(1.0).unwrap();
+    let one: T = one();
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
 
     // value for update
