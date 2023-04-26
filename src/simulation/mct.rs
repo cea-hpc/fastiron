@@ -51,7 +51,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
     cell_volume: T,
 ) -> MCVector<T> {
     let six: T = FromPrimitive::from_f64(6.0).unwrap();
-    let one: T = FromPrimitive::from_f64(1.0).unwrap();
+    let one: T = one();
 
     let center: MCVector<T> = cell_position_3dg(mesh, cell_idx);
 

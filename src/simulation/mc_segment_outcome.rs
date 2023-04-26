@@ -12,7 +12,7 @@
 use core::panic;
 use std::fmt::Debug;
 
-use num::{zero, FromPrimitive};
+use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
@@ -51,7 +51,7 @@ pub fn outcome<T: CustomFloat>(
 ) -> MCSegmentOutcome {
     // initialize distances and constants
     const N_EVENTS: usize = 3;
-    let one: T = FromPrimitive::from_f64(1.0).unwrap();
+    let one: T = one();
     let huge_f: T = T::huge_float();
     let small_f: T = T::small_float();
     let tiny_f: T = T::tiny_float();
@@ -210,15 +210,14 @@ fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::constants::sim::{HUGE_FLOAT, SMALL_FLOAT, TINY_FLOAT};
     use num::zero;
 
     #[test]
     fn find_min_dist() {
         let mut distance: [f64; 3] = [zero(); 3];
-        distance[MCSegmentOutcome::Collision as usize] = HUGE_FLOAT;
-        distance[MCSegmentOutcome::FacetCrossing as usize] = SMALL_FLOAT;
-        distance[MCSegmentOutcome::Census as usize] = TINY_FLOAT;
+        distance[MCSegmentOutcome::Collision as usize] = f64::huge_float();
+        distance[MCSegmentOutcome::FacetCrossing as usize] = f64::small_float();
+        distance[MCSegmentOutcome::Census as usize] = f64::tiny_float();
 
         let outcome = find_min(&distance);
         assert_eq!(outcome, MCSegmentOutcome::Census);

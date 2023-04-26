@@ -5,7 +5,7 @@
 
 use super::{mc_location::MCLocation, N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET};
 use crate::{constants::CustomFloat, data::mc_vector::MCVector};
-use num::{zero, FromPrimitive};
+use num::{one, zero};
 
 //==================
 // Distance to facet
@@ -49,7 +49,7 @@ impl<T: CustomFloat> MCGeneralPlane<T> {
     /// Constructor. This creates an object corresponding to the plane formed by the
     /// three points passed as arguments.
     pub fn new(r0: &MCVector<T>, r1: &MCVector<T>, r2: &MCVector<T>) -> Self {
-        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let one: T = one();
 
         let mut a = ((r1.y - r0.y) * (r2.z - r0.z)) - ((r1.z - r0.z) * (r2.y - r0.y));
         let mut b = ((r1.z - r0.z) * (r2.x - r0.x)) - ((r1.x - r0.x) * (r2.z - r0.z));

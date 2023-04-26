@@ -4,10 +4,10 @@
 //! from beginning to end. Note that _collision_ refers to reaction with the
 //! particle's environment, not in-between particles.
 
-use num::{zero, FromPrimitive};
+use num::{one, zero, FromPrimitive};
 
 use crate::{
-    constants::{physical::PI, CustomFloat},
+    constants::CustomFloat,
     data::{nuclear_data::ReactionType, tallies::Balance},
     montecarlo::MonteCarloData,
     particles::mc_particle::MCParticle,
@@ -17,8 +17,8 @@ use crate::{
 
 fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParticle<T>) {
     // constants
-    let pi: T = FromPrimitive::from_f64(PI).unwrap();
-    let one: T = FromPrimitive::from_f64(1.0).unwrap();
+    let pi: T = T::pi();
+    let one: T = one();
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
 
     // value for update
@@ -166,7 +166,7 @@ pub fn collision_event<T: CustomFloat>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{constants::sim::TINY_FLOAT, data::mc_vector::MCVector};
+    use crate::data::mc_vector::MCVector;
     use num::Float;
 
     #[test]
@@ -190,6 +190,6 @@ mod tests {
         assert!((pp.direction.x - 0.620283).abs() < 1.0e-6);
         assert!((pp.direction.y - 0.620283).abs() < 1.0e-6);
         assert!((pp.direction.z - (-0.480102)).abs() < 1.0e-6);
-        assert!((pp.kinetic_energy - energy).abs() < TINY_FLOAT);
+        assert!((pp.kinetic_energy - energy).abs() < f64::tiny_float());
     }
 }
