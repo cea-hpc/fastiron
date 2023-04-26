@@ -4,11 +4,10 @@
 //! of particles in the simulation as well as two internal functions used by
 //! those.
 
-use num::{one, zero, FromPrimitive};
+use num::{one, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::Balance,
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
@@ -51,87 +50,6 @@ pub fn compute_split_factor<T: CustomFloat>(
     split_rr_factor
 }
 
-/// Routine used to monitor and regulate population level according to the specified
-/// split factor.
-///
-///
-/// If the split factor is strictly below one, there are too many particles,
-/// if it is striclty superior to one, there are too little: Particles are
-/// either randomly killed or spawned to get to the target number of particle.
-pub fn regulate<T: CustomFloat>(
-    split_rr_factor: T,
-    container: &mut ParticleContainer<T>,
-    balance: &mut Balance,
-) {
-    if split_rr_factor < one() {
-        // too many particles; roll for a kill
-        container.processing_particles.retain_mut(|pp| {
-            if rng_sample::<T>(&mut pp.random_number_seed) > split_rr_factor {
-                // particle dies
-                balance.rr += 1;
-                false
-            } else {
-                // particle survives with increased weight
-                pp.weight /= split_rr_factor;
-                true
-            }
-        });
-    } else if split_rr_factor > one() {
-        // not enough particles; create new ones by splitting
-        container.processing_particles.iter_mut().for_each(|pp| {
-            let mut split_factor = split_rr_factor.floor();
-            if rng_sample::<T>(&mut pp.random_number_seed) > split_rr_factor - split_factor {
-                split_factor -= one();
-            }
-            pp.weight /= split_rr_factor;
-
-            let n_split: usize = split_factor.to_usize().unwrap();
-            (0..n_split).for_each(|_| {
-                let mut split_pp = pp.clone();
-                balance.split += 1;
-                split_pp.random_number_seed = spawn_rn_seed::<T>(&mut pp.random_number_seed);
-                split_pp.identifier = split_pp.random_number_seed;
-
-                container.extra_particles.push(split_pp);
-            })
-        });
-        container.clean_extra_vaults();
-    }
-}
-
-/// Play russian-roulette with low-weight particles relative
-/// to the source particle weight.
-///
-/// This function regulates the number of low (statistica) weight particle to
-/// prevent clusters of low energy particle from falsifying the results.
-pub fn roulette_low_weight_particles<T: CustomFloat>(
-    relative_weight_cutoff: T,
-    source_particle_weight: T,
-    container: &mut ParticleContainer<T>,
-    balance: &mut Balance,
-) {
-    if relative_weight_cutoff > zero() {
-        let weight_cutoff = relative_weight_cutoff * source_particle_weight;
-
-        container.processing_particles.retain_mut(|pp| {
-            if pp.weight <= weight_cutoff {
-                if rng_sample::<T>(&mut pp.random_number_seed) <= relative_weight_cutoff {
-                    // particle survives with increased weight
-                    pp.weight /= relative_weight_cutoff;
-                    true
-                } else {
-                    // particle dies
-                    balance.rr += 1;
-                    false
-                }
-            } else {
-                // particle survives
-                true
-            }
-        });
-    }
-}
-
 /// Simulates the sources according to the problem's parameters.
 ///
 /// This function spawns particle is source regions. Each time this function
@@ -139,7 +57,15 @@ pub fn roulette_low_weight_particles<T: CustomFloat>(
 /// spawned. _Where_ they are spawned depends on both deterministic factors and
 /// randomness.
 ///
-/// TODO: Detail the weight system
+/// Each cell is given a weight, computed according to source rate of its
+/// material, volume and time step: The weight is directly proportional to
+/// the number of particle that should be spawned in the cell, during a time
+/// interval equal to the time step. Given this weight, and the weight of a
+/// fresh particle at sourcing, we can compute the number of particle the cell
+/// should spawn to get the overall desired number.
+///
+/// The amount of particle spawned is a consequence of the source particle weight
+/// computation as the value is adjusted according to the problem's total weight.
 pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,

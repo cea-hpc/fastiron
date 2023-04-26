@@ -11,7 +11,7 @@ use crate::{
         CustomFloat,
     },
     data::{mc_vector::MCVector, tallies::MCTallyEvent},
-    utils::mc_rng_state::rng_sample,
+    utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
 /// Custom enum used to model a particle's species.
@@ -95,7 +95,7 @@ impl<T: CustomFloat> MCParticle<T> {
                 .sqrt()
     }
 
-    /// Return the starting cross section for reaction sampling
+    /// Return the starting cross section for reaction sampling.
     pub fn get_current_xs(&mut self) -> T {
         self.total_cross_section * rng_sample::<T>(&mut self.random_number_seed)
     }
@@ -161,6 +161,63 @@ impl<T: CustomFloat> MCParticle<T> {
 
         self.direction.z =
             -sin_theta_zero * (sine_theta * cosine_phi) + zero() + cos_theta_zero * cosine_theta;
+    }
+
+    /// Returns an iterator over particles created from a split of the original one (caller).
+    /// This is used in the population control algorithm.
+    pub fn under_populated_split(
+        &mut self,
+        split_rr_factor: T,
+    ) -> impl Iterator<Item = MCParticle<T>> + '_ {
+        let mut split_factor = split_rr_factor.floor();
+        if rng_sample::<T>(&mut self.random_number_seed) > split_rr_factor - split_factor {
+            split_factor -= one();
+        }
+        self.weight /= split_rr_factor;
+
+        let n_split: usize = split_factor.to_usize().unwrap();
+        // return an iterating object so we can use .flat_map() method
+        (0..n_split).map(|_| {
+            let mut split_pp = self.clone();
+            split_pp.random_number_seed = spawn_rn_seed::<T>(&mut self.random_number_seed);
+            split_pp.identifier = split_pp.random_number_seed;
+
+            split_pp
+        })
+    }
+
+    /// Play russian-roulette with the particle, returning true if the particle survives,
+    /// false otherwise. This function is meant to be used along the [`Vec::retain_mut()`]
+    /// method.
+    pub fn over_populated_rr(&mut self, split_rr_factor: T) -> bool {
+        if rng_sample::<T>(&mut self.random_number_seed) > split_rr_factor {
+            // particle dies
+            false
+        } else {
+            // particle survives with increased weight
+            self.weight /= split_rr_factor;
+            true
+        }
+    }
+
+    /// Play russian-roulette with particle of low statistical weight, returning true if
+    /// the particle survives, false otherwise. This function is meant to be used along
+    /// the [`Vec::retain_mut()`] method.
+    pub fn low_weight_rr(&mut self, relative_weight_cutoff: T, source_particle_weight: T) -> bool {
+        let weight_cutoff = relative_weight_cutoff * source_particle_weight;
+        if self.weight <= weight_cutoff {
+            if rng_sample::<T>(&mut self.random_number_seed) <= relative_weight_cutoff {
+                // particle survives with increased weight
+                self.weight /= relative_weight_cutoff;
+                true
+            } else {
+                // particle dies
+                false
+            }
+        } else {
+            // particle survives
+            true
+        }
     }
 }
 

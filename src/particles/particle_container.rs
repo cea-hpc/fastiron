@@ -2,9 +2,14 @@
 //!
 //! This module contains code used for the main structure holding particles.
 
-use crate::{constants::CustomFloat, data::send_queue::SendQueue};
+use crate::{
+    constants::CustomFloat,
+    data::{send_queue::SendQueue, tallies::Balance},
+    montecarlo::{MonteCarloData, MonteCarloUnit},
+    simulation::cycle_tracking::cycle_tracking_guts,
+};
 
-use super::mc_particle::MCParticle;
+use super::mc_particle::{MCParticle, Species};
 
 #[derive(Debug, Clone)]
 /// Structure used as a container for all particles.
@@ -42,6 +47,67 @@ impl<T: CustomFloat> ParticleContainer<T> {
             &mut self.processing_particles,
             &mut self.processed_particles,
         );
+    }
+
+    /// Randomly delete particles to reach the desired number of particles for
+    /// simulation. Low weight particles are, then, randomly deleted.
+    pub fn regulate_population(
+        &mut self,
+        split_rr_factor: T,
+        relative_weight_cutoff: T,
+        source_particle_weight: T,
+        balance: &mut Balance,
+    ) {
+        let old_len = self.processing_particles.len();
+        self.processing_particles.retain_mut(|pp| {
+            let survive_once = pp.over_populated_rr(split_rr_factor);
+            let survive_twice = pp.low_weight_rr(relative_weight_cutoff, source_particle_weight);
+            survive_once & survive_twice
+        });
+        balance.rr += (old_len - self.processing_particles.len()) as u64;
+    }
+
+    /// Split particles to reach the desired number of particles for
+    /// simulation. Low weight particles are, then, randomly deleted.
+    pub fn split_population(
+        &mut self,
+        split_rr_factor: T,
+        relative_weight_cutoff: T,
+        source_particle_weight: T,
+        balance: &mut Balance,
+    ) {
+        let mut old_len = self.processing_particles.len();
+        self.processing_particles.iter_mut().for_each(|pp| {
+            self.extra_particles
+                .extend(pp.under_populated_split(split_rr_factor));
+        });
+        self.clean_extra_vaults();
+        balance.split += (self.processing_particles.len() - old_len) as u64;
+        old_len = self.processing_particles.len();
+        self.processing_particles
+            .retain_mut(|pp| pp.low_weight_rr(relative_weight_cutoff, source_particle_weight));
+        balance.rr += (old_len - self.processing_particles.len()) as u64;
+    }
+
+    /// Track particles and transfer them to the processed storage when done.
+    pub fn process_particles(
+        &mut self,
+        mcdata: &MonteCarloData<T>,
+        mcunit: &mut MonteCarloUnit<T>,
+    ) {
+        self.processing_particles.iter_mut().for_each(|particle| {
+            cycle_tracking_guts(
+                mcdata,
+                mcunit,
+                particle,
+                &mut self.extra_particles,
+                &mut self.send_queue,
+            )
+        });
+        self.processing_particles
+            .retain(|particle| particle.species != Species::Unknown);
+        self.processed_particles
+            .append(&mut self.processing_particles);
     }
 
     /// Processes the particles stored in the send queue.

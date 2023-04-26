@@ -6,9 +6,7 @@ use fastiron::constants::CustomFloat;
 use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers};
 use fastiron::montecarlo::{MonteCarloData, MonteCarloUnit};
 use fastiron::parameters::Parameters;
-use fastiron::particles::mc_particle::Species;
 use fastiron::particles::particle_container::ParticleContainer;
-use fastiron::simulation::cycle_tracking::cycle_tracking_guts;
 use fastiron::simulation::population_control;
 use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
 use fastiron::utils::io_utils::Cli;
@@ -30,9 +28,6 @@ fn main() {
 
     match mcdata.exec_info.exec_policy {
         ExecPolicy::Sequential => {
-            //let container = &mut containers[0];
-            //let mcunit = &mut mcunits[0];
-
             mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::Main);
 
             for step in 0..n_steps {
@@ -138,7 +133,7 @@ pub fn cycle_process<T: CustomFloat>(
 
     // source 10% of target number of particles
     population_control::source_now(mcdata, mcunit, container);
-    // compute split factor & regulate accordingly
+    // compute split factor & regulate accordingly; regulation include the low weight rr
     let split_rr_factor: T = population_control::compute_split_factor(
         mcdata.params.simulation_params.n_particles as usize,
         mcdata.global_n_particles,
@@ -146,20 +141,21 @@ pub fn cycle_process<T: CustomFloat>(
         mcdata.exec_info.num_threads,
         mcdata.params.simulation_params.load_balance,
     );
-    if split_rr_factor != one() {
-        population_control::regulate(
+    if split_rr_factor < one() {
+        container.regulate_population(
             split_rr_factor,
-            container,
+            mcdata.params.simulation_params.low_weight_cutoff,
+            mcdata.source_particle_weight,
+            &mut mcunit.tallies.balance_cycle,
+        );
+    } else if split_rr_factor > one() {
+        container.split_population(
+            split_rr_factor,
+            mcdata.params.simulation_params.low_weight_cutoff,
+            mcdata.source_particle_weight,
             &mut mcunit.tallies.balance_cycle,
         )
     }
-    // go over low weight particle & eliminate them randomly
-    population_control::roulette_low_weight_particles(
-        mcdata.params.simulation_params.low_weight_cutoff,
-        mcdata.source_particle_weight,
-        container,
-        &mut mcunit.tallies.balance_cycle,
-    );
 
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::PopulationControl);
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
@@ -169,22 +165,7 @@ pub fn cycle_process<T: CustomFloat>(
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
 
             // track particles
-            container
-                .processing_particles
-                .iter_mut()
-                .for_each(|particle| {
-                    cycle_tracking_guts(
-                        mcdata,
-                        mcunit,
-                        particle,
-                        &mut container.extra_particles,
-                        &mut container.send_queue,
-                    );
-                    if particle.species != Species::Unknown {
-                        container.processed_particles.push(particle.clone());
-                    }
-                });
-            container.processing_particles.clear();
+            container.process_particles(mcdata, mcunit);
 
             mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingComm);
@@ -195,6 +176,7 @@ pub fn cycle_process<T: CustomFloat>(
 
             mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingComm);
         }
+        // change this if in parallel to also check pending/buffered particles
         if container.test_done_new() {
             break;
         }
