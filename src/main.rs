@@ -90,9 +90,11 @@ pub fn cycle_sync<T: CustomFloat>(
                 // if sequential, just use the single Monte-Carlo unit
                 mcunits[0].tallies.balance_cycle.end =
                     containers[0].processed_particles.len() as u64;
-                mcunits[0]
-                    .tallies
-                    .print_summary(&mut mcunits[0].fast_timer, step - 1);
+                mcunits[0].tallies.print_summary(
+                    &mut mcunits[0].fast_timer,
+                    step - 1,
+                    mcdata.params.simulation_params.csv,
+                );
                 mcunits[0]
                     .tallies
                     .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);

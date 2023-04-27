@@ -6,7 +6,7 @@
 //! Note that this module isn't used to compute time-related data, this is done in
 //! the [utils::mc_fast_timer][crate::utils::mc_fast_timer] module.
 
-use std::{fmt::Debug, iter::zip};
+use std::{fmt::Debug, fs::OpenOptions, io::Write, iter::zip};
 
 use num::zero;
 
@@ -301,7 +301,12 @@ impl<T: CustomFloat> Tallies<T> {
     /// - `num_seg` column counts the total number of computed segments.
     /// - `scalar_flux` is the total scalar flux of the problem.
     /// - The last three columns indicate the time spent in each section.
-    pub fn print_summary(&self, timer_container: &mut MCFastTimerContainer, step: usize) {
+    pub fn print_summary(
+        &self,
+        timer_container: &mut MCFastTimerContainer,
+        step: usize,
+        csv: bool,
+    ) {
         if step == 0 {
             // print header
             println!("[Tally Summary]");
@@ -310,6 +315,16 @@ impl<T: CustomFloat> Tallies<T> {
                 "cycle", "start |", "source |", "rr |", "split |", "absorb |", "scatter |", "fission |", "produce |", "collision |", 
                 "escape |", "census |", "num_seg |", "scalar_flux |", "ppControl (s) |", "cycleTracking (s) |", "cycleSync (s)"
             );
+            if csv {
+                // write column name
+                let mut file = OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .truncate(true)
+                    .open("tallies_report.csv")
+                    .unwrap();
+                writeln!(file, "cycle;start;source;rr;split;absorb;scatter;fission;produce;collision;escape;census;num_seg;scalar_flux;ppControl(s);cycleTracking(s);cycleSync(s)").unwrap();
+            }
         }
         let cy_init = mc_fast_timer::get_last_cycle(timer_container, Section::PopulationControl);
         let cy_track = mc_fast_timer::get_last_cycle(timer_container, Section::CycleTracking);
@@ -335,6 +350,35 @@ impl<T: CustomFloat> Tallies<T> {
             cy_track,
             cy_fin,
         );
+
+        if csv {
+            let mut file = OpenOptions::new()
+                .append(true)
+                .open("tallies_report.csv")
+                .unwrap();
+            writeln!(
+                file,
+                "{};{};{};{};{};{};{};{};{};{};{};{};{};{:e};{:e};{:e};{:e}",
+                step,
+                bal.start,
+                bal.source,
+                bal.rr,
+                bal.split,
+                bal.absorb,
+                bal.scatter,
+                bal.fission,
+                bal.produce,
+                bal.collision,
+                bal.escape,
+                bal.census,
+                bal.num_segments,
+                sf_sum,
+                cy_init,
+                cy_track,
+                cy_fin,
+            )
+            .unwrap();
+        }
     }
 
     /// Computes the global scalar flux value of the problem.
