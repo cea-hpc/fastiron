@@ -63,9 +63,10 @@ fn main() {
 pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteCarloUnit<T>) {
     mcunit.fast_timer.update_main_stats();
 
-    mcunit
-        .fast_timer
-        .cumulative_report(mcunit.tallies.balance_cumulative.num_segments);
+    mcunit.fast_timer.cumulative_report(
+        mcunit.tallies.balance_cumulative.num_segments,
+        mcdata.params.simulation_params.csv,
+    );
 
     mcunit.tallies.spectrum.print_spectrum(mcdata);
 }
