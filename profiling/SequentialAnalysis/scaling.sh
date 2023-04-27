@@ -12,7 +12,7 @@ mv ./timers_report.csv ./profiling/SequentialAnalysis/scaling_data/timers10000.c
 mv ./tallies_report.csv ./profiling/SequentialAnalysis/scaling_data/tallies10000.csv
 $FI -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 20000 -c
 mv ./timers_report.csv ./profiling/SequentialAnalysis/scaling_data/timers20000.csv
-mv ./tallies_report.csv ./profiling/SequentialAnalysis/scaling_data/tallies30000.csv
+mv ./tallies_report.csv ./profiling/SequentialAnalysis/scaling_data/tallies20000.csv
 $FI -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 30000 -c
 mv ./timers_report.csv ./profiling/SequentialAnalysis/scaling_data/timers30000.csv
 mv ./tallies_report.csv ./profiling/SequentialAnalysis/scaling_data/tallies30000.csv
