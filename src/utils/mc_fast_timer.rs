@@ -97,14 +97,14 @@ impl MCFastTimerContainer {
     /// Here is an example output:
     ///
     /// ```shell
-    /// Timer Name                       | Total number of calls      Shortest cycle (µs)    Average per cycle (µs)     Longest cycle (µs)    Total in section (µs)    Efficiency rating (%)
-    /// Section::Main                    |                     1          9.995582e6                9.995582e6             9.995582e6               9.995582e6                     100.0
-    /// Section::PopulationControl       |                    10             9.147e3                  1.1792e4               1.7115e4                1.17921e5                      68.9
-    /// Section::CycleTracking           |                    10           9.58225e5                 9.87051e5             1.006316e6               9.870513e6                      98.1
-    /// Section::CycleTrackingKernel     |                    10           9.58224e5                  9.8705e5             1.006315e6               9.870504e6                      98.1
-    /// Section::CycleTrackingComm       |                    10                 0e0                       0e0                    0e0                      2e0                      35.8
-    /// Section::CycleSync               |                    11                 2e2                    6.44e2                 7.47e2                  6.446e3                      86.2
-    /// Figure of merit: 2.264e6 [segments / cycle tracking time]
+    /// Timer Name                     | Total # of calls | Shortest cycle (µs) | Average per cycle (µs) | Longest cycle (µs) | Total in section (µs) | Efficiency rating (%)
+    /// Section::Main                  |                1 |     1.027135e7      |        1.027135e7      |    1.027135e7      |       1.027135e7      |             100.0
+    /// Section::PopulationControl     |               10 |     9.609000e3      |        1.179200e4      |    1.645900e4      |       1.179200e5      |              71.6
+    /// Section::CycleTracking         |               10 |     9.942510e5      |        1.014646e6      |    1.024305e6      |       1.014647e7      |              99.1
+    /// Section::CycleTrackingKernel   |               10 |     9.942500e5      |        1.014646e6      |    1.024305e6      |       1.014646e7      |              99.1
+    /// Section::CycleTrackingComm     |               10 |     0.000000e0      |        0.000000e0      |    0.000000e0      |       2.000000e0      |              38.5
+    /// Section::CycleSync             |               11 |     2.540000e2      |        6.280000e2      |    8.360000e2      |       6.283000e3      |              75.1
+    /// Figure of merit: 2.203e6 [segments / cycle tracking time]
     /// ```
     ///
     /// [`Section::PopulationControl`] and [`Section::CycleSync`] do not really have an
