@@ -1,0 +1,9 @@
+Figure of merit: 1.250e6 [segments / cycle tracking time]
+Testing if ratios for absorbtion, fission & scattering are maintained...
+PASS:: Ratios are maintained within 1.1%
+Testing balance between number of facet crossings and reactions...
+PASS:: Ratio maintained within 1%
+Testing for lost / unaccounted for particles in this simulation...
+PASS:: No particles lost during run
+Testing fluence for homogeneity across the cells
+PASS:: Fluence is homogeneous across cells within 6%
