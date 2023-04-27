@@ -113,7 +113,15 @@ impl MCFastTimerContainer {
     pub fn cumulative_report(&self, num_segments: u64) {
         // Print header
         println!("[Timer Report]");
-        println!("Timer Name                       | Total number of calls      Shortest cycle (µs)    Average per cycle (µs)     Longest cycle (µs)    Total in section (µs)    Efficiency rating (%)");
+        println!(
+            "Timer Name                     | {:16} | {:19} | {:22} | {:18} | {:21} | {:21}",
+            "Total # of calls",
+            "Shortest cycle (µs)",
+            "Average per cycle (µs)",
+            "Longest cycle (µs)",
+            "Total in section (µs)",
+            "Efficiency rating (%)",
+        );
         // print data
         self.timers
             .iter()
@@ -129,7 +137,7 @@ impl MCFastTimerContainer {
                     _ => unreachable!(),
                 };
                 println!(
-                    "{}   | {:>21}    {:>16e}    {:>22e}     {:>18e}    {:>21e}    {:>22.1}",
+                    "{} | {:>16} | {:>14.6e}      | {:>17.6e}      | {:>13.6e}      | {:>16.6e}      | {:>17.1}",
                     section,
                     timer.num_calls,
                     self.mins[timer_idx].as_micros(),
