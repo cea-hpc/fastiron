@@ -1,4 +1,5 @@
 use std::iter::zip;
+use std::time::Instant;
 
 use clap::Parser;
 use fastiron::constants::sim::SRC_FRACTION;
@@ -18,13 +19,21 @@ fn main() {
     let cli = Cli::parse();
 
     let params: Parameters<f64> = Parameters::get_parameters(cli).unwrap();
-    println!("Printing Parameters:\n{params:#?}");
+    println!("[Simulation Parameters]\n{:#?}", params.simulation_params);
+    let start_init = Instant::now();
+    println!("[Initialization]: Start");
 
     let n_steps = params.simulation_params.n_steps;
 
     let mut mcdata = init_mcdata(params);
     let mut containers = init_particle_containers(&mcdata.params, &mcdata.exec_info);
     let mut mcunits = init_mcunits(&mcdata);
+
+    println!("[Initialization]: Done");
+    println!(
+        "[Initialization]: {}ms elapsed",
+        start_init.elapsed().as_millis()
+    );
 
     match mcdata.exec_info.exec_policy {
         ExecPolicy::Sequential => {

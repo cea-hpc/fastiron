@@ -26,6 +26,7 @@ use num::{one, zero, Float, FromPrimitive};
 pub fn init_mcdata<T: CustomFloat>(params: Parameters<T>) -> MonteCarloData<T> {
     let mut mcdata: MonteCarloData<T> = MonteCarloData::new(params);
 
+    println!("  [MonteCarloData Initialization]: Start");
     init_nuclear_data(&mut mcdata);
 
     if !mcdata
@@ -36,6 +37,7 @@ pub fn init_mcdata<T: CustomFloat>(params: Parameters<T>) -> MonteCarloData<T> {
     {
         check_cross_sections(&mcdata);
     }
+    println!("  [MonteCarloData Initialization]: Done");
 
     mcdata
 }
@@ -47,6 +49,7 @@ pub fn init_particle_containers<T: CustomFloat>(
     params: &Parameters<T>,
     proc_info: &MCProcessorInfo, // may be removed if we add it to parameters
 ) -> Vec<ParticleContainer<T>> {
+    println!("  [ParticleContainer Initialization]: Start");
     // compute the capacities using number of threads, target number of particles & fission statistical offset
     let target_n_particles = params.simulation_params.n_particles as usize;
 
@@ -73,6 +76,7 @@ pub fn init_particle_containers<T: CustomFloat>(
         ExecPolicy::Sequential => 1,
         ExecPolicy::Parallel => todo!(),
     };
+    println!("  [ParticleContainer Initialization]: Done");
     vec![container; n_container]
 }
 
@@ -80,6 +84,7 @@ pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarl
     let mut units: Vec<MonteCarloUnit<T>> = Vec::new();
 
     // inits
+    println!("  [MonteCarloUnit Initialization]: Start");
     match mcdata.exec_info.exec_policy {
         ExecPolicy::Sequential => {
             // MAY CHANGE; the init of multiple units might directly be done in the functions, not here
@@ -90,13 +95,14 @@ pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarl
         }
         ExecPolicy::Parallel => todo!(),
     }
+    println!("  [MonteCarloUnit Initialization]: Done");
 
     // checks
-    println!("Starting consistency check");
+    println!("  [Consistency Check]: Start");
     units
         .iter()
         .for_each(|mcunit| consistency_check(&mcunit.domain));
-    println!("Finished consistency check");
+    println!("  [Consistency Check]: Done");
 
     units
 }
