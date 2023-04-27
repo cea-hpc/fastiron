@@ -1,5 +1,6 @@
 # folders
 /target
+/.vscode
 
 # overall files
 *.dat
