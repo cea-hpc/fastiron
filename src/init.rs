@@ -14,8 +14,10 @@ use crate::{
     parameters::Parameters,
     particles::particle_container::ParticleContainer,
     utils::{
-        comm_object::CommObject, decomposition_object::DecompositionObject,
-        mc_processor_info::MCProcessorInfo, mc_rng_state::rng_sample,
+        comm_object::CommObject,
+        decomposition_object::DecompositionObject,
+        mc_processor_info::{ExecPolicy, MCProcessorInfo},
+        mc_rng_state::rng_sample,
     },
 };
 use num::{one, zero, Float, FromPrimitive};
@@ -24,11 +26,18 @@ use num::{one, zero, Float, FromPrimitive};
 pub fn init_mcdata<T: CustomFloat>(params: Parameters<T>) -> MonteCarloData<T> {
     let mut mcdata: MonteCarloData<T> = MonteCarloData::new(params);
 
+    println!("  [MonteCarloData Initialization]: Start");
     init_nuclear_data(&mut mcdata);
-    //init_mesh(&mut mcco);
-    //init_tallies(&mut mcco);
 
-    check_cross_sections(&mcdata);
+    if !mcdata
+        .params
+        .simulation_params
+        .cross_sections_out
+        .is_empty()
+    {
+        check_cross_sections(&mcdata);
+    }
+    println!("  [MonteCarloData Initialization]: Done");
 
     mcdata
 }
@@ -40,6 +49,7 @@ pub fn init_particle_containers<T: CustomFloat>(
     params: &Parameters<T>,
     proc_info: &MCProcessorInfo, // may be removed if we add it to parameters
 ) -> Vec<ParticleContainer<T>> {
+    println!("  [ParticleContainer Initialization]: Start");
     // compute the capacities using number of threads, target number of particles & fission statistical offset
     let target_n_particles = params.simulation_params.n_particles as usize;
 
@@ -62,14 +72,39 @@ pub fn init_particle_containers<T: CustomFloat>(
     let extra_capacity = regular_capacity_per_container * max_nu_bar.max(2);
 
     let container = ParticleContainer::new(regular_capacity, extra_capacity);
-    vec![container; proc_info.num_threads]
+    let n_container: usize = match proc_info.exec_policy {
+        ExecPolicy::Sequential => 1,
+        ExecPolicy::Parallel => todo!(),
+    };
+    println!("  [ParticleContainer Initialization]: Done");
+    vec![container; n_container]
 }
 
 pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarloUnit<T>> {
-    let mut mcunit = MonteCarloUnit::new(&mcdata.params);
-    init_mesh(&mut mcunit, mcdata);
-    init_tallies(&mut mcunit, &mcdata.params);
-    vec![mcunit]
+    let mut units: Vec<MonteCarloUnit<T>> = Vec::new();
+
+    // inits
+    println!("  [MonteCarloUnit Initialization]: Start");
+    match mcdata.exec_info.exec_policy {
+        ExecPolicy::Sequential => {
+            // MAY CHANGE; the init of multiple units might directly be done in the functions, not here
+            let mut mcunit = MonteCarloUnit::new(&mcdata.params);
+            init_mesh(&mut mcunit, mcdata);
+            init_tallies(&mut mcunit, &mcdata.params);
+            units.push(mcunit);
+        }
+        ExecPolicy::Parallel => todo!(),
+    }
+    println!("  [MonteCarloUnit Initialization]: Done");
+
+    // checks
+    println!("  [Consistency Check]: Start");
+    units
+        .iter()
+        .for_each(|mcunit| consistency_check(&mcunit.domain));
+    println!("  [Consistency Check]: Done");
+
+    units
 }
 
 //==================
@@ -134,11 +169,7 @@ fn init_nuclear_data<T: CustomFloat>(mcdata: &mut MonteCarloData<T>) {
 ///
 /// This function goes through the given domain list and check for inconsistencies
 /// by checking adjacencies coherence.
-pub fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>]) {
-    if my_rank == 0 {
-        println!("Starting consistency check");
-    }
-
+pub fn consistency_check<T: CustomFloat>(domain: &[MCDomain<T>]) {
     domain.iter().enumerate().for_each(|(domain_idx, dd)| {
         dd.mesh
             .cell_connectivity
@@ -170,10 +201,6 @@ pub fn consistency_check<T: CustomFloat>(my_rank: usize, domain: &[MCDomain<T>])
                 });
             });
     });
-
-    if my_rank == 0 {
-        println!("Finished consistency check");
-    }
 }
 
 fn initialize_centers_rand<T: CustomFloat>(
@@ -265,10 +292,6 @@ fn init_mesh<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, mcdata: &MonteCarlo
             .domain
             .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, mat_db))
     });
-
-    if n_ranks == 1 {
-        consistency_check(my_rank, &mcunit.domain);
-    }
 }
 
 fn init_tallies<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, params: &Parameters<T>) {
@@ -288,17 +311,29 @@ struct XSData<T: Float> {
 
 /// Prints cross-section data of the problem.
 ///
-/// TODO: add a model of the produced output
+/// The data is simply presented in a table sorted by energy levels. Here is a snippet
+/// of the first ten lines of a possible output:
+///
+/// ```shell
+/// group |           energy |  sourceMaterial_absorb |  sourceMaterial_fission |  sourceMaterial_scatter
+///     0 |   0.000000001054 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     1 |   0.000000001168 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     2 |   0.000000001294 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     3 |   0.000000001434 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     4 |   0.000000001589 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     5 |   0.000000001761 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     6 |   0.000000001952 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     7 |   0.000000002163 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     8 |   0.000000002397 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+///     9 |   0.000000002656 |        0.0108589141086 |         0.0096890310969 |         0.0794520547945
+/// ```
+///
+/// The energy scale is logarithmic, hence the way it is printed.
 pub fn check_cross_sections<T: CustomFloat>(mcdata: &MonteCarloData<T>) {
-    let params = &mcdata.params;
-    if params.simulation_params.cross_sections_out.is_empty() {
-        return;
-    }
-
     let nucdb = &mcdata.nuclear_data;
     let matdb = &mcdata.material_database;
 
-    let n_groups = params.simulation_params.n_groups;
+    let n_groups = mcdata.params.simulation_params.n_groups;
 
     let mut energies: Vec<T> = Vec::with_capacity(n_groups);
     for ii in 0..n_groups {
@@ -337,7 +372,12 @@ pub fn check_cross_sections<T: CustomFloat>(mcdata: &MonteCarloData<T>) {
     });
 
     // build an output file
-    let file_name = params.simulation_params.cross_sections_out.to_owned() + ".dat";
+    let file_name = mcdata
+        .params
+        .simulation_params
+        .cross_sections_out
+        .to_owned()
+        + ".dat";
     let mut file = File::create(file_name).unwrap();
     // header
     write!(file, "group |           energy |  ").unwrap();
@@ -364,7 +404,7 @@ pub fn check_cross_sections<T: CustomFloat>(mcdata: &MonteCarloData<T>) {
             }
             write!(
                 file,
-                "{} |  {:>22} |  {:>22}",
+                "{:>20.13} |  {:>22.13} |  {:>22.13}",
                 xc_vec[ii].abs, xc_vec[ii].fis, xc_vec[ii].sca
             )
             .unwrap();

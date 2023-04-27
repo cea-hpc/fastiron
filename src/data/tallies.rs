@@ -281,12 +281,12 @@ impl<T: CustomFloat> Tallies<T> {
     /// would look like the following:
     ///
     /// ```shell
-    /// cycle   |    start     source         rr        split       absorb      scatter      fission      produce    collision       escape       census      num_seg   scalar_flux   cycleInit (s)  cycleTracking (s)  cycleFinalize (s)
-    ///       0 |        0      10000          0        90000        97237       711673        86904        86904       895814            0         2763      2245733    8.984036e11   1.4745e-2         1.088409e0                0e0
-    ///       1 |     2763      10000          0        87202        97576       715193        86951        86951       899720            0         2389      2250433    9.191721e11   1.1338e-2         1.114024e0                0e0
-    ///       2 |     2389      10000          0        87625        97569       717781        87733        87733       903083            0         2445      2262159    9.303649e11     8.45e-3         1.125107e0                0e0
-    ///       3 |     2445      10000       1468        87569        96180       704095        85839        85839       886114            0         2366      2217454    9.227719e11    9.499e-3         1.106859e0                0e0
-    ///       4 |     2366      10000        331        87599        97132       716577        87708        87708       901417            0         2502      2256889    9.255832e11    9.701e-3         1.129408e0                0e0
+    /// cycle   |  start |   source |       rr |      split |     absorb |    scatter |    fission |    produce |  collision |     escape |     census |    num_seg |   scalar_flux | ppControl (s) | cycleTracking (s) | cycleSync (s)
+    ///       0 |      0 |    10000 |        0 |      90000 |      97237 |     711673 |      86904 |      86904 |     895814 |          0 |       2763 |    2245733 |   8.984036e11 |  1.757e-2     |     1.01038e0     |  2.200e-4
+    ///       1 |   2763 |    10000 |        0 |      87202 |      97576 |     715193 |      86951 |      86951 |     899720 |          0 |       2389 |    2250433 |   9.191721e11 |  1.337e-2     |     1.02491e0     |  7.382e-4
+    ///       2 |   2389 |    10000 |        0 |      87625 |      97569 |     717781 |      87733 |      87733 |     903083 |          0 |       2445 |    2262159 |   9.303649e11 |  9.174e-3     |     1.03161e0     |  7.335e-4
+    ///       3 |   2445 |    10000 |     1468 |      87569 |      96180 |     704095 |      85839 |      85839 |     886114 |          0 |       2366 |    2217454 |   9.227719e11 |  1.119e-2     |     1.01220e0     |  6.674e-4
+    ///       4 |   2366 |    10000 |      331 |      87599 |      97132 |     716577 |      87708 |      87708 |     901417 |          0 |       2502 |    2256889 |   9.255832e11 |  1.124e-2     |     1.02922e0     |  6.787e-4
     /// ```
     ///
     /// - `cycle` column gives the cycle number.
@@ -306,17 +306,17 @@ impl<T: CustomFloat> Tallies<T> {
             // print header
             println!("[Tally Summary]");
             println!(
-                "{:<7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>13} {:>15} {:>18} {:>18}",
-                "cycle", "start", "source", "rr", "split", "absorb", "scatter", "fission", "produce", "collision", 
-                "escape", "census", "num_seg", "scalar_flux", "ppControl (s)", "cycleTracking (s)", "cycleFinalize (s)"
+                "{:<7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>15} {:>13} {:>19} {:>13}",
+                "cycle", "start |", "source |", "rr |", "split |", "absorb |", "scatter |", "fission |", "produce |", "collision |", 
+                "escape |", "census |", "num_seg |", "scalar_flux |", "ppControl (s) |", "cycleTracking (s) |", "cycleSync (s)"
             );
         }
         let cy_init = mc_fast_timer::get_last_cycle(timer_container, Section::PopulationControl);
         let cy_track = mc_fast_timer::get_last_cycle(timer_container, Section::CycleTracking);
-        let cy_fin = mc_fast_timer::get_last_cycle(timer_container, Section::CycleFinalize);
+        let cy_fin = mc_fast_timer::get_last_cycle(timer_container, Section::CycleSync);
         let sf_sum = self.scalar_flux_sum();
         let bal = &self.balance_cycle;
-        println!("{:>7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>11.3e} {:>18.5e} {:>18.3e}",
+        println!("{:>7} |{:>7} |{:>9} |{:>9} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>14.6e} |{:>10.3e}     |{:>14.5e}     |{:>10.3e}",
             step,
             bal.start,
             bal.source,
