@@ -1,7 +1,0 @@
-Timer Name                     | Total # of calls | Shortest cycle (µs) | Average per cycle (µs) | Longest cycle (µs) | Total in section (µs) | Efficiency rating (%)
-Section::Main                  |                1 |     2.939811e8      |        2.939811e8      |    2.939811e8      |       2.939811e8      |             100.0
-Section::PopulationControl     |              100 |     4.566000e3      |        5.133000e3      |    7.081000e3      |       5.133490e5      |              72.5
-Section::CycleTracking         |              100 |     2.530968e6      |        2.930476e6      |    3.152474e6      |       2.930477e8      |              93.0
-Section::CycleTrackingKernel   |             5353 |     2.524507e6      |        2.923061e6      |    3.145023e6      |       2.923061e8      |              92.9
-Section::CycleTrackingComm     |             5353 |     6.449000e3      |        7.400000e3      |    7.823000e3      |       7.400370e5      |              94.6
-Section::CycleSync             |              101 |     1.039000e3      |        4.157000e3      |    5.307000e3      |       4.157610e5      |              78.3
