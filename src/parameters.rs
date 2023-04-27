@@ -318,6 +318,8 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub boundary_condition: String,
     /// Switch to enable or disable load balancing during execution.
     pub load_balance: bool,
+    /// Switch to enable writing of tallies & timers data in `csv` files.
+    pub csv: bool,
     /// Switch used to print thread-debugging information. Currently unused.
     pub debug_threads: bool,
     /// Target number of particle for the simulation. Population will be controled
@@ -389,7 +391,7 @@ impl<T: CustomFloat> SimulationParameters<T> {
         fetch_from_cli!(cross_sections_out);
         fetch_from_cli!(dt);
         simulation_params.load_balance = cli.load_balance;
-
+        simulation_params.csv = cli.csv;
         simulation_params.debug_threads = cli.debug_threads;
         fetch_from_cli!(lx);
         fetch_from_cli!(ly);
@@ -414,6 +416,7 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             cross_sections_out: "".to_string(),
             boundary_condition: "reflect".to_string(),
             load_balance: false,
+            csv: false,
             debug_threads: false,
             n_particles: 1000000,
             n_threads: 1,
