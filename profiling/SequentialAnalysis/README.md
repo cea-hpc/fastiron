@@ -9,7 +9,8 @@ column -s=';' -t < a_file.csv
 ```
 
 Note that this analysis precedes some additionnal changes to be done to the code 
-before release (TODO: add link to PRs?).
+before release. See the comparison [section](#rustified-edition-comparison) for more detail.
+
 
 ## Correlation Study
 
@@ -35,8 +36,6 @@ processing and plotting data is located [here][1]. The results are showed below:
 ![popsync](figures/heatmap_popsync.png)
 
 
-[1]: https://github.com/imrn99/fi_stats
-
 ## Scaling
 
 Data for the scaling study can be recorded using the `scaling.sh` script. By looking at 
@@ -44,6 +43,7 @@ the printed output of the program, one can see already that the figure of merit 
 vary significantly. This means that the time taken to compute a segment for a particle
 -- including particle look-up & update -- is independent from the total number of particle, 
 which is expected.
+
 
 ## Rustified Edition Comparison
 
@@ -73,3 +73,18 @@ Section::CycleTrackingComm      5353    6.441e3       7.415e3       8.377e3     
 Section::CycleSync              101     1.044e3       4.411e3       7.449e3       4.41133e5     59.2
 Figure of merit: 1.250e6 [segments / cycle tracking time]
 ```
+
+Here are a few percentages (computed using the [relative change][2] definition): 
+
+- Overall execution time has _decreased_ by **14%**.
+- Excluding `Main` and `CycleSync`/`CycleFinalize`, efficiency has _increased_, 
+  on average, by **30,7%**. Note that efficiency is defined using an outlier 
+  (longest cycle), hence this metric isn't very  significant and could be a fluke.
+- The `CycleTracking` section execution time has _decreased_ by **14%**.
+- The figure of merit, i.e. the number of segments computed per second, has 
+  _increased_ by **16%**.
+
+TODO: add comments on structure changes, what is comparable, Popcontrol & further changes before release
+
+[1]: https://github.com/imrn99/fi_stats
+[2]: https://en.wikipedia.org/wiki/Relative_change_and_difference#Definition
