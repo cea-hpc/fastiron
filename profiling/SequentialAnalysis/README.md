@@ -29,9 +29,10 @@ The sample space is the same for all RV: the cycle indexes. The measurable space
 positive integers for event RV, positive reals for section RV.
 
 The data used for this is located in the `CTS2_1_data/` folder, the code used for 
-processing and plotting data is located [here][1]. The results are showed below:
+processing and plotting data is located [here][1]. For the analysis, the coefficients
+might be referred to by the name of their variables when it's not ambiguous.
 
-### `CycleTracking`
+### `CycleTracking`
 
 ![tracking](figures/heatmap_tracking.png)
 
@@ -45,14 +46,18 @@ tracking section, overall, scales negatively with the number of particle reachin
 This is coherent as a particle reaching census means that no more segments will be 
 computed for it, reducing the "time left to spend" in the tracking section.
 
-From the two previous coefficient, and the one of the `Collision` variable, we can 
+From the two previous coefficients, and the one of the `Collision` variable, we can 
 speculate that **the distribution of events is more important than the overall number of 
 segments**. An additional piece of evidence could be found by tallying facet 
 crossing events: the reaction-specific coefficients hint at the cost of this kind of
 outcome, `Absorb` being the variable with the highest coefficient. If this hypothesis 
-is correct, we would find a coefficient of `0.97+` for facet crossings.
+is correct, we would also find a high coefficient for facet crossings.
 
-
+Concerning reaction-specific coefficients, we can see that the `Absorb` and `Fission`
+values are higher than `Scatter`. Considering that absorption happens both in reactions
+and at the problem's bounds, it is coherent with the cost of the events. As for fission,
+the reaction requires sampling for particles created during the reaction, a costly 
+process both in execution time and memory.
 
 ### `PopulationControl` & `CycleSync`
 
