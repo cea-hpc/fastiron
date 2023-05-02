@@ -8,7 +8,7 @@ problem while the rest was done using the `CTS2_1` benchmark. The data recorded 
 column -s=';' -t < a_file.csv
 ```
 
-Note that this analysis precedes some additionnal changes to be done to the code 
+Note that this analysis precedes some additional changes to be done to the code 
 before release. See the comparison [section](#rustified-edition-comparison) for more detail.
 
 
@@ -86,7 +86,24 @@ Here are a few percentages (computed using the [relative change][2] definition):
 - The figure of merit, i.e. the number of segments computed per second, has 
   _increased_ by **16%**.
 
-TODO: add comments on structure changes, what is comparable, Popcontrol & further changes before release
+The timers have been updated to better represent the new structure of the program: The 
+`CycleFinalize`/`CycleInit` paradigm has been dropped for a single `CycleSync` section 
+to both simplify the code and make it more flexible. They have been defined in order 
+to keep some coherence between `PopulationControl` and `CycleInit`, update 
+`CycleFinalize` to fit the new structure and leave the `CycleTracking` untouched for 
+figure of merit computations.
+
+The population control functions have been integrated in the processing section of the 
+program. An interesting observation is that the `CycleInit` and `PopulationControl` 
+values have comparable values despite the deletion of the `MCBaseParticle` structure, 
+hence a supposedly heavier particle initialization.
+
+Two additional changes will be done before release, hence not be taken into account here:
+The usage of [`tinyvec`][3] when sampling for collision and the usage of `Option<usize>`
+in `MCFacetAdjacency`. While the first will mostly influence the memory footprint, the 
+second might lead to an increase in performances when computing the nearest facet during
+tracking.
 
 [1]: https://github.com/imrn99/fi_stats
 [2]: https://en.wikipedia.org/wiki/Relative_change_and_difference#Definition
+[3]: https://docs.rs/tinyvec/latest/tinyvec/
