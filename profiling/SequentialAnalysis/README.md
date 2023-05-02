@@ -64,19 +64,26 @@ process both in execution time and memory.
 ![popsync](figures/heatmap_popsync.png)
 
 
-- `PopulationControl`/`Rr`: The coefficient is quite close to zero, meaning there 
-  The time spent doing population control is almost independent from the number of
+- `PopulationControl`/`Rr`: The coefficient is quite close to zero, meaning the time 
+  spent doing population control is almost independent from the number of
   russian-rouletted particle. Note that this value is biased in this benchmark as 
   there is no russian-roulette due to overpopulation, they are only due to the low
   weight threshold.
 - `PopulationControl`/`Split`: The coefficient is low positive. We can guess
   that creating particle is a costly task, so the more we create, the more time we 
   spend in the section. The low value could be explained by the number of "task" 
-  ran for population control: sourcing, spliting, and two types of russian-roulette.
-  The splitting can only account for so much of the total time, hence the low 
-  coefficient.
-- `CycleSync`/`Rr`:
-- `CycleSync`/`Split`:
+  ran for population control: sourcing, splitting, and two types of russian-roulette.
+  The splitting can only account for so much of the total time, hence the 
+  low-but-positive coefficient.
+- `CycleSync`/`Rr`: The coefficient is low positive. Note that this value is biased 
+  in this benchmark as there is no russian-roulette due to overpopulation, they are 
+  only due to the low weight threshold.
+- `CycleSync`/`Split`: The coefficient is negative, with a somewhat high value. This 
+  can be explained by the logic controling the splitting process. Splitting happens 
+  after sourcing, which happens after the synchronization phase. Splitting happens if
+  the problem is underpopulated, the lower the number of particles, the higher the 
+  number of split. A high split number means that, at the end of the last cycle, few
+  particles were left. The lower number of particles result in a shorter sync phase. 
 
 
 ## Scaling
