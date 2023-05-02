@@ -25,13 +25,15 @@ The sample space is the same for all RV: the cycle indexes. The measurable space
 positive integers for event RV, positive reals for section RV.
 
 The data used for this is located in the `CTS2_1_data/` folder, the code used for 
-processing and plotting data is located [here][https://github.com/imrn99/fi_stats].\
+processing and plotting data is located [here][1].\
 The results are showed below: 
 
-![tracking](figures/heatmap_tracking.png)\
+![tracking](figures/heatmap_tracking.png)
 
-![popsync](figures/heatmap_popsync.png)\
+![popsync](figures/heatmap_popsync.png)
 
+
+[1]: https://github.com/imrn99/fi_stats
 
 ## Scaling
 
