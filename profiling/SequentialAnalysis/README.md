@@ -1,6 +1,6 @@
 # Sequential Analysis
 
-The study of the influence of the number of particles was done using the `homogeneous7`
+The study on the influence of the number of particles was done using the `homogeneous7`
 problem while the rest was done using the `CTS2_1` benchmark. The data recorded in the 
 `csv` files can be viewed using `column`: 
 
@@ -89,30 +89,35 @@ process both in execution time and memory.
 ## Scaling
 
 Data for the scaling study can be recorded using the `scaling.sh` script. By looking at 
-the printed output of the program, one can see already that the figure of merit does not
-vary significantly. This means that the time taken to compute a segment for a particle
--- including particle look-up & update -- is independent from the total number of particle, 
-which is expected.
+the printed output of the program, one can already see that the figure of merit does not
+vary significantly. This means that the time taken to compute a single segment for a particle
+-- including look-up & update -- is independent from the total number of particle, 
+which is expected. The script used to plot the data is accessible [here][1].
 
-### `PopulationControl` & `CycleTracking`
+### `PopulationControl` & `CycleTracking`
 
 ![scaling_popcontrol](figures/scaling_ppcontrol.png)
 
 ![scaling_tracking](figures/scaling_tracking.png)
 
 The time spent in the `PopulationControl` and `CycleTracking` sections seems to scale 
-linearly with the target number of particles of the simulation.
+linearly with the target number of particles of the simulation. This is the expected 
+results as there are no index lookup or nested iterators in our code; Not that Rust 
+would allow it anyway.
 
 ### `CycleSync`
 
 ![scaling_sync](figures/scaling_sync.png)
 
-At first, the sync phase seems to be independent from the target number of particles. However,
-if we look at the script used to collect the data, we can see that no file name was specified
-for the energy spectrum to be printed. This leads to the code not keeping track of the spectrum,
-hence removing the dependance over the number of particles. If we were to run the script again,
-specifying a file name using `-e`, we would observe a similar figure to that of `PopulationControl`
-and `CycleTracking`.
+The value for 70,000 particles seems to be incorrect, a similar divergence can be observed on 
+the `PopulationControl` diagram. This is probably a normal fluctuation and can be ignored.
+
+At first, the sync phase seems to be independent from the target number of particles as it stays
+constant. However, if we look at the script used to collect the data, we can see that no file 
+name was specified for the energy spectrum to be printed. This means that the code is not keeping 
+track of the spectrum, hence removing the dependance over the number of particles. If we were to 
+run the script again, specifying a file name using `-e`, we would observe a similar figure to that 
+of `PopulationControl` and `CycleTracking`.
 
 
 ## Rustified Edition Comparison
