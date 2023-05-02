@@ -35,6 +35,7 @@ processing and plotting data is located [here][1]. The results are showed below:
 
 ![popsync](figures/heatmap_popsync.png)
 
+TODO: complete section with comments & centered popsync figure
 
 ## Scaling
 
@@ -44,6 +45,7 @@ vary significantly. This means that the time taken to compute a segment for a pa
 -- including particle look-up & update -- is independent from the total number of particle, 
 which is expected.
 
+TODO: complete section with data
 
 ## Rustified Edition Comparison
 
@@ -61,7 +63,7 @@ Section::CycleFinalize           |                   100                 0e0    
 Figure of merit: 1.072e6e6 [segments / cycle tracking time]
 ```
 
-Here is the current version timer report, formatted using `column`:  
+Here is the current version's timer report, formatted using `column`:  
 
 ```
 Timer Name                      #calls  Shortest(µs)  Average(µs)   Longest(µs)   Total(µs)     Efficiency(%)
