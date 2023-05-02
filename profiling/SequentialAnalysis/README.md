@@ -94,7 +94,26 @@ vary significantly. This means that the time taken to compute a segment for a pa
 -- including particle look-up & update -- is independent from the total number of particle, 
 which is expected.
 
-TODO: complete section with data
+### `PopulationControl` & `CycleTracking`
+
+![scaling_popcontrol](figures/scaling_ppcontrol.png)
+
+![scaling_tracking](figures/scaling_tracking.png)
+
+The time spent in the `PopulationControl` and `CycleTracking` sections seems to scale 
+linearly with the target number of particles of the simulation.
+
+### `CycleSync`
+
+![scaling_sync](figures/scaling_sync.png)
+
+At first, the sync phase seems to be independent from the target number of particles. However,
+if we look at the script used to collect the data, we can see that no file name was specified
+for the energy spectrum to be printed. This leads to the code not keeping track of the spectrum,
+hence removing the dependance over the number of particles. If we were to run the script again,
+specifying a file name using `-e`, we would observe a similar figure to that of `PopulationControl`
+and `CycleTracking`.
+
 
 ## Rustified Edition Comparison
 
