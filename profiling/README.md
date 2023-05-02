@@ -16,7 +16,13 @@ change in the future to fit our needs.
 
 ## Hardware used for execution
 
-This section contains the hardware specifications of the machine used to obtain this data. 
+Up to the sequential analysis (included), all benchmarking was done on a laptop with the following specs:
+
+| Parts | Model |
+|-------|-------|
+| CPU   | Intel Core i5-8265U CPU @ 1.60GHz * 8 |
+| GPU   | Mesa Intel UHD Graphics 620 (WHL GT2) |
+| RAM   | 8GiB SODIMM DDR4 Synchrone 2667 MHz (0,4 ns) |
 
 ## Quicksilver modification
 
