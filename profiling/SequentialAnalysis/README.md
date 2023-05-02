@@ -29,11 +29,36 @@ The sample space is the same for all RV: the cycle indexes. The measurable space
 positive integers for event RV, positive reals for section RV.
 
 The data used for this is located in the `CTS2_1_data/` folder, the code used for 
-processing and plotting data is located [here][1]. The results are showed below: 
+processing and plotting data is located [here][1]. The results are showed below:
+
+### `CycleTracking`
 
 ![tracking](figures/heatmap_tracking.png)
 
+This figure yields a number of interesting points. First, the `NumSeg` variable is 
+not the one with the highest correlation coefficient. This means that while the 
+number of computed segment is (heavily) linked to the total time spent in the tracking
+section, it is not the most important factor.
+
+The `Census` variable has a negative coefficient, meaning that the time spent in the 
+tracking section, overall, scales negatively with the number of particle reaching census.
+This is coherent as a particle reaching census means that no more segments will be 
+computed for it, reducing the "time left to spend" in the tracking section.
+
+From the two previous coefficient, and the one of the `Collision` variable, we can 
+speculate that **the distribution of events is more important than the overall number of 
+segments**. An additional piece of evidence could be found by tallying facet 
+crossing events: the reaction-specific coefficients hint at the cost of this kind of
+outcome, `Absorb` being the variable with the highest coefficient. If this hypothesis 
+is correct, we would find a coefficient of `0.97+` for facet crossings.
+
+
+
+### `PopulationControl` & `CycleSync`
+
 ![popsync](figures/heatmap_popsync.png)
+
+
 
 TODO: complete section with comments & centered popsync figure
 
@@ -60,7 +85,7 @@ Section::CycleTracking           |                   100          3.289216e6    
 Section::CycleTrackingKernel     |                  5353          3.284158e6                3.479917e6             4.599556e6             3.47991801e8                      75.7
 Section::CycleTrackingComm       |                  5353             5.023e3                   5.375e3                7.352e3                5.37509e5                      73.1
 Section::CycleFinalize           |                   100                 0e0                       0e0                    0e0                      3e0                      46.4
-Figure of merit: 1.072e6e6 [segments / cycle tracking time]
+Figure of merit: 1.072e6 [segments / cycle tracking time]
 ```
 
 Here is the current version's timer report, formatted using `column`:  
