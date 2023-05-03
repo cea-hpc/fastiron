@@ -131,13 +131,8 @@ pub fn outcome<T: CustomFloat>(
 
     let segment_outcome = find_min(&distance);
 
-    if distance[segment_outcome as usize] < zero() {
-        println!(
-            "Distance to {segment_outcome:?} negative: {}",
-            distance[segment_outcome as usize]
-        );
-        panic!()
-    }
+    assert!(distance[segment_outcome as usize] >= zero());
+
     particle.segment_path_length = distance[segment_outcome as usize];
     particle.num_mean_free_paths -= particle.segment_path_length / particle.mean_free_path;
 
