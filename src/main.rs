@@ -63,9 +63,10 @@ fn main() {
 pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteCarloUnit<T>) {
     mcunit.fast_timer.update_main_stats();
 
-    mcunit
-        .fast_timer
-        .cumulative_report(mcunit.tallies.balance_cumulative.num_segments);
+    mcunit.fast_timer.cumulative_report(
+        mcunit.tallies.balance_cumulative.num_segments,
+        mcdata.params.simulation_params.csv,
+    );
 
     mcunit.tallies.spectrum.print_spectrum(mcdata);
 }
@@ -90,9 +91,11 @@ pub fn cycle_sync<T: CustomFloat>(
                 // if sequential, just use the single Monte-Carlo unit
                 mcunits[0].tallies.balance_cycle.end =
                     containers[0].processed_particles.len() as u64;
-                mcunits[0]
-                    .tallies
-                    .print_summary(&mut mcunits[0].fast_timer, step - 1);
+                mcunits[0].tallies.print_summary(
+                    &mut mcunits[0].fast_timer,
+                    step - 1,
+                    mcdata.params.simulation_params.csv,
+                );
                 mcunits[0]
                     .tallies
                     .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);

@@ -46,9 +46,9 @@ pub struct Cli {
     #[arg(short = 'l', long = "load-balance", num_args(0))]
     pub load_balance: bool,
 
-    /// enable cycle timers if present
-    #[arg(short = 'c', long = "cycle-timers", num_args(0))]
-    pub cycle_timers: bool,
+    /// write tallies & timer data into csv files if present    
+    #[arg(short = 'c', long = "csv", num_args(0))]
+    pub csv: bool,
 
     /// enable thread debugging if present
     #[arg(short = 't', long = "debug-threads", num_args(0))]

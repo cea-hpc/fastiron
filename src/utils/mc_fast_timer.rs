@@ -4,6 +4,8 @@
 
 use std::{
     fmt::Display,
+    fs::OpenOptions,
+    io::Write,
     time::{Duration, Instant},
 };
 
@@ -110,7 +112,7 @@ impl MCFastTimerContainer {
     /// [`Section::PopulationControl`] and [`Section::CycleSync`] do not really have an
     /// equivalent in Quicksilver, the comparable values are those of [`Section::Main`]
     /// and [`Section::CycleTracking`] as well as the figure of merit.
-    pub fn cumulative_report(&self, num_segments: u64) {
+    pub fn cumulative_report(&self, num_segments: u64, csv: bool) {
         // Print header
         println!("[Timer Report]");
         println!(
@@ -122,6 +124,19 @@ impl MCFastTimerContainer {
             "Total in section (µs)",
             "Efficiency rating (%)",
         );
+        if csv {
+            let mut file = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open("timers_report.csv")
+                .unwrap();
+            writeln!(
+                file,
+                "Timer Name;#calls;Shortest(µs);Average(µs);Longest(µs);Total(µs);Efficiency(%)",
+            )
+            .unwrap();
+        }
         // print data
         self.timers
             .iter()
@@ -147,6 +162,22 @@ impl MCFastTimerContainer {
                     (100.0 * self.avgs[timer_idx].as_secs_f64())
                         / (self.maxs[timer_idx].as_secs_f64() + 1.0e-80),
                 );
+                if csv {
+                    let mut file = OpenOptions::new()
+                        .append(true)
+                        .open("timers_report.csv")
+                        .unwrap();
+                    writeln!(file, "{};{};{:e};{:e};{:e};{:e};{:.1}", 
+                        section,
+                        timer.num_calls,
+                        self.mins[timer_idx].as_micros(),
+                        self.avgs[timer_idx].as_micros(),
+                        self.maxs[timer_idx].as_micros(),
+                        self.tots[timer_idx].as_micros(),
+                        (100.0 * self.avgs[timer_idx].as_secs_f64())
+                            / (self.maxs[timer_idx].as_secs_f64() + 1.0e-80)
+                    ).unwrap();
+                };
             });
         println!(
             "Figure of merit: {:>.3e} [segments / cycle tracking time]",
