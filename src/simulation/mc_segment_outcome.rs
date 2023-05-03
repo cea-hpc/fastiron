@@ -48,6 +48,9 @@ pub struct DistanceHandler<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> DistanceHandler<T> {
+    /// Update the distance to a given outcome with the provided value.
+    /// Also check for a new minimum distance and update the structure
+    /// accordingly.
     pub fn update(&mut self, which_outcome: MCSegmentOutcome, dist_outcome: T) {
         match which_outcome {
             MCSegmentOutcome::Collision => self.collision = dist_outcome,
@@ -60,6 +63,7 @@ impl<T: CustomFloat> DistanceHandler<T> {
         }
     }
 
+    /// Update the structure to force a collision
     pub fn force_collision(&mut self) {
         self.collision = T::tiny_float();
         self.facet_crossing = T::huge_float();
@@ -103,9 +107,8 @@ pub fn outcome<T: CustomFloat>(
 
     let particle_speed = particle.get_speed();
 
-    let mut force_collision = false;
-    if particle.num_mean_free_paths < zero() {
-        force_collision = true;
+    let force_collision = particle.num_mean_free_paths < zero();
+    if force_collision {
         particle.num_mean_free_paths = small_f;
     }
 
@@ -128,7 +131,6 @@ pub fn outcome<T: CustomFloat>(
             cell_nb_density,
             particle.energy_group,
         );
-
         // cache the XS
         mcunit.domain[particle.domain].cell_state[particle.cell].total[particle.energy_group] = tmp;
 
@@ -148,33 +150,31 @@ pub fn outcome<T: CustomFloat>(
     }
 
     // sets distance to collision, nearest facet and census
-
-    // collision
-    distance_handler.update(
-        MCSegmentOutcome::Collision,
-        particle.num_mean_free_paths * particle.mean_free_path,
-    );
-    // census
-    distance_handler.update(
-        MCSegmentOutcome::Census,
-        particle_speed * particle.time_to_census,
-    );
-    // nearest facet
     let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, &mcunit.domain[particle.domain]);
     particle.normal_dot = nearest_facet.dot_product;
-    distance_handler.update(
-        MCSegmentOutcome::FacetCrossing,
-        nearest_facet.distance_to_facet,
-    );
 
     // force a collision if needed
     if force_collision {
         distance_handler.force_collision();
+    } else {
+        // collision
+        distance_handler.update(
+            MCSegmentOutcome::Collision,
+            particle.num_mean_free_paths * particle.mean_free_path,
+        );
+        // census
+        distance_handler.update(
+            MCSegmentOutcome::Census,
+            particle_speed * particle.time_to_census,
+        );
+        // nearest facet
+        distance_handler.update(
+            MCSegmentOutcome::FacetCrossing,
+            nearest_facet.distance_to_facet,
+        );
     }
 
-    // pick the outcome and update the particle
-
-    //let segment_outcome = find_min(&distance);
+    // update the particle according to the outcome
     let segment_outcome = distance_handler.outcome;
 
     assert!(distance_handler.min_dist >= zero());
