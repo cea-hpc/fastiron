@@ -107,8 +107,9 @@ pub fn outcome<T: CustomFloat>(
 
     let particle_speed = particle.get_speed();
 
-    let force_collision = particle.num_mean_free_paths < zero();
-    if force_collision {
+    let mut force_collision = false;
+    if particle.num_mean_free_paths < zero() {
+        force_collision = true;
         particle.num_mean_free_paths = small_f;
     }
 
@@ -150,31 +151,33 @@ pub fn outcome<T: CustomFloat>(
     }
 
     // sets distance to collision, nearest facet and census
+
+    // collision
+    distance_handler.update(
+        MCSegmentOutcome::Collision,
+        particle.num_mean_free_paths * particle.mean_free_path,
+    );
+    // census
+    distance_handler.update(
+        MCSegmentOutcome::Census,
+        particle_speed * particle.time_to_census,
+    );
+    // nearest facet
     let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, &mcunit.domain[particle.domain]);
     particle.normal_dot = nearest_facet.dot_product;
+    distance_handler.update(
+        MCSegmentOutcome::FacetCrossing,
+        nearest_facet.distance_to_facet,
+    );
 
     // force a collision if needed
     if force_collision {
         distance_handler.force_collision();
-    } else {
-        // collision
-        distance_handler.update(
-            MCSegmentOutcome::Collision,
-            particle.num_mean_free_paths * particle.mean_free_path,
-        );
-        // census
-        distance_handler.update(
-            MCSegmentOutcome::Census,
-            particle_speed * particle.time_to_census,
-        );
-        // nearest facet
-        distance_handler.update(
-            MCSegmentOutcome::FacetCrossing,
-            nearest_facet.distance_to_facet,
-        );
     }
 
-    // update the particle according to the outcome
+    // pick the outcome and update the particle
+
+    //let segment_outcome = find_min(&distance);
     let segment_outcome = distance_handler.outcome;
 
     assert!(distance_handler.min_dist >= zero());
