@@ -136,7 +136,7 @@ Section::CycleFinalize           |                   100                 0e0    
 Figure of merit: 1.072e6 [segments / cycle tracking time]
 ```
 
-Here is the current version's timer report, formatted using `column`:  
+Here is the current version's timer report for the same problem, formatted using `column`, with the figure of merit:  
 
 ```
 Timer Name                      #calls  Shortest(µs)  Average(µs)   Longest(µs)   Total(µs)     Efficiency(%)
@@ -149,7 +149,8 @@ Section::CycleSync              101     1.044e3       4.411e3       7.449e3     
 Figure of merit: 1.250e6 [segments / cycle tracking time]
 ```
 
-Here are a few percentages (computed using the [relative change][2] definition): 
+Here are a few percentages. They were computed using the [relative change][2] definition with the old 
+values as reference:
 
 - Overall execution time has _decreased_ by **14%**.
 - Excluding `Main` and `CycleSync`/`CycleFinalize`, efficiency has _increased_, 
@@ -159,10 +160,13 @@ Here are a few percentages (computed using the [relative change][2] definition):
 - The figure of merit, i.e. the number of segments computed per second, has 
   _increased_ by **16%**.
 
+`CycleTracking` represent **99.7%** of the execution time. Time spent in 
+`PopulationControl` and `CycleSync` are orders of magnitude lower.
+
 The timers have been updated to better represent the new structure of the program: The 
 `CycleFinalize`/`CycleInit` paradigm has been dropped for a single `CycleSync` section 
 to both simplify the code and make it more flexible. They have been defined in order 
-to keep some coherence between `PopulationControl` and `CycleInit`, update 
+to keep some coherence between `PopulationControl` and `CycleInit`, repurpose 
 `CycleFinalize` to fit the new structure and leave the `CycleTracking` untouched for 
 figure of merit computations.
 
@@ -171,7 +175,7 @@ program. An interesting observation is that the `CycleInit` and `PopulationContr
 values have comparable values despite the deletion of the `MCBaseParticle` structure, 
 hence a supposedly heavier particle initialization.
 
-Two additional changes will be done before release, hence not be taken into account here:
+Two additional changes will be done before release, hence are not taken into account here:
 The usage of [`tinyvec`][3] when sampling for collision and the usage of `Option<usize>`
 in `MCFacetAdjacency`. While the first will mostly influence the memory footprint, the 
 second might lead to an increase in performances when computing the nearest facet during
