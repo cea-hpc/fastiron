@@ -130,7 +130,7 @@ impl<T: CustomFloat> MCParticle<T> {
         reaction: &NuclearDataReaction<T>,
         material_mass: T,
         extra: &mut Vec<MCParticle<T>>,
-    ) -> (Vec<T>, Vec<T>) {
+    ) -> usize {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
         // Need to replace with tinyvec types
@@ -138,15 +138,13 @@ impl<T: CustomFloat> MCParticle<T> {
         let mut angle_out: Vec<T> = Vec::new();
         match reaction.reaction_type {
             ReactionType::Scatter => {
-                energy_out.push(
-                    self.kinetic_energy
-                        * (one
-                            - rng_sample::<T>(&mut self.random_number_seed)
-                                * (one / material_mass)),
-                );
-                angle_out.push(rng_sample::<T>(&mut self.random_number_seed) * two - one);
+                let energy = self.kinetic_energy
+                    * (one - rng_sample::<T>(&mut self.random_number_seed) * (one / material_mass));
+                let angle = rng_sample::<T>(&mut self.random_number_seed) * two - one;
+                self.update_trajectory(energy, angle);
+                1
             }
-            ReactionType::Absorption => (),
+            ReactionType::Absorption => 0,
             ReactionType::Fission => {
                 let num_particle_out = (reaction.nu_bar + rng_sample(&mut self.random_number_seed))
                     .to_usize()
@@ -159,10 +157,23 @@ impl<T: CustomFloat> MCParticle<T> {
                     let twenty: T = FromPrimitive::from_f64(20.0).unwrap();
                     energy_out[ii] = twenty * rand_f * rand_f;
                     angle_out[ii] = rng_sample::<T>(&mut self.random_number_seed) * two - one;
-                })
+                });
+
+                if num_particle_out > 1 {
+                    for secondary_idx in 1..num_particle_out {
+                        let mut sec_particle = self.clone();
+                        sec_particle.random_number_seed =
+                            spawn_rn_seed::<T>(&mut self.random_number_seed);
+                        sec_particle.identifier = sec_particle.random_number_seed;
+                        sec_particle
+                            .update_trajectory(energy_out[secondary_idx], angle_out[secondary_idx]);
+                        extra.push(sec_particle);
+                    }
+                }
+                self.update_trajectory(energy_out[0], angle_out[0]);
+                num_particle_out
             }
         }
-        (energy_out, angle_out)
     }
 
     /// Sample the number of mean free paths to a collision.

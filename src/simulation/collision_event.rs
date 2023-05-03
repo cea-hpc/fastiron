@@ -12,7 +12,6 @@ use crate::{
     montecarlo::MonteCarloData,
     particles::mc_particle::MCParticle,
     simulation::macro_cross_section::macroscopic_cross_section,
-    utils::mc_rng_state::spawn_rn_seed,
 };
 
 /// Transforms a given particle according to an internally drawn type of collision.
@@ -80,11 +79,10 @@ pub fn collision_event<T: CustomFloat>(
 
     // ================
     // Do the collision
-
-    let (energy_out, angle_out) = particle.sample_collision(reaction, mat_mass, extra);
+    //
     // number of particles resulting from the collision, including the original
     // e.g. zero means the original particle was absorbed or invalidated in some way
-    let n_out = energy_out.len();
+    let n_out = particle.sample_collision(reaction, mat_mass, extra);
 
     // ===================
     // Tally the collision
@@ -99,33 +97,5 @@ pub fn collision_event<T: CustomFloat>(
         }
     }
 
-    // ================
-    // Particle updates
-
-    // Early return
-    if n_out == 0 {
-        return false;
-    }
-
-    // additional created particle
-    if n_out > 1 {
-        for secondary_idx in 1..n_out {
-            let mut sec_particle = particle.clone();
-            sec_particle.random_number_seed = spawn_rn_seed::<T>(&mut particle.random_number_seed);
-            sec_particle.identifier = sec_particle.random_number_seed;
-            sec_particle.update_trajectory(energy_out[secondary_idx], angle_out[secondary_idx]);
-            extra.push(sec_particle);
-        }
-    }
-
-    particle.update_trajectory(energy_out[0], angle_out[0]);
-    particle.energy_group = mcdata
-        .nuclear_data
-        .get_energy_groups(particle.kinetic_energy);
-
-    if n_out > 1 {
-        extra.push(particle.clone());
-    }
-
-    n_out == 1
+    n_out >= 1
 }
