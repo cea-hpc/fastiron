@@ -4,7 +4,7 @@
 //! from beginning to end. Note that _collision_ refers to reaction with the
 //! particle's environment, not in-between particles.
 
-use num::{one, zero, FromPrimitive};
+use num::zero;
 
 use crate::{
     constants::CustomFloat,
@@ -12,28 +12,8 @@ use crate::{
     montecarlo::MonteCarloData,
     particles::mc_particle::MCParticle,
     simulation::macro_cross_section::macroscopic_cross_section,
-    utils::mc_rng_state::{rng_sample, spawn_rn_seed},
+    utils::mc_rng_state::spawn_rn_seed,
 };
-
-fn update_trajectory<T: CustomFloat>(energy: T, angle: T, particle: &mut MCParticle<T>) {
-    // constants
-    let pi: T = T::pi();
-    let one: T = one();
-    let two: T = FromPrimitive::from_f64(2.0).unwrap();
-
-    // value for update
-    let cos_theta: T = angle;
-    let sin_theta: T = (one - cos_theta * cos_theta).sqrt();
-    let rdm_number: T = rng_sample(&mut particle.random_number_seed);
-    let phi = two * pi * rdm_number;
-    let sin_phi: T = phi.sin();
-    let cos_phi: T = phi.cos();
-
-    // update
-    particle.kinetic_energy = energy;
-    particle.rotate_direction(sin_theta, cos_theta, sin_phi, cos_phi);
-    particle.sample_num_mfp();
-}
 
 /// Transforms a given particle according to an internally drawn type of collision.
 ///
@@ -95,12 +75,13 @@ pub fn collision_event<T: CustomFloat>(
     }
     assert_ne!(selected_iso, usize::MAX); // sort of a magic value
 
+    let mat_mass = mcdata.material_database.mat[mat_gid].mass;
+    let reaction = &mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react];
+
     // ================
     // Do the collision
 
-    let mat_mass = mcdata.material_database.mat[mat_gid].mass;
-    let reaction = &mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react];
-    let (energy_out, angle_out) = particle.sample_collision(reaction, mat_mass);
+    let (energy_out, angle_out) = particle.sample_collision(reaction, mat_mass, extra);
     // number of particles resulting from the collision, including the original
     // e.g. zero means the original particle was absorbed or invalidated in some way
     let n_out = energy_out.len();
@@ -109,8 +90,7 @@ pub fn collision_event<T: CustomFloat>(
     // Tally the collision
 
     balance.collision += 1; // atomic in original code
-    match mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react].reaction_type
-    {
+    match reaction.reaction_type {
         ReactionType::Scatter => balance.scatter += 1,
         ReactionType::Absorption => balance.absorb += 1,
         ReactionType::Fission => {
@@ -133,16 +113,12 @@ pub fn collision_event<T: CustomFloat>(
             let mut sec_particle = particle.clone();
             sec_particle.random_number_seed = spawn_rn_seed::<T>(&mut particle.random_number_seed);
             sec_particle.identifier = sec_particle.random_number_seed;
-            update_trajectory(
-                energy_out[secondary_idx],
-                angle_out[secondary_idx],
-                &mut sec_particle,
-            );
+            sec_particle.update_trajectory(energy_out[secondary_idx], angle_out[secondary_idx]);
             extra.push(sec_particle);
         }
     }
 
-    update_trajectory(energy_out[0], angle_out[0], particle);
+    particle.update_trajectory(energy_out[0], angle_out[0]);
     particle.energy_group = mcdata
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
@@ -152,39 +128,4 @@ pub fn collision_event<T: CustomFloat>(
     }
 
     n_out == 1
-}
-
-//=============
-// Unit tests
-//=============
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::data::mc_vector::MCVector;
-    use num::Float;
-
-    #[test]
-    fn trajectory() {
-        let mut pp: MCParticle<f64> = MCParticle::default();
-        // init data
-        let e: f64 = 1.0;
-        pp.direction = MCVector {
-            x: 1.0 / 3.0.sqrt(),
-            y: 1.0 / 3.0.sqrt(),
-            z: 1.0 / 3.0.sqrt(),
-        };
-        pp.kinetic_energy = e;
-        let mut seed: u64 = 90374384094798327;
-        let energy = rng_sample(&mut seed);
-        let angle = rng_sample(&mut seed);
-
-        // update & print result
-        update_trajectory(energy, angle, &mut pp);
-
-        assert!((pp.direction.x - 0.620283).abs() < 1.0e-6);
-        assert!((pp.direction.y - 0.620283).abs() < 1.0e-6);
-        assert!((pp.direction.z - (-0.480102)).abs() < 1.0e-6);
-        assert!((pp.kinetic_energy - energy).abs() < f64::tiny_float());
-    }
 }

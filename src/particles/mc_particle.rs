@@ -83,6 +83,26 @@ impl<T: CustomFloat> MCParticle<T> {
         self.coordinate += self.direction * self.segment_path_length;
     }
 
+    pub fn update_trajectory(&mut self, energy: T, angle: T) {
+        // constants
+        let pi: T = T::pi();
+        let one: T = one();
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+
+        // value for update
+        let cos_theta: T = angle;
+        let sin_theta: T = (one - cos_theta * cos_theta).sqrt();
+        let rdm_number: T = rng_sample(&mut self.random_number_seed);
+        let phi = two * pi * rdm_number;
+        let sin_phi: T = phi.sin();
+        let cos_phi: T = phi.cos();
+
+        // update
+        self.kinetic_energy = energy;
+        self.rotate_direction(sin_theta, cos_theta, sin_phi, cos_phi);
+        self.sample_num_mfp();
+    }
+
     /// Computes the particle speed from its energy. Note that this computation
     /// should be species-specific.
     pub fn get_speed(&self) -> T {
@@ -109,6 +129,7 @@ impl<T: CustomFloat> MCParticle<T> {
         &mut self,
         reaction: &NuclearDataReaction<T>,
         material_mass: T,
+        extra: &mut Vec<MCParticle<T>>,
     ) -> (Vec<T>, Vec<T>) {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
@@ -286,6 +307,30 @@ mod tests {
         assert_eq!(particle.direction.x, 0.9083218129645693);
         assert_eq!(particle.direction.y, -0.3658911896631176);
         assert_eq!(particle.direction.z, 0.2026699815455325);
+    }
+
+    #[test]
+    fn trajectory() {
+        let mut pp: MCParticle<f64> = MCParticle::default();
+        // init data
+        let e: f64 = 1.0;
+        pp.direction = MCVector {
+            x: 1.0 / 3.0.sqrt(),
+            y: 1.0 / 3.0.sqrt(),
+            z: 1.0 / 3.0.sqrt(),
+        };
+        pp.kinetic_energy = e;
+        let mut seed: u64 = 90374384094798327;
+        let energy = rng_sample(&mut seed);
+        let angle = rng_sample(&mut seed);
+
+        // update & print result
+        pp.update_trajectory(energy, angle);
+
+        assert!((pp.direction.x - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction.y - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction.z - (-0.480102)).abs() < 1.0e-6);
+        assert!((pp.kinetic_energy - energy).abs() < f64::tiny_float());
     }
 
     #[test]
