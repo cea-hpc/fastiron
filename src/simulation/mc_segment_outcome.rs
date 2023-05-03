@@ -9,7 +9,6 @@
 //! is returned using an enum ([`MCSegmentOutcome`])that takes value according to
 //! the event.
 
-use core::panic;
 use std::fmt::Debug;
 
 use num::{one, zero};
@@ -34,6 +33,55 @@ pub enum MCSegmentOutcome {
     Census = 2,
 }
 
+/// Structure used to handle all distance related data & comparison.
+pub struct DistanceHandler<T: CustomFloat> {
+    /// Distance to collision.
+    pub collision: T,
+    /// Distance to facet crossing.
+    pub facet_crossing: T,
+    /// Distance to census.
+    pub census: T,
+    /// Current minimum distance.
+    pub min_dist: T,
+    /// Current outcome.
+    pub outcome: MCSegmentOutcome,
+}
+
+impl<T: CustomFloat> DistanceHandler<T> {
+    pub fn update(&mut self, which_outcome: MCSegmentOutcome, dist_outcome: T) {
+        match which_outcome {
+            MCSegmentOutcome::Collision => self.collision = dist_outcome,
+            MCSegmentOutcome::FacetCrossing => self.facet_crossing = dist_outcome,
+            MCSegmentOutcome::Census => self.census = dist_outcome,
+        }
+        if dist_outcome < self.min_dist {
+            self.min_dist = dist_outcome;
+            self.outcome = which_outcome;
+        }
+    }
+
+    pub fn force_collision(&mut self) {
+        self.collision = T::tiny_float();
+        self.facet_crossing = T::huge_float();
+        self.census = T::huge_float();
+        self.min_dist = T::tiny_float();
+        self.outcome = MCSegmentOutcome::Collision;
+    }
+}
+
+impl<T: CustomFloat> Default for DistanceHandler<T> {
+    fn default() -> Self {
+        let huge_f: T = T::huge_float();
+        Self {
+            collision: huge_f,
+            facet_crossing: huge_f,
+            census: huge_f,
+            min_dist: huge_f,
+            outcome: MCSegmentOutcome::Collision,
+        }
+    }
+}
+
 /// Computes the outcome of the current segment for a given particle.
 ///
 /// Three outcomes are possible for a given particle: census, facet crossing or
@@ -50,12 +98,8 @@ pub fn outcome<T: CustomFloat>(
     particle: &mut MCParticle<T>,
 ) -> MCSegmentOutcome {
     // initialize distances and constants
-    const N_EVENTS: usize = 3;
-    let one: T = one();
-    let huge_f: T = T::huge_float();
     let small_f: T = T::small_float();
-    let tiny_f: T = T::tiny_float();
-    let mut distance: [T; N_EVENTS] = [huge_f; N_EVENTS];
+    let mut distance_handler = DistanceHandler::default();
 
     let particle_speed = particle.get_speed();
 
@@ -93,9 +137,9 @@ pub fn outcome<T: CustomFloat>(
 
     particle.total_cross_section = macroscopic_total_xsection;
     if macroscopic_total_xsection == zero() {
-        particle.mean_free_path = huge_f;
+        particle.mean_free_path = T::huge_float();
     } else {
-        particle.mean_free_path = one / macroscopic_total_xsection;
+        particle.mean_free_path = one::<T>() / macroscopic_total_xsection;
     }
 
     // if zero
@@ -106,34 +150,36 @@ pub fn outcome<T: CustomFloat>(
     // sets distance to collision, nearest facet and census
 
     // collision
-    if force_collision {
-        distance[MCSegmentOutcome::Collision as usize] = small_f;
-    } else {
-        distance[MCSegmentOutcome::Collision as usize] =
-            particle.num_mean_free_paths * particle.mean_free_path;
-    }
+    distance_handler.update(
+        MCSegmentOutcome::Collision,
+        particle.num_mean_free_paths * particle.mean_free_path,
+    );
     // census
-    distance[MCSegmentOutcome::Census as usize] = particle_speed * particle.time_to_census;
-
+    distance_handler.update(
+        MCSegmentOutcome::Census,
+        particle_speed * particle.time_to_census,
+    );
     // nearest facet
     let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, &mcunit.domain[particle.domain]);
     particle.normal_dot = nearest_facet.dot_product;
-    distance[MCSegmentOutcome::FacetCrossing as usize] = nearest_facet.distance_to_facet;
+    distance_handler.update(
+        MCSegmentOutcome::FacetCrossing,
+        nearest_facet.distance_to_facet,
+    );
 
     // force a collision if needed
     if force_collision {
-        distance[MCSegmentOutcome::FacetCrossing as usize] = huge_f;
-        distance[MCSegmentOutcome::Census as usize] = huge_f;
-        distance[MCSegmentOutcome::Collision as usize] = tiny_f;
+        distance_handler.force_collision();
     }
 
     // pick the outcome and update the particle
 
-    let segment_outcome = find_min(&distance);
+    //let segment_outcome = find_min(&distance);
+    let segment_outcome = distance_handler.outcome;
 
-    assert!(distance[segment_outcome as usize] >= zero());
+    assert!(distance_handler.min_dist >= zero());
 
-    particle.segment_path_length = distance[segment_outcome as usize];
+    particle.segment_path_length = distance_handler.min_dist;
     particle.num_mean_free_paths -= particle.segment_path_length / particle.mean_free_path;
 
     // outcome-specific updates
@@ -150,10 +196,6 @@ pub fn outcome<T: CustomFloat>(
             particle.time_to_census = zero::<T>().min(particle.time_to_census);
             particle.last_event = MCTallyEvent::Census;
         }
-    }
-
-    if force_collision {
-        particle.num_mean_free_paths = zero();
     }
 
     // skip tallies & early return if the path length is 0
@@ -178,43 +220,4 @@ pub fn outcome<T: CustomFloat>(
         [particle.energy_group] += particle.segment_path_length * particle.weight;
 
     segment_outcome
-}
-
-fn find_min<T: CustomFloat>(distance: &[T]) -> MCSegmentOutcome {
-    let mut min_val: T = distance[0];
-    let mut min_idx: usize = 0;
-    (0..distance.len()).for_each(|idx| {
-        if distance[idx] < min_val {
-            min_idx = idx;
-            min_val = distance[idx];
-        }
-    });
-
-    match min_idx {
-        0 => MCSegmentOutcome::Collision,
-        1 => MCSegmentOutcome::FacetCrossing,
-        2 => MCSegmentOutcome::Census,
-        _ => panic!(),
-    }
-}
-
-//=============
-// Unit tests
-//=============
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use num::zero;
-
-    #[test]
-    fn find_min_dist() {
-        let mut distance: [f64; 3] = [zero(); 3];
-        distance[MCSegmentOutcome::Collision as usize] = f64::huge_float();
-        distance[MCSegmentOutcome::FacetCrossing as usize] = f64::small_float();
-        distance[MCSegmentOutcome::Census as usize] = f64::tiny_float();
-
-        let outcome = find_min(&distance);
-        assert_eq!(outcome, MCSegmentOutcome::Census);
-    }
 }
