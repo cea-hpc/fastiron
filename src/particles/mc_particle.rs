@@ -7,7 +7,11 @@ use num::{one, zero, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
-    data::{mc_vector::MCVector, tallies::MCTallyEvent},
+    data::{
+        mc_vector::MCVector,
+        nuclear_data::{NuclearDataReaction, ReactionType},
+        tallies::MCTallyEvent,
+    },
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
@@ -95,6 +99,49 @@ impl<T: CustomFloat> MCParticle<T> {
     /// Return the starting cross section for reaction sampling.
     pub fn get_current_xs(&mut self) -> T {
         self.total_cross_section * rng_sample::<T>(&mut self.random_number_seed)
+    }
+
+    /// Uses a PRNG to sample new energy & angle after a reaction.
+    ///
+    /// Since reaction type is specified when the method is called, we assume
+    /// that the result will be treated correctly by the calling code.
+    pub fn sample_collision(
+        &mut self,
+        reaction: &NuclearDataReaction<T>,
+        material_mass: T,
+    ) -> (Vec<T>, Vec<T>) {
+        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+        // Need to replace with tinyvec types
+        let mut energy_out: Vec<T> = Vec::new();
+        let mut angle_out: Vec<T> = Vec::new();
+        match reaction.reaction_type {
+            ReactionType::Scatter => {
+                energy_out.push(
+                    self.kinetic_energy
+                        * (one
+                            - rng_sample::<T>(&mut self.random_number_seed)
+                                * (one / material_mass)),
+                );
+                angle_out.push(rng_sample::<T>(&mut self.random_number_seed) * two - one);
+            }
+            ReactionType::Absorption => (),
+            ReactionType::Fission => {
+                let num_particle_out = (reaction.nu_bar + rng_sample(&mut self.random_number_seed))
+                    .to_usize()
+                    .unwrap();
+                assert!(num_particle_out < 5); // this is guaranteed by the way we sample and the nu bar value
+                energy_out.extend(vec![zero(); num_particle_out].iter());
+                angle_out.extend(vec![zero(); num_particle_out].iter());
+                (0..num_particle_out).for_each(|ii| {
+                    let rand_f = (rng_sample::<T>(&mut self.random_number_seed) + one) / two;
+                    let twenty: T = FromPrimitive::from_f64(20.0).unwrap();
+                    energy_out[ii] = twenty * rand_f * rand_f;
+                    angle_out[ii] = rng_sample::<T>(&mut self.random_number_seed) * two - one;
+                })
+            }
+        }
+        (energy_out, angle_out)
     }
 
     /// Sample the number of mean free paths to a collision.

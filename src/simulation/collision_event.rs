@@ -99,13 +99,8 @@ pub fn collision_event<T: CustomFloat>(
     // Do the collision
 
     let mat_mass = mcdata.material_database.mat[mat_gid].mass;
-    let (energy_out, angle_out) = mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions
-        [selected_react]
-        .sample_collision(
-            particle.kinetic_energy,
-            mat_mass,
-            &mut particle.random_number_seed,
-        );
+    let reaction = &mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react];
+    let (energy_out, angle_out) = particle.sample_collision(reaction, mat_mass);
     // number of particles resulting from the collision, including the original
     // e.g. zero means the original particle was absorbed or invalidated in some way
     let n_out = energy_out.len();
