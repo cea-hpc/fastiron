@@ -3,6 +3,8 @@
 //! This module contains code of an extended particle structure used
 //! for computations.
 
+use std::iter::zip;
+
 use num::{one, zero, FromPrimitive};
 
 use crate::{
@@ -134,8 +136,6 @@ impl<T: CustomFloat> MCParticle<T> {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
         // Need to replace with tinyvec types
-        let mut energy_out: Vec<T> = Vec::new();
-        let mut angle_out: Vec<T> = Vec::new();
         match reaction.reaction_type {
             ReactionType::Scatter => {
                 let energy = self.kinetic_energy
@@ -146,31 +146,54 @@ impl<T: CustomFloat> MCParticle<T> {
             }
             ReactionType::Absorption => 0,
             ReactionType::Fission => {
-                let num_particle_out = (reaction.nu_bar + rng_sample(&mut self.random_number_seed))
-                    .to_usize()
-                    .unwrap();
-                assert!(num_particle_out < 5); // this is guaranteed by the way we sample and the nu bar value
-                energy_out.extend(vec![zero(); num_particle_out].iter());
-                angle_out.extend(vec![zero(); num_particle_out].iter());
-                (0..num_particle_out).for_each(|ii| {
-                    let rand_f = (rng_sample::<T>(&mut self.random_number_seed) + one) / two;
-                    let twenty: T = FromPrimitive::from_f64(20.0).unwrap();
-                    energy_out[ii] = twenty * rand_f * rand_f;
-                    angle_out[ii] = rng_sample::<T>(&mut self.random_number_seed) * two - one;
-                });
+                let num_particle_out: usize = (reaction.nu_bar
+                    + rng_sample(&mut self.random_number_seed))
+                .to_usize()
+                .unwrap();
+                let twenty: T = FromPrimitive::from_f64(20.0).unwrap(); // should be Emax ?
+                match num_particle_out {
+                    0 => (),
+                    1 => {
+                        let rand_f = (rng_sample::<T>(&mut self.random_number_seed) + one) / two;
+                        let energy = twenty * rand_f * rand_f;
+                        let angle = rng_sample::<T>(&mut self.random_number_seed) * two - one;
+                        self.update_trajectory(energy, angle);
+                    }
+                    _ => {
+                        assert!(num_particle_out < 5); // this is guaranteed by the way we sample and the nu bar value
 
-                if num_particle_out > 1 {
-                    for secondary_idx in 1..num_particle_out {
-                        let mut sec_particle = self.clone();
-                        sec_particle.random_number_seed =
-                            spawn_rn_seed::<T>(&mut self.random_number_seed);
-                        sec_particle.identifier = sec_particle.random_number_seed;
-                        sec_particle
-                            .update_trajectory(energy_out[secondary_idx], angle_out[secondary_idx]);
-                        extra.push(sec_particle);
+                        // for the original particle
+                        let rand_f = (rng_sample::<T>(&mut self.random_number_seed) + one) / two;
+                        let energy = twenty * rand_f * rand_f;
+                        let angle = rng_sample::<T>(&mut self.random_number_seed) * two - one;
+
+                        let out: Vec<(T, T)> = (1..num_particle_out)
+                            .map(|_| {
+                                let rand_f =
+                                    (rng_sample::<T>(&mut self.random_number_seed) + one) / two;
+                                let energy_out = twenty * rand_f * rand_f;
+                                let angle_out =
+                                    rng_sample::<T>(&mut self.random_number_seed) * two - one;
+                                (energy_out, angle_out)
+                            })
+                            .collect();
+
+                        let seeds: Vec<u64> = (1..num_particle_out)
+                            .map(|_| spawn_rn_seed::<T>(&mut self.random_number_seed))
+                            .collect();
+
+                        let sec_particles = zip(seeds, out).map(|(seed, (energy, angle))| {
+                            let mut sec_particle = self.clone();
+                            sec_particle.random_number_seed = seed;
+                            sec_particle.identifier = seed;
+                            sec_particle.update_trajectory(energy, angle);
+                            sec_particle
+                        });
+                        extra.extend(sec_particles);
+
+                        self.update_trajectory(energy, angle);
                     }
                 }
-                self.update_trajectory(energy_out[0], angle_out[0]);
                 num_particle_out
             }
         }
