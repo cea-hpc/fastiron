@@ -188,9 +188,9 @@ fn mct_nf_3dg<T: CustomFloat>(
             // Mesh-dependent code
             let points =
                 domain.mesh.cell_connectivity[location.cell.unwrap()].facet[facet_idx].point;
-            facet_coords[0] = domain.mesh.node[points[0].unwrap()];
-            facet_coords[1] = domain.mesh.node[points[1].unwrap()];
-            facet_coords[2] = domain.mesh.node[points[2].unwrap()];
+            facet_coords[0] = domain.mesh.node[points[0]];
+            facet_coords[1] = domain.mesh.node[points[1]];
+            facet_coords[2] = domain.mesh.node[points[2]];
 
             let t: T = mct_nf_3dg_dist_to_segment(
                 plane_tolerance,
@@ -331,7 +331,7 @@ fn mct_facet_points_3dg<T: CustomFloat>(
     let mut res: [usize; N_POINTS_PER_FACET] = [0; N_POINTS_PER_FACET];
 
     (0..N_POINTS_PER_FACET).for_each(|point_idx| {
-        res[point_idx] = mesh.cell_connectivity[cell].facet[facet].point[point_idx].unwrap();
+        res[point_idx] = mesh.cell_connectivity[cell].facet[facet].point[point_idx];
     });
 
     res
