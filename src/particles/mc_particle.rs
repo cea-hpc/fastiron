@@ -6,6 +6,7 @@
 use std::iter::zip;
 
 use num::{one, zero, FromPrimitive};
+use tinyvec::ArrayVec;
 
 use crate::{
     constants::CustomFloat,
@@ -167,20 +168,21 @@ impl<T: CustomFloat> MCParticle<T> {
                         let energy = twenty * rand_f * rand_f;
                         let angle = rng_sample::<T>(&mut self.random_number_seed) * two - one;
 
-                        let out: Vec<(T, T)> = (1..num_particle_out)
-                            .map(|_| {
-                                let rand_f =
-                                    (rng_sample::<T>(&mut self.random_number_seed) + one) / two;
-                                let energy_out = twenty * rand_f * rand_f;
-                                let angle_out =
-                                    rng_sample::<T>(&mut self.random_number_seed) * two - one;
-                                (energy_out, angle_out)
-                            })
-                            .collect();
+                        let mut out = ArrayVec::<[(T, T); 5]>::default();
+                        out.extend((1..num_particle_out).map(|_| {
+                            let rand_f =
+                                (rng_sample::<T>(&mut self.random_number_seed) + one) / two;
+                            let energy_out = twenty * rand_f * rand_f;
+                            let angle_out =
+                                rng_sample::<T>(&mut self.random_number_seed) * two - one;
+                            (energy_out, angle_out)
+                        }));
 
-                        let seeds: Vec<u64> = (1..num_particle_out)
-                            .map(|_| spawn_rn_seed::<T>(&mut self.random_number_seed))
-                            .collect();
+                        let mut seeds = ArrayVec::<[u64; 5]>::default();
+                        seeds.extend(
+                            (1..num_particle_out)
+                                .map(|_| spawn_rn_seed::<T>(&mut self.random_number_seed)),
+                        );
 
                         let sec_particles = zip(seeds, out).map(|(seed, (energy, angle))| {
                             let mut sec_particle = self.clone();
