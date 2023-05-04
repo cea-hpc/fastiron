@@ -9,7 +9,7 @@ column -s=';' -t < a_file.csv
 ```
 
 Note that this analysis precedes some additional changes to be done to the code 
-before release. See the comparison [section](#rustified-edition-comparison) for more detail.
+before release. See the dedicated [section](#additional-changes) for more detail.
 
 
 ## Correlation Study
@@ -175,12 +175,24 @@ program. An interesting observation is that the `CycleInit` and `PopulationContr
 values have comparable values despite the deletion of the `MCBaseParticle` structure, 
 hence a supposedly heavier particle initialization.
 
-Two additional changes will be done before release, hence are not taken into account here:
-The usage of [`tinyvec`][3] when sampling for collision and the usage of `Option<usize>`
-in `MCFacetAdjacency`. While the first will mostly influence the memory footprint, the 
-second might lead to an increase in performances when computing the nearest facet during
-tracking.
+
+## Additional Changes
+
+Three additional changes have been made and are not taken into account in this 
+analysis. They were merged with PR [#62][4]:
+
+- The `sample_collision()` routine has been rewritten as a method for the `MCParticle` 
+  structure. The new structure prevents a vector return and is overall clearer. The 
+  new function also makes use of [`tinyvec`][3] to greatly reduce the number of 
+  allocations.
+- `MCFacetAdjacency` no longer makes use of `Option<>`, this allows for much less
+  unwraps when computing the nearest facet to a particle.
+- The sourcing function has been slightly changed to reduce the number of allocations.
+
+Only the rewrite of `sample_collision()` affect significantly execution time, the 
+other two changes only affect memory footprint in a non-negligible way.
 
 [1]: https://github.com/imrn99/fi_stats
 [2]: https://en.wikipedia.org/wiki/Relative_change_and_difference#Definition
 [3]: https://docs.rs/tinyvec/latest/tinyvec/
+[4]: https://github.com/cea-hpc/fastiron/pull/62

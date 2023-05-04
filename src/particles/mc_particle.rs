@@ -3,11 +3,18 @@
 //! This module contains code of an extended particle structure used
 //! for computations.
 
+use std::iter::zip;
+
 use num::{one, zero, FromPrimitive};
+use tinyvec::ArrayVec;
 
 use crate::{
     constants::CustomFloat,
-    data::{mc_vector::MCVector, tallies::MCTallyEvent},
+    data::{
+        mc_vector::MCVector,
+        nuclear_data::{NuclearDataReaction, ReactionType},
+        tallies::MCTallyEvent,
+    },
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
@@ -79,6 +86,26 @@ impl<T: CustomFloat> MCParticle<T> {
         self.coordinate += self.direction * self.segment_path_length;
     }
 
+    pub fn update_trajectory(&mut self, energy: T, angle: T) {
+        // constants
+        let pi: T = T::pi();
+        let one: T = one();
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+
+        // value for update
+        let cos_theta: T = angle;
+        let sin_theta: T = (one - cos_theta * cos_theta).sqrt();
+        let rdm_number: T = rng_sample(&mut self.random_number_seed);
+        let phi = two * pi * rdm_number;
+        let sin_phi: T = phi.sin();
+        let cos_phi: T = phi.cos();
+
+        // update
+        self.kinetic_energy = energy;
+        self.rotate_direction(sin_theta, cos_theta, sin_phi, cos_phi);
+        self.sample_num_mfp();
+    }
+
     /// Computes the particle speed from its energy. Note that this computation
     /// should be species-specific.
     pub fn get_speed(&self) -> T {
@@ -95,6 +122,83 @@ impl<T: CustomFloat> MCParticle<T> {
     /// Return the starting cross section for reaction sampling.
     pub fn get_current_xs(&mut self) -> T {
         self.total_cross_section * rng_sample::<T>(&mut self.random_number_seed)
+    }
+
+    /// Uses a PRNG to sample new energy & angle after a reaction.
+    ///
+    /// Since reaction type is specified when the method is called, we assume
+    /// that the result will be treated correctly by the calling code.
+    pub fn sample_collision(
+        &mut self,
+        reaction: &NuclearDataReaction<T>,
+        material_mass: T,
+        extra: &mut Vec<MCParticle<T>>,
+    ) -> usize {
+        let one: T = FromPrimitive::from_f64(1.0).unwrap();
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+        // Need to replace with tinyvec types
+        match reaction.reaction_type {
+            ReactionType::Scatter => {
+                let energy = self.kinetic_energy
+                    * (one - rng_sample::<T>(&mut self.random_number_seed) * (one / material_mass));
+                let angle = rng_sample::<T>(&mut self.random_number_seed) * two - one;
+                self.update_trajectory(energy, angle);
+                1
+            }
+            ReactionType::Absorption => 0,
+            ReactionType::Fission => {
+                let num_particle_out: usize = (reaction.nu_bar
+                    + rng_sample(&mut self.random_number_seed))
+                .to_usize()
+                .unwrap();
+                let twenty: T = FromPrimitive::from_f64(20.0).unwrap(); // should be Emax ?
+                match num_particle_out {
+                    0 => (),
+                    1 => {
+                        let rand_f = (rng_sample::<T>(&mut self.random_number_seed) + one) / two;
+                        let energy = twenty * rand_f * rand_f;
+                        let angle = rng_sample::<T>(&mut self.random_number_seed) * two - one;
+                        self.update_trajectory(energy, angle);
+                    }
+                    _ => {
+                        assert!(num_particle_out < 5); // this is guaranteed by the way we sample and the nu bar value
+
+                        // for the original particle
+                        let rand_f = (rng_sample::<T>(&mut self.random_number_seed) + one) / two;
+                        let energy = twenty * rand_f * rand_f;
+                        let angle = rng_sample::<T>(&mut self.random_number_seed) * two - one;
+
+                        let mut out = ArrayVec::<[(T, T); 5]>::default();
+                        out.extend((1..num_particle_out).map(|_| {
+                            let rand_f =
+                                (rng_sample::<T>(&mut self.random_number_seed) + one) / two;
+                            let energy_out = twenty * rand_f * rand_f;
+                            let angle_out =
+                                rng_sample::<T>(&mut self.random_number_seed) * two - one;
+                            (energy_out, angle_out)
+                        }));
+
+                        let mut seeds = ArrayVec::<[u64; 5]>::default();
+                        seeds.extend(
+                            (1..num_particle_out)
+                                .map(|_| spawn_rn_seed::<T>(&mut self.random_number_seed)),
+                        );
+
+                        let sec_particles = zip(seeds, out).map(|(seed, (energy, angle))| {
+                            let mut sec_particle = self.clone();
+                            sec_particle.random_number_seed = seed;
+                            sec_particle.identifier = seed;
+                            sec_particle.update_trajectory(energy, angle);
+                            sec_particle
+                        });
+                        extra.extend(sec_particles);
+
+                        self.update_trajectory(energy, angle);
+                    }
+                }
+                num_particle_out
+            }
+        }
     }
 
     /// Sample the number of mean free paths to a collision.
@@ -239,6 +343,30 @@ mod tests {
         assert_eq!(particle.direction.x, 0.9083218129645693);
         assert_eq!(particle.direction.y, -0.3658911896631176);
         assert_eq!(particle.direction.z, 0.2026699815455325);
+    }
+
+    #[test]
+    fn trajectory() {
+        let mut pp: MCParticle<f64> = MCParticle::default();
+        // init data
+        let e: f64 = 1.0;
+        pp.direction = MCVector {
+            x: 1.0 / 3.0.sqrt(),
+            y: 1.0 / 3.0.sqrt(),
+            z: 1.0 / 3.0.sqrt(),
+        };
+        pp.kinetic_energy = e;
+        let mut seed: u64 = 90374384094798327;
+        let energy = rng_sample(&mut seed);
+        let angle = rng_sample(&mut seed);
+
+        // update & print result
+        pp.update_trajectory(energy, angle);
+
+        assert!((pp.direction.x - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction.y - 0.620283).abs() < 1.0e-6);
+        assert!((pp.direction.z - (-0.480102)).abs() < 1.0e-6);
+        assert!((pp.kinetic_energy - energy).abs() < f64::tiny_float());
     }
 
     #[test]

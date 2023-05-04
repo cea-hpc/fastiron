@@ -6,9 +6,7 @@ use std::collections::HashMap;
 
 use num::{zero, FromPrimitive};
 
-use crate::{
-    constants::CustomFloat, parameters::MaterialParameters, utils::mc_rng_state::rng_sample,
-};
+use crate::{constants::CustomFloat, parameters::MaterialParameters};
 
 /// Enum used to represent a reaction type.
 #[derive(Debug, PartialEq)]
@@ -105,47 +103,6 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
             reaction_type: rtype,
             nu_bar,
         }
-    }
-
-    /// Uses a PRNG to sample new energy & angle after a reaction.
-    ///
-    /// Since reaction type is specified when the method is called, we assume
-    /// that the result will be treated correctly by the calling code.
-    pub fn sample_collision(
-        &self,
-        incident_energy: T,
-        material_mass: T,
-        seed: &mut u64,
-    ) -> (Vec<T>, Vec<T>) {
-        let one: T = FromPrimitive::from_f64(1.0).unwrap();
-        let two: T = FromPrimitive::from_f64(2.0).unwrap();
-        // can probably prevent relocation by initializing with capacity according to the reaction type
-        let mut energy_out: Vec<T> = Vec::new();
-        let mut angle_out: Vec<T> = Vec::new();
-        match self.reaction_type {
-            ReactionType::Scatter => {
-                let mut rand_f: T = rng_sample(seed);
-                energy_out.push(incident_energy * (one - rand_f * (one / material_mass)));
-                rand_f = rng_sample(seed);
-                angle_out.push(rand_f * two - one);
-            }
-            ReactionType::Absorption => (),
-            ReactionType::Fission => {
-                let num_particle_out = (self.nu_bar + rng_sample(seed)).to_usize().unwrap();
-                assert!(num_particle_out < 5); // this is guaranteed by the way we sample and the nu bar value
-                energy_out.extend(vec![zero(); num_particle_out].iter());
-                angle_out.extend(vec![zero(); num_particle_out].iter());
-                (0..num_particle_out).for_each(|ii| {
-                    let mut rand_f: T = rng_sample(seed);
-                    rand_f = (rand_f + one) / two;
-                    let twenty: T = FromPrimitive::from_f64(20.0).unwrap();
-                    energy_out[ii] = twenty * rand_f * rand_f;
-                    rand_f = rng_sample(seed);
-                    angle_out[ii] = rand_f * two - one;
-                })
-            }
-        }
-        (energy_out, angle_out)
     }
 }
 

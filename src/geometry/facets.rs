@@ -151,22 +151,13 @@ pub struct SubfacetAdjacency {
 }
 
 /// Structure for adjacent facet representation.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MCFacetAdjacency {
     /// Adjacency data.
     pub subfacet: SubfacetAdjacency,
     /// Point indexes for this facet. The points are defined in a private constant
     /// in the [mc_domain][super::mc_domain] module.
-    pub point: [Option<usize>; N_POINTS_PER_FACET],
-}
-
-impl Default for MCFacetAdjacency {
-    fn default() -> Self {
-        Self {
-            subfacet: Default::default(),
-            point: [None; N_POINTS_PER_FACET],
-        }
-    }
+    pub point: [usize; N_POINTS_PER_FACET],
 }
 
 /// Structure encompassing all adjacent facet to a cell.

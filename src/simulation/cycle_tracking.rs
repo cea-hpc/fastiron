@@ -78,6 +78,9 @@ fn cycle_tracking_function<T: CustomFloat>(
                     extra,
                     &mut mcunit.tallies.balance_cycle,
                 );
+                particle.energy_group = mcdata
+                    .nuclear_data
+                    .get_energy_groups(particle.kinetic_energy);
                 if !keep_tracking {
                     particle.species = Species::Unknown;
                 }
