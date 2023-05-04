@@ -9,7 +9,7 @@ column -s=';' -t < a_file.csv
 ```
 
 Note that this analysis precedes some additional changes to be done to the code 
-before release. See the dedicated [section](#additonal-changes) for more detail.
+before release. See the dedicated [section](#additional-changes) for more detail.
 
 
 ## Correlation Study
@@ -174,6 +174,7 @@ The population control functions have been integrated in the processing section 
 program. An interesting observation is that the `CycleInit` and `PopulationControl` 
 values have comparable values despite the deletion of the `MCBaseParticle` structure, 
 hence a supposedly heavier particle initialization.
+
 
 ## Additional Changes
 
