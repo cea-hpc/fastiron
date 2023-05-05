@@ -5,6 +5,8 @@ contains Quicksilver's data for reference.
 
 A script is provided to gather data used by [fi-stats][https://github.com/imrn99/fi_stats]. 
 
+Another script is provided to achieve more consistent results when benchmarking on a laptop.
+
 ## Test problems
 
 The following problems are used in order to compare the versions of the program. Note that these can (and will)
