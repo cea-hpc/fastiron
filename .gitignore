@@ -2,6 +2,7 @@
 /target
 /.vscode
 /profiling/SequentialAnalysis/scaling_data
+/tmp
 
 # overall files
 *.dat
