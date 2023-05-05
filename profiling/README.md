@@ -1,9 +1,11 @@
 # Profiling
 
----
-
 This folder contains summaries & flamegraphes of the different version of fastiron as they progress. It also 
 contains Quicksilver's data for reference. 
+
+A script is provided to gather data used by [fi-stats][https://github.com/imrn99/fi_stats]. 
+
+Another script is provided to achieve more consistent results when benchmarking on a laptop.
 
 ## Test problems
 
