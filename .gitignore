@@ -1,4 +1,6 @@
 /target
 /tmp
+/out
 *.csv
 *.dat
+*.png
