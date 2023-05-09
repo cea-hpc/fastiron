@@ -13,6 +13,10 @@ evaluate the capabilities of the Rust programming language
 The main program produces outputs that can be analyzed using the `fastiron-stats`
 binary. Detailed explanation on its usage can be found in its folder.
 
+A few scripts are provided for gathering data and processing it using the
+custom tool. You can refer to the Rust Doc or to the `README.md` files in each
+sub-folder.
+
 ## Contributing
 
 Contributions are welcome and accepted as pull requests on [GitHub][fastiron].

@@ -3,9 +3,15 @@
 This folder contains summaries & flamegraphes of the different version of 
 fastiron as they progress. It also contains Quicksilver's data for reference. 
 
-A script is provided to gather data used by the `fastiron-stats` binary. 
+Four scripts are provided:
 
-Another script is provided to achieve more consistent results when benchmarking on a laptop.
+- `bench_cfg.sh`, `reverse_cfg.sh`: Set CPU behavior options to be more consistent 
+  when benchmarking on a laptop.
+- `gather_data.sh`: Gather profiling data for the current build of [Fastiron][1]. 
+- `process_data.sh`: Process the data collected using `gather_data.sh`.
+
+The data gathering / processing done with the script can be tweaked to obtain the desired results. 
+Refer to the [Rust Doc][2] or to the `README.md` of `fastiron-stats`.
 
 ## Test problems
 
@@ -31,3 +37,6 @@ Up to the sequential analysis (included), all benchmarking was done on a laptop 
 In a sequential context, Quicksilver has received a small tweak to guarantee coherence of the results. The random
 number generator function used to initialize centers randomly, `drand48`, has been replaced with the program's function,
 `rngSample`.
+
+[1]: https://github.com/cea-hpc/fastiron
+[2]: https://cea-hpc.github.io/fastiron/fastiron_stats/
