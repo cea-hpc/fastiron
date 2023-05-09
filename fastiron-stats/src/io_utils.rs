@@ -1,3 +1,8 @@
+//! I/O handling
+//!
+//! This module contains all functions used to handle inputs and
+//! outputs.
+
 use std::{
     fs::{File, OpenOptions},
     io::Write,
@@ -10,6 +15,14 @@ use crate::structures::{
 // =======
 // Reading
 
+/// Builds an organized structure from a tallies report saved by the
+/// `fastiron` binary.
+///
+/// This function is a general reading function,
+/// not all the data will necessarly be used.
+///
+/// Any change done to the tallied data / its representation will
+/// demand an update of this function.
 pub fn read_tallies(file_name: &str) -> [FiniteDiscreteRV; N_TALLIED_DATA] {
     let file = File::open(file_name).unwrap();
     let mut reader = csv::ReaderBuilder::new().delimiter(b';').from_reader(file);
@@ -46,6 +59,14 @@ pub fn read_tallies(file_name: &str) -> [FiniteDiscreteRV; N_TALLIED_DATA] {
     values.map(|val| FiniteDiscreteRV::new(&val))
 }
 
+/// Builds an organized structure from a timers report saved by the
+/// `fastiron` binary.
+///
+/// This function is a general reading function,
+/// not all the data will necessarly be used.
+///
+/// Any change done to the timers data / its representation will
+/// demand an update of this function.
 pub fn read_timers(file_name: &str) -> TimerReport {
     let mut res = [SummarizedVariable::default(); 6];
     let file = File::open(file_name).unwrap();
@@ -65,6 +86,10 @@ pub fn read_timers(file_name: &str) -> TimerReport {
     TimerReport { timers_data: res }
 }
 
+/// Builds an organized structure from a (formatted) list of timers reports.
+///
+/// Any change done to the timers data / its representation will
+/// demand an update of this function.
 pub fn get_scaling_data(
     root: String,
     n_start: usize,
@@ -87,6 +112,10 @@ pub fn get_scaling_data(
 // =======
 // Writing
 
+/// Save the results of the comparison in a formatted markdown table.
+///
+/// Any change done to the timers data / its representation will
+/// demand an update of this function.
 pub fn save_percents(percents: &[f64]) {
     // Write the result in a Markdown table; maybe we can generate an entire report?
     let mut file = OpenOptions::new()
@@ -103,12 +132,15 @@ pub fn save_percents(percents: &[f64]) {
     writeln!(file, "| CycleSync            | {:>13.1}% |", percents[3]).unwrap();
 }
 
+/// Save the results of the correlation study.
+///
+/// The plotted matrix will have this structure:
+///
+/// \* | Absorb | Scatter | Fission | Collision | Census | NumSeg
+/// ---|--------|---------|---------|-----------|--------|--------
+/// CycleTracking | `c0` | `c1` | `c2` | `c3` | `c4` | `c5`
+///
 pub fn save_tracking_results(tracking_res: &[f64]) {
-    // The table is something like this
-    //
-    //               | Absorb | Scatter | Fission | Collision | Census | NumSeg
-    // CycleTracking | ...
-    //
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
@@ -132,13 +164,16 @@ pub fn save_tracking_results(tracking_res: &[f64]) {
     writeln!(file, "Dummy, 0, 0, 0, 0, 0, 0").unwrap();
 }
 
+/// Save the results of the correlation study.
+///
+/// The plotted matrix will have this structure:
+///
+/// \* | Rr | Split
+/// ---|----|-------
+/// PopulationControl | `c0` | `c1`
+/// CycleSync         | `c2` | `c3`
+///
 pub fn save_popsync_results(popsync_res: &[f64]) {
-    // The table is something like this
-    //
-    //                   | Source | Rr | Split
-    // PopulationControl | ...
-    // CycleSync         | ...
-    //
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
@@ -160,6 +195,17 @@ pub fn save_popsync_results(popsync_res: &[f64]) {
     .unwrap();
 }
 
+/// Save the results of the scaling study.
+///
+/// The produced file technically fits the csv format. For
+/// consistency, it is saved as a dat file.
+///
+/// The file contains four columns, each line corresponds to one simulation:
+///
+/// - `n_particles`: target number of particles.
+/// - `PopulationControlAvg`, `CycleTrackingAvg`, `CycleSyncAvg`:
+///   Average time spent in the given section.
+///
 pub fn compile_scaling_data(timer_data: &[(TimerReport, usize)]) {
     let mut file = OpenOptions::new()
         .write(true)
