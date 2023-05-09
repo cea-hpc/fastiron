@@ -59,7 +59,7 @@ pub struct NuclearDataReaction<T: CustomFloat> {
     pub reaction_type: ReactionType,
     /// Statistical offset. This value is used when sampling for the number
     /// of offspring particles created by a reaction. See the
-    /// [`sample_collision()`][NuclearDataReaction::sample_collision()] method
+    /// [`sample_collision()`][crate::particles::mc_particle::MCParticle::sample_collision()] method
     /// for more information.
     pub nu_bar: T,
 }

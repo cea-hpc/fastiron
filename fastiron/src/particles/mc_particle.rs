@@ -86,6 +86,7 @@ impl<T: CustomFloat> MCParticle<T> {
         self.coordinate += self.direction * self.segment_path_length;
     }
 
+    /// Update the particle's trajectory with new energy & angle.
     pub fn update_trajectory(&mut self, energy: T, angle: T) {
         // constants
         let pi: T = T::pi();
