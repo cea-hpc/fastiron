@@ -1,5 +1,9 @@
 use crate::structures::{correlation, FiniteDiscreteRV, TalliedData, TimerReport, TimerSV};
 
+/// Pairs of tallied data to be correlated.
+///
+/// This constant is used for the `PopulationControl`/`CycleSync` section
+/// of the correlation study.
 pub const POPSYNC_CORRELATIONS: [(TalliedData, TalliedData); 6] = [
     (TalliedData::Source, TalliedData::PopulationControl),
     (TalliedData::Source, TalliedData::CycleSync),
@@ -9,6 +13,10 @@ pub const POPSYNC_CORRELATIONS: [(TalliedData, TalliedData); 6] = [
     (TalliedData::Split, TalliedData::CycleSync),
 ];
 
+/// Pairs of tallied data to be correlated.
+///
+/// This constant is used for the `CycleTracking` section
+/// of the correlation study.
 pub const TRACKING_CORRELATIONS: [(TalliedData, TalliedData); 6] = [
     (TalliedData::Absorb, TalliedData::CycleTracking),
     (TalliedData::Scatter, TalliedData::CycleTracking),
@@ -18,6 +26,10 @@ pub const TRACKING_CORRELATIONS: [(TalliedData, TalliedData); 6] = [
     (TalliedData::NumSeg, TalliedData::CycleTracking),
 ];
 
+/// Computes the relative change between two timers reports.
+///
+/// The actual relative change is multiplied by 100 to have percentages
+/// as a result.
 pub fn compare(old: TimerReport, new: TimerReport) -> [f64; 4] {
     let relative_change =
         |section: TimerSV| (new[section].mean - old[section].mean) / old[section].mean;
@@ -30,41 +42,10 @@ pub fn compare(old: TimerReport, new: TimerReport) -> [f64; 4] {
     [exec_time, pop_control, tracking, sync]
 }
 
-pub fn build_tracking_results(tallies_data: &[FiniteDiscreteRV]) -> Vec<f64> {
-    // The table is something like this
-    //
-    //               | Absorb | Scatter | Fission | Collision | Census | NumSeg
-    // CycleTracking | ...
-    //
-
-    vec![
-        correlation(
-            &tallies_data[TalliedData::Absorb as usize],
-            &tallies_data[TalliedData::CycleTracking as usize],
-        ),
-        correlation(
-            &tallies_data[TalliedData::Scatter as usize],
-            &tallies_data[TalliedData::CycleTracking as usize],
-        ),
-        correlation(
-            &tallies_data[TalliedData::Fission as usize],
-            &tallies_data[TalliedData::CycleTracking as usize],
-        ),
-        correlation(
-            &tallies_data[TalliedData::Collision as usize],
-            &tallies_data[TalliedData::CycleTracking as usize],
-        ),
-        correlation(
-            &tallies_data[TalliedData::Census as usize],
-            &tallies_data[TalliedData::CycleTracking as usize],
-        ),
-        correlation(
-            &tallies_data[TalliedData::NumSeg as usize],
-            &tallies_data[TalliedData::CycleTracking as usize],
-        ),
-    ]
-}
-
+/// Computes correlation coefficient for the correlation study.
+///
+/// This function computes coefficient for the `PopulationControl`/`CycleSync`
+/// section of the correlation study.
 pub fn build_popsync_results(tallies_data: &[FiniteDiscreteRV]) -> Vec<f64> {
     // The table is something like this
     //
@@ -97,6 +78,39 @@ pub fn build_popsync_results(tallies_data: &[FiniteDiscreteRV]) -> Vec<f64> {
         correlation(
             &tallies_data[TalliedData::Split as usize],
             &tallies_data[TalliedData::PopulationControl as usize],
+        ),
+    ]
+}
+
+/// Computes correlation coefficient for the correlation study.
+///
+/// This function computes coefficient for the `CycleTracking` section
+/// of the correlation study.
+pub fn build_tracking_results(tallies_data: &[FiniteDiscreteRV]) -> Vec<f64> {
+    vec![
+        correlation(
+            &tallies_data[TalliedData::Absorb as usize],
+            &tallies_data[TalliedData::CycleTracking as usize],
+        ),
+        correlation(
+            &tallies_data[TalliedData::Scatter as usize],
+            &tallies_data[TalliedData::CycleTracking as usize],
+        ),
+        correlation(
+            &tallies_data[TalliedData::Fission as usize],
+            &tallies_data[TalliedData::CycleTracking as usize],
+        ),
+        correlation(
+            &tallies_data[TalliedData::Collision as usize],
+            &tallies_data[TalliedData::CycleTracking as usize],
+        ),
+        correlation(
+            &tallies_data[TalliedData::Census as usize],
+            &tallies_data[TalliedData::CycleTracking as usize],
+        ),
+        correlation(
+            &tallies_data[TalliedData::NumSeg as usize],
+            &tallies_data[TalliedData::CycleTracking as usize],
         ),
     ]
 }
