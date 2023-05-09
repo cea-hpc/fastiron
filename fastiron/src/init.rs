@@ -1,3 +1,5 @@
+//! Initialization code for the problem
+
 use std::{collections::HashMap, fmt::Debug, fs::File, io::Write};
 
 use crate::{

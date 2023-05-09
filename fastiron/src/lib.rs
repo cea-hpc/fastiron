@@ -33,6 +33,8 @@
 //!           time step in seconds
 //!   -l, --load-balance
 //!           enable load balancing if present
+//!   -c, --csv
+//!           write tallies & timer data into csv files if present
 //!   -t, --debug-threads
 //!           enable thread debugging if present
 //!   -X, --lx <LX>
@@ -91,12 +93,9 @@
 pub mod constants;
 pub mod data;
 pub mod geometry;
-/// Initialization code for the problem
 pub mod init;
 pub mod montecarlo;
 pub mod parameters;
-/// Particle-related code
-/// Particle-related code
 pub mod particles;
 pub mod simulation;
 pub mod utils;
