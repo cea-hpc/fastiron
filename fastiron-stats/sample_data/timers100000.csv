@@ -1,0 +1,7 @@
+Timer Name;#calls;Shortest(µs);Average(µs);Longest(µs);Total(µs);Efficiency(%)
+Section::Main                 ;1;9.149379e6;9.149379e6;9.149379e6;9.149379e6;100.0
+Section::PopulationControl    ;10;9.753e3;1.1812e4;1.7278e4;1.18126e5;68.4
+Section::CycleTracking        ;10;8.81882e5;9.02351e5;9.19491e5;9.023519e6;98.1
+Section::CycleTrackingKernel  ;10;8.81881e5;9.02351e5;9.1949e5;9.023512e6;98.1
+Section::CycleTrackingComm    ;10;0e0;0e0;0e0;1e0;67.1
+Section::CycleSync            ;11;3.35e2;6.98e2;7.6e2;6.981e3;91.8
