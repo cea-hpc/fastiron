@@ -1,5 +1,5 @@
 # This script used to reverse the change made by the bench_cfg.sh script
-# The governor option might change according o the machine
+# The governor option might change according to the machine
 
 # To be run as root!
 echo "Enabling turbo boost"

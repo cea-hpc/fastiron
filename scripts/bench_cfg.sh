@@ -1,6 +1,3 @@
-# This is one of two scripts provided to compute some numbers about 
-# the behavior of Fastiron
-
 # This script is used to set a few options for the execution 
 # behavior. This is done to achieve overall more consistent
 # numbers from one sample to another.

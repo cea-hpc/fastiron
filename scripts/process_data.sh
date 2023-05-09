@@ -1,10 +1,11 @@
 # This is one of two scripts provided to compute some numbers about 
 # the behavior of Fastiron
 
-# This script can be used to gather all data used by the analysis code
-# to provide insights on the code's behavior. 
-# The only additionnal file that is not provided by this script is the 
-# previous version's timers report.
+# This script can be used to process all data gathered by the first script
+# The default auto input does not make the comparison study as the "old"
+# timers report file is unknown.
+# It would be possible to write a script doing this comparison, using a
+# single argument for the old timers report.
 
 PROJECTDIR=$(dirname "$0")/..
 DATADIR=$PROJECTDIR/tmp
