@@ -3,8 +3,8 @@
 //! This tool is documented to ease future modifications of the code.
 //! The program can be run like any other cargo projects:
 //!
-//! ```
-//! cargo run --release
+//! ```shell
+//! cargo run --release --bin=fastiron-stats
 //! ```
 //!
 //! The executable does not take any argument through the command line. Instead,
@@ -28,8 +28,8 @@
 //! will specific data be requested for processing. Additionally, the user can
 //! automatically provide inputs by redirecting a file to the program:
 //!
-//! ```
-//! cargo run --release -- < sample_data/auto_input_example
+//! ```shell
+//! cargo run --release --bin=fastiron -- < sample_data/auto_input_example
 //! ```
 //!
 //! The control flow being simple, it is easy to pre-write a set of answer to achieve
