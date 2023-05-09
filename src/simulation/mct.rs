@@ -7,17 +7,14 @@ use core::panic;
 use num::{one, zero, FromPrimitive};
 
 use crate::{
-    constants::{
-        mesh::{N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
-        CustomFloat,
-    },
-    data::{direction_cosine::DirectionCosine, mc_vector::MCVector},
+    constants::CustomFloat,
+    data::mc_vector::MCVector,
     geometry::{
         facets::{MCDistanceToFacet, MCGeneralPlane, MCNearestFacet},
         mc_domain::{MCDomain, MCMeshDomain},
         mc_location::MCLocation,
+        N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET,
     },
-    montecarlo::MonteCarlo,
     particles::mc_particle::MCParticle,
     utils::mc_rng_state::rng_sample,
 };
@@ -31,14 +28,8 @@ use crate::{
 /// case, a facet crossing. See [MCNearestFacet] for more information.
 pub fn nearest_facet<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    mcco: &MonteCarlo<T>,
+    domain: &MCDomain<T>,
 ) -> MCNearestFacet<T> {
-    let location = particle.get_location();
-    if location.domain.is_none() | location.cell.is_none() {
-        panic!()
-    }
-    let domain = &mcco.domain[location.domain.unwrap()];
-
     let mut nearest_facet = mct_nf_3dg(particle, domain);
 
     if nearest_facet.distance_to_facet < zero() {
@@ -60,7 +51,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
     cell_volume: T,
 ) -> MCVector<T> {
     let six: T = FromPrimitive::from_f64(6.0).unwrap();
-    let one: T = FromPrimitive::from_f64(1.0).unwrap();
+    let one: T = one();
 
     let center: MCVector<T> = cell_position_3dg(mesh, cell_idx);
 
@@ -134,12 +125,8 @@ pub fn cell_position_3dg<T: CustomFloat>(mesh: &MCMeshDomain<T>, cell_idx: usize
 /// This function is called when a particle undergo a reflectionevent at the
 /// boundary of the problem. Note that the reflection does not result in a
 /// loss of energy.
-pub fn reflect_particle<T: CustomFloat>(mcco: &MonteCarlo<T>, particle: &mut MCParticle<T>) {
-    let mut new_d_cos = particle.direction_cosine.clone();
-    let location = particle.get_location();
-
-    let domain = &mcco.domain[location.domain.unwrap()];
-    let plane = &domain.mesh.cell_geometry[location.cell.unwrap()][location.facet.unwrap()];
+pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MCGeneralPlane<T>) {
+    let mut new_direction = particle.direction;
 
     let facet_normal: MCVector<T> = MCVector {
         x: plane.a,
@@ -148,14 +135,12 @@ pub fn reflect_particle<T: CustomFloat>(mcco: &MonteCarlo<T>, particle: &mut MCP
     };
 
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    let dot: T = two * new_d_cos.dir.dot(&facet_normal);
+    let dot: T = two * new_direction.dot(&facet_normal);
 
     if dot > zero() {
-        new_d_cos.dir -= facet_normal * dot;
-        particle.direction_cosine = new_d_cos;
+        new_direction -= facet_normal * dot;
+        particle.direction = new_direction;
     }
-    let particle_speed = particle.base_particle.velocity.length();
-    particle.base_particle.velocity = particle.direction_cosine.dir * particle_speed;
 }
 
 // ==============================
@@ -168,9 +153,13 @@ fn mct_nf_3dg<T: CustomFloat>(
 ) -> MCNearestFacet<T> {
     let huge_f: T = T::huge_float();
 
-    let mut location = particle.get_location();
-    let coords = particle.base_particle.coordinate;
-    let direction_cosine = particle.direction_cosine.clone();
+    let mut location = MCLocation {
+        domain: Some(particle.domain),
+        cell: Some(particle.cell),
+        facet: Some(particle.facet),
+    };
+    let coords = particle.coordinate;
+    let direction = particle.direction;
 
     let mut facet_coords: [MCVector<T>; N_POINTS_PER_FACET] = Default::default();
     let mut iteration: usize = 0;
@@ -189,9 +178,8 @@ fn mct_nf_3dg<T: CustomFloat>(
 
             let plane = &domain.mesh.cell_geometry[location.cell.unwrap()][facet_idx];
 
-            let facet_normal_dot_dcos: T = plane.a * direction_cosine.dir.x
-                + plane.b * direction_cosine.dir.y
-                + plane.c * direction_cosine.dir.z;
+            let facet_normal_dot_dcos: T =
+                plane.a * direction.x + plane.b * direction.y + plane.c * direction.z;
 
             if facet_normal_dot_dcos <= zero() {
                 return;
@@ -200,9 +188,9 @@ fn mct_nf_3dg<T: CustomFloat>(
             // Mesh-dependent code
             let points =
                 domain.mesh.cell_connectivity[location.cell.unwrap()].facet[facet_idx].point;
-            facet_coords[0] = domain.mesh.node[points[0].unwrap()];
-            facet_coords[1] = domain.mesh.node[points[1].unwrap()];
-            facet_coords[2] = domain.mesh.node[points[2].unwrap()];
+            facet_coords[0] = domain.mesh.node[points[0]];
+            facet_coords[1] = domain.mesh.node[points[1]];
+            facet_coords[2] = domain.mesh.node[points[2]];
 
             let t: T = mct_nf_3dg_dist_to_segment(
                 plane_tolerance,
@@ -210,7 +198,7 @@ fn mct_nf_3dg<T: CustomFloat>(
                 *plane,
                 &facet_coords,
                 &coords,
-                &direction_cosine,
+                &direction,
                 false,
             );
 
@@ -305,7 +293,7 @@ fn mct_nf_find_nearest<T: CustomFloat>(
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
     let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
 
-    let coord = &mut particle.base_particle.coordinate;
+    let coord = &mut particle.coordinate;
 
     const MAX_ALLOWED_SEGMENTS: usize = 10000000;
     const MAX_ITERATION: usize = 1000;
@@ -315,8 +303,7 @@ fn mct_nf_find_nearest<T: CustomFloat>(
 
     // take an option as arg and check if is_some ?
     if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
-        | ((particle.base_particle.num_segments > max)
-            & (nearest_facet.distance_to_facet <= zero()))
+        | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
     {
         mct_nf_3dg_move_particle(domain, location, coord, *move_factor);
         *iteration += 1;
@@ -344,7 +331,7 @@ fn mct_facet_points_3dg<T: CustomFloat>(
     let mut res: [usize; N_POINTS_PER_FACET] = [0; N_POINTS_PER_FACET];
 
     (0..N_POINTS_PER_FACET).for_each(|point_idx| {
-        res[point_idx] = mesh.cell_connectivity[cell].facet[facet].point[point_idx].unwrap();
+        res[point_idx] = mesh.cell_connectivity[cell].facet[facet].point[point_idx];
     });
 
     res
@@ -356,7 +343,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     plane: MCGeneralPlane<T>,
     facet_coords: &[MCVector<T>],
     coords: &MCVector<T>,
-    d_cos: &DirectionCosine<T>,
+    direction: &MCVector<T>,
     allow_enter: bool,
 ) -> T {
     let huge_f: T = T::huge_float();
@@ -372,7 +359,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
 
     let distance: T = numerator / facet_normal_dot_dcos;
 
-    let intersection_pt: MCVector<T> = *coords + d_cos.dir * distance;
+    let intersection_pt: MCVector<T> = *coords + *direction * distance;
 
     // if the point doesn't belong to the facet, returns huge_f
     macro_rules! belongs_or_return {

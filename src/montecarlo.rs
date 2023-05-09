@@ -14,65 +14,72 @@ use crate::data::nuclear_data::NuclearData;
 use crate::data::tallies::Tallies;
 use crate::geometry::mc_domain::MCDomain;
 use crate::parameters::Parameters;
-use crate::particles::mc_base_particle::MCBaseParticle;
-use crate::particles::mc_particle::MCParticle;
-use crate::particles::particle_container::ParticleContainer;
 use crate::utils::mc_fast_timer::MCFastTimerContainer;
 use crate::utils::mc_processor_info::MCProcessorInfo;
-use crate::utils::mc_time_info::MCTimeInfo;
 
-/// Super-structure used to contain all the problem's objects and data.
-#[derive(Debug)]
-pub struct MonteCarlo<T: CustomFloat> {
-    /// List of spatial domains.
-    /// List of spatial domains.
-    pub domain: Vec<MCDomain<T>>,
-    /// Parameters of the problem.
+/// Super-structure used to contain all the problem's data.
+///
+/// This structure is used to store read-only data, i.e. after initialization,
+/// its content does not change until the end of the simulation.
+#[derive(Debug, Default)]
+pub struct MonteCarloData<T: CustomFloat> {
     /// Parameters of the problem.
     pub params: Parameters<T>,
-    /// Object storing all data related to particles.
     /// Object storing all data related to particles.
     pub nuclear_data: NuclearData<T>,
     /// Object storing all data related to materials.
     pub material_database: MaterialDatabase<T>,
-    /// Object storing all tallies of the simulation.
-    /// Object storing all tallies of the simulation.
-    pub tallies: Tallies<T>,
-    /// Object storing data related to the advancement of the simulation.
-    /// Object storing data related to the advancement of the simulation.
-    pub time_info: MCTimeInfo<T>,
-    /// Container for the timers used for performance measurements.
-    /// Container for the timers used for performance measurements.
-    pub fast_timer: MCFastTimerContainer,
     /// Object storing data related to the processor and execution mode.
-    /// Object storing data related to the processor and execution mode.
-    pub processor_info: MCProcessorInfo,
-    /// Weight of the particles at creation in a source zone
+    pub exec_info: MCProcessorInfo,
+    /// Weight of a particle to be spawned. This is a constant in our case but
+    /// isn't in more flexible simulation.
     pub source_particle_weight: T,
+    /// Current total number of particles in the simulation. This value is updated at
+    /// each cycle for ease of access by all [MonteCarloUnit].
+    pub global_n_particles: usize,
 }
 
-impl<T: CustomFloat> MonteCarlo<T> {
-    /// Constructor.
+impl<T: CustomFloat> MonteCarloData<T> {
     /// Constructor.
     pub fn new(params: Parameters<T>) -> Self {
+        let exec_info = MCProcessorInfo::new(&params.simulation_params);
+
+        Self {
+            params,
+            exec_info,
+            ..Default::default()
+        }
+    }
+}
+
+/// Super-structure used to contain unit-specific data of the Monte-Carlo problem.
+/// The notion of unit is specified ....
+#[derive(Debug)]
+pub struct MonteCarloUnit<T: CustomFloat> {
+    /// List of spatial domains.
+    pub domain: Vec<MCDomain<T>>,
+    /// Object storing all tallies of the simulation.
+    pub tallies: Tallies<T>,
+    /// Container for the timers used for performance measurements.
+    pub fast_timer: MCFastTimerContainer,
+    /// Weight of the particles at creation in a source zone
+    pub unit_weight: T,
+}
+
+impl<T: CustomFloat> MonteCarloUnit<T> {
+    /// Constructor.
+    pub fn new(params: &Parameters<T>) -> Self {
         let tallies: Tallies<T> = Tallies::new(
             params.simulation_params.energy_spectrum.to_owned(),
             params.simulation_params.n_groups,
         );
-        let processor_info = MCProcessorInfo::new(&params.simulation_params);
-        let time_info = MCTimeInfo::<T>::default();
         let fast_timer: MCFastTimerContainer = MCFastTimerContainer::default();
 
         Self {
             domain: Default::default(),
-            params,
-            nuclear_data: Default::default(),
-            material_database: Default::default(),
             tallies,
-            time_info,
             fast_timer,
-            processor_info,
-            source_particle_weight: zero(),
+            unit_weight: zero(),
         }
     }
 
@@ -83,32 +90,29 @@ impl<T: CustomFloat> MonteCarlo<T> {
         })
     }
 
-    /// Update the energy spectrum by going over all the currently valid particles.
-    pub fn update_spectrum(&mut self, container: &ParticleContainer<T>) {
-        if self.tallies.spectrum.file_name.is_empty() {
-            return;
-        }
+    pub fn update_unit_weight(&mut self, mcdata: &MonteCarloData<T>) {
+        let source_rate: Vec<T> = mcdata
+            .material_database
+            .mat
+            .iter()
+            .map(|mat| mcdata.params.material_params[&mat.name].source_rate)
+            .collect();
 
-        let update_function = |particle_list: &[MCBaseParticle<T>], spectrum: &mut [u64]| {
-            particle_list.iter().for_each(|pp| {
-                // load particle & update energy group
-                let mut particle = MCParticle::new(pp);
-                particle.energy_group = self
-                    .nuclear_data
-                    .get_energy_groups(particle.base_particle.kinetic_energy);
-                spectrum[particle.energy_group] += 1;
-            });
-        };
-
-        // Iterate on processing particles
-        update_function(
-            &container.processing_particles,
-            &mut self.tallies.spectrum.census_energy_spectrum,
-        );
-        // Iterate on processed particles
-        update_function(
-            &container.processed_particles,
-            &mut self.tallies.spectrum.census_energy_spectrum,
-        );
+        self.unit_weight = self
+            .domain
+            .iter()
+            .map(|dom| {
+                dom.cell_state
+                    .iter()
+                    .map(|cell| {
+                        // constant because cell volume is constant in our program
+                        let cell_weight: T = cell.volume
+                            * source_rate[cell.material]
+                            * mcdata.params.simulation_params.dt;
+                        cell_weight
+                    })
+                    .sum()
+            })
+            .sum();
     }
 }

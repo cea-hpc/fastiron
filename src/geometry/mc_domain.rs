@@ -7,10 +7,7 @@ use std::collections::HashMap;
 use num::{one, zero, FromPrimitive};
 
 use crate::{
-    constants::{
-        mesh::{N_FACES, N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET},
-        CustomFloat,
-    },
+    constants::CustomFloat,
     data::{material_database::MaterialDatabase, mc_vector::MCVector},
     parameters::{GeometryParameters, Parameters, Shape},
     simulation::mct::cell_position_3dg,
@@ -24,6 +21,7 @@ use super::{
     mc_cell_state::MCCellState,
     mc_location::MCLocation,
     mesh_partition::{CellInfo, MeshPartition},
+    N_FACES, N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET,
 };
 
 /// Structure used to hold information related a cell's face.
@@ -124,12 +122,9 @@ impl<T: CustomFloat> MCMeshDomain<T> {
         // fill with correct value
         (0..cell_connectivity.len()).for_each(|cell_idx| {
             (0..N_FACETS_OUT).for_each(|facet_idx| {
-                let r0: MCVector<T> =
-                    node[cell_connectivity[cell_idx].facet[facet_idx].point[0].unwrap()];
-                let r1: MCVector<T> =
-                    node[cell_connectivity[cell_idx].facet[facet_idx].point[1].unwrap()];
-                let r2: MCVector<T> =
-                    node[cell_connectivity[cell_idx].facet[facet_idx].point[2].unwrap()];
+                let r0: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[0]];
+                let r1: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[1]];
+                let r2: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[2]];
                 cell_geometry[cell_idx][facet_idx] = MCGeneralPlane::new(&r0, &r1, &r2);
             });
         });
@@ -258,9 +253,9 @@ impl<T: CustomFloat> MCDomain<T> {
 
         (0..N_FACETS_OUT).for_each(|facet_idx| {
             let corners = &cell.facet[facet_idx].point;
-            let aa: MCVector<T> = node[corners[0].unwrap()] - center;
-            let bb: MCVector<T> = node[corners[1].unwrap()] - center;
-            let cc: MCVector<T> = node[corners[2].unwrap()] - center;
+            let aa: MCVector<T> = node[corners[0]] - center;
+            let bb: MCVector<T> = node[corners[1]] - center;
+            let cc: MCVector<T> = node[corners[2]] - center;
             volume += aa.dot(&bb.cross(&cc)).abs();
         });
         volume /= FromPrimitive::from_f64(6.0).unwrap();
@@ -387,9 +382,9 @@ fn make_facet(
     let facet_id = location.facet.unwrap();
     let face_id = facet_id / 4;
 
-    facet.point[0] = Some(node_idx[NODE_INDIRECT[facet_id][0]]);
-    facet.point[1] = Some(node_idx[NODE_INDIRECT[facet_id][1]]);
-    facet.point[2] = Some(node_idx[NODE_INDIRECT[facet_id][2]]);
+    facet.point[0] = node_idx[NODE_INDIRECT[facet_id][0]];
+    facet.point[1] = node_idx[NODE_INDIRECT[facet_id][1]];
+    facet.point[2] = node_idx[NODE_INDIRECT[facet_id][2]];
     facet.subfacet.event = face_info[face_id].event;
     facet.subfacet.current = *location;
     facet.subfacet.adjacent.domain = face_info[face_id].cell_info.domain_index;

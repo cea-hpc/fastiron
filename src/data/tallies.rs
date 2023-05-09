@@ -6,16 +6,16 @@
 //! Note that this module isn't used to compute time-related data, this is done in
 //! the [utils::mc_fast_timer][crate::utils::mc_fast_timer] module.
 
-use std::{fmt::Debug, iter::zip};
+use std::{fmt::Debug, fs::OpenOptions, io::Write, iter::zip};
 
 use num::zero;
 
 use crate::{
     constants::CustomFloat,
     geometry::mc_domain::MCDomain,
-    montecarlo::MonteCarlo,
     parameters::BenchType,
-    utils::mc_fast_timer::{self, Section},
+    particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
+    utils::mc_fast_timer::{self, MCFastTimerContainer, Section},
 };
 
 use super::energy_spectrum::EnergySpectrum;
@@ -281,12 +281,12 @@ impl<T: CustomFloat> Tallies<T> {
     /// would look like the following:
     ///
     /// ```shell
-    /// cycle   |    start     source         rr        split       absorb      scatter      fission      produce    collision       escape       census      num_seg   scalar_flux   cycleInit (s)  cycleTracking (s)  cycleFinalize (s)
-    ///       0 |        0      10000          0        90000        97237       711673        86904        86904       895814            0         2763      2245733    8.984036e11   1.4745e-2         1.088409e0                0e0
-    ///       1 |     2763      10000          0        87202        97576       715193        86951        86951       899720            0         2389      2250433    9.191721e11   1.1338e-2         1.114024e0                0e0
-    ///       2 |     2389      10000          0        87625        97569       717781        87733        87733       903083            0         2445      2262159    9.303649e11     8.45e-3         1.125107e0                0e0
-    ///       3 |     2445      10000       1468        87569        96180       704095        85839        85839       886114            0         2366      2217454    9.227719e11    9.499e-3         1.106859e0                0e0
-    ///       4 |     2366      10000        331        87599        97132       716577        87708        87708       901417            0         2502      2256889    9.255832e11    9.701e-3         1.129408e0                0e0
+    /// cycle   |  start |   source |       rr |      split |     absorb |    scatter |    fission |    produce |  collision |     escape |     census |    num_seg |   scalar_flux | ppControl (s) | cycleTracking (s) | cycleSync (s)
+    ///       0 |      0 |    10000 |        0 |      90000 |      97237 |     711673 |      86904 |      86904 |     895814 |          0 |       2763 |    2245733 |   8.984036e11 |  1.757e-2     |     1.01038e0     |  2.200e-4
+    ///       1 |   2763 |    10000 |        0 |      87202 |      97576 |     715193 |      86951 |      86951 |     899720 |          0 |       2389 |    2250433 |   9.191721e11 |  1.337e-2     |     1.02491e0     |  7.382e-4
+    ///       2 |   2389 |    10000 |        0 |      87625 |      97569 |     717781 |      87733 |      87733 |     903083 |          0 |       2445 |    2262159 |   9.303649e11 |  9.174e-3     |     1.03161e0     |  7.335e-4
+    ///       3 |   2445 |    10000 |     1468 |      87569 |      96180 |     704095 |      85839 |      85839 |     886114 |          0 |       2366 |    2217454 |   9.227719e11 |  1.119e-2     |     1.01220e0     |  6.674e-4
+    ///       4 |   2366 |    10000 |      331 |      87599 |      97132 |     716577 |      87708 |      87708 |     901417 |          0 |       2502 |    2256889 |   9.255832e11 |  1.124e-2     |     1.02922e0     |  6.787e-4
     /// ```
     ///
     /// - `cycle` column gives the cycle number.
@@ -301,23 +301,38 @@ impl<T: CustomFloat> Tallies<T> {
     /// - `num_seg` column counts the total number of computed segments.
     /// - `scalar_flux` is the total scalar flux of the problem.
     /// - The last three columns indicate the time spent in each section.
-    pub fn print_summary(&self, mcco: &MonteCarlo<T>) {
-        if mcco.time_info.cycle == 0 {
+    pub fn print_summary(
+        &self,
+        timer_container: &mut MCFastTimerContainer,
+        step: usize,
+        csv: bool,
+    ) {
+        if step == 0 {
             // print header
             println!("[Tally Summary]");
             println!(
-                "{:<7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>13} {:>15} {:>18} {:>18}",
-                "cycle", "start", "source", "rr", "split", "absorb", "scatter", "fission", "produce", "collision", 
-                "escape", "census", "num_seg", "scalar_flux", "cycleInit (s)", "cycleTracking (s)", "cycleFinalize (s)"
+                "{:<7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>15} {:>13} {:>19} {:>13}",
+                "cycle", "start |", "source |", "rr |", "split |", "absorb |", "scatter |", "fission |", "produce |", "collision |", 
+                "escape |", "census |", "num_seg |", "scalar_flux |", "ppControl (s) |", "cycleTracking (s) |", "cycleSync (s)"
             );
+            if csv {
+                // write column name
+                let mut file = OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .truncate(true)
+                    .open("tallies_report.csv")
+                    .unwrap();
+                writeln!(file, "cycle;start;source;rr;split;absorb;scatter;fission;produce;collision;escape;census;num_seg;scalar_flux;ppControl(s);cycleTracking(s);cycleSync(s)").unwrap();
+            }
         }
-        let cy_init = mc_fast_timer::get_last_cycle(mcco, Section::CycleInit);
-        let cy_track = mc_fast_timer::get_last_cycle(mcco, Section::CycleTracking);
-        let cy_fin = mc_fast_timer::get_last_cycle(mcco, Section::CycleFinalize);
+        let cy_init = mc_fast_timer::get_last_cycle(timer_container, Section::PopulationControl);
+        let cy_track = mc_fast_timer::get_last_cycle(timer_container, Section::CycleTracking);
+        let cy_fin = mc_fast_timer::get_last_cycle(timer_container, Section::CycleSync);
         let sf_sum = self.scalar_flux_sum();
         let bal = &self.balance_cycle;
-        println!("{:>7} | {:>8} {:>10} {:>10} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12}    {:.6e} {:>11.3e} {:>18.5e} {:>18.3e}",
-            mcco.time_info.cycle,
+        println!("{:>7} |{:>7} |{:>9} |{:>9} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>14.6e} |{:>10.3e}     |{:>14.5e}     |{:>10.3e}",
+            step,
             bal.start,
             bal.source,
             bal.rr,
@@ -335,6 +350,35 @@ impl<T: CustomFloat> Tallies<T> {
             cy_track,
             cy_fin,
         );
+
+        if csv {
+            let mut file = OpenOptions::new()
+                .append(true)
+                .open("tallies_report.csv")
+                .unwrap();
+            writeln!(
+                file,
+                "{};{};{};{};{};{};{};{};{};{};{};{};{};{:e};{:e};{:e};{:e}",
+                step,
+                bal.start,
+                bal.source,
+                bal.rr,
+                bal.split,
+                bal.absorb,
+                bal.scatter,
+                bal.fission,
+                bal.produce,
+                bal.collision,
+                bal.escape,
+                bal.census,
+                bal.num_segments,
+                sf_sum,
+                cy_init,
+                cy_track,
+                cy_fin,
+            )
+            .unwrap();
+        }
     }
 
     /// Computes the global scalar flux value of the problem.
@@ -351,6 +395,30 @@ impl<T: CustomFloat> Tallies<T> {
             })
             .sum();
         summ
+    }
+
+    /// Update the energy spectrum by going over all the currently valid particles.
+    pub fn update_spectrum(&mut self, container: &ParticleContainer<T>) {
+        if self.spectrum.file_name.is_empty() {
+            return;
+        }
+
+        let update_function = |particle_list: &[MCParticle<T>], spectrum: &mut [u64]| {
+            particle_list.iter().for_each(|particle| {
+                spectrum[particle.energy_group] += 1;
+            });
+        };
+
+        // Iterate on processing particles
+        update_function(
+            &container.processing_particles,
+            &mut self.spectrum.census_energy_spectrum,
+        );
+        // Iterate on processed particles
+        update_function(
+            &container.processed_particles,
+            &mut self.spectrum.census_energy_spectrum,
+        );
     }
 
     /// Print stats of the current cycle and update the cumulative counters.

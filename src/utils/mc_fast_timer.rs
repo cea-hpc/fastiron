@@ -4,13 +4,12 @@
 
 use std::{
     fmt::Display,
+    fs::OpenOptions,
+    io::Write,
     time::{Duration, Instant},
 };
 
-use crate::{
-    constants::{sim::N_TIMERS, CustomFloat},
-    montecarlo::MonteCarlo,
-};
+use crate::constants::sim::N_TIMERS;
 
 /// Enum used to identify sections and their corresponding
 /// timers.
@@ -19,7 +18,7 @@ pub enum Section {
     /// Full execution time.
     Main = 0,
     /// `cycle_init()` execution time.
-    CycleInit,
+    PopulationControl,
     /// `cycle_tracking()` execution time.
     CycleTracking,
     /// Tracking loop of `cycle_tracking()` execution time.
@@ -27,18 +26,18 @@ pub enum Section {
     /// Communication phase of `cycle_tracking()` execution time.
     CycleTrackingComm,
     /// `cycle_finalize()` execution time.
-    CycleFinalize,
+    CycleSync,
 }
 
 impl Display for Section {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Section::Main => write!(f, "Section::Main                 "),
-            Section::CycleInit => write!(f, "Section::CycleInit            "),
+            Section::PopulationControl => write!(f, "Section::PopulationControl    "),
             Section::CycleTracking => write!(f, "Section::CycleTracking        "),
             Section::CycleTrackingKernel => write!(f, "Section::CycleTrackingKernel  "),
             Section::CycleTrackingComm => write!(f, "Section::CycleTrackingComm    "),
-            Section::CycleFinalize => write!(f, "Section::CycleFinalize        "),
+            Section::CycleSync => write!(f, "Section::CycleSync            "),
         }
     }
 }
@@ -97,11 +96,47 @@ impl MCFastTimerContainer {
     /// total column should be compared to Quicksilver's cumulative report despite
     /// what its header says.
     ///
-    /// TODO: add a model of the produced output
-    pub fn cumulative_report(&self, num_segments: u64) {
+    /// Here is an example output:
+    ///
+    /// ```shell
+    /// Timer Name                     | Total # of calls | Shortest cycle (µs) | Average per cycle (µs) | Longest cycle (µs) | Total in section (µs) | Efficiency rating (%)
+    /// Section::Main                  |                1 |     1.027135e7      |        1.027135e7      |    1.027135e7      |       1.027135e7      |             100.0
+    /// Section::PopulationControl     |               10 |     9.609000e3      |        1.179200e4      |    1.645900e4      |       1.179200e5      |              71.6
+    /// Section::CycleTracking         |               10 |     9.942510e5      |        1.014646e6      |    1.024305e6      |       1.014647e7      |              99.1
+    /// Section::CycleTrackingKernel   |               10 |     9.942500e5      |        1.014646e6      |    1.024305e6      |       1.014646e7      |              99.1
+    /// Section::CycleTrackingComm     |               10 |     0.000000e0      |        0.000000e0      |    0.000000e0      |       2.000000e0      |              38.5
+    /// Section::CycleSync             |               11 |     2.540000e2      |        6.280000e2      |    8.360000e2      |       6.283000e3      |              75.1
+    /// Figure of merit: 2.203e6 [segments / cycle tracking time]
+    /// ```
+    ///
+    /// [`Section::PopulationControl`] and [`Section::CycleSync`] do not really have an
+    /// equivalent in Quicksilver, the comparable values are those of [`Section::Main`]
+    /// and [`Section::CycleTracking`] as well as the figure of merit.
+    pub fn cumulative_report(&self, num_segments: u64, csv: bool) {
         // Print header
         println!("[Timer Report]");
-        println!("Timer Name                       | Total number of calls      Shortest cycle (µs)    Average per cycle (µs)     Longest cycle (µs)    Total in section (µs)    Efficiency rating (%)");
+        println!(
+            "Timer Name                     | {:16} | {:19} | {:22} | {:18} | {:21} | {:21}",
+            "Total # of calls",
+            "Shortest cycle (µs)",
+            "Average per cycle (µs)",
+            "Longest cycle (µs)",
+            "Total in section (µs)",
+            "Efficiency rating (%)",
+        );
+        if csv {
+            let mut file = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open("timers_report.csv")
+                .unwrap();
+            writeln!(
+                file,
+                "Timer Name;#calls;Shortest(µs);Average(µs);Longest(µs);Total(µs);Efficiency(%)",
+            )
+            .unwrap();
+        }
         // print data
         self.timers
             .iter()
@@ -109,15 +144,15 @@ impl MCFastTimerContainer {
             .for_each(|(timer_idx, timer)| {
                 let section = match timer_idx {
                     0 => Section::Main,
-                    1 => Section::CycleInit,
+                    1 => Section::PopulationControl,
                     2 => Section::CycleTracking,
                     3 => Section::CycleTrackingKernel,
                     4 => Section::CycleTrackingComm,
-                    5 => Section::CycleFinalize,
+                    5 => Section::CycleSync,
                     _ => unreachable!(),
                 };
                 println!(
-                    "{}   | {:>21}    {:>16e}    {:>22e}     {:>18e}    {:>21e}    {:>22.1}",
+                    "{} | {:>16} | {:>14.6e}      | {:>17.6e}      | {:>13.6e}      | {:>16.6e}      | {:>17.1}",
                     section,
                     timer.num_calls,
                     self.mins[timer_idx].as_micros(),
@@ -127,6 +162,22 @@ impl MCFastTimerContainer {
                     (100.0 * self.avgs[timer_idx].as_secs_f64())
                         / (self.maxs[timer_idx].as_secs_f64() + 1.0e-80),
                 );
+                if csv {
+                    let mut file = OpenOptions::new()
+                        .append(true)
+                        .open("timers_report.csv")
+                        .unwrap();
+                    writeln!(file, "{};{};{:e};{:e};{:e};{:e};{:.1}", 
+                        section,
+                        timer.num_calls,
+                        self.mins[timer_idx].as_micros(),
+                        self.avgs[timer_idx].as_micros(),
+                        self.maxs[timer_idx].as_micros(),
+                        self.tots[timer_idx].as_micros(),
+                        (100.0 * self.avgs[timer_idx].as_secs_f64())
+                            / (self.maxs[timer_idx].as_secs_f64() + 1.0e-80)
+                    ).unwrap();
+                };
             });
         println!(
             "Figure of merit: {:>.3e} [segments / cycle tracking time]",
@@ -189,26 +240,26 @@ impl Default for MCFastTimerContainer {
 }
 
 /// Start the specified timer.
-pub fn start<T: CustomFloat>(mcco: &mut MonteCarlo<T>, section: Section) {
+pub fn start(timer_container: &mut MCFastTimerContainer, section: Section) {
     let index = section as usize;
-    mcco.fast_timer.timers[index].start_clock = Instant::now();
+    timer_container.timers[index].start_clock = Instant::now();
 }
 
 /// Stop the specified timer and record internally the duration sicne start.
-pub fn stop<T: CustomFloat>(mcco: &mut MonteCarlo<T>, section: Section) {
+pub fn stop(timer_container: &mut MCFastTimerContainer, section: Section) {
     let index = section as usize;
-    mcco.fast_timer.timers[index].end_clock = Instant::now();
-    mcco.fast_timer.timers[index].last_cycle_clock += mcco.fast_timer.timers[index]
+    timer_container.timers[index].end_clock = Instant::now();
+    timer_container.timers[index].last_cycle_clock += timer_container.timers[index]
         .end_clock
-        .duration_since(mcco.fast_timer.timers[index].start_clock);
-    mcco.fast_timer.timers[index].cumulative_clock += mcco.fast_timer.timers[index]
+        .duration_since(timer_container.timers[index].start_clock);
+    timer_container.timers[index].cumulative_clock += timer_container.timers[index]
         .end_clock
-        .duration_since(mcco.fast_timer.timers[index].start_clock);
-    mcco.fast_timer.timers[index].num_calls += 1;
+        .duration_since(timer_container.timers[index].start_clock);
+    timer_container.timers[index].num_calls += 1;
 }
 
 /// Returns the duration of the last cycle of the specified timer.
-pub fn get_last_cycle<T: CustomFloat>(mcco: &MonteCarlo<T>, section: Section) -> f64 {
+pub fn get_last_cycle(timer_container: &mut MCFastTimerContainer, section: Section) -> f64 {
     let index = section as usize;
-    mcco.fast_timer.timers[index].last_cycle_clock.as_secs_f64()
+    timer_container.timers[index].last_cycle_clock.as_secs_f64()
 }

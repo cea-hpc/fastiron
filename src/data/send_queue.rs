@@ -62,7 +62,6 @@ impl<T: CustomFloat> SendQueue<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::particles::mc_base_particle::MCBaseParticle;
 
     use super::*;
 
@@ -117,28 +116,24 @@ mod tests {
         let ttt: SendQueueTuple<f64> = SendQueueTuple {
             neighbor: 3,
             particle: MCParticle {
-                base_particle: MCBaseParticle {
-                    identifier: 23,
-                    ..Default::default()
-                },
+                identifier: 23,
                 ..Default::default()
             },
         };
 
         let mut queue = SendQueue { data: vec![tt; 4] };
 
-        let mut pp = MCParticle::default();
-        pp.base_particle.identifier = 23;
+        let pp = MCParticle {
+            identifier: 23,
+            ..Default::default()
+        };
         queue.push(3, &pp);
 
         assert_eq!(queue.data.len(), 5);
         assert_eq!(queue.data[queue.data.len() - 1].neighbor, ttt.neighbor);
         assert_eq!(
-            queue.data[queue.data.len() - 1]
-                .particle
-                .base_particle
-                .identifier,
-            ttt.particle.base_particle.identifier
+            queue.data[queue.data.len() - 1].particle.identifier,
+            ttt.particle.identifier
         );
 
         queue.clear();

@@ -5,9 +5,8 @@
 
 use crate::{
     constants::CustomFloat,
-    data::{send_queue::SendQueue, tallies::MCTallyEvent},
-    geometry::facets::MCSubfacetAdjacencyEvent,
-    montecarlo::MonteCarlo,
+    data::tallies::MCTallyEvent,
+    geometry::facets::{MCSubfacetAdjacencyEvent, SubfacetAdjacency},
     particles::mc_particle::MCParticle,
 };
 
@@ -16,47 +15,34 @@ use crate::{
 /// This functions update a particle's locational data according to one of the
 /// four defined adjacency events ([MCSubfacetAdjacencyEvent]). Note that in a
 /// sequential or a memory-shared parallelism context, there are no off-processor
-/// transit.
+/// transit as the mesh is not divided for management.
 pub fn facet_crossing_event<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    mcco: &mut MonteCarlo<T>,
-    send_queue: &mut SendQueue<T>,
+    facet_adjacency: &SubfacetAdjacency,
 ) {
-    let location = particle.get_location();
-    let facet_adjacency = &mcco.domain[location.domain.unwrap()].mesh.cell_connectivity
-        [location.cell.unwrap()]
-    .facet[location.facet.unwrap()]
-    .subfacet;
-
     match facet_adjacency.event {
         MCSubfacetAdjacencyEvent::TransitOnProcessor => {
             // particle enters an adjacent cell
-            particle.base_particle.domain = facet_adjacency.adjacent.domain.unwrap();
-            particle.base_particle.cell = facet_adjacency.adjacent.cell.unwrap();
+            particle.domain = facet_adjacency.adjacent.domain.unwrap();
+            particle.cell = facet_adjacency.adjacent.cell.unwrap();
             particle.facet = facet_adjacency.adjacent.facet.unwrap();
-            particle.base_particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
+            particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
         }
         MCSubfacetAdjacencyEvent::BoundaryEscape => {
             // particle escape the system
-            particle.base_particle.last_event = MCTallyEvent::FacetCrossingEscape;
+            particle.last_event = MCTallyEvent::FacetCrossingEscape;
         }
         MCSubfacetAdjacencyEvent::BoundaryReflection => {
             // particle reflect off a system boundary
-            particle.base_particle.last_event = MCTallyEvent::FacetCrossingReflection
+            particle.last_event = MCTallyEvent::FacetCrossingReflection
         }
         MCSubfacetAdjacencyEvent::TransitOffProcessor => {
             // particle enters an adjacent cell that belongs to
             // a domain managed by another processor.
-            particle.base_particle.domain = facet_adjacency.adjacent.domain.unwrap();
-            particle.base_particle.cell = facet_adjacency.adjacent.cell.unwrap();
+            particle.domain = facet_adjacency.adjacent.domain.unwrap();
+            particle.cell = facet_adjacency.adjacent.cell.unwrap();
             particle.facet = facet_adjacency.adjacent.facet.unwrap();
-            particle.base_particle.last_event = MCTallyEvent::FacetCrossingCommunication;
-
-            let neighbor_rank: usize = mcco.domain[facet_adjacency.current.domain.unwrap()]
-                .mesh
-                .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
-
-            send_queue.push(neighbor_rank, particle);
+            particle.last_event = MCTallyEvent::FacetCrossingCommunication;
         }
         MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
     }

@@ -1,5 +1,7 @@
 # folders
 /target
+/.vscode
+/tmp
 
 # overall files
 *.dat
@@ -8,3 +10,5 @@
 
 # location-specific files
 /*.svg
+/*.csv
+/*.zst
