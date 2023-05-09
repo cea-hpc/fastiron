@@ -11,6 +11,8 @@ column -s=';' -t < a_file.csv
 Note that this analysis precedes some additional changes to be done to the code 
 before release. See the dedicated [section](#additional-changes) for more detail.
 
+This analysis was also done without tampering with CPU turbo or governor. Redoing it 
+would mean also re-running the old version. It might be done later.
 
 ## Correlation Study
 
@@ -28,9 +30,10 @@ sections.
 The sample space is the same for all RV: the cycle indexes. The measurable space is
 positive integers for event RV, positive reals for section RV.
 
-The data used for this is located in the `CTS2_1_data/` folder, the code used for 
-processing and plotting data is located [here][1]. For the analysis, the coefficients
-might be referred to by the name of their variables when it's not ambiguous.
+The data used for this is located in the `reference_data/` folder, the code used for 
+processing and plotting data is available in the `fastiron-stats` folder. For the 
+analysis, the coefficients might be referred to by the name of their variables when 
+it's not ambiguous.
 
 ### `CycleTracking`
 
