@@ -29,7 +29,7 @@
 //! automatically provide inputs by redirecting a file to the program:
 //!
 //! ```shell
-//! cargo run --release --bin=fastiron -- < sample_data/auto_input_example
+//! cargo run --release --bin=fastiron-stats -- < sample_data/auto_input_example
 //! ```
 //!
 //! The control flow being simple, it is easy to pre-write a set of answer to achieve

@@ -1,3 +1,8 @@
+//! Modelling code
+//!
+//! This module contains all structures used to model the data and
+//! structure the computations.
+
 use std::{iter::zip, ops::Index};
 
 /// Number of fields presented in the tallies report produced

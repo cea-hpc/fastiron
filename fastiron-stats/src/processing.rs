@@ -1,3 +1,7 @@
+//! Data computation & analysis
+//!
+//! This module contains all functions used for data processing.
+
 use crate::structures::{correlation, FiniteDiscreteRV, TalliedData, TimerReport, TimerSV};
 
 /// Pairs of tallied data to be correlated.
