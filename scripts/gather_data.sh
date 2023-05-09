@@ -22,23 +22,23 @@ mv $PROJECTDIR/timers_report.csv $TARGETDIR/current_timers.csv
 mv $PROJECTDIR/tallies_report.csv $TARGETDIR/CTS2_tallies.csv
 
 # Run scaling simulations
-$FASTIRON -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 10000 -c
+$FASTIRON -i $PROJECTDIR/input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 10000 -c
 mv $PROJECTDIR/timers_report.csv $TARGETDIR/timers10000.csv
-$FASTIRON -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 20000 -c
+$FASTIRON -i $PROJECTDIR/input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 20000 -c
 mv $PROJECTDIR/timers_report.csv $TARGETDIR/timers20000.csv
-$FASTIRON -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 30000 -c
+$FASTIRON -i $PROJECTDIR/input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 30000 -c
 mv $PROJECTDIR/timers_report.csv $TARGETDIR/timers30000.csv
-$FASTIRON -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 40000 -c
+$FASTIRON -i $PROJECTDIR/input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 40000 -c
 mv $PROJECTDIR/timers_report.csv $TARGETDIR/timers40000.csv
-$FASTIRON -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 50000 -c
+$FASTIRON -i $PROJECTDIR/input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 50000 -c
 mv $PROJECTDIR/timers_report.csv $TARGETDIR/timers50000.csv
-$FASTIRON -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 60000 -c
+$FASTIRON -i $PROJECTDIR/input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 60000 -c
 mv $PROJECTDIR/timers_report.csv $TARGETDIR/timers60000.csv
-$FASTIRON -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 70000 -c
+$FASTIRON -i $PROJECTDIR/input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 70000 -c
 mv $PROJECTDIR/timers_report.csv $TARGETDIR/timers70000.csv
-$FASTIRON -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 80000 -c
+$FASTIRON -i $PROJECTDIR/input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 80000 -c
 mv $PROJECTDIR/timers_report.csv $TARGETDIR/timers80000.csv
-$FASTIRON -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 90000 -c
+$FASTIRON -i $PROJECTDIR/input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 90000 -c
 mv $PROJECTDIR/timers_report.csv $TARGETDIR/timers90000.csv
-$FASTIRON -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 100000 -c
+$FASTIRON -i $PROJECTDIR/input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -n 100000 -c
 mv $PROJECTDIR/timers_report.csv $TARGETDIR/timers100000.csv
