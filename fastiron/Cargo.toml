@@ -1,0 +1,30 @@
+[package]
+name = "fastiron"
+version = "1.1.0"
+edition = "2021"
+about = "[This is an about text]"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = {version="4.1.4", features=["cargo", "derive"]}
+serde_yaml = {version="0.9.17", features=[]}
+num = {version="0.4.0"}
+rand = {version="0.8.5", features=["small_rng"]}
+tinyvec = {version="1.6.0"}
+
+[profile.release]
+lto = true
+#codegen-units = 1
+debug = true
+
+[dev-dependencies]
+criterion = {version="0.3.4", features=["html_reports"]}
+
+[[bench]]
+name = "rng_benchmark"
+harness = false
+
+[[bench]]
+name = "mct_cross_product"
+harness = false
