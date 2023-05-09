@@ -23,10 +23,7 @@ supported computations:
   visualized using the corresponding `gnuplot` scripts.
 - **Scaling study**: Compiles data from a collection of timer to a `.dat` file
   that can be used to plot section lengths depending on total number of particles
-  using a `gnuplot` script. Currently, only arithmetic progression is supported 
-  for the scaling number of particle. Geometric progression support will be added 
-  in the future, as well as a specific script to plot this data using a logarithmic
-  scale.
+  using a `gnuplot` script. Scaling can be linear or exponential.
 
 The user will be prompted first on which computations he wishes to do, only then 
 will specific data be requested for processing. Additionally, the user can 
