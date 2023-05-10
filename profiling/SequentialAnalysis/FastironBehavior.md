@@ -1,5 +1,8 @@
 # Behavior of Fastiron
 
+## Flamegraph
+
+![flamegraph](../Fastiron/1.2-RuSeq/CTS2.svg)
 
 ## Correlation Study
 
@@ -15,12 +18,8 @@ sections.
 `cycleTracking (s)` section.
 
 The sample space is the same for all RV: the cycle indexes. The measurable space is
-positive integers for event RV, positive reals for section RV.
-
-The data used for this is located in the `reference_data/` folder, the code used for 
-processing and plotting data is available in the `fastiron-stats` folder. For the 
-analysis, the coefficients might be referred to by the name of their variables when 
-it's not ambiguous.
+positive integers for event RV, positive reals for section RV. The coefficients might 
+be referred to by the name of their variables when it's not ambiguous.
 
 ### `CycleTracking`
 
@@ -29,46 +28,37 @@ it's not ambiguous.
 This figure yields a number of interesting points. First, the `NumSeg` variable is 
 not the one with the highest correlation coefficient. This means that while the 
 number of computed segment is (heavily) linked to the total time spent in the tracking
-section, it is not the most important factor.
+section, it is not the most important factor by a large margin.
 
 The `Census` variable has a negative coefficient, meaning that the time spent in the 
 tracking section, overall, scales negatively with the number of particle reaching census.
 This is coherent as a particle reaching census means that no more segments will be 
 computed for it, reducing the "time left to spend" in the tracking section.
 
-From the two previous coefficients, and the one of the `Collision` variable, we can 
-speculate that **the distribution of events is more important than the overall number of 
-segments**. An additional piece of evidence could be found by tallying facet 
-crossing events: the reaction-specific coefficients hint at the cost of this kind of
-outcome, `Absorb` being the variable with the highest coefficient. If this hypothesis 
-is correct, we would also find a high coefficient for facet crossings.
-
-Concerning reaction-specific coefficients, we can see that the `Absorb` and `Fission`
-values are higher than `Scatter`. Considering that absorption happens both in reactions
-and at the problem's bounds, it is coherent with the cost of the events. As for fission,
-the reaction requires sampling for particles created during the reaction, a costly 
-process both in execution time and memory.
+Concerning reaction-specific coefficients, the coefficients are overall the same. This 
+could indicate that the differences in cost of reaction-specific processing are not 
+significant enough overall. This is further supported by the data shown on the 
+flamegraph: Approximately 77% of the time spent in `cycle_tracking()` is spent computing
+the segment outcome.
 
 ### `PopulationControl` & `CycleSync`
 
 ![popsync](figures/FI_64/heatmap_popsync.png)
 
 
-- `PopulationControl`/`Rr`: The coefficient is quite close to zero, meaning the time 
-  spent doing population control is almost independent from the number of
-  russian-rouletted particle. Note that this value is biased in this benchmark as 
-  there is no russian-roulette due to overpopulation, they are only due to the low
-  weight threshold.
-- `PopulationControl`/`Split`: The coefficient is low positive. We can guess
+- `PopulationControl`/`Rr`: The coefficient is low negative. Note that this value is 
+  biased in this benchmark as there is no russian-roulette due to overpopulation, they 
+  are only due to the low weight threshold.
+- `PopulationControl`/`Split`: The coefficient is positive. We can guess
   that creating particle is a costly task, so the more we create, the more time we 
-  spend in the section. The low value could be explained by the number of "task" 
+  spend in the section. The _low-ish_ value could be explained by the number of "task" 
   ran for population control: sourcing, splitting, and two types of russian-roulette.
   The splitting can only account for so much of the total time, hence the 
   low-but-positive coefficient.
 - `CycleSync`/`Rr`: The coefficient is low positive. Note that this value is biased 
   in this benchmark as there is no russian-roulette due to overpopulation, they are 
   only due to the low weight threshold.
-- `CycleSync`/`Split`: The coefficient is negative, with a somewhat high value. This 
+- `CycleSync`/`Split`: The coefficient is negative. This 
   can be explained by the logic controling the splitting process. Splitting happens 
   after sourcing, which happens after the synchronization phase. Splitting happens if
   the problem is underpopulated, the lower the number of particles, the higher the 

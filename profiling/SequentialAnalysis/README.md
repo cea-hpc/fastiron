@@ -1,22 +1,14 @@
 # Sequential Analysis
 
 The study on the influence of the number of particles was done using the `homogeneous7`
-problem while the rest was done using the `CTS2_1` benchmark. The data recorded in the 
-`csv` files can be viewed using `column`: 
+problem while the rest was done using the `CTS2_1` benchmark. The data used for this is 
+located in the `reference_data/` folder, the code used for processing and plotting data 
+is available in the `fastiron-stats` folder. It can be visualized using `column`:
 
 ```bash
-column -s=';' -t < a_file.csv
+column -s=';' -t < a_file.csv # Might have to change the separator to comma for scaling data
 ```
 
-Note that this analysis precedes some additional changes to be done to the code 
-before release. See the dedicated [section](#additional-changes) for more detail.
-
-This analysis was also done without tampering with CPU turbo or governor. Redoing it 
-would mean also re-running the old version. It might be done later.
-
-
-FoM f64: 7.638e5 [segments / cycle tracking time]
-FoM f32: 8.085e5 [segments / cycle tracking time]
 
 
 
@@ -76,23 +68,5 @@ values have comparable values despite the deletion of the `MCBaseParticle` struc
 hence a supposedly heavier particle initialization.
 
 
-## Additional Changes
-
-Three additional changes have been made and are not taken into account in this 
-analysis. They were merged with PR [#62][4]:
-
-- The `sample_collision()` routine has been rewritten as a method for the `MCParticle` 
-  structure. The new structure prevents a vector return and is overall clearer. The 
-  new function also makes use of [`tinyvec`][3] to greatly reduce the number of 
-  allocations.
-- `MCFacetAdjacency` no longer makes use of `Option<>`, this allows for much less
-  unwraps when computing the nearest facet to a particle.
-- The sourcing function has been slightly changed to reduce the number of allocations.
-
-Only the rewrite of `sample_collision()` affect significantly execution time, the 
-other two changes only affect memory footprint in a non-negligible way.
-
 [1]: https://github.com/imrn99/fi_stats
 [2]: https://en.wikipedia.org/wiki/Relative_change_and_difference#Definition
-[3]: https://docs.rs/tinyvec/latest/tinyvec/
-[4]: https://github.com/cea-hpc/fastiron/pull/62
