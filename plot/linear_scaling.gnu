@@ -12,7 +12,7 @@ set output 'scaling_ppcontrol.png'
 plot 'scaling.dat' using 1:2 notitle with linespoints
 
 # CycleTracking
-set yrange [ 0 : 1150000 ] noreverse nowriteback
+set yrange [ 0 : * ] noreverse nowriteback
 set title "CycleTracking Average Time = f(n_{particles})"
 set output 'scaling_tracking.png'
 plot 'scaling.dat' using 1:3 notitle with linespoints
