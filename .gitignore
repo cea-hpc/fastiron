@@ -6,3 +6,4 @@
 *.png
 
 !/profiling/Fastiron/RuSeq/*.csv
+!/profiling/SequentialAnalysis/reference_data/*/*.csv
