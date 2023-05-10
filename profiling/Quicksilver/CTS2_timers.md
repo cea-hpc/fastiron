@@ -14,7 +14,6 @@ cycleTracking_Kernel             58833    7.729e+08    7.729e+08    7.729e+08   
 cycleTracking_MPI                64186    8.419e+05    8.419e+05    8.419e+05    0.000e+00       100.00
 cycleTracking_Test_Done              0    0.000e+00    0.000e+00    0.000e+00    0.000e+00         0.00
 cycleFinalize                      200    3.289e+05    3.289e+05    3.289e+05    0.000e+00       100.00
-
 ```
 
 **Figure of merit**: `4.830e+05 [Num Segments / Cycle Tracking Time]`
