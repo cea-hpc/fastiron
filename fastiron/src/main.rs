@@ -18,7 +18,7 @@ use num::{one, zero, FromPrimitive};
 fn main() {
     let cli = Cli::parse();
 
-    let params: Parameters<f32> = Parameters::get_parameters(cli).unwrap();
+    let params: Parameters<f64> = Parameters::get_parameters(cli).unwrap();
     println!("[Simulation Parameters]\n{:#?}", params.simulation_params);
     let start_init = Instant::now();
     println!("[Initialization]: Start");

@@ -32,7 +32,11 @@ fn verify_cli_parsing() {
 fn verify_input_file_compatibility() {
     let mut params = Parameters::<f64>::default();
     // we just verify that the file could be parsed, not if it was parsed correctly
-    parse_input_file("input_files/debug/homogeneous.inp".to_string(), &mut params).unwrap();
+    parse_input_file(
+        "../input_files/debug/homogeneous.inp".to_string(),
+        &mut params,
+    )
+    .unwrap();
 }
 
 #[test]
@@ -49,7 +53,7 @@ fn missing_input_file() {
 fn missing_cross_section() {
     let mut params = Parameters::<f64>::default();
     parse_input_file(
-        "input_files/debug/missing_cross_section.inp".to_string(),
+        "../input_files/debug/missing_cross_section.inp".to_string(),
         &mut params,
     )
     .unwrap();
@@ -67,7 +71,7 @@ fn missing_cross_section() {
 fn missing_material() {
     let mut params = Parameters::<f64>::default();
     parse_input_file(
-        "input_files/debug/missing_material.inp".to_string(),
+        "../input_files/debug/missing_material.inp".to_string(),
         &mut params,
     )
     .unwrap();
@@ -86,7 +90,7 @@ fn no_geometry_supplied() {
     let mut params = Parameters::<f64>::default();
     // parse a file with no geometry block
     parse_input_file(
-        "input_files/debug/sim_block_only.inp".to_string(),
+        "../input_files/debug/sim_block_only.inp".to_string(),
         &mut params,
     )
     .unwrap();
@@ -104,7 +108,7 @@ fn no_geometry_supplied() {
 #[test]
 fn verify_file_parsing() {
     let mut params = Parameters::default();
-    parse_input_file("input_files/debug/parsing.inp".to_string(), &mut params).unwrap();
+    parse_input_file("../input_files/debug/parsing.inp".to_string(), &mut params).unwrap();
     // check for obvious issues
     params.check_parameters_integrity().unwrap();
     // lots of assert!
