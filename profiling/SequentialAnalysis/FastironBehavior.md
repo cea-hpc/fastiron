@@ -71,8 +71,9 @@ the segment outcome.
 Data for the scaling study can be recorded using the `scaling.sh` script. By looking at 
 the printed output of the program, one can already see that the figure of merit does not
 vary significantly. This means that the time taken to compute a single segment for a particle
--- including look-up & update -- is independent from the total number of particle, 
-which is expected. The script used to plot the data is accessible [here][1].
+-- including look-up & update -- is independent from the total number of particle, which 
+is expected. The script used to plot the data is accessible in the `plot` folder in the root 
+of the project.
 
 ### `PopulationControl` & `CycleTracking`
 
@@ -89,8 +90,8 @@ would allow it anyway.
 
 ![scaling_sync](figures/FI_64/scaling_sync.png)
 
-The value for 70,000 particles seems to be incorrect, a similar divergence can be observed on 
-the `PopulationControl` diagram. This is probably a normal fluctuation and can be ignored.
+The value for 30,000 and 40,000 particles seems to be incorrect. This is probably a fluke and can 
+be ignored.
 
 At first, the sync phase seems to be independent from the target number of particles as it stays
 constant. However, if we look at the script used to collect the data, we can see that no file 
