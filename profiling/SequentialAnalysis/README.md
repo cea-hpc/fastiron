@@ -14,6 +14,10 @@ before release. See the dedicated [section](#additional-changes) for more detail
 This analysis was also done without tampering with CPU turbo or governor. Redoing it 
 would mean also re-running the old version. It might be done later.
 
+
+FoM f64: 7.638e5 [segments / cycle tracking time]
+FoM f32: 8.085e5 [segments / cycle tracking time]
+
 ## Correlation Study
 
 The goal of this short study is to identify how events influence the time spent in each
