@@ -15,6 +15,11 @@ Refer to the [Rust Doc][2] or to the `README.md` of `fastiron-stats`.
 
 All benchmarks have been done using the `bench_cfg.sh` script unless stated otherwise.
 
+## Known issues
+
+- Usage of the data scripts followed by regular usage of the program leads to crashes 
+  because of restricted permissions on the created folders.
+
 ## Hardware used for execution
 
 Up to the sequential analysis (included), all benchmarking was done on a laptop with the following specs:
