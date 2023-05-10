@@ -3,8 +3,6 @@
 /out
 *.csv
 *.dat
+*.data
 *.png
-
-!/profiling/Fastiron/RuSeq/*.csv
-!/profiling/SequentialAnalysis/reference_data/*/*.csv
-!/profiling/SequentialAnalysis/figures/*/*.png
+*.svg
