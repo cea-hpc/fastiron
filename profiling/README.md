@@ -10,10 +10,17 @@ Four scripts are provided:
 - `gather_data.sh`: Gather profiling data for the current build of [Fastiron][1]. 
 - `process_data.sh`: Process the data collected using `gather_data.sh`.
 
-The data gathering / processing done with the script can be tweaked to obtain the desired results. 
-Refer to the [Rust Doc][2] or to the `README.md` of `fastiron-stats`.
+The data gathering / processing done with the script can be tweaked to obtain the desired 
+results. Refer to the [Rust Doc][2] or to the `README.md` of `fastiron-stats`.
 
-All benchmarks have been done using the `bench_cfg.sh` script unless stated otherwise.
+## Sampling policy
+
+All benchmarks have been done using the `bench_cfg.sh` script unless stated otherwise. 
+Link-time optimization were not enabled for Fastiron.
+
+Flamegraphes were recorded in the default configuration since the overall distribution of 
+time is approximately the same. Additionally, [Quicksilver][3] was recompiled with `-g3` flag, 
+and debug information was enabled in the release profile of Fastiron.
 
 ## Known issues
 
@@ -33,3 +40,4 @@ Up to the sequential analysis (included), all benchmarking was done on a laptop 
 
 [1]: https://github.com/cea-hpc/fastiron
 [2]: https://cea-hpc.github.io/fastiron/fastiron_stats/
+[3]: https://github.com/LLNL/Quicksilver
