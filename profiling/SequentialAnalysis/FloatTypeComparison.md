@@ -20,20 +20,23 @@ While the difference may not be significant for `Census`, it is for all others. 
 is observed for correlations to `CycleSync`. The time spent in the section seems much more dependant of 
 the events, especially splitting, when using `f32`.
 
-This can be explained by writing each time variable with two sub-times: **T_{total} = T_{affected} + T_{static}**.
+This can be explained by writing each time variable with two sub-times: **T_~total~ = T_~affected~ + T_~static~**.
 All events cost a certain time, two parts make it up: A part affected by the floating type used (e.g. arithmetic 
 operations) and the rest. This also applies to total section times. \
-Depending on the relative importance of T_{affected} and T_{static} at both timer and event scale, the correlation 
+Depending on the relative importance of T_~affected~ and T_~static~ at both timer and event scale, the correlation 
 coefficient will evolve differently when swapping **from `f64` to `f32`**:
 
 | Timer Behavior        | Event Behavior        | Effect on time values | Effect on correlation coefficient |
 |-----------------------|-----------------------|-----------------------|-----------------------------------|
-| T_{affected} dominant | T_{affected} dominant | Both go down significantly            | Depends of how much the event time makes up for the total timer value |
-| T_{affected} dominant | T_{static} dominant   | Timer goes down, event stays constant | The event becomes closer to being a bottleneck, coefficient is more or less exacerbated |
-| T_{static} dominant   | T_{static} dominant   | Both do not change significantly      | Depends of how much the event time makes up for the total timer value |
-| T_{static} dominant   | T_{affected} dominant | Event goes down, timer stays constant | The event is less likely to be the bottleneck, coefficient is more or less attenuated |
+| T_~affected~ dominant | T_~affected~ dominant | Both go down significantly            | Depends of how much the event time makes up for the total timer value |
+| T_~affected~ dominant | T_~static~ dominant   | Timer goes down, event stays constant | The event becomes closer to being a bottleneck, coefficient is more or less exacerbated |
+| T_~static~ dominant   | T_~static~ dominant   | Both do not change significantly      | Depends of how much the event time makes up for the total timer value |
+| T_~static~ dominant   | T_~affected~ dominant | Event goes down, timer stays constant | The event is less likely to be the bottleneck, coefficient is more or less attenuated |
 
+Note that how much an event influence a timer depends of two factors:
 
+- The number of occurence compared to the total number of event of the section
+- The time cost of the event compared to time cost of the other event making up the section
 
 ## Scaling
 
@@ -42,3 +45,11 @@ coefficient will evolve differently when swapping **from `f64` to `f32`**:
 ![f32_tracking](figures/FI_32/scaling_tracking.png)   | ![f64_tracking](figures/FI_64/scaling_tracking.png)
 ![f32_ppcontrol](figures/FI_32/scaling_ppcontrol.png) | ![f64_ppcontrol](figures/FI_64/scaling_ppcontrol.png)
 ![f32_sync](figures/FI_32/scaling_sync.png)           | ![f64_sync](figures/FI_64/scaling_sync.png)
+
+The `CycleTracking` section does not seem to be affected overall. The scale factor is the same for both 
+floating types. The `CycleSync` section scale in the same way, however the overall value is higher for 
+`f64` than `f32`.
+
+The `PopulationControl` section scales differently: The graphes show a greater scale factor for the `f64`
+run. A quick computation gives the approximate slopes of the `f32` and `f64` graphes (respectively): 
+`0.1131` and `0.1566`. 
