@@ -20,18 +20,18 @@ While the difference may not be significant for `Census`, it is for all others. 
 is observed for correlations to `CycleSync`. The time spent in the section seems much more dependant of 
 the events, especially splitting, when using `f32`.
 
-This can be explained by writing each time variable with two sub-times: **T_~total~ = T_~affected~ + T_~static~**.
+This can be explained by writing each time variable with two sub-times: **T_<sub>total</sub> = T_<sub>affected</sub> + T_<sub>static</sub>**.
 All events cost a certain time, two parts make it up: A part affected by the floating type used (e.g. arithmetic 
 operations) and the rest. This also applies to total section times. \
-Depending on the relative importance of T_~affected~ and T_~static~ at both timer and event scale, the correlation 
+Depending on the relative importance of T_<sub>affected</sub> and T_<sub>static</sub> at both timer and event scale, the correlation 
 coefficient will evolve differently when swapping **from `f64` to `f32`**:
 
 | Timer Behavior        | Event Behavior        | Effect on time values | Effect on correlation coefficient |
 |-----------------------|-----------------------|-----------------------|-----------------------------------|
-| T_~affected~ dominant | T_~affected~ dominant | Both go down significantly            | Depends of how much the event time makes up for the total timer value |
-| T_~affected~ dominant | T_~static~ dominant   | Timer goes down, event stays constant | The event becomes closer to being a bottleneck, coefficient is more or less exacerbated |
-| T_~static~ dominant   | T_~static~ dominant   | Both do not change significantly      | Depends of how much the event time makes up for the total timer value |
-| T_~static~ dominant   | T_~affected~ dominant | Event goes down, timer stays constant | The event is less likely to be the bottleneck, coefficient is more or less attenuated |
+| T_<sub>affected</sub> dominant | T_<sub>affected</sub> dominant | Both go down significantly            | Depends of how much the event time makes up for the total timer value |
+| T_<sub>affected</sub> dominant | T_<sub>static</sub> dominant   | Timer goes down, event stays constant | The event becomes closer to being a bottleneck, coefficient is more or less exacerbated |
+| T_<sub>static</sub> dominant   | T_<sub>static</sub> dominant   | Both do not change significantly      | Depends of how much the event time makes up for the total timer value |
+| T_<sub>static</sub> dominant   | T_<sub>affected</sub> dominant | Event goes down, timer stays constant | The event is less likely to be the bottleneck, coefficient is more or less attenuated |
 
 Note that how much an event influence a timer depends of two factors:
 
