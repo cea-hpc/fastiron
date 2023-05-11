@@ -11,7 +11,13 @@ Four scripts are provided:
 - `process_data.sh`: Process the data collected using `gather_data.sh`.
 
 The data gathering / processing done with the script can be tweaked to obtain the desired 
-results. Refer to the [Rust Doc][2] or to the `README.md` of `fastiron-stats`.
+results. Refer to the [Rust Doc][2] or to the `README.md` of `fastiron-stats`. Note that 
+you currently need to build the binaries manually before using the scripts. This can be done 
+easily with cargo: 
+
+```bash
+cargo build --release
+```
 
 ## Sampling policy
 
