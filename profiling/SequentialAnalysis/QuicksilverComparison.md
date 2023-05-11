@@ -1,5 +1,6 @@
  # Comparison between Quicksilver & Fastiron
 
+## Performances
 
 As a reference, here is the timer report from Quicksilver, of the `CTS2_1` benchmark with the figure of 
 merit. **Note that Quicksilver's timers report does not function properly in a sequential context**. The 
@@ -44,3 +45,23 @@ values as reference:
 
 In both programs, `CycleTracking` represent most of the execution time while the time spent in 
 other sections are orders of magnitude lower.
+
+## Behavior
+
+## Implementation
+
+Using [`tokei`][https://github.com/XAMPPRocky/tokei], we can have insights into the project size.
+Here is the report for the `src/` folder of Quicksilver's repository: 
+
+```
+===============================================================================
+ Language            Files        Lines         Code     Comments       Blanks
+===============================================================================
+ C++                    41         7963         5936          765         1262
+ C++ Header             75         5016         3605          478          933
+ Makefile                1          344           81          214           49
+ SVG                     1          491          479            0           12
+===============================================================================
+ Total                 118        13814        10101         1457         2256
+===============================================================================
+```
