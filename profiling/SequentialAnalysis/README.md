@@ -4,7 +4,7 @@ This folder contains an overview of the sequential performances of Fastiron as w
 referenced data used for the three specific analysis aside from benchmarking:
 
 - A behavioral study: using tallied data to identify which events are costly, and how well
-  the performances scale ith the total number of particles.
+  the performances scale with the total number of particles.
 - A comparison with the original mini-app, [Quicksilver].
 - A comparison in performances when executing the program using `f32` or `f64` types for 
   computations.
