@@ -35,7 +35,7 @@ Section::CycleSync              101     1.052e3       6.445e3       1.4027e4    
 Figure of merit: 7.630e5 [segments / cycle tracking time]
 ```
 
-Here are a few percentages. They were computed using the [relative change][2] definition with the old 
+Here are a few percentages. They were computed using the [relative change][1] definition with the old 
 values as reference:
 
 - Overall execution time has _decreased_ by **36.7%**.
@@ -50,7 +50,7 @@ other sections are orders of magnitude lower.
 
 ## Implementation
 
-Using [`tokei`][https://github.com/XAMPPRocky/tokei], we can have insights into the project size.
+Using [tokei][2], we can have insights into the project size.
 Here is the report for the `src/` folder of Quicksilver's repository: 
 
 ```
@@ -65,3 +65,6 @@ Here is the report for the `src/` folder of Quicksilver's repository:
  Total                 118        13814        10101         1457         2256
 ===============================================================================
 ```
+
+[1]: https://en.wikipedia.org/wiki/Relative_change_and_difference#Definition
+[2]: https://github.com/XAMPPRocky/tokei

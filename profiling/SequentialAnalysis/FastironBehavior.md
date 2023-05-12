@@ -72,7 +72,7 @@ Data for the scaling study can be recorded using the `scaling.sh` script. By loo
 the printed output of the program, one can already see that the figure of merit does not
 vary significantly. This means that the time taken to compute a single segment for a particle
 -- including look-up & update -- is independent from the total number of particle, which 
-is expected. The script used to plot the data is accessible in the `plot` folder in the root 
+is expected. The script used to plot the data is accessible in the `plot` folder of the root 
 of the project.
 
 ### `PopulationControl` & `CycleTracking`

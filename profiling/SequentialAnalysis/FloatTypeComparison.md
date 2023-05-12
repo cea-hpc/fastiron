@@ -12,8 +12,8 @@ sequential data on floating-type comparison. The version currently used is `1.2-
  `FoM: 8.085e5 [segments / cycle tracking time]`    | `FoM: 7.638e5 [segments / cycle tracking time]`
 
 There is an approximate 5% difference of Figure of Merit between the two versions. From this we can guess
-that the memory one of multiple limiting factors overall. Otherwise, the increase in _FoM_ would have been 
-much higher.
+that the memory is only one of multiple limiting factors overall. Otherwise, the increase in _FoM_ would 
+have been much higher.
 
 Interestingly, event correlation to `CycleTracking` seems exacerbated when using `f64` for computations.
 While the difference may not be significant for `Census`, it is for all others. The opposite phenomenon 
@@ -33,7 +33,7 @@ coefficient will evolve differently when swapping **from `f64` to `f32`**:
 | T<sub>static</sub> dominant   | T<sub>static</sub> dominant   | Both do not change significantly      | Depends of how much the event time makes up for the total timer value |
 | T<sub>static</sub> dominant   | T<sub>affected</sub> dominant | Event goes down, timer stays constant | The event is less likely to be the bottleneck, coefficient is more or less attenuated |
 
-Note that how much an event influence a timer depends of two factors:
+Note that how much an event influence a timer depends on two factors:
 
 - The number of occurence compared to the total number of event of the section
 - The time cost of the event compared to time cost of the other event making up the section
