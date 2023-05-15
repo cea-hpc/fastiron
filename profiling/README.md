@@ -1,20 +1,37 @@
 # Profiling
 
-This folder contains summaries & flamegraphes of the different version of fastiron as they progress. It also 
-contains Quicksilver's data for reference. 
+This folder contains summaries & flamegraphes of the different version of 
+fastiron as they progress. It also contains Quicksilver's data for reference. 
 
-A script is provided to gather data used by [fi-stats][https://github.com/imrn99/fi_stats]. 
+Four scripts are provided:
 
-Another script is provided to achieve more consistent results when benchmarking on a laptop.
+- `bench_cfg.sh`, `reverse_cfg.sh`: Set CPU behavior options to be more consistent 
+  when benchmarking on a laptop.
+- `gather_data.sh`: Gather profiling data for the current build of [Fastiron][1]. 
+- `process_data.sh`: Process the data collected using `gather_data.sh`.
 
-## Test problems
+The data gathering / processing done with the script can be tweaked to obtain the desired 
+results. Refer to the [Rust Doc][2] or to the `README.md` of `fastiron-stats`. Note that 
+**you currently need to build the binaries manually before using the scripts**. This can 
+be done easily with cargo: 
 
-The following problems are used in order to compare the versions of the program. Note that these can (and will)
-change in the future to fit our needs.
+```bash
+cargo build --release
+```
 
-- `homogeneous7`, corresponding to the file `Homogeneous/homogeneousProblem_v7_ts.inp`. Simulation is done two times,
-  respectively with `10000`, `100000`
-- `CTS2_1`, corresponding to the file `CTS2_Benchmark/CTS2_1.inp`.
+## Sampling policy
+
+All benchmarks have been done using the `bench_cfg.sh` script unless stated otherwise. 
+Link-time optimization were not enabled for Fastiron.
+
+Flamegraphes were recorded in the default configuration since the overall distribution of 
+time is approximately the same. Additionally, [Quicksilver][3] was recompiled with `-g3` flag, 
+and debug information was enabled in the release profile of Fastiron.
+
+## Known issues
+
+- Usage of the data scripts followed by regular usage of the program leads to crashes 
+  because of restricted permissions on the created folders.
 
 ## Hardware used for execution
 
@@ -26,8 +43,7 @@ Up to the sequential analysis (included), all benchmarking was done on a laptop 
 | GPU   | Mesa Intel UHD Graphics 620 (WHL GT2) |
 | RAM   | 8GiB SODIMM DDR4 Synchrone 2667 MHz (0,4 ns) |
 
-## Quicksilver modification
 
-In a sequential context, Quicksilver has received a small tweak to guarantee coherence of the results. The random
-number generator function used to initialize centers randomly, `drand48`, has been replaced with the program's function,
-`rngSample`.
+[1]: https://github.com/cea-hpc/fastiron
+[2]: https://cea-hpc.github.io/fastiron/fastiron_stats/
+[3]: https://github.com/LLNL/Quicksilver
