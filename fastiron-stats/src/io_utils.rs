@@ -26,25 +26,8 @@ use crate::structures::{
 pub fn read_tallies(file_name: &str) -> [FiniteDiscreteRV; N_TALLIED_DATA] {
     let file = File::open(file_name).unwrap();
     let mut reader = csv::ReaderBuilder::new().delimiter(b';').from_reader(file);
-    let mut values: [Vec<f64>; N_TALLIED_DATA] = [
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-        Vec::with_capacity(100),
-    ];
+    let mut values: [Vec<f64>; N_TALLIED_DATA] = Default::default();
+    values.iter_mut().for_each(|v| v.reserve(100));
     // for each line
     for result in reader.records() {
         let mut record = result.unwrap();
