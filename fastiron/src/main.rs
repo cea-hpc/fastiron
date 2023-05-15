@@ -15,10 +15,19 @@ use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
 use num::{one, zero, FromPrimitive};
 
+// ===============================
+// Which float type are we using ?
+
+#[cfg(feature = "single-precision")]
+type FloatType = f32;
+
+#[cfg(not(feature = "single-precision"))]
+type FloatType = f64;
+
 fn main() {
     let cli = Cli::parse();
 
-    let params: Parameters<f64> = Parameters::get_parameters(cli).unwrap();
+    let params: Parameters<FloatType> = Parameters::get_parameters(cli).unwrap();
     println!("[Simulation Parameters]\n{:#?}", params.simulation_params);
     let start_init = Instant::now();
     println!("[Initialization]: Start");
