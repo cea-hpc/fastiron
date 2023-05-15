@@ -28,5 +28,12 @@ options are provided to the user:
   the specified argument.
 - `-S, --cross-sections <CROSS_SECTIONS_OUT`: Save the values of cross-sections of the mesh.
 
+## Features
+
+Fastiron currently implements one feature:
+
+- **single-precision** - When enabled, all computations done during the simulation will be done using the
+  single-precision float type `f32`. By default, every computation is done using `f64`.
+
 [fastiron]: https://github.com/cea-hpc/fastiron
 [quicksilver]: https://github.com/LLNL/Quicksilver
