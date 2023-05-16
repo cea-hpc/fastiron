@@ -54,6 +54,10 @@ pub struct Cli {
     #[arg(short = 't', long = "debug-threads", num_args(0))]
     pub debug_threads: bool,
 
+    /// enable thread debugging if present
+    #[arg(short = 'p', long = "single-precision", num_args(0))]
+    pub single_precision: bool,
+
     /// x-size of simulation in cm
     #[arg(short = 'X', long = "lx", num_args(1), allow_negative_numbers(false))]
     pub lx: Option<f32>,
