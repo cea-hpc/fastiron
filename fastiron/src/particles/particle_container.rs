@@ -99,16 +99,19 @@ impl<T: CustomFloat> ParticleContainer<T> {
         mcdata: &MonteCarloData<T>,
         mcunit: &mut MonteCarloUnit<T>,
     ) {
+        let unit = Arc::new(Mutex::new(mcunit));
+        let extra = Arc::new(Mutex::new(&mut self.extra_particles));
+        let sq = Arc::new(Mutex::new(&mut self.send_queue));
         self.processing_particles
             .iter_mut()
             .par_bridge()
             .for_each(|particle| {
                 par_cycle_tracking_guts(
                     mcdata,
-                    mcunit,
+                    Arc::clone(&unit),
                     particle,
-                    &mut self.extra_particles,
-                    &mut self.send_queue,
+                    Arc::clone(&extra),
+                    Arc::clone(&sq),
                 )
             });
         self.processing_particles

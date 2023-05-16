@@ -3,6 +3,8 @@
 //! This module contains the function individually tracking particles during the
 //! main simulation section.
 
+use std::sync::{Arc, Mutex};
+
 use num::{one, zero};
 
 use crate::{
@@ -161,10 +163,10 @@ fn cycle_tracking_function<T: CustomFloat>(
 /// invalidated.
 pub fn par_cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
+    mcunit: Arc<Mutex<&mut MonteCarloUnit<T>>>,
     particle: &mut MCParticle<T>,
-    extra: &mut Vec<MCParticle<T>>,
-    send_queue: &mut SendQueue<T>,
+    extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
+    send_queue: Arc<Mutex<&mut SendQueue<T>>>,
 ) {
     // load particle, track it & update the original
     // next step is to refactor MCParticle / MCBaseParticle to lighten conversion between the types
@@ -181,7 +183,13 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
 
-    par_cycle_tracking_function(mcdata, mcunit, particle, extra, send_queue);
+    par_cycle_tracking_function(
+        mcdata,
+        &mut mcunit.lock().unwrap(),
+        particle,
+        &mut extra.lock().unwrap(),
+        &mut send_queue.lock().unwrap(),
+    );
 }
 
 fn par_cycle_tracking_function<T: CustomFloat>(
