@@ -54,7 +54,7 @@ pub struct Cli {
     #[arg(short = 't', long = "debug-threads", num_args(0))]
     pub debug_threads: bool,
 
-    /// enable thread debugging if present
+    /// enable single-precision float type usage if present
     #[arg(short = 'p', long = "single-precision", num_args(0))]
     pub single_precision: bool,
 
@@ -79,7 +79,7 @@ pub struct Cli {
     )]
     pub n_particles: Option<u64>,
 
-    /// number of threads that should be used to run the simulation
+    /// number of rayon threads that should be used to run the simulation -- set to 0 for rayon's default config
     #[arg(
         short = 'r',
         long = "rayon",
@@ -88,7 +88,7 @@ pub struct Cli {
     )]
     pub n_rayon_threads: Option<u64>,
 
-    /// number of threads that should be used to run the simulation
+    /// number of units that should be used to run the simulation
     #[arg(
         short = 'u',
         long = "units",
@@ -120,7 +120,7 @@ pub struct Cli {
 
     /// random number seed
     #[arg(short = 's', long = "seed", num_args(1), allow_negative_numbers(false))]
-    pub seed: Option<u64>, //maybe allow negative values ? need to test QS behavior
+    pub seed: Option<u64>,
 }
 
 /// Updates the Parameters structure passed as argument using the

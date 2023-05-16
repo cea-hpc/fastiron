@@ -48,8 +48,10 @@ impl MCProcessorInfo {
         };
 
         assert_ne!(res.n_units, 0);
-        assert_ne!(res.n_rayon_threads, 0);
-
+        // we allow 0 for rayon control
+        // A value of 0 means we use the defaut number of threads
+        // chosen by rayon in an implicit init
+        // assert_ne!(res.n_rayon_threads, 0);
         res
     }
 }

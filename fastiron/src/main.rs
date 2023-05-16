@@ -52,6 +52,18 @@ fn main() {
 
     println!("[Execution Policy]\n{:#?}", mcdata.exec_info);
 
+    if (mcdata.exec_info.exec_policy == ExecPolicy::Rayon)
+        | (mcdata.exec_info.exec_policy == ExecPolicy::Hybrid)
+    {
+        // custom threadpool init in this case
+        if mcdata.exec_info.n_rayon_threads != 0 {
+            ThreadPoolBuilder::new()
+                .num_threads(mcdata.exec_info.n_rayon_threads)
+                .build_global()
+                .unwrap();
+        }
+    }
+
     match mcdata.exec_info.exec_policy {
         // single unit
         ExecPolicy::Sequential | ExecPolicy::Rayon => {
