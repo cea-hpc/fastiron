@@ -98,7 +98,7 @@ impl<T: CustomFloat> Default for DistanceHandler<T> {
 /// - Collision: The distance is computed using probabilities.
 pub fn outcome<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
+    mcunit: &MonteCarloUnit<T>,
     tallies: &mut Tallies<T>,
     particle: &mut MCParticle<T>,
 ) -> MCSegmentOutcome {
@@ -116,6 +116,7 @@ pub fn outcome<T: CustomFloat>(
 
     // randomly determines the distance to the next collision
     // based upon the current cell data
+    /*
     let precomputed_cross_section =
         mcunit.domain[particle.domain].cell_state[particle.cell].total[particle.energy_group];
     let macroscopic_total_xsection = if precomputed_cross_section > zero() {
@@ -137,7 +138,12 @@ pub fn outcome<T: CustomFloat>(
         mcunit.domain[particle.domain].cell_state[particle.cell].total[particle.energy_group] = tmp;
 
         tmp
-    };
+    };*/
+    let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
+    let cell_nb_density: T =
+        mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
+    let macroscopic_total_xsection =
+        weighted_macroscopic_cross_section(mcdata, mat_gid, cell_nb_density, particle.energy_group);
     particle.total_cross_section = macroscopic_total_xsection;
     if macroscopic_total_xsection == zero() {
         particle.mean_free_path = T::huge_float();
