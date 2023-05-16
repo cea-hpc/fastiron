@@ -2,11 +2,15 @@
 //!
 //! This module contains code used for the main structure holding particles.
 
+use std::sync::{Arc, Mutex};
+
+use rayon::prelude::*;
+
 use crate::{
     constants::CustomFloat,
     data::{send_queue::SendQueue, tallies::Balance},
     montecarlo::{MonteCarloData, MonteCarloUnit},
-    simulation::cycle_tracking::cycle_tracking_guts,
+    simulation::cycle_tracking::{cycle_tracking_guts, par_cycle_tracking_guts},
 };
 
 use super::mc_particle::{MCParticle, Species};
@@ -95,15 +99,18 @@ impl<T: CustomFloat> ParticleContainer<T> {
         mcdata: &MonteCarloData<T>,
         mcunit: &mut MonteCarloUnit<T>,
     ) {
-        self.processing_particles.iter_mut().for_each(|particle| {
-            cycle_tracking_guts(
-                mcdata,
-                mcunit,
-                particle,
-                &mut self.extra_particles,
-                &mut self.send_queue,
-            )
-        });
+        self.processing_particles
+            .iter_mut()
+            .par_bridge()
+            .for_each(|particle| {
+                par_cycle_tracking_guts(
+                    mcdata,
+                    mcunit,
+                    particle,
+                    &mut self.extra_particles,
+                    &mut self.send_queue,
+                )
+            });
         self.processing_particles
             .retain(|particle| particle.species != Species::Unknown);
         self.processed_particles

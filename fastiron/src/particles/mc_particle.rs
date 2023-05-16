@@ -323,6 +323,8 @@ impl<T: CustomFloat> MCParticle<T> {
     }
 }
 
+unsafe impl<T: CustomFloat> Send for MCParticle<T> {}
+
 //=============
 // Unit tests
 //=============
