@@ -55,7 +55,7 @@ pub fn init_particle_containers<T: CustomFloat>(
     // compute the capacities using number of threads, target number of particles & fission statistical offset
     let target_n_particles = params.simulation_params.n_particles as usize;
 
-    let regular_capacity_per_container = target_n_particles / proc_info.num_threads; // equivalent of batch size
+    let regular_capacity_per_container = target_n_particles / proc_info.n_units; // equivalent of batch size
     let regular_capacity = regular_capacity_per_container + regular_capacity_per_container / 10; // approximate 10% margin
 
     let max_nu_bar: usize = params

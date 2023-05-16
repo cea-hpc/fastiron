@@ -14,6 +14,7 @@ use fastiron::utils::io_utils::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
 use num::{one, zero, FromPrimitive};
+use rayon::ThreadPoolBuilder;
 
 //================================
 // Which float type are we using ?
@@ -48,6 +49,8 @@ fn main() {
         "[Initialization]: {}ms elapsed",
         start_init.elapsed().as_millis()
     );
+
+    println!("[Execution Policy]\n{:#?}", mcdata.exec_info);
 
     match mcdata.exec_info.exec_policy {
         // single unit
@@ -167,7 +170,7 @@ pub fn cycle_process<T: CustomFloat>(
         mcdata.params.simulation_params.n_particles as usize,
         mcdata.global_n_particles,
         container.processing_particles.len(),
-        mcdata.exec_info.num_threads,
+        mcdata.exec_info.n_units,
         mcdata.params.simulation_params.load_balance,
     );
     if split_rr_factor < one() {

@@ -81,8 +81,8 @@ pub struct Cli {
 
     /// number of threads that should be used to run the simulation
     #[arg(
-        short = 'b',
-        long = "n-thread",
+        short = 'r',
+        long = "rayon",
         num_args(1),
         allow_negative_numbers(false)
     )]

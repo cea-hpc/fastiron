@@ -22,27 +22,18 @@ pub struct MCProcessorInfo {
     /// Execution mode.
     pub exec_policy: ExecPolicy,
     /// Number of processors of the machine. Currently useless.
-    pub num_processors: usize,
+    pub n_processors: usize,
     /// Number of thread(s) used for execution.
-    pub num_threads: usize,
+    pub n_rayon_threads: usize,
+    /// Number of unit(s) used for (distributed) execution.
+    pub n_units: usize,
 }
 
 impl MCProcessorInfo {
     /// Constructor. The structure is initialized using parameters and fetched data.
     pub fn new<T: CustomFloat>(sim_params: &SimulationParameters<T>) -> Self {
         // fetch data & init
-        let num_threads: usize = sim_params.n_threads as usize;
-        let exec_policy = if num_threads > 1 {
-            ExecPolicy::Rayon
-        } else {
-            // if n_threads == 0, default to sequential execution
-            ExecPolicy::Sequential
-        };
-        Self {
-            exec_policy,
-            num_processors: 1, // need to fetch this?
-            num_threads,
-        }
+        todo!()
     }
 }
 
@@ -50,8 +41,9 @@ impl Default for MCProcessorInfo {
     fn default() -> Self {
         Self {
             exec_policy: Default::default(),
-            num_processors: 1,
-            num_threads: 1,
+            n_processors: 1,
+            n_rayon_threads: 1,
+            n_units: 1,
         }
     }
 }
