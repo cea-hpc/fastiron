@@ -15,7 +15,7 @@ use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::MCTallyEvent,
+    data::tallies::{MCTallyEvent, Tallies},
     geometry::facets::MCNearestFacet,
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::mc_particle::MCParticle,
@@ -99,6 +99,7 @@ impl<T: CustomFloat> Default for DistanceHandler<T> {
 pub fn outcome<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
+    tallies: &mut Tallies<T>,
     particle: &mut MCParticle<T>,
 ) -> MCSegmentOutcome {
     // initialize distances and constants
@@ -137,7 +138,6 @@ pub fn outcome<T: CustomFloat>(
 
         tmp
     };
-
     particle.total_cross_section = macroscopic_total_xsection;
     if macroscopic_total_xsection == zero() {
         particle.mean_free_path = T::huge_float();
@@ -219,8 +219,8 @@ pub fn outcome<T: CustomFloat>(
 
     // update scalar flux tally
     // atomic in original code
-    mcunit.tallies.scalar_flux_domain[particle.domain].cell[particle.cell]
-        [particle.energy_group] += particle.segment_path_length * particle.weight;
+    tallies.scalar_flux_domain[particle.domain].cell[particle.cell][particle.energy_group] +=
+        particle.segment_path_length * particle.weight;
 
     segment_outcome
 }

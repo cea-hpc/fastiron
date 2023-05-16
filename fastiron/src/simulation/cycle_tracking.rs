@@ -9,7 +9,10 @@ use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
-    data::{send_queue::SendQueue, tallies::MCTallyEvent},
+    data::{
+        send_queue::SendQueue,
+        tallies::{MCTallyEvent, Tallies},
+    },
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::mc_particle::{MCParticle, Species},
     simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
@@ -32,6 +35,7 @@ use super::{
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
+    tallies: &mut Tallies<T>,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCParticle<T>>,
     send_queue: &mut SendQueue<T>,
@@ -51,12 +55,13 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
 
-    cycle_tracking_function(mcdata, mcunit, particle, extra, send_queue);
+    cycle_tracking_function(mcdata, mcunit, tallies, particle, extra, send_queue);
 }
 
 fn cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
+    tallies: &mut Tallies<T>,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCParticle<T>>,
     send_queue: &mut SendQueue<T>,
@@ -65,9 +70,9 @@ fn cycle_tracking_function<T: CustomFloat>(
 
     loop {
         // compute event for segment
-        let segment_outcome = outcome(mcdata, mcunit, particle);
+        let segment_outcome = outcome(mcdata, mcunit, tallies, particle);
         // update # of segments
-        mcunit.tallies.balance_cycle.num_segments += 1; // atomic in original code
+        tallies.balance_cycle.num_segments += 1; // atomic in original code
         particle.num_segments += one();
 
         match segment_outcome {
@@ -82,7 +87,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                     cell_nb_density,
                     particle,
                     extra,
-                    &mut mcunit.tallies.balance_cycle,
+                    &mut tallies.balance_cycle,
                 );
                 particle.energy_group = mcdata
                     .nuclear_data
@@ -129,7 +134,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
-                        mcunit.tallies.balance_cycle.escape += 1;
+                        tallies.balance_cycle.escape += 1;
                         particle.last_event = MCTallyEvent::FacetCrossingEscape;
                         particle.species = Species::Unknown;
                         false
@@ -140,7 +145,7 @@ fn cycle_tracking_function<T: CustomFloat>(
             }
             MCSegmentOutcome::Census => {
                 // atomic in original code
-                mcunit.tallies.balance_cycle.census += 1;
+                tallies.balance_cycle.census += 1;
                 // we're done tracking the particle FOR THIS STEP; Species stays valid
                 keep_tracking = false;
             }
@@ -164,6 +169,7 @@ fn cycle_tracking_function<T: CustomFloat>(
 pub fn par_cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: Arc<Mutex<&mut MonteCarloUnit<T>>>,
+    tallies: Arc<Mutex<&mut Tallies<T>>>,
     particle: &mut MCParticle<T>,
     extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
     send_queue: Arc<Mutex<&mut SendQueue<T>>>,
@@ -186,6 +192,7 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
     par_cycle_tracking_function(
         mcdata,
         &mut mcunit.lock().unwrap(),
+        &mut tallies.lock().unwrap(),
         particle,
         &mut extra.lock().unwrap(),
         &mut send_queue.lock().unwrap(),
@@ -195,6 +202,7 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
 fn par_cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
+    tallies: &mut Tallies<T>,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCParticle<T>>,
     send_queue: &mut SendQueue<T>,
@@ -203,9 +211,9 @@ fn par_cycle_tracking_function<T: CustomFloat>(
 
     loop {
         // compute event for segment
-        let segment_outcome = outcome(mcdata, mcunit, particle);
+        let segment_outcome = outcome(mcdata, mcunit, tallies, particle);
         // update # of segments
-        mcunit.tallies.balance_cycle.num_segments += 1; // atomic in original code
+        tallies.balance_cycle.num_segments += 1; // atomic in original code
         particle.num_segments += one();
 
         match segment_outcome {
@@ -220,7 +228,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                     cell_nb_density,
                     particle,
                     extra,
-                    &mut mcunit.tallies.balance_cycle,
+                    &mut tallies.balance_cycle,
                 );
                 particle.energy_group = mcdata
                     .nuclear_data
@@ -267,7 +275,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
-                        mcunit.tallies.balance_cycle.escape += 1;
+                        tallies.balance_cycle.escape += 1;
                         particle.last_event = MCTallyEvent::FacetCrossingEscape;
                         particle.species = Species::Unknown;
                         false
@@ -278,7 +286,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
             }
             MCSegmentOutcome::Census => {
                 // atomic in original code
-                mcunit.tallies.balance_cycle.census += 1;
+                tallies.balance_cycle.census += 1;
                 // we're done tracking the particle FOR THIS STEP; Species stays valid
                 keep_tracking = false;
             }

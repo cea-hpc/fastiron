@@ -8,6 +8,7 @@ use crate::{
         material_database::{Isotope, Material},
         mc_vector::MCVector,
         nuclear_data::{NuclearData, Polynomial, ReactionType},
+        tallies::Tallies,
     },
     geometry::{
         global_fcc_grid::GlobalFccGrid, mc_domain::MCDomain, mesh_partition::MeshPartition,
@@ -83,21 +84,33 @@ pub fn init_particle_containers<T: CustomFloat>(
     vec![container; n_container]
 }
 
-pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarloUnit<T>> {
+pub fn init_mcunits<T: CustomFloat>(
+    mcdata: &MonteCarloData<T>,
+) -> (Vec<MonteCarloUnit<T>>, Vec<Tallies<T>>) {
     let mut units: Vec<MonteCarloUnit<T>> = Vec::new();
+    let mut talliesss: Vec<Tallies<T>> = Vec::new();
 
     // inits
     println!("  [MonteCarloUnit Initialization]: Start");
     match mcdata.exec_info.exec_policy {
         ExecPolicy::Sequential | ExecPolicy::Rayon => {
             // MAY CHANGE; the init of multiple units might directly be done in the functions, not here
-            let mut mcunit = MonteCarloUnit::new(&mcdata.params);
+            let mut mcunit = MonteCarloUnit::default();
+            let mut tallies: Tallies<T> = Tallies::new(
+                mcdata.params.simulation_params.energy_spectrum.to_owned(),
+                mcdata.params.simulation_params.n_groups,
+            );
             init_mesh(&mut mcunit, mcdata);
-            init_tallies(&mut mcunit, &mcdata.params);
+            //init_tallies(&mut mcunit, &mcdata.params);
+            tallies.initialize_tallies(
+                &mcunit.domain,
+                mcdata.params.simulation_params.n_groups,
+                mcdata.params.simulation_params.coral_benchmark,
+            );
             units.push(mcunit);
+            talliesss.push(tallies);
         }
-        ExecPolicy::Distributed => todo!(),
-        ExecPolicy::Hybrid => todo!(),
+        ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
     }
     println!("  [MonteCarloUnit Initialization]: Done");
 
@@ -108,7 +121,7 @@ pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarl
         .for_each(|mcunit| consistency_check(&mcunit.domain));
     println!("  [Consistency Check]: Done");
 
-    units
+    (units, talliesss)
 }
 
 //==================
@@ -296,14 +309,6 @@ fn init_mesh<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, mcdata: &MonteCarlo
             .domain
             .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, mat_db))
     });
-}
-
-fn init_tallies<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, params: &Parameters<T>) {
-    mcunit.tallies.initialize_tallies(
-        &mcunit.domain,
-        params.simulation_params.n_groups,
-        params.simulation_params.coral_benchmark,
-    )
 }
 
 #[derive(Debug, Clone, Default)]

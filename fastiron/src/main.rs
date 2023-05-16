@@ -2,6 +2,10 @@ use std::iter::zip;
 use std::time::Instant;
 
 use clap::Parser;
+use fastiron::data::tallies::Tallies;
+use num::{one, zero, FromPrimitive};
+use rayon::ThreadPoolBuilder;
+
 use fastiron::constants::sim::SRC_FRACTION;
 use fastiron::constants::CustomFloat;
 use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers};
@@ -13,8 +17,6 @@ use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
 use fastiron::utils::io_utils::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
-use num::{one, zero, FromPrimitive};
-use rayon::ThreadPoolBuilder;
 
 //================================
 // Which float type are we using ?
@@ -42,7 +44,7 @@ fn main() {
 
     let mut mcdata = init_mcdata(params);
     let mut containers = init_particle_containers(&mcdata.params, &mcdata.exec_info);
-    let mut mcunits = init_mcunits(&mcdata);
+    let (mut mcunits, mut tallies) = init_mcunits(&mcdata);
 
     println!("[Initialization]: Done");
     println!(
@@ -70,10 +72,27 @@ fn main() {
             mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::Main);
 
             for step in 0..n_steps {
-                cycle_sync(&mut mcdata, &mut mcunits, &mut containers, step);
-                cycle_process(&mcdata, &mut mcunits[0], &mut containers[0]);
+                cycle_sync(
+                    &mut mcdata,
+                    &mut mcunits,
+                    &mut tallies,
+                    &mut containers,
+                    step,
+                );
+                cycle_process(
+                    &mcdata,
+                    &mut mcunits[0],
+                    &mut tallies[0],
+                    &mut containers[0],
+                );
             }
-            cycle_sync(&mut mcdata, &mut mcunits, &mut containers, n_steps);
+            cycle_sync(
+                &mut mcdata,
+                &mut mcunits,
+                &mut tallies,
+                &mut containers,
+                n_steps,
+            );
 
             mc_fast_timer::stop(&mut mcunits[0].fast_timer, Section::Main);
         }
@@ -81,23 +100,24 @@ fn main() {
         ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
     }
 
-    game_over(&mcdata, &mut mcunits[0]);
+    game_over(&mcdata, &mut mcunits[0], &mut tallies[0]);
 
-    coral_benchmark_correctness(
-        mcdata.params.simulation_params.coral_benchmark,
-        &mcunits[0].tallies,
-    );
+    coral_benchmark_correctness(mcdata.params.simulation_params.coral_benchmark, &tallies[0]);
 }
 
-pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteCarloUnit<T>) {
+pub fn game_over<T: CustomFloat>(
+    mcdata: &MonteCarloData<T>,
+    mcunit: &mut MonteCarloUnit<T>,
+    tallies: &mut Tallies<T>,
+) {
     mcunit.fast_timer.update_main_stats();
 
     mcunit.fast_timer.cumulative_report(
-        mcunit.tallies.balance_cumulative.num_segments,
+        tallies.balance_cumulative.num_segments,
         mcdata.params.simulation_params.csv,
     );
 
-    mcunit.tallies.spectrum.print_spectrum(mcdata);
+    tallies.spectrum.print_spectrum(mcdata);
 }
 
 //============================
@@ -107,6 +127,7 @@ pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteC
 pub fn cycle_sync<T: CustomFloat>(
     mcdata: &mut MonteCarloData<T>,
     mcunits: &mut [MonteCarloUnit<T>],
+    talliesss: &mut [Tallies<T>],
     containers: &mut [ParticleContainer<T>],
     step: usize,
 ) {
@@ -117,22 +138,18 @@ pub fn cycle_sync<T: CustomFloat>(
 
         match mcdata.exec_info.exec_policy {
             ExecPolicy::Sequential | ExecPolicy::Rayon => {
-                // if sequential, just use the single Monte-Carlo unit
-                mcunits[0].tallies.balance_cycle.end =
-                    containers[0].processed_particles.len() as u64;
-                mcunits[0].tallies.print_summary(
+                // if sequential/rayon-only, just use the single Monte-Carlo unit
+                talliesss[0].balance_cycle.end = containers[0].processed_particles.len() as u64;
+                talliesss[0].print_summary(
                     &mut mcunits[0].fast_timer,
                     step - 1,
                     mcdata.params.simulation_params.csv,
                 );
-                mcunits[0]
-                    .tallies
-                    .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
-                mcunits[0].tallies.update_spectrum(&containers[0]);
+                talliesss[0].cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
+                talliesss[0].update_spectrum(&containers[0]);
                 mcunits[0].fast_timer.clear_last_cycle_timers();
             }
-            ExecPolicy::Distributed => todo!(),
-            ExecPolicy::Hybrid => todo!(),
+            ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(), // need to reduce
         }
 
         if step == mcdata.params.simulation_params.n_steps + 1 {
@@ -142,15 +159,15 @@ pub fn cycle_sync<T: CustomFloat>(
     }
 
     // prepare structures for next processing cycle
-    let iter = zip(mcunits.iter_mut(), containers.iter_mut());
+    let iter = zip(mcunits.iter_mut(), containers.iter_mut()).zip(talliesss.iter_mut());
     let mut current_n_particles: usize = 0;
     let mut total_problem_weight: T = zero();
-    iter.for_each(|(mcunit, container)| {
+    iter.for_each(|((mcunit, container), tallies)| {
         mcunit.update_unit_weight(mcdata);
         mcunit.clear_cross_section_cache();
         container.swap_processing_processed();
         let local_n_particles = container.processing_particles.len();
-        mcunit.tallies.balance_cycle.start = local_n_particles as u64;
+        tallies.balance_cycle.start = local_n_particles as u64;
         current_n_particles += local_n_particles;
         total_problem_weight += mcunit.unit_weight;
     });
@@ -171,12 +188,13 @@ pub fn cycle_sync<T: CustomFloat>(
 pub fn cycle_process<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
+    tallies: &mut Tallies<T>,
     container: &mut ParticleContainer<T>,
 ) {
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::PopulationControl);
 
     // source 10% of target number of particles
-    population_control::source_now(mcdata, mcunit, container);
+    population_control::source_now(mcdata, mcunit, container, tallies);
     // compute split factor & regulate accordingly; regulation include the low weight rr
     let split_rr_factor: T = population_control::compute_split_factor(
         mcdata.params.simulation_params.n_particles as usize,
@@ -190,14 +208,14 @@ pub fn cycle_process<T: CustomFloat>(
             split_rr_factor,
             mcdata.params.simulation_params.low_weight_cutoff,
             mcdata.source_particle_weight,
-            &mut mcunit.tallies.balance_cycle,
+            &mut tallies.balance_cycle,
         );
     } else if split_rr_factor > one() {
         container.split_population(
             split_rr_factor,
             mcdata.params.simulation_params.low_weight_cutoff,
             mcdata.source_particle_weight,
-            &mut mcunit.tallies.balance_cycle,
+            &mut tallies.balance_cycle,
         )
     }
 
@@ -209,7 +227,7 @@ pub fn cycle_process<T: CustomFloat>(
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
 
             // track particles
-            container.process_particles(mcdata, mcunit);
+            container.process_particles(mcdata, mcunit, tallies);
 
             mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingComm);

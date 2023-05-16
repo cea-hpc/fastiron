@@ -8,6 +8,7 @@ use num::{one, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
+    data::tallies::Tallies,
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
@@ -70,6 +71,7 @@ pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
+    tallies: &mut Tallies<T>,
 ) {
     let time_step = mcdata.params.simulation_params.dt;
 
@@ -108,7 +110,7 @@ pub fn source_now<T: CustomFloat>(
                     }
 
                     // atomic in original code
-                    mcunit.tallies.balance_cycle.source += seeds.len() as u64;
+                    tallies.balance_cycle.source += seeds.len() as u64;
 
                     container
                         .processing_particles
