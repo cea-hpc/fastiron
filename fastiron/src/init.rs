@@ -75,8 +75,9 @@ pub fn init_particle_containers<T: CustomFloat>(
 
     let container = ParticleContainer::new(regular_capacity, extra_capacity);
     let n_container: usize = match proc_info.exec_policy {
-        ExecPolicy::Sequential => 1,
-        ExecPolicy::Parallel => todo!(),
+        ExecPolicy::Sequential | ExecPolicy::Rayon => 1,
+        ExecPolicy::Distributed => todo!(),
+        ExecPolicy::Hybrid => todo!(),
     };
     println!("  [ParticleContainer Initialization]: Done");
     vec![container; n_container]
@@ -88,14 +89,15 @@ pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarl
     // inits
     println!("  [MonteCarloUnit Initialization]: Start");
     match mcdata.exec_info.exec_policy {
-        ExecPolicy::Sequential => {
+        ExecPolicy::Sequential | ExecPolicy::Rayon => {
             // MAY CHANGE; the init of multiple units might directly be done in the functions, not here
             let mut mcunit = MonteCarloUnit::new(&mcdata.params);
             init_mesh(&mut mcunit, mcdata);
             init_tallies(&mut mcunit, &mcdata.params);
             units.push(mcunit);
         }
-        ExecPolicy::Parallel => todo!(),
+        ExecPolicy::Distributed => todo!(),
+        ExecPolicy::Hybrid => todo!(),
     }
     println!("  [MonteCarloUnit Initialization]: Done");
 

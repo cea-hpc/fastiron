@@ -50,7 +50,8 @@ fn main() {
     );
 
     match mcdata.exec_info.exec_policy {
-        ExecPolicy::Sequential => {
+        // single unit
+        ExecPolicy::Sequential | ExecPolicy::Rayon => {
             mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::Main);
 
             for step in 0..n_steps {
@@ -61,9 +62,8 @@ fn main() {
 
             mc_fast_timer::stop(&mut mcunits[0].fast_timer, Section::Main);
         }
-        ExecPolicy::Parallel => {
-            todo!()
-        }
+        // multiple units
+        ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
     }
 
     game_over(&mcdata, &mut mcunits[0]);
@@ -101,7 +101,7 @@ pub fn cycle_sync<T: CustomFloat>(
         // Finalize after processing; centralize data at each step or just use as it progress?
 
         match mcdata.exec_info.exec_policy {
-            ExecPolicy::Sequential => {
+            ExecPolicy::Sequential | ExecPolicy::Rayon => {
                 // if sequential, just use the single Monte-Carlo unit
                 mcunits[0].tallies.balance_cycle.end =
                     containers[0].processed_particles.len() as u64;
@@ -116,10 +116,8 @@ pub fn cycle_sync<T: CustomFloat>(
                 mcunits[0].tallies.update_spectrum(&containers[0]);
                 mcunits[0].fast_timer.clear_last_cycle_timers();
             }
-            ExecPolicy::Parallel => {
-                // centralize / finalize
-                todo!()
-            }
+            ExecPolicy::Distributed => todo!(),
+            ExecPolicy::Hybrid => todo!(),
         }
 
         if step == mcdata.params.simulation_params.n_steps + 1 {

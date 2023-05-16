@@ -11,8 +11,9 @@ pub enum ExecPolicy {
     /// Default value. Sequential execution.
     #[default]
     Sequential,
-    /// Parallel execution.
-    Parallel,
+    Rayon,
+    Distributed,
+    Hybrid,
 }
 
 /// Structure holding execution information of a given run.
@@ -32,7 +33,7 @@ impl MCProcessorInfo {
         // fetch data & init
         let num_threads: usize = sim_params.n_threads as usize;
         let exec_policy = if num_threads > 1 {
-            ExecPolicy::Parallel
+            ExecPolicy::Rayon
         } else {
             // if n_threads == 0, default to sequential execution
             ExecPolicy::Sequential

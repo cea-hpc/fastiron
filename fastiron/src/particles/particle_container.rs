@@ -11,6 +11,7 @@ use crate::{
     data::{send_queue::SendQueue, tallies::Balance},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     simulation::cycle_tracking::{cycle_tracking_guts, par_cycle_tracking_guts},
+    utils::mc_processor_info::ExecPolicy,
 };
 
 use super::mc_particle::{MCParticle, Species};
@@ -99,21 +100,38 @@ impl<T: CustomFloat> ParticleContainer<T> {
         mcdata: &MonteCarloData<T>,
         mcunit: &mut MonteCarloUnit<T>,
     ) {
-        let unit = Arc::new(Mutex::new(mcunit));
-        let extra = Arc::new(Mutex::new(&mut self.extra_particles));
-        let sq = Arc::new(Mutex::new(&mut self.send_queue));
-        self.processing_particles
-            .iter_mut()
-            .par_bridge()
-            .for_each(|particle| {
-                par_cycle_tracking_guts(
-                    mcdata,
-                    Arc::clone(&unit),
-                    particle,
-                    Arc::clone(&extra),
-                    Arc::clone(&sq),
-                )
-            });
+        match mcdata.exec_info.exec_policy {
+            // Process unit sequentially
+            ExecPolicy::Sequential | ExecPolicy::Distributed => {
+                self.processing_particles.iter_mut().for_each(|particle| {
+                    cycle_tracking_guts(
+                        mcdata,
+                        mcunit,
+                        particle,
+                        &mut self.extra_particles,
+                        &mut self.send_queue,
+                    )
+                });
+            }
+            // Process unit in parallel
+            ExecPolicy::Rayon | ExecPolicy::Hybrid => {
+                let unit = Arc::new(Mutex::new(mcunit));
+                let extra = Arc::new(Mutex::new(&mut self.extra_particles));
+                let sq = Arc::new(Mutex::new(&mut self.send_queue));
+                self.processing_particles
+                    .iter_mut()
+                    .par_bridge()
+                    .for_each(|particle| {
+                        par_cycle_tracking_guts(
+                            mcdata,
+                            Arc::clone(&unit),
+                            particle,
+                            Arc::clone(&extra),
+                            Arc::clone(&sq),
+                        )
+                    });
+            }
+        }
         self.processing_particles
             .retain(|particle| particle.species != Species::Unknown);
         self.processed_particles
