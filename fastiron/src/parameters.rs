@@ -326,7 +326,9 @@ pub struct SimulationParameters<T: CustomFloat> {
     /// according to this value.
     pub n_particles: u64,
     /// Number of threads that should be used to run the simulation.
-    pub n_threads: u64,
+    pub n_rayon_threads: u64,
+    /// Number of units that should be used to run the simulation.
+    pub n_units: u64,
     /// Number of steps simulated by the program.
     pub n_steps: usize,
     /// Number of cells along the x axis.
@@ -397,7 +399,8 @@ impl<T: CustomFloat> SimulationParameters<T> {
         fetch_from_cli!(ly);
         fetch_from_cli!(lz);
         fetch_from_cli!(n_particles);
-        fetch_from_cli!(n_threads);
+        fetch_from_cli!(n_rayon_threads);
+        fetch_from_cli!(n_units);
         fetch_from_cli!(n_steps);
         fetch_from_cli!(nx);
         fetch_from_cli!(ny);
@@ -419,7 +422,8 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             csv: false,
             debug_threads: false,
             n_particles: 1000000,
-            n_threads: 1,
+            n_rayon_threads: 1,
+            n_units: 1,
             n_steps: 10,
             nx: 10,
             ny: 10,
@@ -644,7 +648,7 @@ impl<T: CustomFloat> Parameters<T> {
                 "nGroups" => fetch_data!(n_groups, val),
                 "lowWeightCutoff" => fetch_data!(low_weight_cutoff, val),
 
-                // Unused in fastiron;
+                // Unused in fastiron; execution policy support is now CLI only
                 "cycleTimers" => (),
                 "batchSize" | "nBatches" => (),
                 "balanceTallyReplications" | "bTally" => (),

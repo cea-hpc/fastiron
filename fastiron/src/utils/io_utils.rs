@@ -86,7 +86,16 @@ pub struct Cli {
         num_args(1),
         allow_negative_numbers(false)
     )]
-    pub n_threads: Option<u64>,
+    pub n_rayon_threads: Option<u64>,
+
+    /// number of threads that should be used to run the simulation
+    #[arg(
+        short = 'u',
+        long = "units",
+        num_args(1),
+        allow_negative_numbers(false)
+    )]
+    pub n_units: Option<u64>,
 
     /// number of steps simulated
     #[arg(
