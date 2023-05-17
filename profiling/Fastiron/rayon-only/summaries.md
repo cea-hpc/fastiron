@@ -54,7 +54,11 @@ Previous version is `1.2-RuSeq`. Current version corresponds to commit `de548f7`
   read-only.
 3. `Balance` structure now uses only `AtomicU64`. This allows us to get rid of unecessary locks
   on thetallies.
-4. Mutex are used for extra container and send queue accesses. Those do not seem avoidable, so 
+4. Scalar flux computations now uses generic atomics from the [`atomic`][1] crate.
+5. Mutex are used for extra container and send queue accesses. Those do not seem avoidable, so 
   minimizing lock-time should be the objective.
 
+
 Some of these changes worsen the sequential performances, most importantly the cache removal.
+
+[1]: https://docs.rs/atomic/latest/atomic/
