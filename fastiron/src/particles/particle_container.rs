@@ -110,8 +110,8 @@ impl<T: CustomFloat> ParticleContainer<T> {
     pub fn process_particles(
         &mut self,
         mcdata: &MonteCarloData<T>,
-        mcunit: &mut MonteCarloUnit<T>,
-        tallies: &mut Tallies<T>,
+        mcunit: &MonteCarloUnit<T>,
+        tallies: &Tallies<T>,
     ) {
         match mcdata.exec_info.exec_policy {
             // Process unit sequentially
@@ -129,7 +129,6 @@ impl<T: CustomFloat> ParticleContainer<T> {
             }
             // Process unit in parallel
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
-                let tallie = Arc::new(tallies);
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
                 let sq = Arc::new(Mutex::new(&mut self.send_queue));
                 self.processing_particles
@@ -139,7 +138,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
                         par_cycle_tracking_guts(
                             mcdata,
                             mcunit,
-                            Arc::clone(&tallie),
+                            tallies,
                             particle,
                             Arc::clone(&extra),
                             Arc::clone(&sq),

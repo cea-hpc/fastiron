@@ -34,8 +34,8 @@ use super::{
 /// invalidated.
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
-    tallies: &mut Tallies<T>,
+    mcunit: &MonteCarloUnit<T>,
+    tallies: &Tallies<T>,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCParticle<T>>,
     send_queue: &mut SendQueue<T>,
@@ -57,8 +57,8 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
 
 fn cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
-    tallies: &mut Tallies<T>,
+    mcunit: &MonteCarloUnit<T>,
+    tallies: &Tallies<T>,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCParticle<T>>,
     send_queue: &mut SendQueue<T>,
@@ -176,7 +176,7 @@ fn cycle_tracking_function<T: CustomFloat>(
 pub fn par_cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
-    tallies: Arc<&mut Tallies<T>>,
+    tallies: &Tallies<T>,
     particle: &mut MCParticle<T>,
     extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
     send_queue: Arc<Mutex<&mut SendQueue<T>>>,
@@ -193,7 +193,7 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
 
-    par_cycle_tracking_function(mcdata, mcunit, &tallies, particle, extra, send_queue);
+    par_cycle_tracking_function(mcdata, mcunit, tallies, particle, extra, send_queue);
 }
 
 fn par_cycle_tracking_function<T: CustomFloat>(
