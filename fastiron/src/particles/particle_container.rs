@@ -120,8 +120,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
             }
             // Process unit in parallel
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
-                let unit = Arc::new(Mutex::new(mcunit));
-                let tallie = Arc::new(Mutex::new(tallies));
+                let tallie = Arc::new(tallies);
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
                 let sq = Arc::new(Mutex::new(&mut self.send_queue));
                 self.processing_particles
@@ -130,7 +129,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
                     .for_each(|particle| {
                         par_cycle_tracking_guts(
                             mcdata,
-                            Arc::clone(&unit),
+                            mcunit,
                             Arc::clone(&tallie),
                             particle,
                             Arc::clone(&extra),

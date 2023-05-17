@@ -6,7 +6,13 @@
 //! Note that this module isn't used to compute time-related data, this is done in
 //! the [utils::mc_fast_timer][crate::utils::mc_fast_timer] module.
 
-use std::{fmt::Debug, fs::OpenOptions, io::Write, iter::zip};
+use std::{
+    fmt::Debug,
+    fs::OpenOptions,
+    io::Write,
+    iter::zip,
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use num::zero;
 
@@ -80,7 +86,7 @@ impl<T: CustomFloat> FluenceDomain<T> {
 /// During the simulation, each time an event of interest occurs, the counters
 /// are incremented accordingly. In a parallel context, this structure should be
 /// operated on using atomic operations.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct Balance {
     /// Number of particles absorbed.
     pub absorb: u64,
@@ -107,7 +113,7 @@ pub struct Balance {
     /// Number of particles split in population control.
     pub split: u64,
     /// Number of segements.
-    pub num_segments: u64,
+    pub num_segments: AtomicU64,
 }
 
 impl Balance {
@@ -130,7 +136,8 @@ impl Balance {
         self.source += bal.source;
         self.rr += bal.rr;
         self.split += bal.split;
-        self.num_segments += bal.num_segments;
+        self.num_segments
+            .fetch_add(bal.num_segments.load(Ordering::SeqCst), Ordering::SeqCst);
     }
 }
 
@@ -344,7 +351,7 @@ impl<T: CustomFloat> Tallies<T> {
             bal.collision,
             bal.escape,
             bal.census,
-            bal.num_segments,
+            bal.num_segments.load(Ordering::Relaxed),
             sf_sum,
             cy_init,
             cy_track,
@@ -371,7 +378,7 @@ impl<T: CustomFloat> Tallies<T> {
                 bal.collision,
                 bal.escape,
                 bal.census,
-                bal.num_segments,
+                bal.num_segments.load(Ordering::Relaxed),
                 sf_sum,
                 cy_init,
                 cy_track,

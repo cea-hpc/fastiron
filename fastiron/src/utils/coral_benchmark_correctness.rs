@@ -4,6 +4,8 @@
 //! If there is a need for additional checks on data yielded by a _homemade_
 //! example, this is where to start.
 
+use std::sync::atomic::Ordering;
+
 use num::{one, zero, FromPrimitive};
 
 use crate::{constants::CustomFloat, data::tallies::Tallies, parameters::BenchType};
@@ -91,7 +93,9 @@ pub fn balance_event_test<T: CustomFloat>(tallies: &Tallies<T>) {
 
     let balance_tally = &tallies.balance_cumulative;
     let facet_crossing: T = FromPrimitive::from_u64(
-        balance_tally.num_segments - balance_tally.collision - balance_tally.census,
+        balance_tally.num_segments.load(Ordering::Relaxed)
+            - balance_tally.collision
+            - balance_tally.census,
     )
     .unwrap();
     let collision: T = FromPrimitive::from_u64(balance_tally.collision).unwrap();
