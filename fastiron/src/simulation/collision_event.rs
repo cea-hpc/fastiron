@@ -4,13 +4,16 @@
 //! from beginning to end. Note that _collision_ refers to reaction with the
 //! particle's environment, not in-between particles.
 
-use std::sync::{Arc, Mutex};
+use std::sync::{atomic::Ordering, Arc, Mutex};
 
 use num::zero;
 
 use crate::{
-    constants::CustomFloat, data::nuclear_data::ReactionType, montecarlo::MonteCarloData,
-    particles::mc_particle::MCParticle, simulation::macro_cross_section::macroscopic_cross_section,
+    constants::CustomFloat,
+    data::{nuclear_data::ReactionType, tallies::Tallies},
+    montecarlo::MonteCarloData,
+    particles::mc_particle::MCParticle,
+    simulation::macro_cross_section::macroscopic_cross_section,
 };
 
 /// Transforms a given particle according to an internally drawn type of collision.
@@ -25,11 +28,12 @@ use crate::{
 /// - Scattering reaction: no additional modifications occur.
 pub fn collision_event<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
+    tallies: &Tallies<T>,
     mat_gid: usize,
     cell_nb_density: T,
     particle: &mut MCParticle<T>,
     extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
-) -> (ReactionType, usize) {
+) -> bool {
     // ==========================
     // Pick an isotope & reaction
 
@@ -82,5 +86,34 @@ pub fn collision_event<T: CustomFloat>(
     // e.g. zero means the original particle was absorbed or invalidated in some way
     let n_out = particle.sample_collision(reaction, mat_mass, extra);
 
-    (reaction.reaction_type, n_out)
+    //====================
+    // Tally the collision
+
+    tallies
+        .balance_cycle
+        .collision
+        .fetch_add(1, Ordering::Relaxed); // atomic in original code
+    match reaction.reaction_type {
+        ReactionType::Scatter => {
+            tallies
+                .balance_cycle
+                .scatter
+                .fetch_add(1, Ordering::Relaxed);
+        }
+        ReactionType::Absorption => {
+            tallies.balance_cycle.absorb.fetch_add(1, Ordering::Relaxed);
+        }
+        ReactionType::Fission => {
+            tallies
+                .balance_cycle
+                .fission
+                .fetch_add(1, Ordering::Relaxed);
+            tallies
+                .balance_cycle
+                .produce
+                .fetch_add(n_out as u64, Ordering::Relaxed);
+        }
+    };
+
+    n_out >= 1
 }

@@ -10,7 +10,6 @@ use num::{one, zero};
 use crate::{
     constants::CustomFloat,
     data::{
-        nuclear_data::ReactionType,
         send_queue::SendQueue,
         tallies::{MCTallyEvent, Tallies},
     },
@@ -85,36 +84,15 @@ fn cycle_tracking_function<T: CustomFloat>(
                 let mat_gid = mcunit.domain[particle.domain].cell_state[particle.cell].material;
                 let cell_nb_density =
                     mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
-                let (reaction_type, n_out) =
-                    collision_event(mcdata, mat_gid, cell_nb_density, particle, Arc::clone(&tmp));
+                keep_tracking = collision_event(
+                    mcdata,
+                    tallies,
+                    mat_gid,
+                    cell_nb_density,
+                    particle,
+                    Arc::clone(&tmp),
+                );
 
-                // Tally the collision
-                tallies
-                    .balance_cycle
-                    .collision
-                    .fetch_add(1, Ordering::Relaxed); // atomic in original code
-                match reaction_type {
-                    ReactionType::Scatter => {
-                        tallies
-                            .balance_cycle
-                            .scatter
-                            .fetch_add(1, Ordering::Relaxed);
-                    }
-                    ReactionType::Absorption => {
-                        tallies.balance_cycle.absorb.fetch_add(1, Ordering::Relaxed);
-                    }
-                    ReactionType::Fission => {
-                        tallies
-                            .balance_cycle
-                            .fission
-                            .fetch_add(1, Ordering::Relaxed);
-                        tallies
-                            .balance_cycle
-                            .produce
-                            .fetch_add(n_out as u64, Ordering::Relaxed);
-                    }
-                };
-                keep_tracking = n_out >= 1;
                 particle.energy_group = mcdata
                     .nuclear_data
                     .get_energy_groups(particle.kinetic_energy);
@@ -244,41 +222,15 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                 let cell_nb_density =
                     mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
 
-                let (reaction_type, n_out) = collision_event(
+                keep_tracking = collision_event(
                     mcdata,
+                    tallies,
                     mat_gid,
                     cell_nb_density,
                     particle,
                     Arc::clone(&extra),
                 );
 
-                // Tally the collision
-                tallies
-                    .balance_cycle
-                    .collision
-                    .fetch_add(1, Ordering::Relaxed); // atomic in original code
-                match reaction_type {
-                    ReactionType::Scatter => {
-                        tallies
-                            .balance_cycle
-                            .scatter
-                            .fetch_add(1, Ordering::Relaxed);
-                    }
-                    ReactionType::Absorption => {
-                        tallies.balance_cycle.absorb.fetch_add(1, Ordering::Relaxed);
-                    }
-                    ReactionType::Fission => {
-                        tallies
-                            .balance_cycle
-                            .fission
-                            .fetch_add(1, Ordering::Relaxed);
-                        tallies
-                            .balance_cycle
-                            .produce
-                            .fetch_add(n_out as u64, Ordering::Relaxed);
-                    }
-                };
-                keep_tracking = n_out >= 1;
                 particle.energy_group = mcdata
                     .nuclear_data
                     .get_energy_groups(particle.kinetic_energy);
