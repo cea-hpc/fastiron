@@ -10,7 +10,6 @@ column -s=';' -t < timers_report.csv
 **Figure of merit**: `2.600e6 [segments / cycle tracking time]`
 
 
-
 ## Tokei Report
 
 Note that this is prone to change since the implem is currently more of a 
@@ -36,6 +35,8 @@ DIY implem than clean code.
 
 ## Previous Version Comparison
 
+### Percents
+
 Previous version is `1.2-RuSeq`. Current version corresponds to commit `de548f7`.
 
 | Section              | Percent Change |
@@ -44,3 +45,16 @@ Previous version is `1.2-RuSeq`. Current version corresponds to commit `de548f7`
 | PopulationControl    |           4.0% |
 | CycleTracking        |         -70.7% |
 | CycleSync            |           1.9% |
+
+### Implementation
+
+1. Separated `Tallies` from `MonteCarloUnit`. This may be avoidable since reference to tallies 
+  are now immutable & they are updated using atomics.
+2. Removed cross-section cache-ing from `MonteCarloUnit`. This was done to make the structure 
+  read-only.
+3. `Balance` structure now uses only `AtomicU64`. This allows us to get rid of unecessary locks
+  on thetallies.
+4. Mutex are used for extra container and send queue accesses. Those do not seem avoidable, so 
+  minimizing lock-time should be the objective.
+
+Some of these changes worsen the sequential performances, most importantly the cache removal.
