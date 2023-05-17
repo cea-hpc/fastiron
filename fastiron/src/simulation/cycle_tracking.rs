@@ -65,6 +65,7 @@ fn cycle_tracking_function<T: CustomFloat>(
     send_queue: &mut SendQueue<T>,
 ) {
     let mut keep_tracking: bool;
+    let tmp = Arc::new(Mutex::new(extra));
 
     loop {
         // compute event for segment
@@ -84,9 +85,8 @@ fn cycle_tracking_function<T: CustomFloat>(
                 let mat_gid = mcunit.domain[particle.domain].cell_state[particle.cell].material;
                 let cell_nb_density =
                     mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
-
                 let (reaction_type, n_out) =
-                    collision_event(mcdata, mat_gid, cell_nb_density, particle, extra);
+                    collision_event(mcdata, mat_gid, cell_nb_density, particle, Arc::clone(&tmp));
 
                 // Tally the collision
                 tallies
@@ -249,7 +249,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                     mat_gid,
                     cell_nb_density,
                     particle,
-                    &mut extra.lock().unwrap(),
+                    Arc::clone(&extra),
                 );
 
                 // Tally the collision

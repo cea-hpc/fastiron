@@ -4,6 +4,8 @@
 //! from beginning to end. Note that _collision_ refers to reaction with the
 //! particle's environment, not in-between particles.
 
+use std::sync::{Arc, Mutex};
+
 use num::zero;
 
 use crate::{
@@ -26,7 +28,7 @@ pub fn collision_event<T: CustomFloat>(
     mat_gid: usize,
     cell_nb_density: T,
     particle: &mut MCParticle<T>,
-    extra: &mut Vec<MCParticle<T>>,
+    extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
 ) -> (ReactionType, usize) {
     // ==========================
     // Pick an isotope & reaction
