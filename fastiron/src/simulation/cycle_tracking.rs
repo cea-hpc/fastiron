@@ -10,6 +10,7 @@ use num::{one, zero};
 use crate::{
     constants::CustomFloat,
     data::{
+        nuclear_data::ReactionType,
         send_queue::SendQueue,
         tallies::{MCTallyEvent, Tallies},
     },
@@ -87,14 +88,20 @@ fn cycle_tracking_function<T: CustomFloat>(
                 let cell_nb_density =
                     mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
 
-                keep_tracking = collision_event(
-                    mcdata,
-                    mat_gid,
-                    cell_nb_density,
-                    particle,
-                    extra,
-                    &mut tallies.balance_cycle,
-                );
+                let (reaction_type, n_out) =
+                    collision_event(mcdata, mat_gid, cell_nb_density, particle, extra);
+
+                // Tally the collision
+                tallies.balance_cycle.collision += 1; // atomic in original code
+                match reaction_type {
+                    ReactionType::Scatter => tallies.balance_cycle.scatter += 1,
+                    ReactionType::Absorption => tallies.balance_cycle.absorb += 1,
+                    ReactionType::Fission => {
+                        tallies.balance_cycle.fission += 1;
+                        tallies.balance_cycle.produce += n_out as u64;
+                    }
+                };
+                keep_tracking = n_out >= 1;
                 particle.energy_group = mcdata
                     .nuclear_data
                     .get_energy_groups(particle.kinetic_energy);
@@ -227,14 +234,25 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                 let cell_nb_density =
                     mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
 
-                keep_tracking = collision_event(
+                let (reaction_type, n_out) = collision_event(
                     mcdata,
                     mat_gid,
                     cell_nb_density,
                     particle,
                     &mut extra.lock().unwrap(),
-                    &mut tallies.as_ref().balance_cycle,
                 );
+
+                // Tally the collision
+                tallies.balance_cycle.collision += 1; // atomic in original code
+                match reaction_type {
+                    ReactionType::Scatter => tallies.balance_cycle.scatter += 1,
+                    ReactionType::Absorption => tallies.balance_cycle.absorb += 1,
+                    ReactionType::Fission => {
+                        tallies.balance_cycle.fission += 1;
+                        tallies.balance_cycle.produce += n_out as u64;
+                    }
+                };
+                keep_tracking = n_out >= 1;
                 particle.energy_group = mcdata
                     .nuclear_data
                     .get_energy_groups(particle.kinetic_energy);

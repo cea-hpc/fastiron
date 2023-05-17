@@ -7,11 +7,8 @@
 use num::zero;
 
 use crate::{
-    constants::CustomFloat,
-    data::{nuclear_data::ReactionType, tallies::Balance},
-    montecarlo::MonteCarloData,
-    particles::mc_particle::MCParticle,
-    simulation::macro_cross_section::macroscopic_cross_section,
+    constants::CustomFloat, data::nuclear_data::ReactionType, montecarlo::MonteCarloData,
+    particles::mc_particle::MCParticle, simulation::macro_cross_section::macroscopic_cross_section,
 };
 
 /// Transforms a given particle according to an internally drawn type of collision.
@@ -30,8 +27,7 @@ pub fn collision_event<T: CustomFloat>(
     cell_nb_density: T,
     particle: &mut MCParticle<T>,
     extra: &mut Vec<MCParticle<T>>,
-    balance: &mut Balance,
-) -> bool {
+) -> (ReactionType, usize) {
     // ==========================
     // Pick an isotope & reaction
 
@@ -84,18 +80,5 @@ pub fn collision_event<T: CustomFloat>(
     // e.g. zero means the original particle was absorbed or invalidated in some way
     let n_out = particle.sample_collision(reaction, mat_mass, extra);
 
-    // ===================
-    // Tally the collision
-
-    balance.collision += 1; // atomic in original code
-    match reaction.reaction_type {
-        ReactionType::Scatter => balance.scatter += 1,
-        ReactionType::Absorption => balance.absorb += 1,
-        ReactionType::Fission => {
-            balance.fission += 1;
-            balance.produce += n_out as u64;
-        }
-    }
-
-    n_out >= 1
+    (reaction.reaction_type, n_out)
 }
