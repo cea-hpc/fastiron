@@ -89,29 +89,29 @@ impl<T: CustomFloat> FluenceDomain<T> {
 #[derive(Debug, Default)]
 pub struct Balance {
     /// Number of particles absorbed.
-    pub absorb: u64,
+    pub absorb: AtomicU64,
     /// Number of particles that enter census.
-    pub census: u64,
+    pub census: AtomicU64,
     /// Number of particles that escape.
-    pub escape: u64,
+    pub escape: AtomicU64,
     /// Number of collisions.
-    pub collision: u64,
+    pub collision: AtomicU64,
     /// Number of particles at end of cycle.
-    pub end: u64,
+    pub end: AtomicU64,
     /// Number of fission events.
-    pub fission: u64,
+    pub fission: AtomicU64,
     /// Number of particles created by collisions.
-    pub produce: u64,
+    pub produce: AtomicU64,
     /// Number of scatters.
-    pub scatter: u64,
+    pub scatter: AtomicU64,
     /// Number of particles at beginning of cycle.
-    pub start: u64,
+    pub start: AtomicU64,
     /// Number of particles sourced in.
-    pub source: u64,
+    pub source: AtomicU64,
     /// Number of particles Russian Rouletted in population control.
-    pub rr: u64,
+    pub rr: AtomicU64,
     /// Number of particles split in population control.
-    pub split: u64,
+    pub split: AtomicU64,
     /// Number of segements.
     pub num_segments: AtomicU64,
 }
@@ -124,18 +124,30 @@ impl Balance {
 
     /// Add another [Balance]'s value to its own.
     pub fn add(&mut self, bal: &Balance) {
-        self.absorb += bal.absorb;
-        self.census += bal.census;
-        self.escape += bal.escape;
-        self.collision += bal.collision;
-        self.end += bal.end;
-        self.fission += bal.fission;
-        self.produce += bal.produce;
-        self.scatter += bal.scatter;
-        self.start += bal.start;
-        self.source += bal.source;
-        self.rr += bal.rr;
-        self.split += bal.split;
+        self.absorb
+            .fetch_add(bal.absorb.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.census
+            .fetch_add(bal.census.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.escape
+            .fetch_add(bal.escape.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.collision
+            .fetch_add(bal.collision.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.end
+            .fetch_add(bal.end.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.fission
+            .fetch_add(bal.fission.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.produce
+            .fetch_add(bal.produce.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.scatter
+            .fetch_add(bal.scatter.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.start
+            .fetch_add(bal.start.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.source
+            .fetch_add(bal.source.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.rr
+            .fetch_add(bal.rr.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.split
+            .fetch_add(bal.split.load(Ordering::SeqCst), Ordering::SeqCst);
         self.num_segments
             .fetch_add(bal.num_segments.load(Ordering::SeqCst), Ordering::SeqCst);
     }
@@ -340,17 +352,17 @@ impl<T: CustomFloat> Tallies<T> {
         let bal = &self.balance_cycle;
         println!("{:>7} |{:>7} |{:>9} |{:>9} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>14.6e} |{:>10.3e}     |{:>14.5e}     |{:>10.3e}",
             step,
-            bal.start,
-            bal.source,
-            bal.rr,
-            bal.split,
-            bal.absorb,
-            bal.scatter,
-            bal.fission,
-            bal.produce,
-            bal.collision,
-            bal.escape,
-            bal.census,
+            bal.start.load(Ordering::Relaxed),
+            bal.source.load(Ordering::Relaxed),
+            bal.rr.load(Ordering::Relaxed),
+            bal.split.load(Ordering::Relaxed),
+            bal.absorb.load(Ordering::Relaxed),
+            bal.scatter.load(Ordering::Relaxed),
+            bal.fission.load(Ordering::Relaxed),
+            bal.produce.load(Ordering::Relaxed),
+            bal.collision.load(Ordering::Relaxed),
+            bal.escape.load(Ordering::Relaxed),
+            bal.census.load(Ordering::Relaxed),
             bal.num_segments.load(Ordering::Relaxed),
             sf_sum,
             cy_init,
@@ -367,17 +379,17 @@ impl<T: CustomFloat> Tallies<T> {
                 file,
                 "{};{};{};{};{};{};{};{};{};{};{};{};{};{:e};{:e};{:e};{:e}",
                 step,
-                bal.start,
-                bal.source,
-                bal.rr,
-                bal.split,
-                bal.absorb,
-                bal.scatter,
-                bal.fission,
-                bal.produce,
-                bal.collision,
-                bal.escape,
-                bal.census,
+                bal.start.load(Ordering::Relaxed),
+                bal.source.load(Ordering::Relaxed),
+                bal.rr.load(Ordering::Relaxed),
+                bal.split.load(Ordering::Relaxed),
+                bal.absorb.load(Ordering::Relaxed),
+                bal.scatter.load(Ordering::Relaxed),
+                bal.fission.load(Ordering::Relaxed),
+                bal.produce.load(Ordering::Relaxed),
+                bal.collision.load(Ordering::Relaxed),
+                bal.escape.load(Ordering::Relaxed),
+                bal.census.load(Ordering::Relaxed),
                 bal.num_segments.load(Ordering::Relaxed),
                 sf_sum,
                 cy_init,
@@ -432,9 +444,9 @@ impl<T: CustomFloat> Tallies<T> {
     pub fn cycle_finalize(&mut self, bench_type: BenchType) {
         self.balance_cumulative.add(&self.balance_cycle);
 
-        let new_start: u64 = self.balance_cycle.end;
+        let new_start: u64 = self.balance_cycle.end.load(Ordering::SeqCst);
         self.balance_cycle.reset();
-        self.balance_cycle.start = new_start;
+        self.balance_cycle.start.store(new_start, Ordering::SeqCst);
 
         if bench_type != BenchType::Standard {
             let fluence_computation_iter = zip(

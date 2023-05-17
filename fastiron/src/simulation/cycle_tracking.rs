@@ -92,13 +92,29 @@ fn cycle_tracking_function<T: CustomFloat>(
                     collision_event(mcdata, mat_gid, cell_nb_density, particle, extra);
 
                 // Tally the collision
-                tallies.balance_cycle.collision += 1; // atomic in original code
+                tallies
+                    .balance_cycle
+                    .collision
+                    .fetch_add(1, Ordering::Relaxed); // atomic in original code
                 match reaction_type {
-                    ReactionType::Scatter => tallies.balance_cycle.scatter += 1,
-                    ReactionType::Absorption => tallies.balance_cycle.absorb += 1,
+                    ReactionType::Scatter => {
+                        tallies
+                            .balance_cycle
+                            .scatter
+                            .fetch_add(1, Ordering::Relaxed);
+                    }
+                    ReactionType::Absorption => {
+                        tallies.balance_cycle.absorb.fetch_add(1, Ordering::Relaxed);
+                    }
                     ReactionType::Fission => {
-                        tallies.balance_cycle.fission += 1;
-                        tallies.balance_cycle.produce += n_out as u64;
+                        tallies
+                            .balance_cycle
+                            .fission
+                            .fetch_add(1, Ordering::Relaxed);
+                        tallies
+                            .balance_cycle
+                            .produce
+                            .fetch_add(n_out as u64, Ordering::Relaxed);
                     }
                 };
                 keep_tracking = n_out >= 1;
@@ -147,7 +163,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
-                        tallies.balance_cycle.escape += 1;
+                        tallies.balance_cycle.escape.fetch_add(1, Ordering::Relaxed);
                         particle.last_event = MCTallyEvent::FacetCrossingEscape;
                         particle.species = Species::Unknown;
                         false
@@ -158,7 +174,7 @@ fn cycle_tracking_function<T: CustomFloat>(
             }
             MCSegmentOutcome::Census => {
                 // atomic in original code
-                tallies.balance_cycle.census += 1;
+                tallies.balance_cycle.census.fetch_add(1, Ordering::Relaxed);
                 // we're done tracking the particle FOR THIS STEP; Species stays valid
                 keep_tracking = false;
             }
@@ -243,13 +259,29 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                 );
 
                 // Tally the collision
-                tallies.balance_cycle.collision += 1; // atomic in original code
+                tallies
+                    .balance_cycle
+                    .collision
+                    .fetch_add(1, Ordering::Relaxed); // atomic in original code
                 match reaction_type {
-                    ReactionType::Scatter => tallies.balance_cycle.scatter += 1,
-                    ReactionType::Absorption => tallies.balance_cycle.absorb += 1,
+                    ReactionType::Scatter => {
+                        tallies
+                            .balance_cycle
+                            .scatter
+                            .fetch_add(1, Ordering::Relaxed);
+                    }
+                    ReactionType::Absorption => {
+                        tallies.balance_cycle.absorb.fetch_add(1, Ordering::Relaxed);
+                    }
                     ReactionType::Fission => {
-                        tallies.balance_cycle.fission += 1;
-                        tallies.balance_cycle.produce += n_out as u64;
+                        tallies
+                            .balance_cycle
+                            .fission
+                            .fetch_add(1, Ordering::Relaxed);
+                        tallies
+                            .balance_cycle
+                            .produce
+                            .fetch_add(n_out as u64, Ordering::Relaxed);
                     }
                 };
                 keep_tracking = n_out >= 1;
@@ -298,7 +330,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {
                         // atomic in original code
-                        tallies.as_ref().balance_cycle.escape += 1;
+                        tallies.balance_cycle.escape.fetch_add(1, Ordering::Relaxed);
                         particle.last_event = MCTallyEvent::FacetCrossingEscape;
                         particle.species = Species::Unknown;
                         false
@@ -309,7 +341,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
             }
             MCSegmentOutcome::Census => {
                 // atomic in original code
-                tallies.as_ref().balance_cycle.census += 1;
+                tallies.balance_cycle.census.fetch_add(1, Ordering::Relaxed);
                 // we're done tracking the particle FOR THIS STEP; Species stays valid
                 keep_tracking = false;
             }

@@ -4,6 +4,8 @@
 //! of particles in the simulation as well as two internal functions used by
 //! those.
 
+use std::sync::atomic::Ordering;
+
 use num::{one, FromPrimitive};
 
 use crate::{
@@ -110,7 +112,10 @@ pub fn source_now<T: CustomFloat>(
                     }
 
                     // atomic in original code
-                    tallies.balance_cycle.source += seeds.len() as u64;
+                    tallies
+                        .balance_cycle
+                        .source
+                        .fetch_add(seeds.len() as u64, Ordering::Relaxed);
 
                     container
                         .processing_particles

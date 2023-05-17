@@ -2,7 +2,7 @@
 //!
 //! This module contains code used for the main structure holding particles.
 
-use std::sync::{Arc, Mutex};
+use std::sync::{atomic::Ordering, Arc, Mutex};
 
 use rayon::prelude::*;
 
@@ -72,7 +72,10 @@ impl<T: CustomFloat> ParticleContainer<T> {
             let survive_twice = pp.low_weight_rr(relative_weight_cutoff, source_particle_weight);
             survive_once & survive_twice
         });
-        balance.rr += (old_len - self.processing_particles.len()) as u64;
+        balance.rr.fetch_add(
+            (old_len - self.processing_particles.len()) as u64,
+            Ordering::Relaxed,
+        );
     }
 
     /// Split particles to reach the desired number of particles for
@@ -90,11 +93,17 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 .extend(pp.under_populated_split(split_rr_factor));
         });
         self.clean_extra_vaults();
-        balance.split += (self.processing_particles.len() - old_len) as u64;
+        balance.split.fetch_add(
+            (self.processing_particles.len() - old_len) as u64,
+            Ordering::Relaxed,
+        );
         old_len = self.processing_particles.len();
         self.processing_particles
             .retain_mut(|pp| pp.low_weight_rr(relative_weight_cutoff, source_particle_weight));
-        balance.rr += (old_len - self.processing_particles.len()) as u64;
+        balance.rr.fetch_add(
+            (old_len - self.processing_particles.len()) as u64,
+            Ordering::Relaxed,
+        );
     }
 
     /// Track particles and transfer them to the processed storage when done.

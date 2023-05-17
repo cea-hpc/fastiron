@@ -33,9 +33,11 @@ pub fn balance_ratio_test<T: CustomFloat>(bench_type: BenchType, tallies: &Talli
     println!("Testing if ratios for absorbtion, fission & scattering are maintained...");
 
     let balance_tally = &tallies.balance_cumulative;
-    let absorb: T = FromPrimitive::from_u64(balance_tally.absorb).unwrap();
-    let fission: T = FromPrimitive::from_u64(balance_tally.fission).unwrap();
-    let scatter: T = FromPrimitive::from_u64(balance_tally.scatter).unwrap();
+    let absorb: T = FromPrimitive::from_u64(balance_tally.absorb.load(Ordering::Relaxed)).unwrap();
+    let fission: T =
+        FromPrimitive::from_u64(balance_tally.fission.load(Ordering::Relaxed)).unwrap();
+    let scatter: T =
+        FromPrimitive::from_u64(balance_tally.scatter.load(Ordering::Relaxed)).unwrap();
     let (fission_ratio, scatter_ratio, absorb_ratio, percent_tolerance): (T, T, T, T) =
         if bench_type == BenchType::Coral1 {
             (
@@ -94,11 +96,12 @@ pub fn balance_event_test<T: CustomFloat>(tallies: &Tallies<T>) {
     let balance_tally = &tallies.balance_cumulative;
     let facet_crossing: T = FromPrimitive::from_u64(
         balance_tally.num_segments.load(Ordering::Relaxed)
-            - balance_tally.collision
-            - balance_tally.census,
+            - balance_tally.collision.load(Ordering::Relaxed)
+            - balance_tally.census.load(Ordering::Relaxed),
     )
     .unwrap();
-    let collision: T = FromPrimitive::from_u64(balance_tally.collision).unwrap();
+    let collision: T =
+        FromPrimitive::from_u64(balance_tally.collision.load(Ordering::Relaxed)).unwrap();
 
     let ratio: T = (facet_crossing / collision - one()).abs();
     let percent_tolerance: T = one();
@@ -121,8 +124,15 @@ pub fn missing_particle_test<T: CustomFloat>(tallies: &Tallies<T>) {
     println!("Testing for lost / unaccounted for particles in this simulation...");
 
     let bt = &tallies.balance_cumulative;
-    let gains: u64 = bt.start + bt.source + bt.produce + bt.split;
-    let losses: u64 = bt.absorb + bt.census + bt.escape + bt.rr + bt.fission;
+    let gains: u64 = bt.start.load(Ordering::Relaxed)
+        + bt.source.load(Ordering::Relaxed)
+        + bt.produce.load(Ordering::Relaxed)
+        + bt.split.load(Ordering::Relaxed);
+    let losses: u64 = bt.absorb.load(Ordering::Relaxed)
+        + bt.census.load(Ordering::Relaxed)
+        + bt.escape.load(Ordering::Relaxed)
+        + bt.rr.load(Ordering::Relaxed)
+        + bt.fission.load(Ordering::Relaxed);
 
     if gains == losses {
         println!("PASS:: No particles lost during run");
