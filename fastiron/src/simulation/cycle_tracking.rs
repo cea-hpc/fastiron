@@ -41,9 +41,6 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     extra: &mut Vec<MCParticle<T>>,
     send_queue: &mut SendQueue<T>,
 ) {
-    // load particle, track it & update the original
-    // next step is to refactor MCParticle / MCBaseParticle to lighten conversion between the types
-
     // set age & time to census
     if particle.time_to_census <= zero() {
         particle.time_to_census += mcdata.params.simulation_params.dt;
@@ -203,9 +200,6 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
     extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
     send_queue: Arc<Mutex<&mut SendQueue<T>>>,
 ) {
-    // load particle, track it & update the original
-    // next step is to refactor MCParticle / MCBaseParticle to lighten conversion between the types
-
     // set age & time to census
     if particle.time_to_census <= zero() {
         particle.time_to_census += mcdata.params.simulation_params.dt;
@@ -218,13 +212,13 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
 
-    par_cycle_tracking_function(mcdata, mcunit, tallies, particle, extra, send_queue);
+    par_cycle_tracking_function(mcdata, mcunit, &tallies, particle, extra, send_queue);
 }
 
 fn par_cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
-    tallies: Arc<&mut Tallies<T>>,
+    tallies: &Tallies<T>,
     particle: &mut MCParticle<T>,
     extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
     send_queue: Arc<Mutex<&mut SendQueue<T>>>,
@@ -241,8 +235,8 @@ fn par_cycle_tracking_function<T: CustomFloat>(
             .fetch_add(1, Ordering::SeqCst); // atomic in original code
         particle.num_segments += one();
         // update scalar flux tally
-        tallies.as_ref().scalar_flux_domain[particle.domain].cell[particle.cell]
-            [particle.energy_group] += particle.segment_path_length * particle.weight;
+        //tallies.scalar_flux_domain[particle.domain].cell[particle.cell][particle.energy_group] +=
+        //    particle.segment_path_length * particle.weight;
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {

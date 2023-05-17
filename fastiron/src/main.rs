@@ -1,4 +1,5 @@
 use std::iter::zip;
+use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 use clap::Parser;
@@ -113,7 +114,10 @@ pub fn game_over<T: CustomFloat>(
     mcunit.fast_timer.update_main_stats();
 
     mcunit.fast_timer.cumulative_report(
-        tallies.balance_cumulative.num_segments,
+        tallies
+            .balance_cumulative
+            .num_segments
+            .load(Ordering::Relaxed),
         mcdata.params.simulation_params.csv,
     );
 
@@ -139,7 +143,10 @@ pub fn cycle_sync<T: CustomFloat>(
         match mcdata.exec_info.exec_policy {
             ExecPolicy::Sequential | ExecPolicy::Rayon => {
                 // if sequential/rayon-only, just use the single Monte-Carlo unit
-                talliesss[0].balance_cycle.end = containers[0].processed_particles.len() as u64;
+                talliesss[0].balance_cycle.end.store(
+                    containers[0].processed_particles.len() as u64,
+                    Ordering::SeqCst,
+                );
                 talliesss[0].print_summary(
                     &mut mcunits[0].fast_timer,
                     step - 1,
@@ -167,7 +174,10 @@ pub fn cycle_sync<T: CustomFloat>(
         mcunit.clear_cross_section_cache();
         container.swap_processing_processed();
         let local_n_particles = container.processing_particles.len();
-        tallies.balance_cycle.start = local_n_particles as u64;
+        tallies
+            .balance_cycle
+            .start
+            .store(local_n_particles as u64, Ordering::SeqCst);
         current_n_particles += local_n_particles;
         total_problem_weight += mcunit.unit_weight;
     });
