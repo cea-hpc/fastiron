@@ -14,6 +14,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
+use atomic::Atomic;
 use num::zero;
 
 use crate::{
@@ -68,7 +69,8 @@ impl<T: CustomFloat> FluenceDomain<T> {
     pub fn compute(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
         let cell_iter = zip(self.cell.iter_mut(), scalar_flux_domain.cell.iter());
         cell_iter.for_each(|(fl_cell, sf_cell)| {
-            *fl_cell += sf_cell.iter().copied().sum();
+            let sum = sf_cell.iter().map(|val| val.load(Ordering::Relaxed)).sum();
+            *fl_cell += sum;
         })
     }
 
@@ -159,11 +161,12 @@ impl Balance {
 
 /// Cell-specific scalar flux data.
 ///
-/// Each element of the vector is corresponds to a cell's data.
-type ScalarFluxCell<T> = Vec<T>;
+/// Each element of the vector is corresponds to an energy
+/// level specific data of the cell.
+type ScalarFluxCell<T> = Vec<Atomic<T>>;
 
 /// Domain-sorted _scalar-flux-data-holding_ sub-structure.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ScalarFluxDomain<T: CustomFloat> {
     pub cell: Vec<ScalarFluxCell<T>>,
 }
@@ -172,27 +175,20 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
     /// Constructor.
     pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
-        let cell = vec![vec![zero::<T>(); num_groups]; domain.cell_state.len()];
+        let mut cell = Vec::with_capacity(domain.cell_state.len());
+        (0..domain.cell_state.len()).for_each(|_| {
+            let sf_cell = (0..num_groups).map(|_| Atomic::<T>::default()).collect();
+            cell.push(sf_cell);
+        });
         Self { cell }
     }
 
     /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
+        let num_groups = self.cell[0].len();
         self.cell.iter_mut().for_each(|sf_cell| {
-            sf_cell.fill(zero());
+            *sf_cell = (0..num_groups).map(|_| Atomic::<T>::default()).collect();
         });
-    }
-
-    /// Add another [ScalarFluxDomain]'s value to its own.
-    pub fn add(&mut self, other: &ScalarFluxDomain<T>) {
-        // zip iterators from the two objects' values.
-        let cell_iter = zip(self.cell.iter_mut(), other.cell.iter());
-        cell_iter.for_each(|(cell_lhs, cell_rhs)| {
-            // zip iterators from the two objects' values.
-            let group_iter = zip(cell_lhs.iter_mut(), cell_rhs.iter());
-            // sum other to self
-            group_iter.for_each(|(group_lhs, group_rhs)| *group_lhs += *group_rhs);
-        })
     }
 }
 
@@ -409,8 +405,13 @@ impl<T: CustomFloat> Tallies<T> {
                 sf_domain
                     .cell
                     .iter()
-                    .map(|sf_cell| sf_cell.iter().copied().sum())
-                    .sum()
+                    .map(|sf_cell| {
+                        sf_cell
+                            .iter()
+                            .map(|val| val.load(Ordering::Relaxed))
+                            .sum::<T>()
+                    })
+                    .sum::<T>()
             })
             .sum();
         summ

@@ -3,6 +3,12 @@
 version = 3
 
 [[package]]
+name = "atomic"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c59bdb34bc650a32731b31bd8f0829cc15d24a708ee31559e0bb34f2bc320cba"
+
+[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -228,6 +234,7 @@ dependencies = [
 name = "fastiron"
 version = "1.2.0"
 dependencies = [
+ "atomic",
  "clap 4.1.4",
  "criterion",
  "num",

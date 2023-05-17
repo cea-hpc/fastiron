@@ -76,8 +76,11 @@ fn cycle_tracking_function<T: CustomFloat>(
             .fetch_add(1, Ordering::SeqCst); // atomic in original code
         particle.num_segments += one();
         // update scalar flux of the cell
-        tallies.scalar_flux_domain[particle.domain].cell[particle.cell][particle.energy_group] +=
-            particle.segment_path_length * particle.weight;
+        tallies.scalar_flux_domain[particle.domain].cell[particle.cell][particle.energy_group]
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| {
+                Some(x + particle.segment_path_length * particle.weight)
+            })
+            .unwrap();
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
@@ -213,8 +216,11 @@ fn par_cycle_tracking_function<T: CustomFloat>(
             .fetch_add(1, Ordering::SeqCst); // atomic in original code
         particle.num_segments += one();
         // update scalar flux tally
-        //tallies.scalar_flux_domain[particle.domain].cell[particle.cell][particle.energy_group] +=
-        //    particle.segment_path_length * particle.weight;
+        tallies.scalar_flux_domain[particle.domain].cell[particle.cell][particle.energy_group]
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| {
+                Some(x + particle.segment_path_length * particle.weight)
+            })
+            .unwrap();
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {

@@ -49,7 +49,16 @@ pub type Tuple4 = (usize, usize, usize, usize);
 pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
 /// Custom trait for floatting point number
 pub trait UtilsFloat:
-    Default + Debug + Display + LowerExp + FromStr + From<f32> + Sum + Send + Sync
+    Default
+    + Debug
+    + Display
+    + LowerExp
+    + FromStr
+    + From<f32>
+    + Sum
+    + for<'a> Sum<&'a Self>
+    + Send
+    + Sync
 {
 }
 /// Custom super-trait for floatting point number

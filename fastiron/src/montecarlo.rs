@@ -90,7 +90,7 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
                             * mcdata.params.simulation_params.dt;
                         cell_weight
                     })
-                    .sum()
+                    .sum::<T>()
             })
             .sum();
     }
