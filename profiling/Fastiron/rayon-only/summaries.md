@@ -33,3 +33,14 @@ DIY implem than clean code.
  Total                  48         7220         5892          451          877
 ===============================================================================
 ```
+
+## Previous Version Comparison
+
+Previous version is `1.2-RuSeq`. Current version corresponds to commit `de548f7`.
+
+| Section              | Percent Change |
+|----------------------|----------------|
+| Total execution time |         -70.5% |
+| PopulationControl    |           4.0% |
+| CycleTracking        |         -70.7% |
+| CycleSync            |           1.9% |
