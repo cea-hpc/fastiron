@@ -82,9 +82,9 @@ something else than a laptop.
 ### Number of particles
 
 
- `RuSeq - f64` Fastiron | `RuSeq - f32` Fastiron | Rayon-only Fastiron
-------------------------|------------------------|---------------------
-![f64_tracking](../../SequentialAnalysis/figures/FI_64/scaling_tracking.png) | ![f32_tracking](../../SequentialAnalysis/figures/FI_32/scaling_tracking.png) | ![rayon_tracking](particles_scaling_tracking.png)
+ `RuSeq` Fastiron                                       | Rayon-only Fastiron
+------------------------------------------------------|----------------------------------------------------
+![tracking](../../SequentialAnalysis/figures/FI_64/scaling_tracking.png)   | ![rayon_tracking](particles_scaling_tracking.png)
 
 
 
