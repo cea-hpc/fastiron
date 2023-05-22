@@ -3,6 +3,8 @@
 //! This module is currently useless but will be built on when introducing
 //! parallelism to the program.
 
+use std::fmt::Display;
+
 use crate::{constants::CustomFloat, parameters::SimulationParameters};
 
 /// Enum used to represent the execution mode of the simulation.
@@ -14,6 +16,17 @@ pub enum ExecPolicy {
     Rayon,
     Distributed,
     Hybrid,
+}
+
+impl Display for ExecPolicy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            ExecPolicy::Sequential => write!(f, "Sequential"),
+            ExecPolicy::Rayon => write!(f, "Rayon Only"),
+            ExecPolicy::Distributed => write!(f, "Distributed"),
+            ExecPolicy::Hybrid => write!(f, "Hybrid"),
+        }
+    }
 }
 
 /// Structure holding execution information of a given run.
@@ -63,6 +76,22 @@ impl Default for MCProcessorInfo {
             n_processors: 1,
             n_rayon_threads: 1,
             n_units: 1,
+        }
+    }
+}
+
+impl Display for MCProcessorInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "  Policy: {}", self.exec_policy).unwrap();
+        writeln!(f, "  Number of processors: {}", self.n_processors).unwrap();
+        match self.exec_policy {
+            ExecPolicy::Sequential => Ok(()),
+            ExecPolicy::Rayon => writeln!(f, "  Number of rayon threads: {}", self.n_rayon_threads),
+            ExecPolicy::Distributed => writeln!(f, "  Number of units: {}", self.n_units),
+            ExecPolicy::Hybrid => {
+                writeln!(f, "  Number of rayon threads: {}", self.n_rayon_threads).unwrap();
+                writeln!(f, "  Number of units: {}", self.n_units)
+            }
         }
     }
 }

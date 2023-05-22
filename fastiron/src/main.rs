@@ -53,8 +53,6 @@ fn main() {
         start_init.elapsed().as_millis()
     );
 
-    println!("[Execution Policy]\n{:#?}", mcdata.exec_info);
-
     if (mcdata.exec_info.exec_policy == ExecPolicy::Rayon)
         | (mcdata.exec_info.exec_policy == ExecPolicy::Hybrid)
     {
@@ -65,7 +63,11 @@ fn main() {
                 .build_global()
                 .unwrap();
         }
+        mcdata.exec_info.n_rayon_threads = rayon::current_num_threads();
     }
+
+    println!("[Execution Info]");
+    println!("{}", mcdata.exec_info);
 
     match mcdata.exec_info.exec_policy {
         // single unit
