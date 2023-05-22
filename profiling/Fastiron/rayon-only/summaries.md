@@ -82,12 +82,13 @@ something else than a laptop.
 ### Number of particles
 
 
- `RuSeq` Fastiron                                       | Rayon-only Fastiron
-------------------------------------------------------|----------------------------------------------------
-![tracking](../../SequentialAnalysis/figures/FI_64/scaling_tracking.png)   | ![rayon_tracking](particles_scaling_tracking.png)
+Version | `RuSeq` Fastiron | Rayon-only Fastiron
+--------|------------------|---------------------
+Graphes | ![tracking](../../SequentialAnalysis/figures/FI_64/scaling_tracking.png) | ![rayon_tracking](particles_scaling_tracking.png)
+Slope | `18.9e-6 s/particle` | `5.6e-6 s/particle`
 
-
-
+**Note**: The slope computation were done using read values from the graphes, they might 
+be off by 10-ish %.
 
 [1]: https://docs.rs/atomic/latest/atomic/
 [2]: https://docs.rs/rayon/latest/rayon/
