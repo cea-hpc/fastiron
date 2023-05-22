@@ -11,6 +11,7 @@
 
 use std::fmt::Debug;
 
+use atomic::Ordering;
 use num::{one, zero};
 
 use crate::{
@@ -101,6 +102,9 @@ pub fn outcome<T: CustomFloat>(
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
 ) -> MCSegmentOutcome {
+    //==========
+    // Prep work
+
     // initialize distances and constants
     let small_f: T = T::small_float();
     let mut distance_handler = DistanceHandler::default();
@@ -113,11 +117,10 @@ pub fn outcome<T: CustomFloat>(
         particle.num_mean_free_paths = small_f;
     }
 
-    // randomly determines the distance to the next collision
-    // based upon the current cell data
-    /*
-    let precomputed_cross_section =
-        mcunit.domain[particle.domain].cell_state[particle.cell].total[particle.energy_group];
+    // get cross section
+    let precomputed_cross_section = mcunit.domain[particle.domain].cell_state[particle.cell].total
+        [particle.energy_group]
+        .load(Ordering::Relaxed);
     let macroscopic_total_xsection = if precomputed_cross_section > zero() {
         // XS was already cached
         precomputed_cross_section
@@ -134,15 +137,13 @@ pub fn outcome<T: CustomFloat>(
             particle.energy_group,
         );
         // cache the XS
-        mcunit.domain[particle.domain].cell_state[particle.cell].total[particle.energy_group] = tmp;
+        mcunit.domain[particle.domain].cell_state[particle.cell].total[particle.energy_group]
+            .store(tmp, Ordering::Relaxed);
 
         tmp
-    };*/
-    let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
-    let cell_nb_density: T =
-        mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
-    let macroscopic_total_xsection =
-        weighted_macroscopic_cross_section(mcdata, mat_gid, cell_nb_density, particle.energy_group);
+    };
+
+    // prepare particle
     particle.total_cross_section = macroscopic_total_xsection;
     if macroscopic_total_xsection == zero() {
         particle.mean_free_path = T::huge_float();
@@ -155,7 +156,8 @@ pub fn outcome<T: CustomFloat>(
         particle.sample_num_mfp();
     }
 
-    // sets distance to collision, nearest facet and census
+    //===========================
+    // Compute distances to event
 
     // collision
     distance_handler.update(
@@ -180,11 +182,13 @@ pub fn outcome<T: CustomFloat>(
         distance_handler.force_collision();
     }
 
-    // pick the outcome and update the particle
-    let segment_outcome = distance_handler.outcome;
+    //============================================
+    // Pick the outcome & update particle, tallies
 
+    let segment_outcome = distance_handler.outcome;
     assert!(distance_handler.min_dist >= zero());
 
+    // general update
     particle.segment_path_length = distance_handler.min_dist;
     particle.num_mean_free_paths -= particle.segment_path_length / particle.mean_free_path;
 

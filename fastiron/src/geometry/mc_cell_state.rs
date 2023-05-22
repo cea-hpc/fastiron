@@ -1,5 +1,7 @@
 //! Contains code to represent a cell's current state.
 
+use atomic::Atomic;
+
 use crate::constants::CustomFloat;
 
 /// Structure used to represent a cell's state, i.e.
@@ -7,12 +9,12 @@ use crate::constants::CustomFloat;
 ///
 /// Note that in advanced Monte-Carlo code, the mesh may be deformed and
 /// a cell's volume may change, hence the cache-ing of that value.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct MCCellState<T: CustomFloat> {
     /// Global id of the material the cell is made of.
     pub material: usize,
     /// Cache for the total cross-sections of energy groups.
-    pub total: Vec<T>,
+    pub total: Vec<Atomic<T>>,
     /// Cell volume in cm³.
     pub volume: T,
     /// Density of the material in the cell?
