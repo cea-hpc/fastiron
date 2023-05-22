@@ -1,6 +1,6 @@
 # This scripts remove all files produced by the main program & the stats tool
 #
-# Useful when permission issues occur over fodlers created by 
+# Useful when permission issues occur over folders created by 
 # gathering / processing scripts
 
 PROJECTDIR=$(dirname "$0")/..

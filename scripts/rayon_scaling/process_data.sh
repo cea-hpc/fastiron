@@ -24,7 +24,8 @@ $STATS < $(dirname "$0")/auto_in_threads
 # Do the necessary plotting
 gnuplot $PROJECTDIR/plot/rayon_scaling.gnu
 
-mv $PROJECTDIR/scaling_tracking.png $TARGETDIR/rayon_scaling_tracking.png
+mv $PROJECTDIR/scaling.dat $TARGETDIR/rayon_scaling.dat
+mv $PROJECTDIR/scaling_tracking.png $TARGETDIR/threads_scaling_tracking.png
 
 $STATS < $(dirname "$0")/auto_in_stats
 
