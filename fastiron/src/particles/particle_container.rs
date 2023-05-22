@@ -64,7 +64,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
         split_rr_factor: T,
         relative_weight_cutoff: T,
         source_particle_weight: T,
-        balance: &mut Balance,
+        balance: &Balance,
     ) {
         let old_len = self.processing_particles.len();
         self.processing_particles.retain_mut(|pp| {
@@ -85,7 +85,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
         split_rr_factor: T,
         relative_weight_cutoff: T,
         source_particle_weight: T,
-        balance: &mut Balance,
+        balance: &Balance,
     ) {
         let mut old_len = self.processing_particles.len();
         self.processing_particles.iter_mut().for_each(|pp| {

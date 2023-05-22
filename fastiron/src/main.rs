@@ -82,12 +82,7 @@ fn main() {
                     &mut containers,
                     step,
                 );
-                cycle_process(
-                    &mcdata,
-                    &mut mcunits[0],
-                    &mut tallies[0],
-                    &mut containers[0],
-                );
+                cycle_process(&mcdata, &mut mcunits[0], &tallies[0], &mut containers[0]);
             }
             cycle_sync(
                 &mut mcdata,
@@ -200,7 +195,7 @@ pub fn cycle_sync<T: CustomFloat>(
 pub fn cycle_process<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
-    tallies: &mut Tallies<T>,
+    tallies: &Tallies<T>,
     container: &mut ParticleContainer<T>,
 ) {
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::PopulationControl);
@@ -220,14 +215,14 @@ pub fn cycle_process<T: CustomFloat>(
             split_rr_factor,
             mcdata.params.simulation_params.low_weight_cutoff,
             mcdata.source_particle_weight,
-            &mut tallies.balance_cycle,
+            &tallies.balance_cycle,
         );
     } else if split_rr_factor > one() {
         container.split_population(
             split_rr_factor,
             mcdata.params.simulation_params.low_weight_cutoff,
             mcdata.source_particle_weight,
-            &mut tallies.balance_cycle,
+            &tallies.balance_cycle,
         )
     }
 

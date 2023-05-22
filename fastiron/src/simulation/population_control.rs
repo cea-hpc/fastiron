@@ -73,7 +73,7 @@ pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
     container: &mut ParticleContainer<T>,
-    tallies: &mut Tallies<T>,
+    tallies: &Tallies<T>,
 ) {
     let time_step = mcdata.params.simulation_params.dt;
 
