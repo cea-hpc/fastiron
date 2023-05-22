@@ -2,8 +2,8 @@
 !/Fastiron/*/*.svg
 !/Fastiron/*/*.png
 
-!/Fastiron/*/*/*.csv
-!/Fastiron/*/*/*.png
+!/RayonOnly/reference_data/*.csv
+!/RayonOnly/figures/*.png
 
 !/SequentialAnalysis/reference_data/*/*.csv
 !/SequentialAnalysis/figures/*/*.png
