@@ -92,7 +92,7 @@ pub fn collision_event<T: CustomFloat>(
     tallies
         .balance_cycle
         .collision
-        .fetch_add(1, Ordering::Relaxed); // atomic in original code
+        .fetch_add(1, Ordering::Relaxed);
     match reaction.reaction_type {
         ReactionType::Scatter => {
             tallies

@@ -69,7 +69,7 @@ fn cycle_tracking_function<T: CustomFloat>(
             .tallies
             .balance_cycle
             .num_segments
-            .fetch_add(1, Ordering::SeqCst); // atomic in original code
+            .fetch_add(1, Ordering::SeqCst);
         particle.num_segments += one();
         // update scalar flux of the cell
         mcunit.tallies.scalar_flux_domain[particle.domain].cell[particle.cell]
@@ -137,7 +137,6 @@ fn cycle_tracking_function<T: CustomFloat>(
                     }
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {
-                        // atomic in original code
                         mcunit
                             .tallies
                             .balance_cycle
@@ -152,7 +151,6 @@ fn cycle_tracking_function<T: CustomFloat>(
                 };
             }
             MCSegmentOutcome::Census => {
-                // atomic in original code
                 mcunit
                     .tallies
                     .balance_cycle
@@ -217,7 +215,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
             .tallies
             .balance_cycle
             .num_segments
-            .fetch_add(1, Ordering::SeqCst); // atomic in original code
+            .fetch_add(1, Ordering::SeqCst);
         particle.num_segments += one();
         // update scalar flux tally
         mcunit.tallies.scalar_flux_domain[particle.domain].cell[particle.cell]
@@ -286,7 +284,6 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                     }
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {
-                        // atomic in original code
                         mcunit
                             .tallies
                             .balance_cycle
@@ -301,7 +298,6 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                 };
             }
             MCSegmentOutcome::Census => {
-                // atomic in original code
                 mcunit
                     .tallies
                     .balance_cycle

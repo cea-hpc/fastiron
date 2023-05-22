@@ -109,7 +109,6 @@ pub fn source_now<T: CustomFloat>(
                         seeds.push(rand_n_seed);
                     }
 
-                    // atomic in original code
                     mcunit
                         .tallies
                         .balance_cycle

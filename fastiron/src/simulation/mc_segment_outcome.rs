@@ -181,8 +181,6 @@ pub fn outcome<T: CustomFloat>(
     }
 
     // pick the outcome and update the particle
-
-    //let segment_outcome = find_min(&distance);
     let segment_outcome = distance_handler.outcome;
 
     assert!(distance_handler.min_dist >= zero());
@@ -221,9 +219,6 @@ pub fn outcome<T: CustomFloat>(
     if particle.time_to_census < zero() {
         particle.time_to_census = zero();
     }
-
-    // update scalar flux tally
-    // atomic in original code
 
     segment_outcome
 }
