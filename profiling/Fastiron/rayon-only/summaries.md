@@ -1,4 +1,4 @@
-# Fastiron - RuSeq version
+# Fastiron - Rayon-Only Execution
 
 The tallies and timers report can be visualized using column: 
 
@@ -8,7 +8,7 @@ column -s=';' -t < timers_report.csv
 ```
 
 The performance recorded for the CTS2 benchmark were obtained using the default 
-number of threads determined by rayon at run-time.
+number of threads determined by [rayon] at run-time.
 
 **Figure of merit**: `2.600e6 [segments / cycle tracking time]`
 
@@ -74,7 +74,14 @@ amount of figures.
 
 ![scaling_tracking](scaling_tracking.png)
 
+The scaling data was recorded using the `homogeneous7` problem, using progressively
+1, 2, 4, 8, 16 threads for Rayon. This should be done again with more threads on 
+something else than a laptop.
+
 
 ### Number of particles
 
+
+
 [1]: https://docs.rs/atomic/latest/atomic/
+[2]: https://docs.rs/rayon/latest/rayon/
