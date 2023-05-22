@@ -1,8 +1,9 @@
 n
-n
 y
-tmp/timers
-g
-1
-2
-5
+y
+tmp/CTS2_tallies.csv
+tmp/particles
+a
+10000
+10000
+10

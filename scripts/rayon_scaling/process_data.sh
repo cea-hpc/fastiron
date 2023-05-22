@@ -19,10 +19,20 @@ STATS=$PROJECTDIR/target/release/fastiron-stats
 mkdir -p $TARGETDIR
 
 # Process data gathered by gather_data.sh
-$STATS < $(dirname "$0")/auto_in_stats
+$STATS < $(dirname "$0")/auto_in_threads
 
 # Do the necessary plotting
 gnuplot $PROJECTDIR/plot/rayon_scaling.gnu
+
+mv $PROJECTDIR/*.dat $TARGETDIR
+mv $PROJECTDIR/*.png $TARGETDIR
+
+$STATS < $(dirname "$0")/auto_in_stats
+
+# Do the necessary plotting
+gnuplot $PROJECTDIR/plot/heatmap_cycletracking.gnu
+gnuplot $PROJECTDIR/plot/heatmap_popsync.gnu
+gnuplot $PROJECTDIR/plot/linear_scaling.gnu
 
 mv $PROJECTDIR/*.dat $TARGETDIR
 mv $PROJECTDIR/*.png $TARGETDIR
