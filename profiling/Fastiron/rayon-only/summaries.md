@@ -72,7 +72,7 @@ amount of figures.
 
 ### Number of threads 
 
-![scaling_tracking](scaling_tracking.png)
+![rayon_scaling_tracking](rayon_scaling_tracking.png)
 
 The scaling data was recorded using the `homogeneous7` problem, using progressively
 1, 2, 4, 8, 16 threads for Rayon. This should be done again with more threads on 
@@ -80,6 +80,12 @@ something else than a laptop.
 
 
 ### Number of particles
+
+
+ `RuSeq` Fastiron                                       | Rayon-only Fastiron
+------------------------------------------------------|----------------------------------------------------
+![tracking](../../SequentialAnalysis/figures/FI_64/scaling_tracking.png)   | ![rayon_tracking](particles_scaling_tracking.png)
+
 
 
 
