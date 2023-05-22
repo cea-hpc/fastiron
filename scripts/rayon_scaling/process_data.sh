@@ -22,7 +22,7 @@ mkdir -p $TARGETDIR
 $STATS < $(dirname "$0")/auto_in_stats
 
 # Do the necessary plotting
-gnuplot $PROJECTDIR/plot/logarithmic_scaling.gnu
+gnuplot $PROJECTDIR/plot/rayon_scaling.gnu
 
 mv $PROJECTDIR/*.dat $TARGETDIR
 mv $PROJECTDIR/*.png $TARGETDIR
