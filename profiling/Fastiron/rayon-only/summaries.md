@@ -7,6 +7,9 @@ column -s=';' -t < tallies_report.csv
 column -s=';' -t < timers_report.csv
 ```
 
+The performance recorded for the CTS2 benchmark were obtained using the default 
+number of threads determined by rayon at run-time.
+
 **Figure of merit**: `2.600e6 [segments / cycle tracking time]`
 
 
@@ -32,6 +35,7 @@ DIY implem than clean code.
  Total                  48         7220         5892          451          877
 ===============================================================================
 ```
+
 
 ## Previous Version Comparison
 
@@ -60,5 +64,17 @@ Previous version is `1.2-RuSeq`. Current version corresponds to commit `de548f7`
 
 
 Some of these changes worsen the sequential performances, most importantly the cache removal.
+
+## Scaling
+
+The parallel iterators were used only in the tracking section, hence the limited
+amount of figures.
+
+### Number of threads 
+
+![scaling_tracking](scaling_tracking.png)
+
+
+### Number of particles
 
 [1]: https://docs.rs/atomic/latest/atomic/

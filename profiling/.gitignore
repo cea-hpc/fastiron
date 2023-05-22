@@ -1,4 +1,5 @@
 !/Fastiron/*/*.csv
 !/Fastiron/*/*.svg
+!/Fastiron/*/*.png
 !/SequentialAnalysis/reference_data/*/*.csv
 !/SequentialAnalysis/figures/*/*.png
