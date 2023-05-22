@@ -52,18 +52,13 @@ Previous version is `1.2-RuSeq`. Current version corresponds to commit `de548f7`
 
 ### Implementation
 
-1. Separated `Tallies` from `MonteCarloUnit`. This may be avoidable since reference to tallies 
-  are now immutable & they are updated using atomics.
-2. Removed cross-section cache-ing from `MonteCarloUnit`. This was done to make the structure 
-  read-only.
-3. `Balance` structure now uses only `AtomicU64`. This allows us to get rid of unecessary locks
-  on thetallies.
-4. Scalar flux computations now uses generic atomics from the [`atomic`][1] crate.
-5. Mutex are used for extra container and send queue accesses. Those do not seem avoidable, so 
+1. Mutex are used for extra container and send queue accesses. Those do not seem avoidable, so 
   minimizing lock-time should be the objective.
+2. Cross-section cache-ing now uses generic atomics from the [`atomic`][1] crate.
+3. Scalar flux computations now uses generic atomics from the [`atomic`][1] crate.
+4. `Balance` structure now uses only `AtomicU64`. This allows us to get rid of unnecessary locks
+  on the tallies.
 
-
-Some of these changes worsen the sequential performances, most importantly the cache removal.
 
 ## Scaling
 
