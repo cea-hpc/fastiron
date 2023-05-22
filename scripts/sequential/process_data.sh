@@ -7,7 +7,7 @@
 # It would be possible to write a script doing this comparison, using a
 # single argument for the old timers report.
 
-PROJECTDIR=$(dirname "$0")/..
+PROJECTDIR=$(dirname "$0")/../..
 DATADIR=$PROJECTDIR/tmp
 TARGETDIR=$PROJECTDIR/out
 #CARGO=~/.cargo/bin/cargo
