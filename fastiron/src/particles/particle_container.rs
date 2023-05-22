@@ -8,10 +8,7 @@ use rayon::prelude::*;
 
 use crate::{
     constants::CustomFloat,
-    data::{
-        send_queue::SendQueue,
-        tallies::{Balance, Tallies},
-    },
+    data::{send_queue::SendQueue, tallies::Balance},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     simulation::cycle_tracking::{cycle_tracking_guts, par_cycle_tracking_guts},
     utils::mc_processor_info::ExecPolicy,
@@ -107,12 +104,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
     }
 
     /// Track particles and transfer them to the processed storage when done.
-    pub fn process_particles(
-        &mut self,
-        mcdata: &MonteCarloData<T>,
-        mcunit: &MonteCarloUnit<T>,
-        tallies: &Tallies<T>,
-    ) {
+    pub fn process_particles(&mut self, mcdata: &MonteCarloData<T>, mcunit: &MonteCarloUnit<T>) {
         match mcdata.exec_info.exec_policy {
             // Process unit sequentially
             ExecPolicy::Sequential | ExecPolicy::Distributed => {
@@ -120,7 +112,6 @@ impl<T: CustomFloat> ParticleContainer<T> {
                     cycle_tracking_guts(
                         mcdata,
                         mcunit,
-                        tallies,
                         particle,
                         &mut self.extra_particles,
                         &mut self.send_queue,
@@ -138,7 +129,6 @@ impl<T: CustomFloat> ParticleContainer<T> {
                         par_cycle_tracking_guts(
                             mcdata,
                             mcunit,
-                            tallies,
                             particle,
                             Arc::clone(&extra),
                             Arc::clone(&sq),
