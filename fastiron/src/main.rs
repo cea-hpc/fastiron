@@ -37,6 +37,11 @@ fn main() {
 
     let params: Parameters<FloatType> = Parameters::get_parameters(cli).unwrap();
     println!("[Simulation Parameters]\n{:#?}", params.simulation_params);
+
+    //===============
+    // Initialization
+    //===============
+
     let start_init = Instant::now();
     println!("[Initialization]: Start");
 
@@ -46,15 +51,8 @@ fn main() {
     let mut containers = init_particle_containers(&mcdata.params, &mcdata.exec_info);
     let mut mcunits = init_mcunits(&mcdata);
 
-    println!("[Initialization]: Done");
-    println!(
-        "[Initialization]: {}ms elapsed",
-        start_init.elapsed().as_millis()
-    );
-
-    if (mcdata.exec_info.exec_policy == ExecPolicy::Rayon)
-        | (mcdata.exec_info.exec_policy == ExecPolicy::Hybrid)
-    {
+    // rayon only => one global thread pool
+    if mcdata.exec_info.exec_policy == ExecPolicy::Rayon {
         // custom threadpool init in this case
         if mcdata.exec_info.n_rayon_threads != 0 {
             ThreadPoolBuilder::new()
@@ -65,8 +63,18 @@ fn main() {
         mcdata.exec_info.n_rayon_threads = rayon::current_num_threads();
     }
 
+    println!("[Initialization]: Done");
+    println!(
+        "[Initialization]: {}ms elapsed",
+        start_init.elapsed().as_millis()
+    );
+
     println!("[Execution Info]");
     println!("{}", mcdata.exec_info);
+
+    //==========
+    // Core loop
+    //==========
 
     match mcdata.exec_info.exec_policy {
         // single unit
@@ -85,7 +93,11 @@ fn main() {
         ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
     }
 
-    game_over(&mcdata, &mut mcunits[0]);
+    //========
+    // Wrap-up
+    //========
+
+    game_over(&mcdata, &mut mcunits);
 
     coral_benchmark_correctness(
         mcdata.params.simulation_params.coral_benchmark,
@@ -93,19 +105,25 @@ fn main() {
     );
 }
 
-pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteCarloUnit<T>) {
-    mcunit.fast_timer.update_main_stats();
+pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunits: &mut [MonteCarloUnit<T>]) {
+    match mcdata.exec_info.exec_policy {
+        ExecPolicy::Sequential | ExecPolicy::Rayon => {
+            let mcunit = &mut mcunits[0];
+            mcunit.fast_timer.update_main_stats();
 
-    mcunit.fast_timer.cumulative_report(
-        mcunit
-            .tallies
-            .balance_cumulative
-            .num_segments
-            .load(Ordering::Relaxed),
-        mcdata.params.simulation_params.csv,
-    );
+            mcunit.fast_timer.cumulative_report(
+                mcunit
+                    .tallies
+                    .balance_cumulative
+                    .num_segments
+                    .load(Ordering::Relaxed),
+                mcdata.params.simulation_params.csv,
+            );
 
-    mcunit.tallies.spectrum.print_spectrum(mcdata);
+            mcunit.tallies.spectrum.print_spectrum(mcdata);
+        }
+        ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
+    }
 }
 
 //============================
