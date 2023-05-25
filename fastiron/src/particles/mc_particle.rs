@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Custom enum used to model a particle's species.
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Default)]
 pub enum Species {
     /// Invalid value.
     Unknown = -1,
@@ -34,7 +34,7 @@ pub enum Species {
 /// Structure used to hold all data of a particle.
 ///
 /// This is mostly used for computations during the tracking section.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, PartialOrd, PartialEq, Clone)]
 pub struct MCParticle<T: CustomFloat> {
     /// Current position.
     pub coordinate: MCVector<T>,

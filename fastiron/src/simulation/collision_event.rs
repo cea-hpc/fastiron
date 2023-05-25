@@ -6,14 +6,13 @@
 
 use std::sync::{atomic::Ordering, Arc, Mutex};
 
-use num::zero;
+use num::{zero, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
     data::{nuclear_data::ReactionType, tallies::Tallies},
     montecarlo::MonteCarloData,
     particles::mc_particle::MCParticle,
-    simulation::macro_cross_section::macroscopic_cross_section,
 };
 
 /// Transforms a given particle according to an internally drawn type of collision.
@@ -38,31 +37,21 @@ pub fn collision_event<T: CustomFloat>(
     // Pick an isotope & reaction
 
     let mut current_xsection: T = particle.get_current_xs();
+    let mut reaction = None;
 
-    // sort of a magic value but using an option seems to be overkill
-    let mut selected_iso: usize = usize::MAX;
-    let mut selected_unique_n: usize = usize::MAX;
-    let mut selected_react: usize = usize::MAX;
-
-    let n_iso: usize = mcdata.material_database.mat[mat_gid].iso.len();
-
-    loop {
-        for iso_idx in 0..n_iso {
-            let unique_n: usize = mcdata.material_database.mat[mat_gid].iso[iso_idx].gid;
-            let n_reactions: usize = mcdata.nuclear_data.get_number_reactions(unique_n);
-            for reaction_idx in 0..n_reactions {
-                current_xsection -= macroscopic_cross_section(
-                    mcdata,
-                    reaction_idx,
-                    mat_gid,
-                    cell_nb_density,
-                    iso_idx,
-                    particle.energy_group,
-                );
+    while current_xsection >= zero() {
+        for isotope in &mcdata.material_database.mat[mat_gid].iso {
+            let atom_fraction = isotope.atom_fraction;
+            for curr_reaction in &mcdata.nuclear_data.isotopes[isotope.gid][0].reactions {
+                if (atom_fraction == zero()) | (cell_nb_density == zero()) {
+                    current_xsection -= FromPrimitive::from_f64(1e-20).unwrap();
+                } else {
+                    current_xsection -= atom_fraction
+                        * cell_nb_density
+                        * curr_reaction.cross_section[particle.energy_group];
+                }
                 if current_xsection < zero() {
-                    selected_iso = iso_idx;
-                    selected_unique_n = unique_n;
-                    selected_react = reaction_idx;
+                    reaction = Some(curr_reaction);
                     break;
                 }
             }
@@ -70,14 +59,11 @@ pub fn collision_event<T: CustomFloat>(
                 break;
             }
         }
-        if current_xsection < zero() {
-            break;
-        }
     }
-    assert_ne!(selected_iso, usize::MAX); // sort of a magic value
+    assert!(reaction.is_some());
+    let reaction = reaction.unwrap();
 
     let mat_mass = mcdata.material_database.mat[mat_gid].mass;
-    let reaction = &mcdata.nuclear_data.isotopes[selected_unique_n][0].reactions[selected_react];
 
     // ================
     // Do the collision

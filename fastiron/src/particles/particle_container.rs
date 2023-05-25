@@ -122,6 +122,8 @@ impl<T: CustomFloat> ParticleContainer<T> {
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
                 let sq = Arc::new(Mutex::new(&mut self.send_queue));
+
+                // par_bridge implem
                 self.processing_particles
                     .iter_mut()
                     .par_bridge()
@@ -134,6 +136,26 @@ impl<T: CustomFloat> ParticleContainer<T> {
                             Arc::clone(&sq),
                         )
                     });
+
+                /*
+                // par_chunks implem
+                self.processing_particles
+                    .par_chunks_mut(
+                        (mcdata.params.simulation_params.n_particles as usize)
+                            / mcdata.exec_info.n_rayon_threads
+                            * 10,
+                    )
+                    .for_each(|chunk| {
+                        chunk.iter_mut().for_each(|particle| {
+                            par_cycle_tracking_guts(
+                                mcdata,
+                                mcunit,
+                                particle,
+                                Arc::clone(&extra),
+                                Arc::clone(&sq),
+                            )
+                        });
+                    });*/
             }
         }
         self.processing_particles

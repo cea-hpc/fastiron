@@ -232,6 +232,18 @@ pub fn cycle_process<T: CustomFloat>(
         )
     }
 
+    container
+        .processing_particles
+        .sort_by(|a, b| match a.domain.cmp(&b.domain) {
+            std::cmp::Ordering::Less => std::cmp::Ordering::Less,
+            std::cmp::Ordering::Equal => match a.cell.cmp(&b.cell) {
+                std::cmp::Ordering::Less => std::cmp::Ordering::Less,
+                std::cmp::Ordering::Equal => std::cmp::Ordering::Equal,
+                std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
+            },
+            std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
+        });
+
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::PopulationControl);
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
 

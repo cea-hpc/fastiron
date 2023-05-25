@@ -23,7 +23,7 @@ use crate::constants::CustomFloat;
 /// assert!(w.is_almost_equal(&v));
 ///
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Default)]
 pub struct MCVector<T: CustomFloat> {
     /// x axis coordinate.
     pub x: T,

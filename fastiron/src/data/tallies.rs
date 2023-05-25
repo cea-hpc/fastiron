@@ -28,7 +28,7 @@ use crate::{
 use super::energy_spectrum::EnergySpectrum;
 
 /// Enum representing a tally event.
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Default)]
 pub enum MCTallyEvent {
     /// Value for a collision event.
     Collision,
