@@ -3,7 +3,9 @@
 Tests showed that Fastiron's scalability is worse than Quicksilver's. This file contains the raw perf 
 reports used to understand what is going on.
 
-## Sequential 
+## Regular execution
+
+### Sequential 
 
 ```
 Performance counter stats for './target/release/fastiron -i input_files/QS_originals/CTS2_Benchmark/CTS2_1.inp -r 1':
@@ -27,7 +29,7 @@ Performance counter stats for './target/release/fastiron -i input_files/QS_origi
        0,027997000 seconds sys
 ```
 
-## Rayon 
+### Rayon 
 
 ```
 Performance counter stats for './target/release/fastiron -i input_files/QS_originals/CTS2_Benchmark/CTS2_1.inp -r 0':
@@ -50,4 +52,56 @@ Performance counter stats for './target/release/fastiron -i input_files/QS_origi
      192,669044000 seconds user
        0,646754000 seconds sys
 
+```
+
+## XS-cache-less execution
+
+Removing lazy computation of cross section seems to worsen the problem.
+
+### Sequential
+
+```
+Performance counter stats for './target/release/fastiron -i input_files/QS_originals/CTS2_Benchmark/CTS2_1.inp -r 1':
+
+        130 341,70 msec task-clock:u              #    0,999 CPUs utilized          
+                 0      context-switches:u        #    0,000 /sec                   
+                 0      cpu-migrations:u          #    0,000 /sec                   
+            14 881      page-faults:u             #  114,169 /sec                   
+   207 021 372 474      cycles:u                  #    1,588 GHz                      (50,00%)
+   438 590 283 453      instructions:u            #    2,12  insn per cycle           (62,50%)
+    83 449 680 705      branches:u                #  640,238 M/sec                    (62,50%)
+       704 410 446      branch-misses:u           #    0,84% of all branches          (62,51%)
+   116 272 027 851      L1-dcache-loads:u         #  892,055 M/sec                    (62,51%)
+    12 794 670 510      L1-dcache-load-misses:u   #   11,00% of all L1-dcache accesses  (62,50%)
+     1 526 257 735      LLC-loads:u               #   11,710 M/sec                    (50,00%)
+       238 372 909      LLC-load-misses:u         #   15,62% of all LL-cache accesses  (49,99%)
+
+     130,515779794 seconds time elapsed
+
+     130,283677000 seconds user
+       0,059920000 seconds sys
+```
+
+### Rayon
+
+```
+ Performance counter stats for './target/release/fastiron -i input_files/QS_originals/CTS2_Benchmark/CTS2_1.inp -r 0':
+
+        264 988,89 msec task-clock:u              #    7,778 CPUs utilized          
+                 0      context-switches:u        #    0,000 /sec                   
+                 0      cpu-migrations:u          #    0,000 /sec                   
+            14 945      page-faults:u             #   56,399 /sec                   
+   418 848 601 284      cycles:u                  #    1,581 GHz                      (50,01%)
+   447 953 401 977      instructions:u            #    1,07  insn per cycle           (62,52%)
+    85 201 657 236      branches:u                #  321,529 M/sec                    (62,54%)
+       741 227 576      branch-misses:u           #    0,87% of all branches          (62,53%)
+   118 789 836 575      L1-dcache-loads:u         #  448,282 M/sec                    (62,52%)
+    25 911 379 733      L1-dcache-load-misses:u   #   21,81% of all L1-dcache accesses  (62,47%)
+     2 924 566 443      LLC-loads:u               #   11,037 M/sec                    (49,97%)
+       212 558 312      LLC-load-misses:u         #    7,27% of all LL-cache accesses  (49,98%)
+
+      34,068105661 seconds time elapsed
+
+     264,643334000 seconds user
+       0,399992000 seconds sys
 ```
