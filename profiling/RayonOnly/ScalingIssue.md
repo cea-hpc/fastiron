@@ -8,24 +8,20 @@ two when using rayon with the default number of thread. By running it using 1, 2
 can see the number gradually diminishing. The featue-specific modifications tried seems to indicate 
 that the problem isn't linked to memory contention.
 
-The number of branch misses does not seem to vary significantly between execution mode.
-
-The number of cache misses move in a very interesting way. The number of L1 cache misses goes up 
-with the number of threads, but the number of LLC cache misses goes down. I'm going to guess that 
-the overall number of cache misses is not significantly different, however the "blind" split between
-threads result in more L1 cache misses, meaning the overall time spent fetching data for misses goes 
-up.
+The number of branch misses does not seem to vary significantly between execution mode. The number of 
+cache misses move in a very interesting way. The number of L1 cache misses goes up with the number of 
+threads, but the number of LLC cache misses goes down. The number of instructions per cycle is divided 
+by 2. The number of L1 cache goes up 50%.
 
 By comparing with the stats yielded by Quicksilver OMP-only execution, we can guess that the main 
-difference in scaling occurs thanks to the use of MPI and split of the mesh: The diminishing factor
-of instruction per cycle seems to be almost the same (\~2). The number of L1 cache miss also seems to 
-evolve in the same way (+50% from sequential to 8 threads).  However the overall number of cache miss 
-seems lower in Quicksilver. This could be due to the very limited consideration I gave to memory 
-locality while developing Fastiron.
+difference in scaling occurs thanks to the use of MPI and split of the mesh. However the overall 
+number of cache miss seems lower in Quicksilver. This could be due to the very limited consideration 
+I gave to memory locality while developing Fastiron.
 
 After looking into the `rayon` documentation, notably the way `par_bridge` works, I think implementing 
 the parallel iterator traits of `rayon` could help divide the workload in a more favorable way for 
-cache loads.
+cache loads. The usage of chunks coupled with sorted particles could help keep the memory accesses 
+from being too chaotic.
 
 ## Regular execution
 
