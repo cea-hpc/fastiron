@@ -3,9 +3,19 @@
 Tests showed that Fastiron's scalability is worse than Quicksilver's. This file contains the raw perf 
 reports used to understand what is going on. The simulation is stopped at 20 cycles.
 
+We can see from the data that the number of instruction executed per cycle is actually divided by
+two when using rayon with the default number of thread. By running it using 1, 2, 4, 8 threads, we 
+can see the number gradually diminishing. 
+
+The number of branch misses does not seem to vary significantly between execution mode.
+
+The number of cache misses move in a very interesting way. The number of L1 cache misses goes up 
+with the number of threads, but the number of LLC cache misses goes down. I'm going to guess that 
+the overall number of cache misses is not significantly different, however the "blind" split between
+threads result in more L1 cache misses, meaning the overall time spent fetching data for misses goes 
+up.
+
 ## Regular execution
-
-
 
 ### Sequential 
 
