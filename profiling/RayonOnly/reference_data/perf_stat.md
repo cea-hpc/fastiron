@@ -1,7 +1,7 @@
 # perf tool statistics
 
-Tests showed that Fastiron's scalability is worse than Quicksilver's. This file contains the raw perf 
-reports used to understand what is going on. The simulation is stopped at 20 cycles.
+Tests showed that Fastiron's scalability is worse than Quicksilver's (using OpenMP & MPI). This file contains 
+the raw perf reports used to understand what is going on. The simulation is stopped at 20 cycles.
 
 We can see from the data that the number of instruction executed per cycle is actually divided by
 two when using rayon with the default number of thread. By running it using 1, 2, 4, 8 threads, we 
@@ -14,6 +14,13 @@ with the number of threads, but the number of LLC cache misses goes down. I'm go
 the overall number of cache misses is not significantly different, however the "blind" split between
 threads result in more L1 cache misses, meaning the overall time spent fetching data for misses goes 
 up.
+
+By comparing with the stats yielded by Quicksilver OMP-only execution, we can guess that the main 
+difference in scaling occurs thanks to the use of MPI and split of the mesh: The diminishing factor
+of instruction per cycle seems to be almost the same (\~2). The number of L1 cache miss also seems to 
+evolve in the same way (+50% from sequential to 8 threads).  However the overall number of cache miss 
+seems lower in Quicksilver. This could be due to the very limited consideration I gave to memory 
+locality while developing Fastiron.
 
 ## Regular execution
 
@@ -64,6 +71,56 @@ Performance counter stats for './target/release/fastiron -i input_files/QS_origi
      192,669044000 seconds user
        0,646754000 seconds sys
 
+```
+
+## Quicksilver (OpenMP only)
+
+### 1 OMP thread
+
+```
+Performance counter stats for './qs -i ../Examples/CTS2_Benchmark/CTS2_1.inp':
+
+        160 636,46 msec task-clock                #    1,000 CPUs utilized          
+               744      context-switches          #    4,632 /sec                   
+                17      cpu-migrations            #    0,106 /sec                   
+            10 129      page-faults               #   63,055 /sec                   
+   255 798 252 278      cycles                    #    1,592 GHz                      (49,99%)
+   543 984 380 781      instructions              #    2,13  insn per cycle           (62,49%)
+    74 323 020 865      branches                  #  462,678 M/sec                    (62,49%)
+       866 513 806      branch-misses             #    1,17% of all branches          (62,50%)
+   166 812 405 289      L1-dcache-loads           #    1,038 G/sec                    (62,50%)
+     7 985 583 623      L1-dcache-load-misses     #    4,79% of all L1-dcache accesses  (62,51%)
+     1 168 927 339      LLC-loads                 #    7,277 M/sec                    (50,01%)
+       157 917 389      LLC-load-misses           #   13,51% of all LL-cache accesses  (50,00%)
+
+     160,655983001 seconds time elapsed
+
+     160,576395000 seconds user
+       0,059992000 seconds sys
+```
+
+### 8 OMP thread
+
+```
+Performance counter stats for './qs -i ../Examples/CTS2_Benchmark/CTS2_1.inp':
+
+        284 470,58 msec task-clock                #    7,907 CPUs utilized          
+            10 491      context-switches          #   36,879 /sec                   
+                 3      cpu-migrations            #    0,011 /sec                   
+            10 132      page-faults               #   35,617 /sec                   
+   452 332 809 284      cycles                    #    1,590 GHz                      (49,99%)
+   547 347 352 452      instructions              #    1,21  insn per cycle           (62,49%)
+    75 014 015 880      branches                  #  263,697 M/sec                    (62,50%)
+       876 346 733      branch-misses             #    1,17% of all branches          (62,50%)
+   167 589 075 717      L1-dcache-loads           #  589,126 M/sec                    (62,52%)
+    10 127 706 130      L1-dcache-load-misses     #    6,04% of all L1-dcache accesses  (62,51%)
+     1 132 914 072      LLC-loads                 #    3,983 M/sec                    (49,99%)
+       147 020 317      LLC-load-misses           #   12,98% of all LL-cache accesses  (49,99%)
+
+      35,978842793 seconds time elapsed
+
+     284,355795000 seconds user
+       0,123959000 seconds sys
 ```
 
 ## XS-cache-less execution
