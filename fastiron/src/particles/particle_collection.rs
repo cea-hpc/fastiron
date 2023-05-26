@@ -52,7 +52,8 @@ impl<'a, T: CustomFloat> IndexedParallelIterator for ParParIter<'a, T> {
         self,
         callback: CB,
     ) -> CB::Output {
-        todo!()
+        let producer = ParticleProducer::from(self);
+        callback.callback(producer)
     }
 
     fn drive<C: rayon::iter::plumbing::Consumer<Self::Item>>(self, consumer: C) -> C::Result {
@@ -84,11 +85,23 @@ impl<'a, T: CustomFloat> Producer for ParticleProducer<'a, T> {
     type Item = &'a MCParticle<T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        todo!()
+        self.data_slice.iter()
     }
 
     fn split_at(self, index: usize) -> (Self, Self) {
-        todo!()
+        let (left, right) = self.data_slice.split_at(index);
+        (
+            ParticleProducer { data_slice: left },
+            ParticleProducer { data_slice: right },
+        )
+    }
+}
+
+impl<'a, T: CustomFloat> From<ParParIter<'a, T>> for ParticleProducer<'a, T> {
+    fn from(iter: ParParIter<'a, T>) -> Self {
+        Self {
+            data_slice: iter.data_slice,
+        }
     }
 }
 
