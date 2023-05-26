@@ -105,6 +105,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
 
     /// Track particles and transfer them to the processed storage when done.
     pub fn process_particles(&mut self, mcdata: &MonteCarloData<T>, mcunit: &MonteCarloUnit<T>) {
+        self.sort_processing();
         match mcdata.exec_info.exec_policy {
             // Process unit sequentially
             ExecPolicy::Sequential | ExecPolicy::Distributed => {
@@ -124,26 +125,16 @@ impl<T: CustomFloat> ParticleContainer<T> {
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
                 let sq = Arc::new(Mutex::new(&mut self.send_queue));
+                // choose chunk size to get one chunk per thread
+                let chunk_size: usize =
+                    (self.processing_particles.len() / mcdata.exec_info.n_rayon_threads) + 1;
 
-                // par_bridge implem
                 self.processing_particles
                     .par_iter_mut()
-                    .for_each(|particle| {
-                        par_cycle_tracking_guts(
-                            mcdata,
-                            mcunit,
-                            particle,
-                            Arc::clone(&extra),
-                            Arc::clone(&sq),
-                        )
-                    });
-
-                /*
-                // par_chunks implem
-                self.processing_particles
-                    .par_chunks_mut(5120)
-                    .for_each(|chunk| {
-                        chunk.iter_mut().for_each(|particle| {
+                    .chunks(chunk_size)
+                    .for_each(|mut particles| {
+                        // par_bridge for job stealing when load isn't balanced?
+                        particles.iter_mut().par_bridge().for_each(|particle| {
                             par_cycle_tracking_guts(
                                 mcdata,
                                 mcunit,
@@ -151,8 +142,8 @@ impl<T: CustomFloat> ParticleContainer<T> {
                                 Arc::clone(&extra),
                                 Arc::clone(&sq),
                             )
-                        });
-                    });*/
+                        })
+                    });
             }
         }
         self.processing_particles
