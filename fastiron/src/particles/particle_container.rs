@@ -8,7 +8,7 @@ use rayon::prelude::*;
 
 use crate::{
     constants::CustomFloat,
-    data::{send_queue::SendQueue, tallies::Balance},
+    data::tallies::Balance,
     montecarlo::{MonteCarloData, MonteCarloUnit},
     simulation::cycle_tracking::{cycle_tracking_guts, par_cycle_tracking_guts},
     utils::mc_processor_info::ExecPolicy,
@@ -28,10 +28,6 @@ pub struct ParticleContainer<T: CustomFloat> {
     /// Container for extra particles. This is used for fission-induced
     /// particles and incoming off-processor particles.
     pub extra_particles: ParticleCollection<T>,
-    /// Queue used to save particles and neighbor index for any particles
-    /// moving from a domain managed by a different processor than the current
-    /// one.
-    pub send_queue: SendQueue<T>,
 }
 
 impl<T: CustomFloat> ParticleContainer<T> {
@@ -41,7 +37,6 @@ impl<T: CustomFloat> ParticleContainer<T> {
             processing_particles: ParticleCollection::with_capacity(regular_capacity),
             processed_particles: ParticleCollection::with_capacity(regular_capacity),
             extra_particles: ParticleCollection::with_capacity(extra_capacity),
-            send_queue: Default::default(),
         }
     }
 
@@ -112,19 +107,12 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 (&mut self.processing_particles)
                     .into_iter()
                     .for_each(|particle| {
-                        cycle_tracking_guts(
-                            mcdata,
-                            mcunit,
-                            particle,
-                            &mut self.extra_particles,
-                            &mut self.send_queue,
-                        )
+                        cycle_tracking_guts(mcdata, mcunit, particle, &mut self.extra_particles)
                     });
             }
             // Process unit in parallel
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
-                let sq = Arc::new(Mutex::new(&mut self.send_queue));
                 // choose chunk size to get one chunk per thread
                 let chunk_size: usize =
                     (self.processing_particles.len() / mcdata.exec_info.n_rayon_threads) + 1;
@@ -135,13 +123,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
                     .for_each(|mut particles| {
                         // par_bridge for job stealing when load isn't balanced?
                         particles.iter_mut().par_bridge().for_each(|particle| {
-                            par_cycle_tracking_guts(
-                                mcdata,
-                                mcunit,
-                                particle,
-                                Arc::clone(&extra),
-                                Arc::clone(&sq),
-                            )
+                            par_cycle_tracking_guts(mcdata, mcunit, particle, Arc::clone(&extra))
                         })
                     });
             }
@@ -171,18 +153,19 @@ impl<T: CustomFloat> ParticleContainer<T> {
     ///   to the extra storage
     /// - In a message-passing context, this would include sending and receiving
     ///   particles
-    pub fn process_sq(&mut self) {
-        self.extra_particles.extend(
-            self.send_queue
-                .data
-                .iter()
-                .map(|sq_tuple| sq_tuple.particle.clone()),
-        );
-        self.send_queue.clear();
-        // Here we would add the receiver part
-        // while rx.try_recv().is_ok() {...}
-    }
-
+    /*
+        pub fn process_sq(&mut self) {
+            self.extra_particles.extend(
+                self.send_queue
+                    .data
+                    .iter()
+                    .map(|sq_tuple| sq_tuple.particle.clone()),
+            );
+            self.send_queue.clear();
+            // Here we would add the receiver part
+            // while rx.try_recv().is_ok() {...}
+        }
+    */
     /// Adds back to the processing storage the extra particles.
     pub fn clean_extra_vaults(&mut self) {
         self.processing_particles.append(&mut self.extra_particles);
@@ -193,8 +176,6 @@ impl<T: CustomFloat> ParticleContainer<T> {
     /// - processing storage is empty
     /// - send queue is empty
     pub fn test_done_new(&self) -> bool {
-        self.extra_particles.is_empty()
-            & self.processing_particles.is_empty()
-            & self.send_queue.data.is_empty()
+        self.extra_particles.is_empty() & self.processing_particles.is_empty()
     }
 }
