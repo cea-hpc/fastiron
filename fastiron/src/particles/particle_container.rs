@@ -140,11 +140,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 /*
                 // par_chunks implem
                 self.processing_particles
-                    .par_chunks_mut(
-                        (mcdata.params.simulation_params.n_particles as usize)
-                            / mcdata.exec_info.n_rayon_threads
-                            * 10,
-                    )
+                    .par_chunks_mut(5120)
                     .for_each(|chunk| {
                         chunk.iter_mut().for_each(|particle| {
                             par_cycle_tracking_guts(
@@ -164,6 +160,20 @@ impl<T: CustomFloat> ParticleContainer<T> {
             .append(&mut self.processing_particles);
     }
 
+    /// Sort the processing particles according to where they belong in the mesh.
+    pub fn sort_processing(&mut self) {
+        self.processing_particles
+            .sort_by(|a, b| match a.domain.cmp(&b.domain) {
+                std::cmp::Ordering::Less => std::cmp::Ordering::Less,
+                std::cmp::Ordering::Equal => match a.cell.cmp(&b.cell) {
+                    std::cmp::Ordering::Less => std::cmp::Ordering::Less,
+                    std::cmp::Ordering::Equal => std::cmp::Ordering::Equal,
+                    std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
+                },
+                std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
+            });
+    }
+
     /// Processes the particles stored in the send queue.
     /// - In a shared memory context, this is just a transfer from the send queue
     ///   to the extra storage
@@ -173,6 +183,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
         self.send_queue.data.iter().for_each(|sq_tuple| {
             // Neighbor index would be used here to get the correct sender
             // match sq_tuple.neighbor {...}
+            println!("do we send praticles?");
             self.extra_particles.push(sq_tuple.particle.clone());
         });
         self.send_queue.clear();
