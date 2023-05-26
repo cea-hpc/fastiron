@@ -3,7 +3,10 @@
 //! This module contains code used as an abstraction of particle vectors. This
 //! allows for custom iterator implementation.
 
-use rayon::prelude::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
+use rayon::{
+    iter::plumbing::bridge,
+    prelude::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator},
+};
 
 use crate::constants::CustomFloat;
 
@@ -24,11 +27,11 @@ impl<'a, T: CustomFloat> ParallelIterator for ParParIter<'a, T> {
     where
         C: rayon::iter::plumbing::UnindexedConsumer<Self::Item>,
     {
-        todo!()
+        bridge(self, consumer)
     }
 
     fn opt_len(&self) -> Option<usize> {
-        todo!()
+        Some(self.len())
     }
 }
 
@@ -41,11 +44,11 @@ impl<'a, T: CustomFloat> IndexedParallelIterator for ParParIter<'a, T> {
     }
 
     fn drive<C: rayon::iter::plumbing::Consumer<Self::Item>>(self, consumer: C) -> C::Result {
-        todo!()
+        bridge(self, consumer)
     }
 
     fn len(&self) -> usize {
-        todo!()
+        self.data_slice.len()
     }
 }
 
@@ -54,15 +57,35 @@ impl<'a, T: CustomFloat> IntoParallelIterator for &'a ParticleCollection<T> {
     type Item = &'a MCParticle<T>;
 
     fn into_par_iter(self) -> Self::Iter {
-        todo!()
+        ParParIter {
+            data_slice: &self.data,
+        }
+    }
+}
+
+impl<T: CustomFloat> IntoIterator for ParticleCollection<T> {
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+    type Item = MCParticle<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.into_iter()
     }
 }
 
 impl<'a, T: CustomFloat> IntoIterator for &'a ParticleCollection<T> {
-    type IntoIter = std::vec::IntoIter<Self::Item>;
+    type IntoIter = core::slice::Iter<'a, MCParticle<T>>;
     type Item = &'a MCParticle<T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        todo!()
+        self.data.iter()
+    }
+}
+
+impl<'a, T: CustomFloat> IntoIterator for &'a mut ParticleCollection<T> {
+    type IntoIter = core::slice::IterMut<'a, MCParticle<T>>;
+    type Item = &'a mut MCParticle<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.iter_mut()
     }
 }
