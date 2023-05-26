@@ -12,7 +12,7 @@ use crate::{
     constants::CustomFloat,
     data::{nuclear_data::ReactionType, tallies::Tallies},
     montecarlo::MonteCarloData,
-    particles::mc_particle::MCParticle,
+    particles::{mc_particle::MCParticle, particle_collection::ParticleCollection},
 };
 
 /// Transforms a given particle according to an internally drawn type of collision.
@@ -31,7 +31,7 @@ pub fn collision_event<T: CustomFloat>(
     mat_gid: usize,
     cell_nb_density: T,
     particle: &mut MCParticle<T>,
-    extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
+    extra: Arc<Mutex<&mut ParticleCollection<T>>>,
 ) -> bool {
     // ==========================
     // Pick an isotope & reaction

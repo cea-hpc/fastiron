@@ -234,15 +234,6 @@ impl<'a, T: CustomFloat> From<ParParIterMut<'a, T>> for ParticleProducerMut<'a, 
 // / traits
 //==========
 
-impl<T: CustomFloat> IntoIterator for ParticleCollection<T> {
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-    type Item = MCParticle<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.data.into_iter()
-    }
-}
-
 impl<'a, T: CustomFloat> IntoIterator for &'a ParticleCollection<T> {
     type IntoIter = std::slice::Iter<'a, MCParticle<T>>;
     type Item = &'a MCParticle<T>;

@@ -11,7 +11,10 @@ use crate::{
     constants::CustomFloat,
     data::{send_queue::SendQueue, tallies::MCTallyEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
-    particles::mc_particle::{MCParticle, Species},
+    particles::{
+        mc_particle::{MCParticle, Species},
+        particle_collection::ParticleCollection,
+    },
     simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
 };
 
@@ -33,7 +36,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: &mut Vec<MCParticle<T>>,
+    extra: &mut ParticleCollection<T>,
     send_queue: &mut SendQueue<T>,
 ) {
     // set age & time to census
@@ -55,7 +58,7 @@ fn cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: &mut Vec<MCParticle<T>>,
+    extra: &mut ParticleCollection<T>,
     send_queue: &mut SendQueue<T>,
 ) {
     let mut keep_tracking: bool;
@@ -180,7 +183,7 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
+    extra: Arc<Mutex<&mut ParticleCollection<T>>>,
     send_queue: Arc<Mutex<&mut SendQueue<T>>>,
 ) {
     // set age & time to census
@@ -202,7 +205,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
+    extra: Arc<Mutex<&mut ParticleCollection<T>>>,
     send_queue: Arc<Mutex<&mut SendQueue<T>>>,
 ) {
     let mut keep_tracking: bool;
