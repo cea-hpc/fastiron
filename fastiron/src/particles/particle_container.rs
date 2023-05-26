@@ -183,7 +183,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
         self.send_queue.data.iter().for_each(|sq_tuple| {
             // Neighbor index would be used here to get the correct sender
             // match sq_tuple.neighbor {...}
-            println!("do we send praticles?");
+            println!("do we send particles?");
             self.extra_particles.push(sq_tuple.particle.clone());
         });
         self.send_queue.clear();

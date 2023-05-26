@@ -12,12 +12,51 @@ use crate::constants::CustomFloat;
 
 use super::mc_particle::MCParticle;
 
-//================
-// Base structures
-//================
+//==========================
+// Base structures & methods
+//==========================
 
 pub struct ParticleCollection<T: CustomFloat> {
     data: Vec<MCParticle<T>>,
+}
+
+impl<T: CustomFloat> ParticleCollection<T> {
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            data: Vec::with_capacity(capacity),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.data.len() == 0
+    }
+
+    pub fn retain<F: Fn(&MCParticle<T>) -> bool>(&mut self, f: F) {
+        self.data.retain(f);
+    }
+
+    pub fn retain_mut<F: FnMut(&mut MCParticle<T>) -> bool>(&mut self, f: F) {
+        self.data.retain_mut(f);
+    }
+
+    pub fn append(&mut self, other: &mut Self) {
+        self.data.append(&mut other.data)
+    }
+
+    pub fn extend<I: IntoIterator<Item = MCParticle<T>>>(&mut self, iter: I) {
+        self.data.extend(iter);
+    }
+
+    pub fn sort_by<F: FnMut(&MCParticle<T>, &MCParticle<T>) -> std::cmp::Ordering>(
+        &mut self,
+        compare: F,
+    ) {
+        self.data.sort_by(compare);
+    }
 }
 
 pub struct ParParIter<'a, T: CustomFloat> {
