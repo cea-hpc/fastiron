@@ -14,10 +14,7 @@ use crate::{
     utils::mc_processor_info::ExecPolicy,
 };
 
-use super::{
-    mc_particle::{MCParticle, Species},
-    particle_collection::ParticleCollection,
-};
+use super::{mc_particle::Species, particle_collection::ParticleCollection};
 
 #[derive(Debug, Clone)]
 /// Structure used as a container for all particles.
@@ -43,7 +40,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
         Self {
             processing_particles: ParticleCollection::with_capacity(regular_capacity),
             processed_particles: ParticleCollection::with_capacity(regular_capacity),
-            extra_particles: ParticleCollection::with_capacity(regular_capacity),
+            extra_particles: ParticleCollection::with_capacity(extra_capacity),
             send_queue: Default::default(),
         }
     }
@@ -184,12 +181,12 @@ impl<T: CustomFloat> ParticleContainer<T> {
     /// - In a message-passing context, this would include sending and receiving
     ///   particles
     pub fn process_sq(&mut self) {
-        self.send_queue.data.iter().for_each(|sq_tuple| {
-            // Neighbor index would be used here to get the correct sender
-            // match sq_tuple.neighbor {...}
-            println!("do we send particles?");
-            //self.extra_particles.push(sq_tuple.particle.clone());
-        });
+        self.extra_particles.extend(
+            self.send_queue
+                .data
+                .iter()
+                .map(|sq_tuple| sq_tuple.particle.clone()),
+        );
         self.send_queue.clear();
         // Here we would add the receiver part
         // while rx.try_recv().is_ok() {...}

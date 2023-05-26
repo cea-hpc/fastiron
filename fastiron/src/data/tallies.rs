@@ -21,10 +21,7 @@ use crate::{
     constants::CustomFloat,
     geometry::mc_domain::MCDomain,
     parameters::BenchType,
-    particles::{
-        mc_particle::MCParticle, particle_collection::ParticleCollection,
-        particle_container::ParticleContainer,
-    },
+    particles::{particle_collection::ParticleCollection, particle_container::ParticleContainer},
     utils::mc_fast_timer::{self, MCFastTimerContainer, Section},
 };
 
