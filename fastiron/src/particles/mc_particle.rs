@@ -21,6 +21,8 @@ use crate::{
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
+use super::particle_collection::ParticleCollection;
+
 /// Custom enum used to model a particle's species.
 #[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Default)]
 pub enum Species {
@@ -136,7 +138,7 @@ impl<T: CustomFloat> MCParticle<T> {
         &mut self,
         reaction: &NuclearDataReaction<T>,
         material_mass: T,
-        extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
+        extra: Arc<Mutex<&mut ParticleCollection<T>>>,
     ) -> usize {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let two: T = FromPrimitive::from_f64(2.0).unwrap();

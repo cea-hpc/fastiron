@@ -9,9 +9,12 @@ use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
-    data::{send_queue::SendQueue, tallies::MCTallyEvent},
+    data::tallies::MCTallyEvent,
     montecarlo::{MonteCarloData, MonteCarloUnit},
-    particles::mc_particle::{MCParticle, Species},
+    particles::{
+        mc_particle::{MCParticle, Species},
+        particle_collection::ParticleCollection,
+    },
     simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
 };
 
@@ -33,8 +36,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: &mut Vec<MCParticle<T>>,
-    send_queue: &mut SendQueue<T>,
+    extra: &mut ParticleCollection<T>,
 ) {
     // set age & time to census
     if particle.time_to_census <= zero() {
@@ -48,15 +50,14 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
 
-    cycle_tracking_function(mcdata, mcunit, particle, extra, send_queue);
+    cycle_tracking_function(mcdata, mcunit, particle, extra);
 }
 
 fn cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: &mut Vec<MCParticle<T>>,
-    send_queue: &mut SendQueue<T>,
+    extra: &mut ParticleCollection<T>,
 ) {
     let mut keep_tracking: bool;
     let tmp = Arc::new(Mutex::new(extra));
@@ -126,6 +127,8 @@ fn cycle_tracking_function<T: CustomFloat>(
                     // off-unit transit
                     MCTallyEvent::FacetCrossingCommunication => {
                         // get destination neighbor
+                        unimplemented!()
+                        /*
                         let neighbor_rank: usize = mcunit.domain
                             [facet_adjacency.current.domain.unwrap()]
                         .mesh
@@ -133,7 +136,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                         // add to sendqueue
                         send_queue.push(neighbor_rank, particle);
                         particle.species = Species::Unknown;
-                        false
+                        false*/
                     }
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {
@@ -180,8 +183,7 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
-    send_queue: Arc<Mutex<&mut SendQueue<T>>>,
+    extra: Arc<Mutex<&mut ParticleCollection<T>>>,
 ) {
     // set age & time to census
     if particle.time_to_census <= zero() {
@@ -195,15 +197,14 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
 
-    par_cycle_tracking_function(mcdata, mcunit, particle, extra, send_queue);
+    par_cycle_tracking_function(mcdata, mcunit, particle, extra);
 }
 
 fn par_cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: Arc<Mutex<&mut Vec<MCParticle<T>>>>,
-    send_queue: Arc<Mutex<&mut SendQueue<T>>>,
+    extra: Arc<Mutex<&mut ParticleCollection<T>>>,
 ) {
     let mut keep_tracking: bool;
 
@@ -273,6 +274,8 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                     // off-unit transit
                     MCTallyEvent::FacetCrossingCommunication => {
                         // get destination neighbor
+                        unimplemented!()
+                        /*
                         let neighbor_rank: usize = mcunit.domain
                             [facet_adjacency.current.domain.unwrap()]
                         .mesh
@@ -281,6 +284,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                         send_queue.lock().unwrap().push(neighbor_rank, particle);
                         particle.species = Species::Unknown;
                         false
+                        */
                     }
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {

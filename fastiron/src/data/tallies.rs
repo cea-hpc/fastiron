@@ -21,7 +21,7 @@ use crate::{
     constants::CustomFloat,
     geometry::mc_domain::MCDomain,
     parameters::BenchType,
-    particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
+    particles::{particle_collection::ParticleCollection, particle_container::ParticleContainer},
     utils::mc_fast_timer::{self, MCFastTimerContainer, Section},
 };
 
@@ -423,8 +423,8 @@ impl<T: CustomFloat> Tallies<T> {
             return;
         }
 
-        let update_function = |particle_list: &[MCParticle<T>], spectrum: &mut [u64]| {
-            particle_list.iter().for_each(|particle| {
+        let update_function = |particle_list: &ParticleCollection<T>, spectrum: &mut [u64]| {
+            particle_list.into_iter().for_each(|particle| {
                 spectrum[particle.energy_group] += 1;
             });
         };

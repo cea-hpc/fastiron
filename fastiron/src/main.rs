@@ -246,7 +246,6 @@ pub fn cycle_process<T: CustomFloat>(
             mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingComm);
 
             // clean extra here
-            container.process_sq();
             container.clean_extra_vaults();
 
             mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingComm);
