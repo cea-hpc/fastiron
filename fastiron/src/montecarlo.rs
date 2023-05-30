@@ -16,7 +16,6 @@ use crate::data::nuclear_data::NuclearData;
 use crate::data::tallies::Tallies;
 use crate::geometry::mc_domain::MCDomain;
 use crate::parameters::Parameters;
-use crate::simulation::macro_cross_section::weighted_macroscopic_cross_section;
 use crate::utils::mc_fast_timer::MCFastTimerContainer;
 use crate::utils::mc_processor_info::MCProcessorInfo;
 
@@ -85,29 +84,13 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
             tallies,
             fast_timer,
             unit_weight: zero(),
-            xs_cache: DashMap::<(usize, usize, usize), T, FxBuildHasher>::default(),
+            xs_cache: DashMap::default(),
         }
     }
 
     /// Clear the cross section cache for each domain.
     pub fn clear_cross_section_cache(&mut self) {
-        self.domain.iter_mut().for_each(|dd| {
-            dd.clear_cross_section_cache();
-        });
         self.xs_cache.clear();
-    }
-
-    pub fn get_cross_section(
-        &self,
-        key: (usize, usize, usize),
-        mcdata: &MonteCarloData<T>, // only needed when xs isn't computed
-    ) -> T {
-        *self.xs_cache.entry(key).or_insert_with(|| {
-            let (domain, cell, energy_group) = key;
-            let mat_gid: usize = self.domain[domain].cell_state[cell].material;
-            let cell_nb_density: T = self.domain[domain].cell_state[cell].cell_number_density;
-            weighted_macroscopic_cross_section(mcdata, mat_gid, cell_nb_density, energy_group)
-        })
     }
 
     pub fn update_unit_weight(&mut self, mcdata: &MonteCarloData<T>) {

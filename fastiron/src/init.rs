@@ -309,9 +309,8 @@ fn init_tallies<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, params: &Paramet
 }
 
 fn init_xs_cache<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>) {
-    // compute needed capacity
+    // compute needed capacity & init accordingly
     let capacity: usize = mcunit.domain.iter().map(|dom| dom.cell_state.len()).sum();
-    // need to add the custom hasher from fxhash
     mcunit.xs_cache = DashMap::<(usize, usize, usize), T, FxBuildHasher>::with_capacity_and_hasher(
         capacity,
         FxBuildHasher::default(),

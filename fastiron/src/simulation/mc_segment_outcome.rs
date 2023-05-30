@@ -19,7 +19,7 @@ use crate::{
     geometry::facets::MCNearestFacet,
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::mc_particle::MCParticle,
-    simulation::mct::nearest_facet,
+    simulation::{macro_cross_section::weighted_macroscopic_cross_section, mct::nearest_facet},
 };
 
 /// Enum representing the outcome of the current segment.
@@ -118,10 +118,20 @@ pub fn outcome<T: CustomFloat>(
 
     // get cross section
     // lazily computed
-    let macroscopic_total_xsection = mcunit.get_cross_section(
-        (particle.domain, particle.cell, particle.energy_group),
-        mcdata,
-    );
+    let macroscopic_total_xsection = *mcunit
+        .xs_cache
+        .entry((particle.domain, particle.cell, particle.energy_group))
+        .or_insert_with(|| {
+            let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
+            let cell_nb_density: T =
+                mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
+            weighted_macroscopic_cross_section(
+                mcdata,
+                mat_gid,
+                cell_nb_density,
+                particle.energy_group,
+            )
+        });
     // always computed
     /*
     let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
