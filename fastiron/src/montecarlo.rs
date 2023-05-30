@@ -7,6 +7,7 @@
 use std::fmt::Debug;
 
 use dashmap::DashMap;
+use fxhash::FxBuildHasher;
 use num::zero;
 
 use crate::constants::CustomFloat;
@@ -67,7 +68,7 @@ pub struct MonteCarloUnit<T: CustomFloat> {
     /// Weight of the particles at creation in a source zone.
     pub unit_weight: T,
     /// HashMap used to lazily compute cross-sections.
-    pub xs_cache: DashMap<(usize, usize, usize), T>,
+    pub xs_cache: DashMap<(usize, usize, usize), T, FxBuildHasher>,
 }
 
 impl<T: CustomFloat> MonteCarloUnit<T> {
@@ -84,7 +85,7 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
             tallies,
             fast_timer,
             unit_weight: zero(),
-            xs_cache: DashMap::default(),
+            xs_cache: DashMap::<(usize, usize, usize), T, FxBuildHasher>::default(),
         }
     }
 

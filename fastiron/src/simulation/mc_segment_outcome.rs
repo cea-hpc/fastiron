@@ -11,7 +11,6 @@
 
 use std::fmt::Debug;
 
-use atomic::Ordering;
 use num::{one, zero};
 
 use crate::{
@@ -20,7 +19,7 @@ use crate::{
     geometry::facets::MCNearestFacet,
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::mc_particle::MCParticle,
-    simulation::{macro_cross_section::weighted_macroscopic_cross_section, mct::nearest_facet},
+    simulation::mct::nearest_facet,
 };
 
 /// Enum representing the outcome of the current segment.
@@ -123,32 +122,6 @@ pub fn outcome<T: CustomFloat>(
         (particle.domain, particle.cell, particle.energy_group),
         mcdata,
     );
-    /*
-    let precomputed_cross_section = mcunit.domain[particle.domain].cell_state[particle.cell].total
-        [particle.energy_group]
-        .load(Ordering::Relaxed);
-    let macroscopic_total_xsection = if precomputed_cross_section > zero() {
-        // XS was already cached
-        precomputed_cross_section
-    } else {
-        // compute XS
-        let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
-        let cell_nb_density: T =
-            mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
-
-        let tmp = weighted_macroscopic_cross_section(
-            mcdata,
-            mat_gid,
-            cell_nb_density,
-            particle.energy_group,
-        );
-        // cache the XS
-        mcunit.domain[particle.domain].cell_state[particle.cell].total[particle.energy_group]
-            .store(tmp, Ordering::Relaxed);
-
-        tmp
-    };
-    */
     // always computed
     /*
     let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
