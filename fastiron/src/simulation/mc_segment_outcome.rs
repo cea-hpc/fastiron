@@ -119,6 +119,11 @@ pub fn outcome<T: CustomFloat>(
 
     // get cross section
     // lazily computed
+    let macroscopic_total_xsection = mcunit.get_cross_section(
+        (particle.domain, particle.cell, particle.energy_group),
+        mcdata,
+    );
+    /*
     let precomputed_cross_section = mcunit.domain[particle.domain].cell_state[particle.cell].total
         [particle.energy_group]
         .load(Ordering::Relaxed);
@@ -143,7 +148,7 @@ pub fn outcome<T: CustomFloat>(
 
         tmp
     };
-
+    */
     // always computed
     /*
     let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;

@@ -22,6 +22,7 @@ use crate::{
         mc_rng_state::rng_sample,
     },
 };
+use dashmap::DashMap;
 use num::{one, zero, Float, FromPrimitive};
 
 /// Creates a [MonteCarloData] object using the specified parameters.
@@ -94,6 +95,7 @@ pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarl
             let mut mcunit = MonteCarloUnit::new(&mcdata.params);
             init_mesh(&mut mcunit, mcdata);
             init_tallies(&mut mcunit, &mcdata.params);
+            init_xs_cache(&mut mcunit);
             units.push(mcunit);
         }
         ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
@@ -303,6 +305,13 @@ fn init_tallies<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, params: &Paramet
         params.simulation_params.n_groups,
         params.simulation_params.coral_benchmark,
     )
+}
+
+fn init_xs_cache<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>) {
+    // compute needed capacity
+    let capacity = mcunit.domain.iter().map(|dom| dom.cell_state.len()).sum();
+    // need to add the custom hasher from fxhash
+    mcunit.xs_cache = DashMap::with_capacity(capacity)
 }
 
 #[derive(Debug, Clone, Default)]
