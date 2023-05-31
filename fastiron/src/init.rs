@@ -23,8 +23,8 @@ use crate::{
     },
 };
 use atomic::Atomic;
-use dashmap::DashMap;
-use fxhash::FxBuildHasher;
+//use dashmap::DashMap;
+//use fxhash::FxBuildHasher;
 use num::{one, zero, Float, FromPrimitive};
 
 /// Creates a [MonteCarloData] object using the specified parameters.
@@ -323,7 +323,7 @@ fn init_xs_cache<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, n_energy_groups
         .map(|dom| {
             dom.cell_state
                 .iter()
-                .map(|cell| (0..n_energy_groups).map(|_| Atomic::new(zero())).collect())
+                .map(|_| (0..n_energy_groups).map(|_| Atomic::new(zero())).collect())
                 .collect()
         })
         .collect();

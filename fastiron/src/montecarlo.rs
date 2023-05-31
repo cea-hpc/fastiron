@@ -8,8 +8,8 @@ use std::fmt::Debug;
 use std::ops::{Index, IndexMut};
 
 use atomic::Atomic;
-use dashmap::DashMap;
-use fxhash::FxBuildHasher;
+//use dashmap::DashMap;
+//use fxhash::FxBuildHasher;
 use num::zero;
 
 use crate::constants::CustomFloat;
@@ -134,6 +134,7 @@ pub struct XSCache<T: CustomFloat> {
     pub cache: Vec<Vec<Vec<Atomic<T>>>>,
 }
 
+// maybe make theses accesses unchecked?
 impl<T: CustomFloat> Index<(usize, usize, usize)> for XSCache<T> {
     type Output = Atomic<T>;
 

@@ -134,8 +134,9 @@ pub fn outcome<T: CustomFloat>(
                 particle.energy_group,
             )
         });*/
+    // This ordering should make it so that we dont compute a XS multiple times?
     let pcxs = mcunit.xs_cache[(particle.domain, particle.cell, particle.energy_group)]
-        .load(Ordering::Relaxed);
+        .load(Ordering::Acquire);
     let macroscopic_total_xsection = if pcxs > zero() {
         // use precomputed value
         pcxs
@@ -151,17 +152,9 @@ pub fn outcome<T: CustomFloat>(
             particle.energy_group,
         );
         mcunit.xs_cache[(particle.domain, particle.cell, particle.energy_group)]
-            .store(tmp, Ordering::Relaxed);
+            .store(tmp, Ordering::Release);
         tmp
     };
-    // always computed
-    /*
-    let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
-    let cell_nb_density: T =
-        mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
-    let macroscopic_total_xsection =
-        weighted_macroscopic_cross_section(mcdata, mat_gid, cell_nb_density, particle.energy_group);
-    */
 
     // prepare particle
     particle.total_cross_section = macroscopic_total_xsection;
