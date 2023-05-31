@@ -22,6 +22,7 @@ use crate::{
         mc_rng_state::rng_sample,
     },
 };
+use atomic::Atomic;
 use dashmap::DashMap;
 use fxhash::FxBuildHasher;
 use num::{one, zero, Float, FromPrimitive};
@@ -96,7 +97,7 @@ pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarl
             let mut mcunit = MonteCarloUnit::new(&mcdata.params);
             init_mesh(&mut mcunit, mcdata);
             init_tallies(&mut mcunit, &mcdata.params);
-            init_xs_cache(&mut mcunit);
+            init_xs_cache(&mut mcunit, mcdata.params.simulation_params.n_groups);
             units.push(mcunit);
         }
         ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
@@ -308,13 +309,24 @@ fn init_tallies<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, params: &Paramet
     )
 }
 
-fn init_xs_cache<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>) {
+fn init_xs_cache<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, n_energy_groups: usize) {
     // compute needed capacity & init accordingly
-    let capacity: usize = mcunit.domain.iter().map(|dom| dom.cell_state.len()).sum();
+    // need to multiply this by n energy groups
+    /*let capacity: usize = mcunit.domain.iter().map(|dom| dom.cell_state.len()).sum();
     mcunit.xs_cache = DashMap::<(usize, usize, usize), T, FxBuildHasher>::with_capacity_and_hasher(
         capacity,
         FxBuildHasher::default(),
-    );
+    );*/
+    mcunit.xs_cache.cache = mcunit
+        .domain
+        .iter()
+        .map(|dom| {
+            dom.cell_state
+                .iter()
+                .map(|cell| (0..n_energy_groups).map(|_| Atomic::new(zero())).collect())
+                .collect()
+        })
+        .collect();
 }
 
 #[derive(Debug, Clone, Default)]

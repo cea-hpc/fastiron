@@ -11,6 +11,7 @@
 
 use std::fmt::Debug;
 
+use atomic::Ordering;
 use num::{one, zero};
 
 use crate::{
@@ -118,6 +119,7 @@ pub fn outcome<T: CustomFloat>(
 
     // get cross section
     // lazily computed
+    /*
     let macroscopic_total_xsection = *mcunit
         .xs_cache
         .entry((particle.domain, particle.cell, particle.energy_group))
@@ -131,7 +133,27 @@ pub fn outcome<T: CustomFloat>(
                 cell_nb_density,
                 particle.energy_group,
             )
-        });
+        });*/
+    let pcxs = mcunit.xs_cache[(particle.domain, particle.cell, particle.energy_group)]
+        .load(Ordering::Relaxed);
+    let macroscopic_total_xsection = if pcxs > zero() {
+        // use precomputed value
+        pcxs
+    } else {
+        // compute & cache value
+        let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
+        let cell_nb_density: T =
+            mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
+        let tmp = weighted_macroscopic_cross_section(
+            mcdata,
+            mat_gid,
+            cell_nb_density,
+            particle.energy_group,
+        );
+        mcunit.xs_cache[(particle.domain, particle.cell, particle.energy_group)]
+            .store(tmp, Ordering::Relaxed);
+        tmp
+    };
     // always computed
     /*
     let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;

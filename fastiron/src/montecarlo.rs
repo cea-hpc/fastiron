@@ -5,7 +5,9 @@
 //! here in the future.
 
 use std::fmt::Debug;
+use std::ops::{Index, IndexMut};
 
+use atomic::Atomic;
 use dashmap::DashMap;
 use fxhash::FxBuildHasher;
 use num::zero;
@@ -67,7 +69,8 @@ pub struct MonteCarloUnit<T: CustomFloat> {
     /// Weight of the particles at creation in a source zone.
     pub unit_weight: T,
     /// HashMap used to lazily compute cross-sections.
-    pub xs_cache: DashMap<(usize, usize, usize), T, FxBuildHasher>,
+    pub xs_cache: XSCache<T>,
+    //pub xs_cache: DashMap<(usize, usize, usize), T, FxBuildHasher>,
 }
 
 impl<T: CustomFloat> MonteCarloUnit<T> {
@@ -84,13 +87,19 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
             tallies,
             fast_timer,
             unit_weight: zero(),
-            xs_cache: DashMap::default(),
+            xs_cache: Default::default(),
+            //xs_cache: DashMap::default(),
         }
     }
 
     /// Clear the cross section cache for each domain.
     pub fn clear_cross_section_cache(&mut self) {
-        self.xs_cache.clear();
+        //self.xs_cache.clear();
+        self.xs_cache.cache.iter_mut().for_each(|domain| {
+            domain
+                .iter_mut()
+                .for_each(|cell| cell.iter_mut().for_each(|xs| *xs = Atomic::new(zero())))
+        })
     }
 
     pub fn update_unit_weight(&mut self, mcdata: &MonteCarloData<T>) {
@@ -117,5 +126,24 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
                     .sum::<T>()
             })
             .sum();
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct XSCache<T: CustomFloat> {
+    pub cache: Vec<Vec<Vec<Atomic<T>>>>,
+}
+
+impl<T: CustomFloat> Index<(usize, usize, usize)> for XSCache<T> {
+    type Output = Atomic<T>;
+
+    fn index(&self, index: (usize, usize, usize)) -> &Self::Output {
+        &self.cache[index.0][index.1][index.2]
+    }
+}
+
+impl<T: CustomFloat> IndexMut<(usize, usize, usize)> for XSCache<T> {
+    fn index_mut(&mut self, index: (usize, usize, usize)) -> &mut Self::Output {
+        &mut self.cache[index.0][index.1][index.2]
     }
 }
