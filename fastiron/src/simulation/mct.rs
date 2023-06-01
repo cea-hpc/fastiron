@@ -184,11 +184,10 @@ fn mct_nf_3dg<T: CustomFloat>(
             let t: T = mct_nf_3dg_dist_to_segment(
                 plane_tolerance,
                 facet_normal_dot_dcos,
-                *plane,
+                plane,
                 &facet_coords,
                 &coords,
                 &direction,
-                false,
             );
 
             distance_to_facet[facet_idx].distance = t;
@@ -326,11 +325,10 @@ fn mct_facet_points_3dg<T: CustomFloat>(
 fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     plane_tolerance: T,
     facet_normal_dot_dcos: T,
-    plane: MCGeneralPlane<T>,
+    plane: &MCGeneralPlane<T>,
     facet_coords: &[MCVector<T>],
     coords: &MCVector<T>,
     direction: &MCVector<T>,
-    allow_enter: bool,
 ) -> T {
     let huge_f: T = T::huge_float();
     let pfive: T = FromPrimitive::from_f64(0.5).unwrap();
@@ -339,7 +337,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     let numerator: T =
         -one::<T>() * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
 
-    if !allow_enter & (numerator < zero()) & (numerator * numerator > plane_tolerance) {
+    if (numerator < zero()) & (numerator * numerator > plane_tolerance) {
         return huge_f;
     }
 
