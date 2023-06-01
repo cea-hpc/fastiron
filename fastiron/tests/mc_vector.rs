@@ -158,6 +158,82 @@ fn div_assign_zero() {
     uu /= 0.0;
 }
 
+// Sums
+
+#[test]
+fn sum_owned() {
+    let vec = vec![
+        MCVector {
+            x: 2.0,
+            y: 2.0,
+            z: 2.0,
+        },
+        MCVector {
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        },
+        MCVector {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
+        },
+        MCVector {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
+        },
+    ];
+
+    let res: MCVector<f64> = vec.iter().copied().sum();
+
+    assert_eq!(
+        res,
+        MCVector {
+            x: 4.0,
+            y: 4.0,
+            z: 4.0
+        }
+    )
+}
+
+#[test]
+fn sum_borrowed() {
+    let vec = vec![
+        MCVector {
+            x: 2.0,
+            y: 2.0,
+            z: 2.0,
+        },
+        MCVector {
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        },
+        MCVector {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
+        },
+        MCVector {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
+        },
+    ];
+
+    let res: MCVector<f64> = vec.iter().sum();
+
+    assert_eq!(
+        res,
+        MCVector {
+            x: 4.0,
+            y: 4.0,
+            z: 4.0
+        }
+    )
+}
+
 // Pushing the boundaries
 
 #[test]
