@@ -48,34 +48,21 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
 
     let center: MCVector<T> = cell_position_3dg(mesh, cell_idx);
 
-    let rdm_number: T = rng_sample(seed);
-    let which_volume = rdm_number * six * cell_volume;
+    let which_volume = rng_sample::<T>(seed) * six * cell_volume;
 
     let mut current_volume: T = zero();
-    let mut facet_idx: usize = 0;
-
-    let mut point0: MCVector<T> = Default::default();
-    let mut point1: MCVector<T> = Default::default();
-    let mut point2: MCVector<T> = Default::default();
+    let mut points = [MCVector::default(); N_POINTS_PER_FACET];
 
     // find the facet to sample from
-    while current_volume < which_volume {
-        if facet_idx == N_FACETS_OUT {
+    for facet_idx in 0..N_FACETS_OUT {
+        points = mesh.get_facet_coords(cell_idx, facet_idx);
+
+        let subvolume = compute_volume(&points, &center);
+        current_volume += subvolume;
+        if current_volume >= which_volume {
             break;
         }
-        let facet_points = mct_facet_points_3dg(mesh, cell_idx, facet_idx);
-
-        point0 = mesh.node[facet_points[0]];
-        point1 = mesh.node[facet_points[1]];
-        point2 = mesh.node[facet_points[2]];
-
-        let subvolume = mct_cell_volume_3dg_vector_tetdet(&point0, &point1, &point2, &center);
-        current_volume += subvolume;
-
-        facet_idx += 1;
     }
-    // the facet we sample from is facet_idx-1; this is due to a change in the loop structure
-    // no need to update facet_idx though, it is not used again
 
     // sample and adjust
     let mut r1: T = rng_sample(seed);
@@ -96,7 +83,7 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
     }
     let r4: T = one - r1 - r2 - r3;
 
-    point0 * r1 + point1 * r2 + point2 * r3 + center * r4
+    points[0] * r1 + points[1] * r2 + points[2] * r3 + center * r4
 }
 
 /// Returns a coordinate that represents the "center" of the cell.
@@ -199,20 +186,15 @@ fn mct_nf_3dg<T: CustomFloat>(
 
 /// Returns the volume defined by `v3v0`, `v3v1`, `v3v2` using
 /// vectorial operations.
-fn mct_cell_volume_3dg_vector_tetdet<T: CustomFloat>(
-    v0: &MCVector<T>,
-    v1: &MCVector<T>,
-    v2: &MCVector<T>,
-    v3: &MCVector<T>,
-) -> T {
-    let tmp0 = *v0 - *v3;
-    let tmp1 = *v1 - *v3;
-    let tmp2 = *v2 - *v3;
+fn compute_volume<T: CustomFloat>(vertices: &[MCVector<T>], origin: &MCVector<T>) -> T {
+    assert_eq!(vertices.len(), N_POINTS_PER_FACET);
+    let tmp0 = vertices[0] - *origin;
+    let tmp1 = vertices[1] - *origin;
+    let tmp2 = vertices[2] - *origin;
 
     tmp0.dot(&tmp1.cross(&tmp2)) // should be the same as original code
 }
 
-/// delete num_facets_per_cell ?
 fn mct_nf_compute_nearest<T: CustomFloat>(distance_to_facet: &[T]) -> MCNearestFacet<T> {
     let huge_f: T = T::huge_float();
     let mut nearest_facet: MCNearestFacet<T> = Default::default();
@@ -277,20 +259,6 @@ fn check_nearest_validity<T: CustomFloat>(
         return *iteration != MAX_ITERATION;
     }
     false
-}
-
-fn mct_facet_points_3dg<T: CustomFloat>(
-    mesh: &MCMeshDomain<T>,
-    cell: usize,
-    facet: usize,
-) -> [usize; N_POINTS_PER_FACET] {
-    let mut res: [usize; N_POINTS_PER_FACET] = [0; N_POINTS_PER_FACET];
-
-    (0..N_POINTS_PER_FACET).for_each(|point_idx| {
-        res[point_idx] = mesh.cell_connectivity[cell].facet[facet].point[point_idx];
-    });
-
-    res
 }
 
 fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
