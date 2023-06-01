@@ -356,100 +356,108 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
         };
     }
 
-    let mut cross0: T = zero();
-    let mut cross1: T = zero();
-    let mut cross2: T = zero();
-
-    if (plane.c < -pfive) | (plane.c > pfive) {
+    let crosses = if plane.c.abs() > pfive {
         belongs_or_return!(x);
         belongs_or_return!(y);
         // update cross; z elements
-        cross1 = ab_cross_ac!(
-            facet_coords[0].x,
-            facet_coords[0].y,
-            facet_coords[1].x,
-            facet_coords[1].y,
-            intersection_pt.x,
-            intersection_pt.y
-        );
-        cross2 = ab_cross_ac!(
-            facet_coords[1].x,
-            facet_coords[1].y,
-            facet_coords[2].x,
-            facet_coords[2].y,
-            intersection_pt.x,
-            intersection_pt.y
-        );
-        cross0 = ab_cross_ac!(
-            facet_coords[2].x,
-            facet_coords[2].y,
-            facet_coords[0].x,
-            facet_coords[0].y,
-            intersection_pt.x,
-            intersection_pt.y
-        );
-    } else if (plane.b < -pfive) | (plane.b > pfive) {
+        [
+            ab_cross_ac!(
+                facet_coords[0].x,
+                facet_coords[0].y,
+                facet_coords[1].x,
+                facet_coords[1].y,
+                intersection_pt.x,
+                intersection_pt.y
+            ),
+            ab_cross_ac!(
+                facet_coords[1].x,
+                facet_coords[1].y,
+                facet_coords[2].x,
+                facet_coords[2].y,
+                intersection_pt.x,
+                intersection_pt.y
+            ),
+            ab_cross_ac!(
+                facet_coords[2].x,
+                facet_coords[2].y,
+                facet_coords[0].x,
+                facet_coords[0].y,
+                intersection_pt.x,
+                intersection_pt.y
+            ),
+        ]
+    } else if plane.b.abs() > pfive {
         belongs_or_return!(x);
         belongs_or_return!(z);
         // update cross; y elements
-        cross1 = ab_cross_ac!(
-            facet_coords[0].z,
-            facet_coords[0].x,
-            facet_coords[1].z,
-            facet_coords[1].x,
-            intersection_pt.z,
-            intersection_pt.x
-        );
-        cross2 = ab_cross_ac!(
-            facet_coords[1].z,
-            facet_coords[1].x,
-            facet_coords[2].z,
-            facet_coords[2].x,
-            intersection_pt.z,
-            intersection_pt.x
-        );
-        cross0 = ab_cross_ac!(
-            facet_coords[2].z,
-            facet_coords[2].x,
-            facet_coords[0].z,
-            facet_coords[0].x,
-            intersection_pt.z,
-            intersection_pt.x
-        );
-    } else if (plane.a < -pfive) | (plane.a > pfive) {
+        [
+            ab_cross_ac!(
+                facet_coords[0].z,
+                facet_coords[0].x,
+                facet_coords[1].z,
+                facet_coords[1].x,
+                intersection_pt.z,
+                intersection_pt.x
+            ),
+            ab_cross_ac!(
+                facet_coords[1].z,
+                facet_coords[1].x,
+                facet_coords[2].z,
+                facet_coords[2].x,
+                intersection_pt.z,
+                intersection_pt.x
+            ),
+            ab_cross_ac!(
+                facet_coords[2].z,
+                facet_coords[2].x,
+                facet_coords[0].z,
+                facet_coords[0].x,
+                intersection_pt.z,
+                intersection_pt.x
+            ),
+        ]
+    } else if plane.a.abs() > pfive {
         belongs_or_return!(z);
         belongs_or_return!(y);
         // update cross; x elements
-        cross1 = ab_cross_ac!(
-            facet_coords[0].y,
-            facet_coords[0].z,
-            facet_coords[1].y,
-            facet_coords[1].z,
-            intersection_pt.y,
-            intersection_pt.z
-        );
-        cross2 = ab_cross_ac!(
-            facet_coords[1].y,
-            facet_coords[1].z,
-            facet_coords[2].y,
-            facet_coords[2].z,
-            intersection_pt.y,
-            intersection_pt.z
-        );
-        cross0 = ab_cross_ac!(
-            facet_coords[2].y,
-            facet_coords[2].z,
-            facet_coords[0].y,
-            facet_coords[0].z,
-            intersection_pt.y,
-            intersection_pt.z
-        );
-    }
+        [
+            ab_cross_ac!(
+                facet_coords[0].y,
+                facet_coords[0].z,
+                facet_coords[1].y,
+                facet_coords[1].z,
+                intersection_pt.y,
+                intersection_pt.z
+            ),
+            ab_cross_ac!(
+                facet_coords[1].y,
+                facet_coords[1].z,
+                facet_coords[2].y,
+                facet_coords[2].z,
+                intersection_pt.y,
+                intersection_pt.z
+            ),
+            ab_cross_ac!(
+                facet_coords[2].y,
+                facet_coords[2].z,
+                facet_coords[0].y,
+                facet_coords[0].z,
+                intersection_pt.y,
+                intersection_pt.z
+            ),
+        ]
+    } else {
+        [zero(); 3]
+    };
 
-    let cross_tolerance: T = bounding_box_tolerance * (cross0 + cross1 + cross2).abs();
+    let cross_tolerance: T = bounding_box_tolerance * (crosses[0] + crosses[1] + crosses[2]).abs();
 
-    if ((cross0 > -cross_tolerance) & (cross1 > -cross_tolerance) & (cross2 > -cross_tolerance))
-        | ((cross0 < cross_tolerance) & (cross1 < cross_tolerance) & (cross2 < cross_tolerance))
+    if ((crosses[0] > -cross_tolerance)
+        & (crosses[1] > -cross_tolerance)
+        & (crosses[2] > -cross_tolerance))
+        | ((crosses[0] < cross_tolerance)
+            & (crosses[1] < cross_tolerance)
+            & (crosses[2] < cross_tolerance))
     {
         return true;
     }
