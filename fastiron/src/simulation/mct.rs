@@ -169,26 +169,27 @@ fn mct_nf_3dg<T: CustomFloat>(
             .for_each(|(facet_idx, dist)| {
                 let plane = &domain.mesh.cell_geometry[particle.cell][facet_idx];
 
-                let facet_normal_dot_dcos: T =
-                    plane.a * direction.x + plane.b * direction.y + plane.c * direction.z;
-
-                if facet_normal_dot_dcos <= zero() {
-                    return;
-                }
-
                 // Mesh-dependent code
                 facet_coords = domain.mesh.get_facet_coords(particle.cell, facet_idx);
 
-                let t: T = mct_nf_3dg_dist_to_segment(
-                    plane_tolerance,
-                    facet_normal_dot_dcos,
-                    plane,
-                    &facet_coords,
-                    &coords,
-                    &direction,
-                );
+                let numerator: T = -one::<T>()
+                    * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
 
-                *dist = t;
+                let facet_normal_dot_dcos: T =
+                    plane.a * direction.x + plane.b * direction.y + plane.c * direction.z;
+
+                if (facet_normal_dot_dcos <= zero())
+                    | (numerator < zero()) & (numerator * numerator > plane_tolerance)
+                {
+                    return;
+                }
+
+                let distance = numerator / facet_normal_dot_dcos;
+                let intersection_pt: MCVector<T> = coords + direction * distance;
+
+                if mct_nf_3dg_dist_to_segment(&intersection_pt, plane, &facet_coords) {
+                    *dist = distance;
+                }
             });
 
         let (nearest_facet, retry) = mct_nf_find_nearest(
@@ -321,28 +322,14 @@ fn mct_facet_points_3dg<T: CustomFloat>(
     res
 }
 
+#[inline]
 fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
-    plane_tolerance: T,
-    facet_normal_dot_dcos: T,
+    intersection_pt: &MCVector<T>,
     plane: &MCGeneralPlane<T>,
     facet_coords: &[MCVector<T>],
-    coords: &MCVector<T>,
-    direction: &MCVector<T>,
-) -> T {
-    let huge_f: T = T::huge_float();
+) -> bool {
     let pfive: T = FromPrimitive::from_f64(0.5).unwrap();
-    // this hardcoded tolerance might be problematic for f32?
     let bounding_box_tolerance: T = FromPrimitive::from_f64(1e-9).unwrap();
-    let numerator: T =
-        -one::<T>() * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
-
-    if (numerator < zero()) & (numerator * numerator > plane_tolerance) {
-        return huge_f;
-    }
-
-    let distance: T = numerator / facet_normal_dot_dcos;
-
-    let intersection_pt: MCVector<T> = *coords + *direction * distance;
 
     // if the point doesn't belong to the facet, returns huge_f
     macro_rules! belongs_or_return {
@@ -357,7 +344,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
                 & (facet_coords[2].$axis < intersection_pt.$axis - bounding_box_tolerance);
             if below | above {
                 // doesn't belong
-                return huge_f;
+                return false;
             }
         };
     }
@@ -464,7 +451,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     if ((cross0 > -cross_tolerance) & (cross1 > -cross_tolerance) & (cross2 > -cross_tolerance))
         | ((cross0 < cross_tolerance) & (cross1 < cross_tolerance) & (cross2 < cross_tolerance))
     {
-        return distance;
+        return true;
     }
-    huge_f
+    false
 }
