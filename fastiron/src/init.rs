@@ -22,6 +22,7 @@ use crate::{
         mc_rng_state::rng_sample,
     },
 };
+use atomic::Atomic;
 use num::{one, zero, Float, FromPrimitive};
 
 /// Creates a [MonteCarloData] object using the specified parameters.
@@ -94,6 +95,7 @@ pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarl
             let mut mcunit = MonteCarloUnit::new(&mcdata.params);
             init_mesh(&mut mcunit, mcdata);
             init_tallies(&mut mcunit, &mcdata.params);
+            init_xs_cache(&mut mcunit, mcdata.params.simulation_params.n_groups);
             units.push(mcunit);
         }
         ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
@@ -303,6 +305,19 @@ fn init_tallies<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, params: &Paramet
         params.simulation_params.n_groups,
         params.simulation_params.coral_benchmark,
     )
+}
+
+fn init_xs_cache<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, n_energy_groups: usize) {
+    mcunit.xs_cache.cache = mcunit
+        .domain
+        .iter()
+        .map(|dom| {
+            dom.cell_state
+                .iter()
+                .map(|_| (0..n_energy_groups).map(|_| Atomic::new(zero())).collect())
+                .collect()
+        })
+        .collect();
 }
 
 #[derive(Debug, Clone, Default)]

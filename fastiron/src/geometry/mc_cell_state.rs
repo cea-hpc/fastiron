@@ -1,7 +1,5 @@
 //! Contains code to represent a cell's current state.
 
-use atomic::Atomic;
-
 use crate::constants::CustomFloat;
 
 /// Structure used to represent a cell's state, i.e.
@@ -13,8 +11,6 @@ use crate::constants::CustomFloat;
 pub struct MCCellState<T: CustomFloat> {
     /// Global id of the material the cell is made of.
     pub material: usize,
-    /// Cache for the total cross-sections of energy groups.
-    pub total: Vec<Atomic<T>>,
     /// Cell volume in cm³.
     pub volume: T,
     /// Density of the material in the cell?

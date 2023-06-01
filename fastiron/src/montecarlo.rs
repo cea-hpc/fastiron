@@ -5,7 +5,9 @@
 //! here in the future.
 
 use std::fmt::Debug;
+use std::ops::{Index, IndexMut};
 
+use atomic::Atomic;
 use num::zero;
 
 use crate::constants::CustomFloat;
@@ -62,8 +64,10 @@ pub struct MonteCarloUnit<T: CustomFloat> {
     pub tallies: Tallies<T>,
     /// Object storing all tallies of the simulation.
     pub fast_timer: MCFastTimerContainer,
-    /// Weight of the particles at creation in a source zone
+    /// Weight of the particles at creation in a source zone.
     pub unit_weight: T,
+    /// HashMap used to lazily compute cross-sections.
+    pub xs_cache: XSCache<T>,
 }
 
 impl<T: CustomFloat> MonteCarloUnit<T> {
@@ -80,13 +84,16 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
             tallies,
             fast_timer,
             unit_weight: zero(),
+            xs_cache: Default::default(),
         }
     }
 
     /// Clear the cross section cache for each domain.
     pub fn clear_cross_section_cache(&mut self) {
-        self.domain.iter_mut().for_each(|dd| {
-            dd.clear_cross_section_cache();
+        self.xs_cache.cache.iter_mut().for_each(|domain| {
+            domain
+                .iter_mut()
+                .for_each(|cell| cell.iter_mut().for_each(|xs| *xs = Atomic::new(zero())))
         })
     }
 
@@ -114,5 +121,25 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
                     .sum::<T>()
             })
             .sum();
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct XSCache<T: CustomFloat> {
+    pub cache: Vec<Vec<Vec<Atomic<T>>>>,
+}
+
+// maybe make theses accesses unchecked?
+impl<T: CustomFloat> Index<(usize, usize, usize)> for XSCache<T> {
+    type Output = Atomic<T>;
+
+    fn index(&self, index: (usize, usize, usize)) -> &Self::Output {
+        &self.cache[index.0][index.1][index.2]
+    }
+}
+
+impl<T: CustomFloat> IndexMut<(usize, usize, usize)> for XSCache<T> {
+    fn index_mut(&mut self, index: (usize, usize, usize)) -> &mut Self::Output {
+        &mut self.cache[index.0][index.1][index.2]
     }
 }

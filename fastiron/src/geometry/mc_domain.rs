@@ -4,7 +4,6 @@
 
 use std::collections::HashMap;
 
-use atomic::Atomic;
 use num::{one, zero, FromPrimitive};
 
 use crate::{
@@ -171,17 +170,12 @@ impl<T: CustomFloat> MCDomain<T> {
             mesh,
         };
 
-        let num_energy_groups: usize = params.simulation_params.n_groups;
-
         (0..mcdomain.cell_state.len()).for_each(|ii| {
             mcdomain.cell_state[ii].volume = mcdomain.cell_volume(ii);
 
             let rr = cell_position_3dg(&mcdomain.mesh, ii);
             let mat_name = Self::find_material(&params.geometry_params, &rr);
             mcdomain.cell_state[ii].material = mat_db.find_material(&mat_name).unwrap();
-            mcdomain.cell_state[ii].total = (0..num_energy_groups)
-                .map(|_| Atomic::new(zero()))
-                .collect();
 
             mcdomain.cell_state[ii].cell_number_density = one();
 
@@ -191,15 +185,6 @@ impl<T: CustomFloat> MCDomain<T> {
         });
 
         mcdomain
-    }
-
-    /// Clears the cross section cache for future uses.
-    pub fn clear_cross_section_cache(&mut self) {
-        self.cell_state.iter_mut().for_each(|cs| {
-            cs.total
-                .iter_mut()
-                .for_each(|val| *val = Atomic::new(zero()))
-        })
     }
 
     fn find_material(geometry_params: &[GeometryParameters<T>], rr: &MCVector<T>) -> String {
