@@ -10,7 +10,7 @@ use crate::{
     data::mc_vector::MCVector,
     geometry::{
         facets::{MCGeneralPlane, MCNearestFacet},
-        mc_domain::{MCDomain, MCMeshDomain},
+        mc_domain::MCMeshDomain,
         N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET,
     },
     particles::mc_particle::MCParticle,
@@ -26,9 +26,9 @@ use crate::{
 /// case, a facet crossing. See [MCNearestFacet] for more information.
 pub fn nearest_facet<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    domain: &MCDomain<T>,
+    mesh: &MCMeshDomain<T>,
 ) -> MCNearestFacet<T> {
-    let mut nearest_facet = mct_nf_3dg(particle, domain);
+    let mut nearest_facet = mct_nf_3dg(particle, mesh);
 
     if nearest_facet.distance_to_facet < zero() {
         nearest_facet.distance_to_facet = zero();
@@ -142,7 +142,7 @@ pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MC
 
 fn mct_nf_3dg<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    domain: &MCDomain<T>,
+    mesh: &MCMeshDomain<T>,
 ) -> MCNearestFacet<T> {
     let coords = particle.coordinate;
     let direction = particle.direction;
@@ -164,8 +164,8 @@ fn mct_nf_3dg<T: CustomFloat>(
             .iter_mut()
             .enumerate()
             .for_each(|(facet_idx, dist)| {
-                let plane = &domain.mesh.cell_geometry[particle.cell][facet_idx];
-                facet_coords = domain.mesh.get_facet_coords(particle.cell, facet_idx);
+                let plane = &mesh.cell_geometry[particle.cell][facet_idx];
+                facet_coords = mesh.get_facet_coords(particle.cell, facet_idx);
 
                 let numerator: T = -one::<T>()
                     * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
@@ -189,7 +189,7 @@ fn mct_nf_3dg<T: CustomFloat>(
         let nearest_facet = mct_nf_compute_nearest(&distance_to_facet);
         let retry = check_nearest_validity(
             particle,
-            domain,
+            mesh,
             &mut iteration,
             &mut move_factor,
             &nearest_facet,
@@ -253,7 +253,7 @@ fn mct_nf_compute_nearest<T: CustomFloat>(distance_to_facet: &[T]) -> MCNearestF
 
 fn check_nearest_validity<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    domain: &MCDomain<T>,
+    mesh: &MCMeshDomain<T>,
     iteration: &mut usize,
     move_factor: &mut T,
     nearest_facet: &MCNearestFacet<T>,
@@ -271,7 +271,7 @@ fn check_nearest_validity<T: CustomFloat>(
         let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
 
         // move coordinates towards cell center
-        let move_to = cell_position_3dg(&domain.mesh, particle.cell);
+        let move_to = cell_position_3dg(mesh, particle.cell);
         *coord += (move_to - *coord) * *move_factor;
 
         // keep track of the movement
