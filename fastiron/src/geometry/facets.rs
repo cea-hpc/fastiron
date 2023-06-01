@@ -16,14 +16,21 @@ use num::{one, zero};
 /// This structure is used in order to group information used when assessing the
 /// next event for a particle and, in the case of a facet crossing, going through
 /// with it.
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy)]
 pub struct MCDistanceToFacet<T: CustomFloat> {
     /// Distance to the given facet in cm.
     pub distance: T,
     /// Index of the given facet.
     pub facet: usize,
-    /// Index of the given sub-facet.
-    pub subfacet: usize,
+}
+
+impl<T: CustomFloat> Default for MCDistanceToFacet<T> {
+    fn default() -> Self {
+        Self {
+            distance: T::huge_float(),
+            facet: 0,
+        }
+    }
 }
 
 //==============

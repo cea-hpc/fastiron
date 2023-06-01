@@ -150,8 +150,6 @@ fn mct_nf_3dg<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
 ) -> MCNearestFacet<T> {
-    let huge_f: T = T::huge_float();
-
     let coords = particle.coordinate;
     let direction = particle.direction;
 
@@ -168,8 +166,6 @@ fn mct_nf_3dg<T: CustomFloat>(
             [MCDistanceToFacet::default(); N_FACETS_OUT];
 
         (0..N_FACETS_OUT).for_each(|facet_idx| {
-            distance_to_facet[facet_idx].distance = huge_f;
-
             let plane = &domain.mesh.cell_geometry[particle.cell][facet_idx];
 
             let facet_normal_dot_dcos: T =
