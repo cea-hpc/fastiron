@@ -122,8 +122,6 @@ pub fn cell_position_3dg<T: CustomFloat>(mesh: &MCMeshDomain<T>, cell_idx: usize
 /// boundary of the problem. Note that the reflection does not result in a
 /// loss of energy.
 pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MCGeneralPlane<T>) {
-    let mut new_direction = particle.direction;
-
     let facet_normal: MCVector<T> = MCVector {
         x: plane.a,
         y: plane.b,
@@ -131,11 +129,10 @@ pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MC
     };
 
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    let dot: T = two * new_direction.dot(&facet_normal);
+    let dot: T = two * particle.direction.dot(&facet_normal);
 
     if dot > zero() {
-        new_direction -= facet_normal * dot;
-        particle.direction = new_direction;
+        particle.direction -= facet_normal * dot;
     }
 }
 
@@ -168,13 +165,10 @@ fn mct_nf_3dg<T: CustomFloat>(
             .enumerate()
             .for_each(|(facet_idx, dist)| {
                 let plane = &domain.mesh.cell_geometry[particle.cell][facet_idx];
-
-                // Mesh-dependent code
                 facet_coords = domain.mesh.get_facet_coords(particle.cell, facet_idx);
 
                 let numerator: T = -one::<T>()
                     * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
-
                 let facet_normal_dot_dcos: T =
                     plane.a * direction.x + plane.b * direction.y + plane.c * direction.z;
 
