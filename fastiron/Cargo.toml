@@ -13,8 +13,6 @@ rand = {version="0.8.5", features=["small_rng"]}
 tinyvec = {version="1.6.0"}
 rayon= {version="1.7.0"}
 atomic = {version="0.5"}
-dashmap = {version="5.4.0"}
-fxhash = {version="0.2.1"}
 
 [dev-dependencies]
 criterion = {version="0.3.4", features=["html_reports"]}

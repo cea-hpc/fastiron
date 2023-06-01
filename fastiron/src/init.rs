@@ -23,8 +23,6 @@ use crate::{
     },
 };
 use atomic::Atomic;
-//use dashmap::DashMap;
-//use fxhash::FxBuildHasher;
 use num::{one, zero, Float, FromPrimitive};
 
 /// Creates a [MonteCarloData] object using the specified parameters.
@@ -310,13 +308,6 @@ fn init_tallies<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, params: &Paramet
 }
 
 fn init_xs_cache<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, n_energy_groups: usize) {
-    // compute needed capacity & init accordingly
-    // need to multiply this by n energy groups
-    /*let capacity: usize = mcunit.domain.iter().map(|dom| dom.cell_state.len()).sum();
-    mcunit.xs_cache = DashMap::<(usize, usize, usize), T, FxBuildHasher>::with_capacity_and_hasher(
-        capacity,
-        FxBuildHasher::default(),
-    );*/
     mcunit.xs_cache.cache = mcunit
         .domain
         .iter()

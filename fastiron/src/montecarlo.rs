@@ -8,8 +8,6 @@ use std::fmt::Debug;
 use std::ops::{Index, IndexMut};
 
 use atomic::Atomic;
-//use dashmap::DashMap;
-//use fxhash::FxBuildHasher;
 use num::zero;
 
 use crate::constants::CustomFloat;
@@ -70,7 +68,6 @@ pub struct MonteCarloUnit<T: CustomFloat> {
     pub unit_weight: T,
     /// HashMap used to lazily compute cross-sections.
     pub xs_cache: XSCache<T>,
-    //pub xs_cache: DashMap<(usize, usize, usize), T, FxBuildHasher>,
 }
 
 impl<T: CustomFloat> MonteCarloUnit<T> {
@@ -88,13 +85,11 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
             fast_timer,
             unit_weight: zero(),
             xs_cache: Default::default(),
-            //xs_cache: DashMap::default(),
         }
     }
 
     /// Clear the cross section cache for each domain.
     pub fn clear_cross_section_cache(&mut self) {
-        //self.xs_cache.clear();
         self.xs_cache.cache.iter_mut().for_each(|domain| {
             domain
                 .iter_mut()

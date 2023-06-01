@@ -119,21 +119,6 @@ pub fn outcome<T: CustomFloat>(
 
     // get cross section
     // lazily computed
-    /*
-    let macroscopic_total_xsection = *mcunit
-        .xs_cache
-        .entry((particle.domain, particle.cell, particle.energy_group))
-        .or_insert_with(|| {
-            let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
-            let cell_nb_density: T =
-                mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
-            weighted_macroscopic_cross_section(
-                mcdata,
-                mat_gid,
-                cell_nb_density,
-                particle.energy_group,
-            )
-        });*/
     // This ordering should make it so that we dont compute a XS multiple times?
     let pcxs = mcunit.xs_cache[(particle.domain, particle.cell, particle.energy_group)]
         .load(Ordering::Acquire);
