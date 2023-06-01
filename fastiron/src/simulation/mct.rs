@@ -186,12 +186,13 @@ fn mct_nf_3dg<T: CustomFloat>(
                 }
             });
 
-        let (nearest_facet, retry) = mct_nf_find_nearest(
+        let nearest_facet = mct_nf_compute_nearest(&distance_to_facet);
+        let retry = mct_nf_find_nearest(
             particle,
             domain,
             &mut iteration,
             &mut move_factor,
-            &distance_to_facet,
+            &nearest_facet,
         );
 
         if !retry {
@@ -266,9 +267,8 @@ fn mct_nf_find_nearest<T: CustomFloat>(
     domain: &MCDomain<T>,
     iteration: &mut usize,
     move_factor: &mut T,
-    distance_to_facet: &[T],
-) -> (MCNearestFacet<T>, bool) {
-    let nearest_facet = mct_nf_compute_nearest(distance_to_facet);
+    nearest_facet: &MCNearestFacet<T>,
+) -> bool {
     let huge_f: T = T::huge_float();
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
     let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
@@ -282,6 +282,7 @@ fn mct_nf_find_nearest<T: CustomFloat>(
     let mut retry = false;
 
     // take an option as arg and check if is_some ?
+    assert!(*move_factor > zero());
     if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
         | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
     {
@@ -299,7 +300,7 @@ fn mct_nf_find_nearest<T: CustomFloat>(
             retry = true;
         }
     }
-    (nearest_facet, retry)
+    retry
 }
 
 fn mct_facet_points_3dg<T: CustomFloat>(
