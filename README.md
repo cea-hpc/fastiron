@@ -17,6 +17,19 @@ A few scripts are provided for gathering data and processing it using the
 custom tool. You can refer to the Rust Doc or to the `README.md` files in each
 sub-folder.
 
+## Trying with a container
+
+Building the container:
+
+```shell
+podman build . -t fastiron
+```
+
+Running the fastiron:
+```shell
+podman run -v $PWD:/fastiron fastiron fastiron -i input_files/QS_originals/CTS2_1.inp
+```
+
 ## Contributing
 
 Contributions are welcome and accepted as pull requests on [GitHub][fastiron].
