@@ -2,7 +2,6 @@
 //!
 //! This module contains function used to compute and manipulate data related
 //! to a particle's coordinate and direction in the problem.
-use core::panic;
 
 use num::{one, zero, FromPrimitive};
 
@@ -35,9 +34,7 @@ pub fn nearest_facet<T: CustomFloat>(
         nearest_facet.distance_to_facet = zero();
     }
 
-    if nearest_facet.distance_to_facet > T::huge_float() {
-        panic!()
-    }
+    assert!(nearest_facet.distance_to_facet <= T::huge_float());
 
     nearest_facet
 }
