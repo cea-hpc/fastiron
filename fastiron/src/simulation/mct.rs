@@ -30,10 +30,7 @@ pub fn nearest_facet<T: CustomFloat>(
 ) -> MCNearestFacet<T> {
     let mut nearest_facet = mct_nf_3dg(particle, mesh);
 
-    if nearest_facet.distance_to_facet < zero() {
-        nearest_facet.distance_to_facet = zero();
-    }
-
+    nearest_facet.distance_to_facet = nearest_facet.distance_to_facet.max(zero());
     assert!(nearest_facet.distance_to_facet <= T::huge_float());
 
     nearest_facet
