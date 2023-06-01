@@ -101,12 +101,11 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
 
 /// Returns a coordinate that represents the "center" of the cell.
 pub fn cell_position_3dg<T: CustomFloat>(mesh: &MCMeshDomain<T>, cell_idx: usize) -> MCVector<T> {
-    let mut coordinate: MCVector<T> = Default::default();
-
-    (0..N_POINTS_INTERSEC).for_each(|point_idx| {
-        let point = mesh.cell_connectivity[cell_idx].point[point_idx];
-        coordinate += mesh.node[point];
-    });
+    let mut coordinate: MCVector<T> = mesh.cell_connectivity[cell_idx]
+        .point
+        .map(|point_idx| mesh.node[point_idx])
+        .iter()
+        .sum();
 
     coordinate /= FromPrimitive::from_usize(N_POINTS_INTERSEC).unwrap();
 
