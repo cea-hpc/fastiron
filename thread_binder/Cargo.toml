@@ -1,0 +1,16 @@
+[package]
+name = "thread_binder"
+version = "0.1.0"
+authors = ["Saurabh Raje <saurabh.mraje@gmail.com>", "frederic wagner <frederic.wagner@imag.fr>"]
+edition = "2018"
+license = "Apache-2.0/MIT"
+repository = "https://github.com/wagnerf42/thread_binder"
+categories = ["concurrency"]
+keywords = ["parallel", "thread", "NUMA"]
+description = "Bind rayon pools to limit numa effects"
+exclude = ["*.nix"]
+
+[dependencies]
+rayon = "^1"
+hwloc = "0.5.0"
+libc = "^0.2"
