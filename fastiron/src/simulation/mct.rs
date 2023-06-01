@@ -157,11 +157,11 @@ fn mct_nf_3dg<T: CustomFloat>(
     let mut iteration: usize = 0;
     let mut move_factor: T = <T as FromPrimitive>::from_f64(0.5).unwrap() * T::small_float();
 
-    loop {
-        let tmp: T = FromPrimitive::from_f64(1e-16).unwrap();
-        let plane_tolerance: T =
-            tmp * (coords.x * coords.x + coords.y * coords.y + coords.z * coords.z);
+    let tmp: T = FromPrimitive::from_f64(1e-16).unwrap();
+    let plane_tolerance: T =
+        tmp * (coords.x * coords.x + coords.y * coords.y + coords.z * coords.z);
 
+    loop {
         let mut distance_to_facet: [MCDistanceToFacet<T>; N_FACETS_OUT] =
             [MCDistanceToFacet::default(); N_FACETS_OUT];
 
@@ -176,10 +176,7 @@ fn mct_nf_3dg<T: CustomFloat>(
             }
 
             // Mesh-dependent code
-            let points = domain.mesh.cell_connectivity[particle.cell].facet[facet_idx].point;
-            facet_coords[0] = domain.mesh.node[points[0]];
-            facet_coords[1] = domain.mesh.node[points[1]];
-            facet_coords[2] = domain.mesh.node[points[2]];
+            facet_coords = domain.mesh.get_facet_coords(particle.cell, facet_idx);
 
             let t: T = mct_nf_3dg_dist_to_segment(
                 plane_tolerance,
