@@ -187,7 +187,7 @@ fn mct_nf_3dg<T: CustomFloat>(
             });
 
         let nearest_facet = mct_nf_compute_nearest(&distance_to_facet);
-        let retry = mct_nf_find_nearest(
+        let retry = check_nearest_validity(
             particle,
             domain,
             &mut iteration,
@@ -214,17 +214,6 @@ fn mct_cell_volume_3dg_vector_tetdet<T: CustomFloat>(
     let tmp2 = *v2 - *v3;
 
     tmp0.dot(&tmp1.cross(&tmp2)) // should be the same as original code
-}
-
-fn mct_nf_3dg_move_particle<T: CustomFloat>(
-    domain: &MCDomain<T>,
-    cell_idx: usize,
-    coord: &mut MCVector<T>,
-    move_factor: T,
-) {
-    let move_to = cell_position_3dg(&domain.mesh, cell_idx);
-
-    *coord += (move_to - *coord) * move_factor;
 }
 
 /// delete num_facets_per_cell ?
@@ -262,45 +251,36 @@ fn mct_nf_compute_nearest<T: CustomFloat>(distance_to_facet: &[T]) -> MCNearestF
     nearest_facet
 }
 
-fn mct_nf_find_nearest<T: CustomFloat>(
+fn check_nearest_validity<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     domain: &MCDomain<T>,
     iteration: &mut usize,
     move_factor: &mut T,
     nearest_facet: &MCNearestFacet<T>,
 ) -> bool {
-    let huge_f: T = T::huge_float();
-    let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
-
-    let coord = &mut particle.coordinate;
-
     const MAX_ALLOWED_SEGMENTS: usize = 10000000;
     const MAX_ITERATION: usize = 1000;
     let max: T = FromPrimitive::from_usize(MAX_ALLOWED_SEGMENTS).unwrap();
 
-    let mut retry = false;
+    let coord = &mut particle.coordinate;
 
-    // take an option as arg and check if is_some ?
-    assert!(*move_factor > zero());
-    if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
+    if (nearest_facet.distance_to_facet == T::huge_float())
         | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
     {
-        mct_nf_3dg_move_particle(domain, particle.cell, coord, *move_factor);
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+        let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
+
+        // move coordinates towards cell center
+        let move_to = cell_position_3dg(&domain.mesh, particle.cell);
+        *coord += (move_to - *coord) * *move_factor;
+
+        // keep track of the movement
         *iteration += 1;
-        *move_factor *= two;
+        *move_factor = threshold.min(*move_factor * two);
 
-        if *move_factor > threshold {
-            *move_factor = threshold;
-        }
-
-        if *iteration == MAX_ITERATION {
-            retry = false;
-        } else {
-            retry = true;
-        }
+        return *iteration != MAX_ITERATION;
     }
-    retry
+    false
 }
 
 fn mct_facet_points_3dg<T: CustomFloat>(
@@ -317,7 +297,6 @@ fn mct_facet_points_3dg<T: CustomFloat>(
     res
 }
 
-#[inline]
 fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     intersection_pt: &MCVector<T>,
     plane: &MCGeneralPlane<T>,
