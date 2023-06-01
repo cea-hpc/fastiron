@@ -10,7 +10,7 @@ use crate::{
     constants::CustomFloat,
     data::mc_vector::MCVector,
     geometry::{
-        facets::{MCDistanceToFacet, MCGeneralPlane, MCNearestFacet},
+        facets::{MCGeneralPlane, MCNearestFacet},
         mc_domain::{MCDomain, MCMeshDomain},
         N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET,
     },
@@ -162,33 +162,37 @@ fn mct_nf_3dg<T: CustomFloat>(
         tmp * (coords.x * coords.x + coords.y * coords.y + coords.z * coords.z);
 
     loop {
-        let mut distance_to_facet: [MCDistanceToFacet<T>; N_FACETS_OUT] =
-            [MCDistanceToFacet::default(); N_FACETS_OUT];
+        // the link between distances and facet idx is made implicitly through
+        // array indexing
+        let mut distance_to_facet: [T; N_FACETS_OUT] = [T::huge_float(); N_FACETS_OUT];
 
-        (0..N_FACETS_OUT).for_each(|facet_idx| {
-            let plane = &domain.mesh.cell_geometry[particle.cell][facet_idx];
+        distance_to_facet
+            .iter_mut()
+            .enumerate()
+            .for_each(|(facet_idx, dist)| {
+                let plane = &domain.mesh.cell_geometry[particle.cell][facet_idx];
 
-            let facet_normal_dot_dcos: T =
-                plane.a * direction.x + plane.b * direction.y + plane.c * direction.z;
+                let facet_normal_dot_dcos: T =
+                    plane.a * direction.x + plane.b * direction.y + plane.c * direction.z;
 
-            if facet_normal_dot_dcos <= zero() {
-                return;
-            }
+                if facet_normal_dot_dcos <= zero() {
+                    return;
+                }
 
-            // Mesh-dependent code
-            facet_coords = domain.mesh.get_facet_coords(particle.cell, facet_idx);
+                // Mesh-dependent code
+                facet_coords = domain.mesh.get_facet_coords(particle.cell, facet_idx);
 
-            let t: T = mct_nf_3dg_dist_to_segment(
-                plane_tolerance,
-                facet_normal_dot_dcos,
-                plane,
-                &facet_coords,
-                &coords,
-                &direction,
-            );
+                let t: T = mct_nf_3dg_dist_to_segment(
+                    plane_tolerance,
+                    facet_normal_dot_dcos,
+                    plane,
+                    &facet_coords,
+                    &coords,
+                    &direction,
+                );
 
-            distance_to_facet[facet_idx].distance = t;
-        });
+                *dist = t;
+            });
 
         let (nearest_facet, retry) = mct_nf_find_nearest(
             particle,
@@ -231,9 +235,7 @@ fn mct_nf_3dg_move_particle<T: CustomFloat>(
 }
 
 /// delete num_facets_per_cell ?
-fn mct_nf_compute_nearest<T: CustomFloat>(
-    distance_to_facet: &[MCDistanceToFacet<T>],
-) -> MCNearestFacet<T> {
+fn mct_nf_compute_nearest<T: CustomFloat>(distance_to_facet: &[T]) -> MCNearestFacet<T> {
     let huge_f: T = T::huge_float();
     let mut nearest_facet: MCNearestFacet<T> = Default::default();
     let mut nearest_negative_facet: MCNearestFacet<T> = MCNearestFacet {
@@ -242,17 +244,20 @@ fn mct_nf_compute_nearest<T: CustomFloat>(
     };
 
     // determine the nearest facet
-    (0..N_FACETS_OUT).for_each(|facet_idx| {
-        if distance_to_facet[facet_idx].distance > zero() {
-            if distance_to_facet[facet_idx].distance <= nearest_facet.distance_to_facet {
-                nearest_facet.distance_to_facet = distance_to_facet[facet_idx].distance;
-                nearest_facet.facet = facet_idx;
+    distance_to_facet
+        .iter()
+        .enumerate()
+        .for_each(|(facet_idx, dist)| {
+            if *dist > zero() {
+                if *dist <= nearest_facet.distance_to_facet {
+                    nearest_facet.distance_to_facet = *dist;
+                    nearest_facet.facet = facet_idx;
+                }
+            } else if *dist > nearest_negative_facet.distance_to_facet {
+                nearest_negative_facet.distance_to_facet = *dist;
+                nearest_negative_facet.facet = facet_idx;
             }
-        } else if distance_to_facet[facet_idx].distance > nearest_negative_facet.distance_to_facet {
-            nearest_negative_facet.distance_to_facet = distance_to_facet[facet_idx].distance;
-            nearest_negative_facet.facet = facet_idx;
-        }
-    });
+        });
 
     if (nearest_facet.distance_to_facet == huge_f)
         & (nearest_negative_facet.distance_to_facet != -huge_f)
@@ -269,7 +274,7 @@ fn mct_nf_find_nearest<T: CustomFloat>(
     domain: &MCDomain<T>,
     iteration: &mut usize,
     move_factor: &mut T,
-    distance_to_facet: &[MCDistanceToFacet<T>],
+    distance_to_facet: &[T],
 ) -> (MCNearestFacet<T>, bool) {
     let nearest_facet = mct_nf_compute_nearest(distance_to_facet);
     let huge_f: T = T::huge_float();

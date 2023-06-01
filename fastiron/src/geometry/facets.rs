@@ -7,32 +7,6 @@ use super::{mc_location::MCLocation, N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_P
 use crate::{constants::CustomFloat, data::mc_vector::MCVector};
 use num::{one, zero};
 
-//==================
-// Distance to facet
-//==================
-
-/// Structure used to represent the distance to a given facet.
-///
-/// This structure is used in order to group information used when assessing the
-/// next event for a particle and, in the case of a facet crossing, going through
-/// with it.
-#[derive(Debug, Clone, Copy)]
-pub struct MCDistanceToFacet<T: CustomFloat> {
-    /// Distance to the given facet in cm.
-    pub distance: T,
-    /// Index of the given facet.
-    pub facet: usize,
-}
-
-impl<T: CustomFloat> Default for MCDistanceToFacet<T> {
-    fn default() -> Self {
-        Self {
-            distance: T::huge_float(),
-            facet: 0,
-        }
-    }
-}
-
 //==============
 // Spatial plane
 //==============
