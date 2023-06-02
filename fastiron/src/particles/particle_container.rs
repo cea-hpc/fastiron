@@ -122,7 +122,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
                     .chunks(chunk_size)
                     .for_each(|mut particles| {
                         // par_bridge for job stealing when load isn't balanced?
-                        particles.iter_mut().par_bridge().for_each(|particle| {
+                        particles.iter_mut().for_each(|particle| {
                             par_cycle_tracking_guts(mcdata, mcunit, particle, Arc::clone(&extra))
                         })
                     });
@@ -137,13 +137,9 @@ impl<T: CustomFloat> ParticleContainer<T> {
     /// Sort the processing particles according to where they belong in the mesh.
     pub fn sort_processing(&mut self) {
         self.processing_particles
-            .sort_by(|a, b| match a.domain.cmp(&b.domain) {
+            .sort_by(|a, b| match a.cell.cmp(&b.cell) {
                 std::cmp::Ordering::Less => std::cmp::Ordering::Less,
-                std::cmp::Ordering::Equal => match a.cell.cmp(&b.cell) {
-                    std::cmp::Ordering::Less => std::cmp::Ordering::Less,
-                    std::cmp::Ordering::Equal => std::cmp::Ordering::Equal,
-                    std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
-                },
+                std::cmp::Ordering::Equal => a.energy_group.cmp(&b.energy_group),
                 std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
             });
     }
