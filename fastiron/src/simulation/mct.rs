@@ -142,12 +142,12 @@ fn mct_nf_3dg<T: CustomFloat>(
         // the link between distances and facet idx is made implicitly through
         // array indexing
         let mut distance_to_facet: [T; N_FACETS_OUT] = [T::huge_float(); N_FACETS_OUT];
-
+        let planes = &mesh.cell_geometry[particle.cell];
         distance_to_facet
             .iter_mut()
             .enumerate()
-            .for_each(|(facet_idx, dist)| {
-                let plane = &mesh.cell_geometry[particle.cell][facet_idx];
+            .zip(planes.iter())
+            .for_each(|((facet_idx, dist), plane)| {
                 facet_coords = mesh.get_facet_coords(particle.cell, facet_idx);
 
                 let numerator: T = -one::<T>()
@@ -169,7 +169,7 @@ fn mct_nf_3dg<T: CustomFloat>(
                 }
             });
 
-        let nearest_facet = mct_nf_compute_nearest(&distance_to_facet);
+        let nearest_facet = mct_nf_compute_nearest(distance_to_facet);
         let retry = check_nearest_validity(
             particle,
             mesh,
@@ -195,7 +195,9 @@ fn compute_volume<T: CustomFloat>(vertices: &[MCVector<T>], origin: &MCVector<T>
     tmp0.dot(&tmp1.cross(&tmp2)) // should be the same as original code
 }
 
-fn mct_nf_compute_nearest<T: CustomFloat>(distance_to_facet: &[T]) -> MCNearestFacet<T> {
+fn mct_nf_compute_nearest<T: CustomFloat>(
+    distance_to_facet: [T; N_FACETS_OUT],
+) -> MCNearestFacet<T> {
     let huge_f: T = T::huge_float();
     let mut nearest_facet: MCNearestFacet<T> = Default::default();
     let mut nearest_negative_facet: MCNearestFacet<T> = MCNearestFacet {
