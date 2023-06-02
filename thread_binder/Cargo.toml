@@ -12,5 +12,5 @@ exclude = ["*.nix"]
 
 [dependencies]
 rayon = "^1"
-hwloc = "0.5.0"
+hwloc2 = "2.2.0"
 libc = "^0.2"

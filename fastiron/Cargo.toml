@@ -13,6 +13,7 @@ rand = {version="0.8.5", features=["small_rng"]}
 tinyvec = {version="1.6.0"}
 rayon= {version="1.7.0"}
 atomic = {version="0.5"}
+thread_binder= {path="../thread_binder"}
 
 [dev-dependencies]
 criterion = {version="0.3.4", features=["html_reports"]}

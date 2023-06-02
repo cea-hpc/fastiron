@@ -47,7 +47,7 @@
 //!           z-size of simulation in cm
 //!   -n, --n-particles <N_PARTICLES>
 //!           total number of particules
-//!   -r, --rayon <N_RAYON_THREADS>
+//!   -r, -- <N_RAYON_THREADS>
 //!           number of rayon threads that should be used to run the simulation -- set to 0 for rayon's default config
 //!   -u, --units <N_UNITS>
 //!           number of units that should be used to run the simulation

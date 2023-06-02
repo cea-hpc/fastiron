@@ -4,7 +4,9 @@ use std::time::Instant;
 
 use clap::Parser;
 use num::{one, zero, FromPrimitive};
-use rayon::ThreadPoolBuilder;
+//use rayon::ThreadPoolBuilder;
+use thread_binder::Policy::RoundRobinNuma;
+use thread_binder::ThreadPoolBuilder;
 
 use fastiron::constants::sim::SRC_FRACTION;
 use fastiron::constants::CustomFloat;
@@ -57,6 +59,7 @@ fn main() {
         if mcdata.exec_info.n_rayon_threads != 0 {
             ThreadPoolBuilder::new()
                 .num_threads(mcdata.exec_info.n_rayon_threads)
+                .bind(RoundRobinNuma)
                 .build_global()
                 .unwrap();
         }
