@@ -82,9 +82,8 @@ fn cycle_tracking_function<T: CustomFloat>(
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                let mat_gid = mcunit.domain[particle.domain].cell_state[particle.cell].material;
-                let cell_nb_density =
-                    mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
+                let mat_gid = mcunit.domain.cell_state[particle.cell].material;
+                let cell_nb_density = mcunit.domain.cell_state[particle.cell].cell_number_density;
                 keep_tracking = collision_event(
                     mcdata,
                     &mcunit.tallies,
@@ -103,9 +102,8 @@ fn cycle_tracking_function<T: CustomFloat>(
             }
             MCSegmentOutcome::FacetCrossing => {
                 // crossed facet data
-                let facet_adjacency = &mcunit.domain[particle.domain].mesh.cell_connectivity
-                    [particle.cell]
-                    .facet[particle.facet]
+                let facet_adjacency = &mcunit.domain.mesh.cell_connectivity[particle.cell].facet
+                    [particle.facet]
                     .subfacet;
 
                 facet_crossing_event(particle, facet_adjacency);
@@ -117,8 +115,8 @@ fn cycle_tracking_function<T: CustomFloat>(
                     // bound reflection
                     MCTallyEvent::FacetCrossingReflection => {
                         // plane on which particle is reflected
-                        let plane = &mcunit.domain[particle.domain].mesh.cell_geometry
-                            [particle.cell][particle.facet];
+                        let plane =
+                            &mcunit.domain.mesh.cell_geometry[particle.cell][particle.facet];
 
                         reflect_particle(particle, plane);
                         true
@@ -228,9 +226,8 @@ fn par_cycle_tracking_function<T: CustomFloat>(
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                let mat_gid = mcunit.domain[particle.domain].cell_state[particle.cell].material;
-                let cell_nb_density =
-                    mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
+                let mat_gid = mcunit.domain.cell_state[particle.cell].material;
+                let cell_nb_density = mcunit.domain.cell_state[particle.cell].cell_number_density;
 
                 keep_tracking = collision_event(
                     mcdata,
@@ -250,9 +247,8 @@ fn par_cycle_tracking_function<T: CustomFloat>(
             }
             MCSegmentOutcome::FacetCrossing => {
                 // crossed facet data
-                let facet_adjacency = &mcunit.domain[particle.domain].mesh.cell_connectivity
-                    [particle.cell]
-                    .facet[particle.facet]
+                let facet_adjacency = &mcunit.domain.mesh.cell_connectivity[particle.cell].facet
+                    [particle.facet]
                     .subfacet;
 
                 facet_crossing_event(particle, facet_adjacency);
@@ -264,8 +260,8 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                     // bound reflection
                     MCTallyEvent::FacetCrossingReflection => {
                         // plane on which particle is reflected
-                        let plane = &mcunit.domain[particle.domain].mesh.cell_geometry
-                            [particle.cell][particle.facet];
+                        let plane =
+                            &mcunit.domain.mesh.cell_geometry[particle.cell][particle.facet];
 
                         reflect_particle(particle, plane);
                         true

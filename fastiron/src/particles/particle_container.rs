@@ -166,6 +166,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
             // while rx.try_recv().is_ok() {...}
         }
     */
+
     /// Adds back to the processing storage the extra particles.
     pub fn clean_extra_vaults(&mut self) {
         self.processing_particles.append(&mut self.extra_particles);

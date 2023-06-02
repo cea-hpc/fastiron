@@ -59,7 +59,7 @@ impl<T: CustomFloat> MonteCarloData<T> {
 #[derive(Debug)]
 pub struct MonteCarloUnit<T: CustomFloat> {
     /// List of spatial domains.
-    pub domain: Vec<MCDomain<T>>,
+    pub domain: MCDomain<T>,
     /// Object storing all tallies of the simulation.
     pub tallies: Tallies<T>,
     /// Object storing all tallies of the simulation.
@@ -107,20 +107,15 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
 
         self.unit_weight = self
             .domain
+            .cell_state
             .iter()
-            .map(|dom| {
-                dom.cell_state
-                    .iter()
-                    .map(|cell| {
-                        // constant because cell volume is constant in our program
-                        let cell_weight: T = cell.volume
-                            * source_rate[cell.material]
-                            * mcdata.params.simulation_params.dt;
-                        cell_weight
-                    })
-                    .sum::<T>()
+            .map(|cell| {
+                // constant because cell volume is constant in our program
+                let cell_weight: T =
+                    cell.volume * source_rate[cell.material] * mcdata.params.simulation_params.dt;
+                cell_weight
             })
-            .sum();
+            .sum::<T>()
     }
 }
 
