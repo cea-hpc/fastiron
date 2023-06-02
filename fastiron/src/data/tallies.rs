@@ -262,7 +262,7 @@ impl<T: CustomFloat> Tallies<T> {
     /// Prepare the tallies for use.
     pub fn initialize_tallies(
         &mut self,
-        domain: &[MCDomain<T>],
+        domain: &MCDomain<T>,
         num_energy_groups: usize,
         bench_type: BenchType,
     ) {
