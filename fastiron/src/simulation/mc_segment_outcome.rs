@@ -168,7 +168,8 @@ pub fn outcome<T: CustomFloat>(
         particle_speed * particle.time_to_census,
     );
     // nearest facet
-    let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, &mcunit.domain[particle.domain]);
+    let nearest_facet: MCNearestFacet<T> =
+        nearest_facet(particle, &mcunit.domain[particle.domain].mesh);
     particle.normal_dot = nearest_facet.dot_product;
     distance_handler.update(
         MCSegmentOutcome::FacetCrossing,

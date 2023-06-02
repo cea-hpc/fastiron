@@ -138,6 +138,19 @@ impl<T: CustomFloat> MCMeshDomain<T> {
             cell_geometry,
         }
     }
+
+    pub fn get_facet_coords(
+        &self,
+        cell_idx: usize,
+        facet_idx: usize,
+    ) -> [MCVector<T>; N_POINTS_PER_FACET] {
+        let points = &self.cell_connectivity[cell_idx].facet[facet_idx].point;
+        [
+            self.node[points[0]],
+            self.node[points[1]],
+            self.node[points[2]],
+        ]
+    }
 }
 
 /// Structure used to manage a domain, i.e. a spatial region of the problem.

@@ -2,7 +2,6 @@
 //!
 //! This module contains function used to compute and manipulate data related
 //! to a particle's coordinate and direction in the problem.
-use core::panic;
 
 use num::{one, zero, FromPrimitive};
 
@@ -10,8 +9,8 @@ use crate::{
     constants::CustomFloat,
     data::mc_vector::MCVector,
     geometry::{
-        facets::{MCDistanceToFacet, MCGeneralPlane, MCNearestFacet},
-        mc_domain::{MCDomain, MCMeshDomain},
+        facets::{MCGeneralPlane, MCNearestFacet},
+        mc_domain::MCMeshDomain,
         N_FACETS_OUT, N_POINTS_INTERSEC, N_POINTS_PER_FACET,
     },
     particles::mc_particle::MCParticle,
@@ -27,17 +26,12 @@ use crate::{
 /// case, a facet crossing. See [MCNearestFacet] for more information.
 pub fn nearest_facet<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    domain: &MCDomain<T>,
+    mesh: &MCMeshDomain<T>,
 ) -> MCNearestFacet<T> {
-    let mut nearest_facet = mct_nf_3dg(particle, domain);
+    let mut nearest_facet = mct_nf_3dg(particle, mesh);
 
-    if nearest_facet.distance_to_facet < zero() {
-        nearest_facet.distance_to_facet = zero();
-    }
-
-    if nearest_facet.distance_to_facet > T::huge_float() {
-        panic!()
-    }
+    nearest_facet.distance_to_facet = nearest_facet.distance_to_facet.max(zero());
+    assert!(nearest_facet.distance_to_facet <= T::huge_float());
 
     nearest_facet
 }
@@ -54,34 +48,21 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
 
     let center: MCVector<T> = cell_position_3dg(mesh, cell_idx);
 
-    let rdm_number: T = rng_sample(seed);
-    let which_volume = rdm_number * six * cell_volume;
+    let which_volume = rng_sample::<T>(seed) * six * cell_volume;
 
     let mut current_volume: T = zero();
-    let mut facet_idx: usize = 0;
-
-    let mut point0: MCVector<T> = Default::default();
-    let mut point1: MCVector<T> = Default::default();
-    let mut point2: MCVector<T> = Default::default();
+    let mut points = [MCVector::default(); N_POINTS_PER_FACET];
 
     // find the facet to sample from
-    while current_volume < which_volume {
-        if facet_idx == N_FACETS_OUT {
+    for facet_idx in 0..N_FACETS_OUT {
+        points = mesh.get_facet_coords(cell_idx, facet_idx);
+
+        let subvolume = compute_volume(&points, &center);
+        current_volume += subvolume;
+        if current_volume >= which_volume {
             break;
         }
-        let facet_points = mct_facet_points_3dg(mesh, cell_idx, facet_idx);
-
-        point0 = mesh.node[facet_points[0]];
-        point1 = mesh.node[facet_points[1]];
-        point2 = mesh.node[facet_points[2]];
-
-        let subvolume = mct_cell_volume_3dg_vector_tetdet(&point0, &point1, &point2, &center);
-        current_volume += subvolume;
-
-        facet_idx += 1;
     }
-    // the facet we sample from is facet_idx-1; this is due to a change in the loop structure
-    // no need to update facet_idx though, it is not used again
 
     // sample and adjust
     let mut r1: T = rng_sample(seed);
@@ -102,17 +83,16 @@ pub fn generate_coordinate_3dg<T: CustomFloat>(
     }
     let r4: T = one - r1 - r2 - r3;
 
-    point0 * r1 + point1 * r2 + point2 * r3 + center * r4
+    points[0] * r1 + points[1] * r2 + points[2] * r3 + center * r4
 }
 
 /// Returns a coordinate that represents the "center" of the cell.
 pub fn cell_position_3dg<T: CustomFloat>(mesh: &MCMeshDomain<T>, cell_idx: usize) -> MCVector<T> {
-    let mut coordinate: MCVector<T> = Default::default();
-
-    (0..N_POINTS_INTERSEC).for_each(|point_idx| {
-        let point = mesh.cell_connectivity[cell_idx].point[point_idx];
-        coordinate += mesh.node[point];
-    });
+    let mut coordinate: MCVector<T> = mesh.cell_connectivity[cell_idx]
+        .point
+        .map(|point_idx| mesh.node[point_idx])
+        .iter()
+        .sum();
 
     coordinate /= FromPrimitive::from_usize(N_POINTS_INTERSEC).unwrap();
 
@@ -125,8 +105,6 @@ pub fn cell_position_3dg<T: CustomFloat>(mesh: &MCMeshDomain<T>, cell_idx: usize
 /// boundary of the problem. Note that the reflection does not result in a
 /// loss of energy.
 pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MCGeneralPlane<T>) {
-    let mut new_direction = particle.direction;
-
     let facet_normal: MCVector<T> = MCVector {
         x: plane.a,
         y: plane.b,
@@ -134,11 +112,10 @@ pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MC
     };
 
     let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    let dot: T = two * new_direction.dot(&facet_normal);
+    let dot: T = two * particle.direction.dot(&facet_normal);
 
     if dot > zero() {
-        new_direction -= facet_normal * dot;
-        particle.direction = new_direction;
+        particle.direction -= facet_normal * dot;
     }
 }
 
@@ -148,10 +125,8 @@ pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MC
 
 fn mct_nf_3dg<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    domain: &MCDomain<T>,
+    mesh: &MCMeshDomain<T>,
 ) -> MCNearestFacet<T> {
-    let huge_f: T = T::huge_float();
-
     let coords = particle.coordinate;
     let direction = particle.direction;
 
@@ -159,51 +134,48 @@ fn mct_nf_3dg<T: CustomFloat>(
     let mut iteration: usize = 0;
     let mut move_factor: T = <T as FromPrimitive>::from_f64(0.5).unwrap() * T::small_float();
 
+    let tmp: T = FromPrimitive::from_f64(1e-16).unwrap();
+    let plane_tolerance: T =
+        tmp * (coords.x * coords.x + coords.y * coords.y + coords.z * coords.z);
+
     loop {
-        let tmp: T = FromPrimitive::from_f64(1e-16).unwrap();
-        let plane_tolerance: T =
-            tmp * (coords.x * coords.x + coords.y * coords.y + coords.z * coords.z);
+        // the link between distances and facet idx is made implicitly through
+        // array indexing
+        let mut distance_to_facet: [T; N_FACETS_OUT] = [T::huge_float(); N_FACETS_OUT];
+        let planes = &mesh.cell_geometry[particle.cell];
+        distance_to_facet
+            .iter_mut()
+            .enumerate()
+            .zip(planes.iter())
+            .for_each(|((facet_idx, dist), plane)| {
+                facet_coords = mesh.get_facet_coords(particle.cell, facet_idx);
 
-        let mut distance_to_facet: [MCDistanceToFacet<T>; N_FACETS_OUT] =
-            [MCDistanceToFacet::default(); N_FACETS_OUT];
+                let numerator: T = -one::<T>()
+                    * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
+                let facet_normal_dot_dcos: T =
+                    plane.a * direction.x + plane.b * direction.y + plane.c * direction.z;
 
-        (0..N_FACETS_OUT).for_each(|facet_idx| {
-            distance_to_facet[facet_idx].distance = huge_f;
+                if (facet_normal_dot_dcos <= zero())
+                    | (numerator < zero()) & (numerator * numerator > plane_tolerance)
+                {
+                    return;
+                }
 
-            let plane = &domain.mesh.cell_geometry[particle.cell][facet_idx];
+                let distance = numerator / facet_normal_dot_dcos;
+                let intersection_pt: MCVector<T> = coords + direction * distance;
 
-            let facet_normal_dot_dcos: T =
-                plane.a * direction.x + plane.b * direction.y + plane.c * direction.z;
+                if mct_nf_3dg_dist_to_segment(&intersection_pt, plane, &facet_coords) {
+                    *dist = distance;
+                }
+            });
 
-            if facet_normal_dot_dcos <= zero() {
-                return;
-            }
-
-            // Mesh-dependent code
-            let points = domain.mesh.cell_connectivity[particle.cell].facet[facet_idx].point;
-            facet_coords[0] = domain.mesh.node[points[0]];
-            facet_coords[1] = domain.mesh.node[points[1]];
-            facet_coords[2] = domain.mesh.node[points[2]];
-
-            let t: T = mct_nf_3dg_dist_to_segment(
-                plane_tolerance,
-                facet_normal_dot_dcos,
-                *plane,
-                &facet_coords,
-                &coords,
-                &direction,
-                false,
-            );
-
-            distance_to_facet[facet_idx].distance = t;
-        });
-
-        let (nearest_facet, retry) = mct_nf_find_nearest(
+        let nearest_facet = mct_nf_compute_nearest(distance_to_facet);
+        let retry = check_nearest_validity(
             particle,
-            domain,
+            mesh,
             &mut iteration,
             &mut move_factor,
-            &distance_to_facet,
+            &nearest_facet,
         );
 
         if !retry {
@@ -214,33 +186,17 @@ fn mct_nf_3dg<T: CustomFloat>(
 
 /// Returns the volume defined by `v3v0`, `v3v1`, `v3v2` using
 /// vectorial operations.
-fn mct_cell_volume_3dg_vector_tetdet<T: CustomFloat>(
-    v0: &MCVector<T>,
-    v1: &MCVector<T>,
-    v2: &MCVector<T>,
-    v3: &MCVector<T>,
-) -> T {
-    let tmp0 = *v0 - *v3;
-    let tmp1 = *v1 - *v3;
-    let tmp2 = *v2 - *v3;
+fn compute_volume<T: CustomFloat>(vertices: &[MCVector<T>], origin: &MCVector<T>) -> T {
+    assert_eq!(vertices.len(), N_POINTS_PER_FACET);
+    let tmp0 = vertices[0] - *origin;
+    let tmp1 = vertices[1] - *origin;
+    let tmp2 = vertices[2] - *origin;
 
     tmp0.dot(&tmp1.cross(&tmp2)) // should be the same as original code
 }
 
-fn mct_nf_3dg_move_particle<T: CustomFloat>(
-    domain: &MCDomain<T>,
-    cell_idx: usize,
-    coord: &mut MCVector<T>,
-    move_factor: T,
-) {
-    let move_to = cell_position_3dg(&domain.mesh, cell_idx);
-
-    *coord += (move_to - *coord) * move_factor;
-}
-
-/// delete num_facets_per_cell ?
 fn mct_nf_compute_nearest<T: CustomFloat>(
-    distance_to_facet: &[MCDistanceToFacet<T>],
+    distance_to_facet: [T; N_FACETS_OUT],
 ) -> MCNearestFacet<T> {
     let huge_f: T = T::huge_float();
     let mut nearest_facet: MCNearestFacet<T> = Default::default();
@@ -250,106 +206,78 @@ fn mct_nf_compute_nearest<T: CustomFloat>(
     };
 
     // determine the nearest facet
-    (0..N_FACETS_OUT).for_each(|facet_idx| {
-        if distance_to_facet[facet_idx].distance > zero() {
-            if distance_to_facet[facet_idx].distance <= nearest_facet.distance_to_facet {
-                nearest_facet.distance_to_facet = distance_to_facet[facet_idx].distance;
+    distance_to_facet
+        .iter()
+        .enumerate()
+        .filter(|(_, dist)| **dist > zero())
+        .for_each(|(facet_idx, dist)| {
+            if *dist <= nearest_facet.distance_to_facet {
+                nearest_facet.distance_to_facet = *dist;
                 nearest_facet.facet = facet_idx;
             }
-        } else if distance_to_facet[facet_idx].distance > nearest_negative_facet.distance_to_facet {
-            nearest_negative_facet.distance_to_facet = distance_to_facet[facet_idx].distance;
-            nearest_negative_facet.facet = facet_idx;
-        }
-    });
+        });
 
-    if (nearest_facet.distance_to_facet == huge_f)
-        & (nearest_negative_facet.distance_to_facet != -huge_f)
-    {
-        nearest_facet.distance_to_facet = nearest_negative_facet.distance_to_facet;
-        nearest_facet.facet = nearest_negative_facet.facet;
+    if nearest_facet.distance_to_facet != huge_f {
+        return nearest_facet;
+    }
+
+    distance_to_facet
+        .iter()
+        .enumerate()
+        .filter(|(_, dist)| **dist <= zero())
+        .for_each(|(facet_idx, dist)| {
+            if *dist > nearest_negative_facet.distance_to_facet {
+                nearest_negative_facet.distance_to_facet = *dist;
+                nearest_negative_facet.facet = facet_idx;
+            }
+        });
+
+    if nearest_negative_facet.distance_to_facet != -huge_f {
+        return nearest_negative_facet;
     }
 
     nearest_facet
 }
 
-fn mct_nf_find_nearest<T: CustomFloat>(
+fn check_nearest_validity<T: CustomFloat>(
     particle: &mut MCParticle<T>,
-    domain: &MCDomain<T>,
+    mesh: &MCMeshDomain<T>,
     iteration: &mut usize,
     move_factor: &mut T,
-    distance_to_facet: &[MCDistanceToFacet<T>],
-) -> (MCNearestFacet<T>, bool) {
-    let nearest_facet = mct_nf_compute_nearest(distance_to_facet);
-    let huge_f: T = T::huge_float();
-    let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
-
-    let coord = &mut particle.coordinate;
-
+    nearest_facet: &MCNearestFacet<T>,
+) -> bool {
     const MAX_ALLOWED_SEGMENTS: usize = 10000000;
     const MAX_ITERATION: usize = 1000;
     let max: T = FromPrimitive::from_usize(MAX_ALLOWED_SEGMENTS).unwrap();
 
-    let mut retry = false;
+    let coord = &mut particle.coordinate;
 
-    // take an option as arg and check if is_some ?
-    if (nearest_facet.distance_to_facet == huge_f) & (*move_factor > zero::<T>())
+    if (nearest_facet.distance_to_facet == T::huge_float())
         | ((particle.num_segments > max) & (nearest_facet.distance_to_facet <= zero()))
     {
-        mct_nf_3dg_move_particle(domain, particle.cell, coord, *move_factor);
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+        let threshold: T = FromPrimitive::from_f64(1.0e-2).unwrap();
+
+        // move coordinates towards cell center
+        let move_to = cell_position_3dg(mesh, particle.cell);
+        *coord += (move_to - *coord) * *move_factor;
+
+        // keep track of the movement
         *iteration += 1;
-        *move_factor *= two;
+        *move_factor = threshold.min(*move_factor * two);
 
-        if *move_factor > threshold {
-            *move_factor = threshold;
-        }
-
-        if *iteration == MAX_ITERATION {
-            retry = false;
-        } else {
-            retry = true;
-        }
+        return *iteration != MAX_ITERATION;
     }
-    (nearest_facet, retry)
-}
-
-fn mct_facet_points_3dg<T: CustomFloat>(
-    mesh: &MCMeshDomain<T>,
-    cell: usize,
-    facet: usize,
-) -> [usize; N_POINTS_PER_FACET] {
-    let mut res: [usize; N_POINTS_PER_FACET] = [0; N_POINTS_PER_FACET];
-
-    (0..N_POINTS_PER_FACET).for_each(|point_idx| {
-        res[point_idx] = mesh.cell_connectivity[cell].facet[facet].point[point_idx];
-    });
-
-    res
+    false
 }
 
 fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
-    plane_tolerance: T,
-    facet_normal_dot_dcos: T,
-    plane: MCGeneralPlane<T>,
+    intersection_pt: &MCVector<T>,
+    plane: &MCGeneralPlane<T>,
     facet_coords: &[MCVector<T>],
-    coords: &MCVector<T>,
-    direction: &MCVector<T>,
-    allow_enter: bool,
-) -> T {
-    let huge_f: T = T::huge_float();
+) -> bool {
     let pfive: T = FromPrimitive::from_f64(0.5).unwrap();
-    // this hardcoded tolerance might be problematic for f32?
     let bounding_box_tolerance: T = FromPrimitive::from_f64(1e-9).unwrap();
-    let numerator: T =
-        -one::<T>() * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
-
-    if !allow_enter & (numerator < zero()) & (numerator * numerator > plane_tolerance) {
-        return huge_f;
-    }
-
-    let distance: T = numerator / facet_normal_dot_dcos;
-
-    let intersection_pt: MCVector<T> = *coords + *direction * distance;
 
     // if the point doesn't belong to the facet, returns huge_f
     macro_rules! belongs_or_return {
@@ -364,7 +292,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
                 & (facet_coords[2].$axis < intersection_pt.$axis - bounding_box_tolerance);
             if below | above {
                 // doesn't belong
-                return huge_f;
+                return false;
             }
         };
     }
@@ -376,102 +304,110 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
         };
     }
 
-    let mut cross0: T = zero();
-    let mut cross1: T = zero();
-    let mut cross2: T = zero();
-
-    if (plane.c < -pfive) | (plane.c > pfive) {
+    let crosses = if plane.c.abs() > pfive {
         belongs_or_return!(x);
         belongs_or_return!(y);
         // update cross; z elements
-        cross1 = ab_cross_ac!(
-            facet_coords[0].x,
-            facet_coords[0].y,
-            facet_coords[1].x,
-            facet_coords[1].y,
-            intersection_pt.x,
-            intersection_pt.y
-        );
-        cross2 = ab_cross_ac!(
-            facet_coords[1].x,
-            facet_coords[1].y,
-            facet_coords[2].x,
-            facet_coords[2].y,
-            intersection_pt.x,
-            intersection_pt.y
-        );
-        cross0 = ab_cross_ac!(
-            facet_coords[2].x,
-            facet_coords[2].y,
-            facet_coords[0].x,
-            facet_coords[0].y,
-            intersection_pt.x,
-            intersection_pt.y
-        );
-    } else if (plane.b < -pfive) | (plane.b > pfive) {
+        [
+            ab_cross_ac!(
+                facet_coords[0].x,
+                facet_coords[0].y,
+                facet_coords[1].x,
+                facet_coords[1].y,
+                intersection_pt.x,
+                intersection_pt.y
+            ),
+            ab_cross_ac!(
+                facet_coords[1].x,
+                facet_coords[1].y,
+                facet_coords[2].x,
+                facet_coords[2].y,
+                intersection_pt.x,
+                intersection_pt.y
+            ),
+            ab_cross_ac!(
+                facet_coords[2].x,
+                facet_coords[2].y,
+                facet_coords[0].x,
+                facet_coords[0].y,
+                intersection_pt.x,
+                intersection_pt.y
+            ),
+        ]
+    } else if plane.b.abs() > pfive {
         belongs_or_return!(x);
         belongs_or_return!(z);
         // update cross; y elements
-        cross1 = ab_cross_ac!(
-            facet_coords[0].z,
-            facet_coords[0].x,
-            facet_coords[1].z,
-            facet_coords[1].x,
-            intersection_pt.z,
-            intersection_pt.x
-        );
-        cross2 = ab_cross_ac!(
-            facet_coords[1].z,
-            facet_coords[1].x,
-            facet_coords[2].z,
-            facet_coords[2].x,
-            intersection_pt.z,
-            intersection_pt.x
-        );
-        cross0 = ab_cross_ac!(
-            facet_coords[2].z,
-            facet_coords[2].x,
-            facet_coords[0].z,
-            facet_coords[0].x,
-            intersection_pt.z,
-            intersection_pt.x
-        );
-    } else if (plane.a < -pfive) | (plane.a > pfive) {
+        [
+            ab_cross_ac!(
+                facet_coords[0].z,
+                facet_coords[0].x,
+                facet_coords[1].z,
+                facet_coords[1].x,
+                intersection_pt.z,
+                intersection_pt.x
+            ),
+            ab_cross_ac!(
+                facet_coords[1].z,
+                facet_coords[1].x,
+                facet_coords[2].z,
+                facet_coords[2].x,
+                intersection_pt.z,
+                intersection_pt.x
+            ),
+            ab_cross_ac!(
+                facet_coords[2].z,
+                facet_coords[2].x,
+                facet_coords[0].z,
+                facet_coords[0].x,
+                intersection_pt.z,
+                intersection_pt.x
+            ),
+        ]
+    } else if plane.a.abs() > pfive {
         belongs_or_return!(z);
         belongs_or_return!(y);
         // update cross; x elements
-        cross1 = ab_cross_ac!(
-            facet_coords[0].y,
-            facet_coords[0].z,
-            facet_coords[1].y,
-            facet_coords[1].z,
-            intersection_pt.y,
-            intersection_pt.z
-        );
-        cross2 = ab_cross_ac!(
-            facet_coords[1].y,
-            facet_coords[1].z,
-            facet_coords[2].y,
-            facet_coords[2].z,
-            intersection_pt.y,
-            intersection_pt.z
-        );
-        cross0 = ab_cross_ac!(
-            facet_coords[2].y,
-            facet_coords[2].z,
-            facet_coords[0].y,
-            facet_coords[0].z,
-            intersection_pt.y,
-            intersection_pt.z
-        );
-    }
+        [
+            ab_cross_ac!(
+                facet_coords[0].y,
+                facet_coords[0].z,
+                facet_coords[1].y,
+                facet_coords[1].z,
+                intersection_pt.y,
+                intersection_pt.z
+            ),
+            ab_cross_ac!(
+                facet_coords[1].y,
+                facet_coords[1].z,
+                facet_coords[2].y,
+                facet_coords[2].z,
+                intersection_pt.y,
+                intersection_pt.z
+            ),
+            ab_cross_ac!(
+                facet_coords[2].y,
+                facet_coords[2].z,
+                facet_coords[0].y,
+                facet_coords[0].z,
+                intersection_pt.y,
+                intersection_pt.z
+            ),
+        ]
+    } else {
+        [zero(); 3]
+    };
 
-    let cross_tolerance: T = bounding_box_tolerance * (cross0 + cross1 + cross2).abs();
+    let cross_tolerance: T = bounding_box_tolerance * (crosses[0] + crosses[1] + crosses[2]).abs();
 
-    if ((cross0 > -cross_tolerance) & (cross1 > -cross_tolerance) & (cross2 > -cross_tolerance))
-        | ((cross0 < cross_tolerance) & (cross1 < cross_tolerance) & (cross2 < cross_tolerance))
+    if ((crosses[0] > -cross_tolerance)
+        & (crosses[1] > -cross_tolerance)
+        & (crosses[2] > -cross_tolerance))
+        | ((crosses[0] < cross_tolerance)
+            & (crosses[1] < cross_tolerance)
+            & (crosses[2] < cross_tolerance))
     {
-        return distance;
+        return true;
     }
-    huge_f
+    false
 }
