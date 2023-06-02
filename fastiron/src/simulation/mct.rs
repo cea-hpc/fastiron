@@ -209,23 +209,31 @@ fn mct_nf_compute_nearest<T: CustomFloat>(
     distance_to_facet
         .iter()
         .enumerate()
+        .filter(|(_, dist)| **dist > zero())
         .for_each(|(facet_idx, dist)| {
-            if *dist > zero() {
-                if *dist <= nearest_facet.distance_to_facet {
-                    nearest_facet.distance_to_facet = *dist;
-                    nearest_facet.facet = facet_idx;
-                }
-            } else if *dist > nearest_negative_facet.distance_to_facet {
+            if *dist <= nearest_facet.distance_to_facet {
+                nearest_facet.distance_to_facet = *dist;
+                nearest_facet.facet = facet_idx;
+            }
+        });
+
+    if nearest_facet.distance_to_facet != huge_f {
+        return nearest_facet;
+    }
+
+    distance_to_facet
+        .iter()
+        .enumerate()
+        .filter(|(_, dist)| **dist <= zero())
+        .for_each(|(facet_idx, dist)| {
+            if *dist > nearest_negative_facet.distance_to_facet {
                 nearest_negative_facet.distance_to_facet = *dist;
                 nearest_negative_facet.facet = facet_idx;
             }
         });
 
-    if (nearest_facet.distance_to_facet == huge_f)
-        & (nearest_negative_facet.distance_to_facet != -huge_f)
-    {
-        nearest_facet.distance_to_facet = nearest_negative_facet.distance_to_facet;
-        nearest_facet.facet = nearest_negative_facet.facet;
+    if nearest_negative_facet.distance_to_facet != -huge_f {
+        return nearest_negative_facet;
     }
 
     nearest_facet
