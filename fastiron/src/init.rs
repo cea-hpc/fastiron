@@ -253,7 +253,7 @@ fn init_mesh<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, mcdata: &MonteCarlo
     let my_rank = 0;
 
     let ddc = DecompositionObject::new(my_rank, n_ranks, n_domains_per_rank);
-    let my_domain_gids = ddc.assigned_gids.clone();
+    let my_domain_gids = &ddc.assigned_gids;
     let global_grid: GlobalFccGrid<T> = GlobalFccGrid::new(nx, ny, nz, lx, ly, lz);
 
     // initialize centers randomly
