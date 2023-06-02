@@ -7,7 +7,7 @@
 use std::fmt::Debug;
 use std::ops::{Index, IndexMut};
 
-use atomic::Atomic;
+use atomic::{Atomic, Ordering};
 use num::zero;
 
 use crate::constants::CustomFloat;
@@ -90,11 +90,10 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
 
     /// Clear the cross section cache for each domain.
     pub fn clear_cross_section_cache(&mut self) {
-        self.xs_cache.cache.iter_mut().for_each(|domain| {
-            domain
-                .iter_mut()
-                .for_each(|cell| cell.iter_mut().for_each(|xs| *xs = Atomic::new(zero())))
-        })
+        self.xs_cache
+            .cache
+            .iter_mut()
+            .for_each(|xs| xs.store(zero(), Ordering::Relaxed))
     }
 
     pub fn update_unit_weight(&mut self, mcdata: &MonteCarloData<T>) {
@@ -121,20 +120,21 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
 
 #[derive(Debug, Default)]
 pub struct XSCache<T: CustomFloat> {
-    pub cache: Vec<Vec<Vec<Atomic<T>>>>,
+    pub num_groups: usize,
+    pub cache: Vec<Atomic<T>>,
 }
 
 // maybe make theses accesses unchecked?
-impl<T: CustomFloat> Index<(usize, usize, usize)> for XSCache<T> {
+impl<T: CustomFloat> Index<(usize, usize)> for XSCache<T> {
     type Output = Atomic<T>;
 
-    fn index(&self, index: (usize, usize, usize)) -> &Self::Output {
-        &self.cache[index.0][index.1][index.2]
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        &self.cache[index.0 * self.num_groups + index.1]
     }
 }
 
-impl<T: CustomFloat> IndexMut<(usize, usize, usize)> for XSCache<T> {
-    fn index_mut(&mut self, index: (usize, usize, usize)) -> &mut Self::Output {
-        &mut self.cache[index.0][index.1][index.2]
+impl<T: CustomFloat> IndexMut<(usize, usize)> for XSCache<T> {
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        &mut self.cache[index.0 * self.num_groups + index.1]
     }
 }

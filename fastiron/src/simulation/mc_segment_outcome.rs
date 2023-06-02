@@ -120,8 +120,7 @@ pub fn outcome<T: CustomFloat>(
     // get cross section
     // lazily computed
     // This ordering should make it so that we dont compute a XS multiple times?
-    let pcxs = mcunit.xs_cache[(particle.domain, particle.cell, particle.energy_group)]
-        .load(Ordering::Acquire);
+    let pcxs = mcunit.xs_cache[(particle.cell, particle.energy_group)].load(Ordering::Acquire);
     let macroscopic_total_xsection = if pcxs > zero() {
         // use precomputed value
         pcxs
@@ -135,8 +134,7 @@ pub fn outcome<T: CustomFloat>(
             cell_nb_density,
             particle.energy_group,
         );
-        mcunit.xs_cache[(particle.domain, particle.cell, particle.energy_group)]
-            .store(tmp, Ordering::Release);
+        mcunit.xs_cache[(particle.cell, particle.energy_group)].store(tmp, Ordering::Release);
         tmp
     };
 
