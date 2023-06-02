@@ -148,8 +148,6 @@ fn mct_nf_3dg<T: CustomFloat>(
             .enumerate()
             .zip(planes.iter())
             .for_each(|((facet_idx, dist), plane)| {
-                facet_coords = mesh.get_facet_coords(particle.cell, facet_idx);
-
                 let numerator: T = -one::<T>()
                     * (plane.a * coords.x + plane.b * coords.y + plane.c * coords.z + plane.d);
                 let facet_normal_dot_dcos: T =
@@ -161,6 +159,7 @@ fn mct_nf_3dg<T: CustomFloat>(
                     return;
                 }
 
+                facet_coords = mesh.get_facet_coords(particle.cell, facet_idx);
                 let distance = numerator / facet_normal_dot_dcos;
                 let intersection_pt: MCVector<T> = coords + direction * distance;
 
@@ -195,6 +194,7 @@ fn compute_volume<T: CustomFloat>(vertices: &[MCVector<T>], origin: &MCVector<T>
     tmp0.dot(&tmp1.cross(&tmp2)) // should be the same as original code
 }
 
+#[inline(never)]
 fn mct_nf_compute_nearest<T: CustomFloat>(
     distance_to_facet: [T; N_FACETS_OUT],
 ) -> MCNearestFacet<T> {
@@ -239,6 +239,7 @@ fn mct_nf_compute_nearest<T: CustomFloat>(
     nearest_facet
 }
 
+#[inline(never)]
 fn check_nearest_validity<T: CustomFloat>(
     particle: &mut MCParticle<T>,
     mesh: &MCMeshDomain<T>,
@@ -271,6 +272,7 @@ fn check_nearest_validity<T: CustomFloat>(
     false
 }
 
+#[inline(never)]
 fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
     intersection_pt: &MCVector<T>,
     plane: &MCGeneralPlane<T>,

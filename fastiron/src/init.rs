@@ -163,7 +163,6 @@ fn init_nuclear_data<T: CustomFloat>(mcdata: &mut MonteCarloData<T>) {
     }
 }
 
-/// TODO: implement the check correctly according to new init
 /// Check the consistency of the domain list passed as argument.
 ///
 /// This function goes through the given domain list and check for inconsistencies
