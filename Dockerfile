@@ -18,4 +18,8 @@ WORKDIR /fastiron
 
 COPY --from=builder /builder/install/bin /usr/bin
 
-CMD ["/usr/bin/fastiron"]
+COPY --from=builder /builder/input_files/ /fastiron/
+
+COPY --from=builder /builder/scripts/ /fastiron/
+
+CMD ["./scripts/test.sh"]
