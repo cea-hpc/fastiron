@@ -10,6 +10,8 @@ COPY . .
 
 RUN --mount=type=cache,target=/cargo CARGO_HOME=/cargo cargo install --path=fastiron --root /builder/install
 
+RUN apt-get install -y linux-perf linux-base
+
 # FINAL IMAGE
 
 FROM debian:bullseye-slim
