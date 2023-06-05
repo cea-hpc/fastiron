@@ -8,7 +8,6 @@ Simulation:
    lx: 16
    ly: 16
    lz: 16
-   nParticles: 40960
    nSteps: 20
    nx: 16
    ny: 16
