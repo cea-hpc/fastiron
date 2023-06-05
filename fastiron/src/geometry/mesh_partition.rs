@@ -33,8 +33,6 @@ pub struct CellInfo {
 pub struct MeshPartition {
     /// Domain global identifier.
     pub domain_gid: usize,
-    /// Domain index.
-    pub domain_index: usize,
     /// Foreman identifier.
     pub foreman: usize,
     /// Map linking cell global identifier to their [CellInfo] structure
@@ -45,10 +43,9 @@ pub struct MeshPartition {
 
 impl MeshPartition {
     /// Constructor. The structure is **not** ready to be used directly.
-    pub fn new(domain_gid: usize, domain_index: usize, foreman: usize) -> Self {
+    pub fn new(domain_gid: usize, foreman: usize) -> Self {
         Self {
             domain_gid,
-            domain_index,
             foreman,
             cell_info_map: Default::default(),
             nbr_domains: Default::default(),
@@ -119,7 +116,7 @@ impl MeshPartition {
                 // local cell
                 cell_info.cell_index = Some(n_local_cells);
                 n_local_cells += 1;
-                cell_info.domain_index = Some(self.domain_index);
+                cell_info.domain_index = Some(self.domain_gid);
                 cell_info.foreman = Some(self.foreman);
             } else {
                 let face_nbr = grid.get_face_nbr_gids(*cell_gid);
@@ -203,7 +200,7 @@ mod tests {
         let domain_gids: Vec<usize> = vec![0, 1];
         let mut partition: Vec<MeshPartition> = Vec::with_capacity(centers.len());
         domain_gids.iter().for_each(|ii| {
-            partition.push(MeshPartition::new(*ii, *ii, 0));
+            partition.push(MeshPartition::new(*ii, 0));
         });
 
         (0..partition.len()).for_each(|part_idx| {

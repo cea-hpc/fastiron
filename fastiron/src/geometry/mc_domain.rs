@@ -67,7 +67,7 @@ const OPPOSING_FACET: [usize; N_FACETS_OUT] = [
 ];
 
 /// Structure that manages a data set on a mesh-like geometry.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MCMeshDomain<T: CustomFloat> {
     /// Global identifier associated of the domain.
     pub domain_gid: usize,
@@ -154,7 +154,7 @@ impl<T: CustomFloat> MCMeshDomain<T> {
 }
 
 /// Structure used to manage a domain, i.e. a spatial region of the problem.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MCDomain<T: CustomFloat> {
     /// Global domain identifier.
     pub global_domain: usize,

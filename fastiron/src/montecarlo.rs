@@ -7,7 +7,7 @@
 use std::fmt::Debug;
 use std::ops::{Index, IndexMut};
 
-use atomic::Atomic;
+use atomic::{Atomic, Ordering};
 use num::zero;
 
 use crate::constants::CustomFloat;
@@ -59,7 +59,7 @@ impl<T: CustomFloat> MonteCarloData<T> {
 #[derive(Debug)]
 pub struct MonteCarloUnit<T: CustomFloat> {
     /// List of spatial domains.
-    pub domain: Vec<MCDomain<T>>,
+    pub domain: MCDomain<T>,
     /// Object storing all tallies of the simulation.
     pub tallies: Tallies<T>,
     /// Object storing all tallies of the simulation.
@@ -90,11 +90,10 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
 
     /// Clear the cross section cache for each domain.
     pub fn clear_cross_section_cache(&mut self) {
-        self.xs_cache.cache.iter_mut().for_each(|domain| {
-            domain
-                .iter_mut()
-                .for_each(|cell| cell.iter_mut().for_each(|xs| *xs = Atomic::new(zero())))
-        })
+        self.xs_cache
+            .cache
+            .iter_mut()
+            .for_each(|xs| xs.store(zero(), Ordering::Relaxed))
     }
 
     pub fn update_unit_weight(&mut self, mcdata: &MonteCarloData<T>) {
@@ -107,39 +106,35 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
 
         self.unit_weight = self
             .domain
+            .cell_state
             .iter()
-            .map(|dom| {
-                dom.cell_state
-                    .iter()
-                    .map(|cell| {
-                        // constant because cell volume is constant in our program
-                        let cell_weight: T = cell.volume
-                            * source_rate[cell.material]
-                            * mcdata.params.simulation_params.dt;
-                        cell_weight
-                    })
-                    .sum::<T>()
+            .map(|cell| {
+                // constant because cell volume is constant in our program
+                let cell_weight: T =
+                    cell.volume * source_rate[cell.material] * mcdata.params.simulation_params.dt;
+                cell_weight
             })
-            .sum();
+            .sum::<T>()
     }
 }
 
 #[derive(Debug, Default)]
 pub struct XSCache<T: CustomFloat> {
-    pub cache: Vec<Vec<Vec<Atomic<T>>>>,
+    pub num_groups: usize,
+    pub cache: Vec<Atomic<T>>,
 }
 
 // maybe make theses accesses unchecked?
-impl<T: CustomFloat> Index<(usize, usize, usize)> for XSCache<T> {
+impl<T: CustomFloat> Index<(usize, usize)> for XSCache<T> {
     type Output = Atomic<T>;
 
-    fn index(&self, index: (usize, usize, usize)) -> &Self::Output {
-        &self.cache[index.0][index.1][index.2]
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        &self.cache[index.0 * self.num_groups + index.1]
     }
 }
 
-impl<T: CustomFloat> IndexMut<(usize, usize, usize)> for XSCache<T> {
-    fn index_mut(&mut self, index: (usize, usize, usize)) -> &mut Self::Output {
-        &mut self.cache[index.0][index.1][index.2]
+impl<T: CustomFloat> IndexMut<(usize, usize)> for XSCache<T> {
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        &mut self.cache[index.0 * self.num_groups + index.1]
     }
 }

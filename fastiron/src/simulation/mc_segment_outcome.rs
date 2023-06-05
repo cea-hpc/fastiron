@@ -120,24 +120,21 @@ pub fn outcome<T: CustomFloat>(
     // get cross section
     // lazily computed
     // This ordering should make it so that we dont compute a XS multiple times?
-    let pcxs = mcunit.xs_cache[(particle.domain, particle.cell, particle.energy_group)]
-        .load(Ordering::Acquire);
+    let pcxs = mcunit.xs_cache[(particle.cell, particle.energy_group)].load(Ordering::Acquire);
     let macroscopic_total_xsection = if pcxs > zero() {
         // use precomputed value
         pcxs
     } else {
         // compute & cache value
-        let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
-        let cell_nb_density: T =
-            mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
+        let mat_gid: usize = mcunit.domain.cell_state[particle.cell].material;
+        let cell_nb_density: T = mcunit.domain.cell_state[particle.cell].cell_number_density;
         let tmp = weighted_macroscopic_cross_section(
             mcdata,
             mat_gid,
             cell_nb_density,
             particle.energy_group,
         );
-        mcunit.xs_cache[(particle.domain, particle.cell, particle.energy_group)]
-            .store(tmp, Ordering::Release);
+        mcunit.xs_cache[(particle.cell, particle.energy_group)].store(tmp, Ordering::Release);
         tmp
     };
 
@@ -168,8 +165,7 @@ pub fn outcome<T: CustomFloat>(
         particle_speed * particle.time_to_census,
     );
     // nearest facet
-    let nearest_facet: MCNearestFacet<T> =
-        nearest_facet(particle, &mcunit.domain[particle.domain].mesh);
+    let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, &mcunit.domain.mesh);
     particle.normal_dot = nearest_facet.dot_product;
     distance_handler.update(
         MCSegmentOutcome::FacetCrossing,
