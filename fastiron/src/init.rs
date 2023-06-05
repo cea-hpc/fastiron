@@ -85,28 +85,21 @@ pub fn init_particle_containers<T: CustomFloat>(
 }
 
 pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarloUnit<T>> {
-    let mut units: Vec<MonteCarloUnit<T>> = Vec::new();
+    let mut units: Vec<MonteCarloUnit<T>> = (0..mcdata.params.simulation_params.n_units)
+        .map(|_| MonteCarloUnit::new(&mcdata.params))
+        .collect();
 
     // inits
     println!("  [MonteCarloUnit Initialization]: Start");
-    match mcdata.exec_info.exec_policy {
-        ExecPolicy::Sequential | ExecPolicy::Rayon => {
-            // MAY CHANGE; the init of multiple units might directly be done in the functions, not here
-            let mut mcunit = MonteCarloUnit::new(&mcdata.params);
-            init_mesh(&mut mcunit, mcdata);
-            init_tallies(&mut mcunit, &mcdata.params);
-            init_xs_cache(&mut mcunit, mcdata.params.simulation_params.n_groups);
-            units.push(mcunit);
-        }
-        ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
-    }
+    init_mesh(&mut units, mcdata);
+    init_tallies(&mut units, &mcdata.params);
+    init_xs_cache(&mut units, mcdata.params.simulation_params.n_groups);
     println!("  [MonteCarloUnit Initialization]: Done");
 
     // checks
     println!("  [Consistency Check]: Start");
-    units
-        .iter()
-        .for_each(|mcunit| consistency_check(&mcunit.domain));
+    // TODO: implement the check correctly according to new init
+    consistency_check(&units);
     println!("  [Consistency Check]: Done");
 
     units
@@ -174,38 +167,43 @@ fn init_nuclear_data<T: CustomFloat>(mcdata: &mut MonteCarloData<T>) {
 ///
 /// This function goes through the given domain list and check for inconsistencies
 /// by checking adjacencies coherence.
-pub fn consistency_check<T: CustomFloat>(domain: &[MCDomain<T>]) {
-    domain.iter().enumerate().for_each(|(domain_idx, dd)| {
-        dd.mesh
-            .cell_connectivity
-            .iter()
-            .enumerate()
-            .for_each(|(cell_idx, cc)| {
-                cc.facet.iter().enumerate().for_each(|(facet_idx, ff)| {
-                    let current = ff.subfacet.current;
-                    assert_eq!(current.cell.unwrap(), cell_idx);
-                    let adjacent = ff.subfacet.adjacent;
-                    // These can hold none as a correct value e.g. if the current cell is on the border of the problem
-                    if adjacent.domain.is_some()
-                        & adjacent.cell.is_some()
-                        & adjacent.facet.is_some()
-                    {
-                        let domain_idx_adj = adjacent.domain.unwrap();
-                        let cell_idx_adj = adjacent.cell.unwrap();
-                        let facet_idx_adj = adjacent.facet.unwrap();
-                        let backside = &domain[domain_idx_adj].mesh.cell_connectivity[cell_idx_adj]
-                            .facet[facet_idx_adj]
-                            .subfacet;
+pub fn consistency_check<T: CustomFloat>(units: &[MonteCarloUnit<T>]) {
+    units
+        .iter()
+        .map(|unit| &unit.domain)
+        .enumerate()
+        .for_each(|(domain_idx, dd)| {
+            dd.mesh
+                .cell_connectivity
+                .iter()
+                .enumerate()
+                .for_each(|(cell_idx, cc)| {
+                    cc.facet.iter().enumerate().for_each(|(facet_idx, ff)| {
+                        let current = ff.subfacet.current;
+                        assert_eq!(current.cell.unwrap(), cell_idx);
+                        let adjacent = ff.subfacet.adjacent;
+                        // These can hold none as a correct value e.g. if the current cell is on the border of the problem
+                        if adjacent.domain.is_some()
+                            & adjacent.cell.is_some()
+                            & adjacent.facet.is_some()
+                        {
+                            let domain_idx_adj = adjacent.domain.unwrap();
+                            let cell_idx_adj = adjacent.cell.unwrap();
+                            let facet_idx_adj = adjacent.facet.unwrap();
+                            let backside = &units[domain_idx_adj].domain.mesh.cell_connectivity
+                                [cell_idx_adj]
+                                .facet[facet_idx_adj]
+                                .subfacet;
 
-                        assert!(
-                            (backside.adjacent.domain.unwrap() == domain_idx)
-                                & (backside.adjacent.cell.unwrap() == cell_idx)
-                                & (backside.adjacent.facet.unwrap() == facet_idx)
-                        )
-                    }
+                            assert!(
+                                (backside.adjacent.domain.unwrap() == domain_idx)
+                                    & (backside.adjacent.cell.unwrap() == cell_idx)
+                                    & (backside.adjacent.facet.unwrap() == facet_idx)
+                            )
+                        }
+                    });
                 });
-            });
-    });
+        });
 }
 
 fn initialize_centers_rand<T: CustomFloat>(
@@ -235,7 +233,8 @@ fn initialize_centers_rand<T: CustomFloat>(
     centers
 }
 
-fn init_mesh<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, mcdata: &MonteCarloData<T>) {
+fn init_mesh<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], mcdata: &MonteCarloData<T>) {
+    // readability variables
     let params = &mcdata.params;
     let mat_db = &mcdata.material_database;
 
@@ -247,25 +246,24 @@ fn init_mesh<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, mcdata: &MonteCarlo
     let ly: T = params.simulation_params.ly;
     let lz: T = params.simulation_params.lz;
 
-    // these values may be somewhat equivalent to no MPI usage
+    let n_units: usize = params.simulation_params.n_units as usize;
+
     let n_ranks: usize = 1;
     let n_domains_per_rank = 4; // why 4 in original code?
     let my_rank = 0;
 
     let ddc = DecompositionObject::new(my_rank, n_ranks, n_domains_per_rank);
-    let my_domain_gids = &ddc.assigned_gids;
     let global_grid: GlobalFccGrid<T> = GlobalFccGrid::new(nx, ny, nz, lx, ly, lz);
 
-    // initialize centers randomly
-    let n_centers: usize = n_domains_per_rank * n_ranks;
     let mut s = params.simulation_params.seed + 1; // use a seed dependant on sim seed
-    let domain_centers = initialize_centers_rand(n_centers, &global_grid, &mut s);
+    let domain_centers = initialize_centers_rand(n_units, &global_grid, &mut s);
 
-    let mut partition: Vec<MeshPartition> = Vec::with_capacity(my_domain_gids.len());
-    (0..my_domain_gids.len()).for_each(|ii| {
-        // my rank should be constant
-        partition.push(MeshPartition::new(my_domain_gids[ii], ii, my_rank));
-    });
+    let partition: Vec<MeshPartition> = (0..n_units)
+        .map(|ii| {
+            // my rank should be constant
+            MeshPartition::new(ii, my_rank)
+        })
+        .collect();
 
     let mut comm: CommObject = CommObject::new(&partition);
     // indexing should be coherent since we cloned partition in comm's construction
@@ -291,33 +289,37 @@ fn init_mesh<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, mcdata: &MonteCarlo
         }
     });
 
-    mcunit.domain.reserve(my_domain_gids.len());
-    comm.partition.iter().for_each(|mesh_p| {
-        mcunit
-            .domain
-            .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, mat_db))
+    (0..n_units).for_each(|gid| {
+        mcunits[gid].domain =
+            MCDomain::new(&comm.partition[gid], &global_grid, &ddc, params, mat_db);
     });
+    //comm.partition.iter().for_each(|mesh_p| {
+    //    mcunit
+    //        .domain
+    //        .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, mat_db))
+    //});
 }
 
-fn init_tallies<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, params: &Parameters<T>) {
-    mcunit.tallies.initialize_tallies(
-        &mcunit.domain,
-        params.simulation_params.n_groups,
-        params.simulation_params.coral_benchmark,
-    )
+fn init_tallies<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], params: &Parameters<T>) {
+    mcunits.iter_mut().for_each(|mcunit| {
+        mcunit.tallies.initialize_tallies(
+            &mcunit.domain,
+            params.simulation_params.n_groups,
+            params.simulation_params.coral_benchmark,
+        )
+    })
 }
 
-fn init_xs_cache<T: CustomFloat>(mcunit: &mut MonteCarloUnit<T>, n_energy_groups: usize) {
-    mcunit.xs_cache.cache = mcunit
-        .domain
-        .iter()
-        .map(|dom| {
-            dom.cell_state
-                .iter()
-                .map(|_| (0..n_energy_groups).map(|_| Atomic::new(zero())).collect())
-                .collect()
-        })
-        .collect();
+fn init_xs_cache<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], n_energy_groups: usize) {
+    mcunits.iter_mut().for_each(|mcunit| {
+        mcunit.xs_cache.num_groups = n_energy_groups;
+        mcunit.xs_cache.cache = mcunit
+            .domain
+            .cell_state
+            .iter()
+            .flat_map(|_| (0..n_energy_groups).map(|_| Atomic::new(zero())))
+            .collect();
+    })
 }
 
 #[derive(Debug, Clone, Default)]
