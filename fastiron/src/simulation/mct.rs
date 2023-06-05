@@ -268,7 +268,7 @@ fn check_nearest_validity<T: CustomFloat>(
         // keep track of the movement
         *iteration += 1;
         *move_factor = threshold.min(*move_factor * two);
-      
+
         return *iteration != MAX_ITERATION;
     }
     false
@@ -404,9 +404,7 @@ fn mct_nf_3dg_dist_to_segment<T: CustomFloat>(
 
     let cross_tolerance: T = bounding_box_tolerance * (crosses[0] + crosses[1] + crosses[2]).abs();
 
-    if ((crosses[0] 
-      
-      -cross_tolerance)
+    if ((crosses[0] > -cross_tolerance)
         & (crosses[1] > -cross_tolerance)
         & (crosses[2] > -cross_tolerance))
         | ((crosses[0] < cross_tolerance)

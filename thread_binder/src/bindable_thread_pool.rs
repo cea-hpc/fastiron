@@ -1,7 +1,7 @@
 extern crate hwloc2;
 extern crate libc;
 extern crate rayon;
-use self::hwloc2::{ObjectType, Topology, TopologyObject, CpuBindFlags};
+use self::hwloc2::{CpuBindFlags, ObjectType, Topology, TopologyObject};
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -66,11 +66,10 @@ impl ThreadPoolBuilder {
 
     /// Build the `ThreadPool`.
     pub fn build(self) -> Result<rayon::ThreadPool, rayon::ThreadPoolBuildError> {
-        let pool = match self.bind_policy {
+        match self.bind_policy {
             Policy::RoundRobinNuma => self.builder.build(),
             Policy::NoBinding => self.builder.build(),
-        };
-        pool
+        }
     }
 
     /// Build the global `ThreadPool`.

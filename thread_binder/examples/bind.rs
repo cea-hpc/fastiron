@@ -18,7 +18,7 @@ fn main() {
 
     let fibo: Vec<_> = (0..46u64)
         .into_par_iter()
-        .map(|i| fibonacci_recursive(i))
+        .map(fibonacci_recursive)
         .collect();
     assert_eq!(fibo[0], 0);
     println!("{:?}", fibo);
