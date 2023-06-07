@@ -28,7 +28,7 @@ use super::{
 /// The particle at the specified index is loaded, tracked and updated accordingly.
 /// Depeding on the outcome of the tracking, it is either set as processed or
 /// invalidated.
-pub fn par_cycle_tracking_guts<T: CustomFloat>(
+pub fn cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
@@ -47,10 +47,10 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
 
-    par_cycle_tracking_function(mcdata, mcunit, particle, balance, extra);
+    cycle_tracking_function(mcdata, mcunit, particle, balance, extra);
 }
 
-fn par_cycle_tracking_function<T: CustomFloat>(
+fn cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,

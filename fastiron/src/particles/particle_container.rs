@@ -10,7 +10,7 @@ use crate::{
     constants::CustomFloat,
     data::tallies::{Balance, TalliedEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
-    simulation::cycle_tracking::par_cycle_tracking_guts,
+    simulation::cycle_tracking::cycle_tracking_guts,
     utils::{
         mc_fast_timer::{self, Section},
         mc_processor_info::ExecPolicy,
@@ -111,7 +111,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 (&mut self.processing_particles)
                     .into_iter()
                     .for_each(|particle| {
-                        par_cycle_tracking_guts(
+                        cycle_tracking_guts(
                             mcdata,
                             mcunit,
                             particle,
@@ -144,7 +144,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
                         let mut local_extra: ParticleCollection<T> =
                             ParticleCollection::with_capacity(extra_capacity);
                         particles.iter_mut().for_each(|particle| {
-                            par_cycle_tracking_guts(
+                            cycle_tracking_guts(
                                 mcdata,
                                 mcunit,
                                 particle,
