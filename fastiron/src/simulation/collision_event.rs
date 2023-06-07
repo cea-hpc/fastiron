@@ -10,7 +10,7 @@ use num::{zero, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
-    data::{nuclear_data::ReactionType, tallies::Tallies},
+    data::{nuclear_data::ReactionType, tallies::Balance},
     montecarlo::MonteCarloData,
     particles::{mc_particle::MCParticle, particle_collection::ParticleCollection},
 };
@@ -27,7 +27,7 @@ use crate::{
 /// - Scattering reaction: no additional modifications occur.
 pub fn collision_event<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    tallies: &Tallies<T>,
+    balance: &mut Balance,
     mat_gid: usize,
     cell_nb_density: T,
     particle: &mut MCParticle<T>,
@@ -75,29 +75,17 @@ pub fn collision_event<T: CustomFloat>(
     //====================
     // Tally the collision
 
-    tallies
-        .balance_cycle
-        .collision
-        .fetch_add(1, Ordering::Relaxed);
+    balance.collision.fetch_add(1, Ordering::Relaxed);
     match reaction.reaction_type {
         ReactionType::Scatter => {
-            tallies
-                .balance_cycle
-                .scatter
-                .fetch_add(1, Ordering::Relaxed);
+            balance.scatter.fetch_add(1, Ordering::Relaxed);
         }
         ReactionType::Absorption => {
-            tallies.balance_cycle.absorb.fetch_add(1, Ordering::Relaxed);
+            balance.absorb.fetch_add(1, Ordering::Relaxed);
         }
         ReactionType::Fission => {
-            tallies
-                .balance_cycle
-                .fission
-                .fetch_add(1, Ordering::Relaxed);
-            tallies
-                .balance_cycle
-                .produce
-                .fetch_add(n_out as u64, Ordering::Relaxed);
+            balance.fission.fetch_add(1, Ordering::Relaxed);
+            balance.produce.fetch_add(n_out as u64, Ordering::Relaxed);
         }
     };
 

@@ -134,12 +134,18 @@ impl<T: CustomFloat> ParticleContainer<T> {
                         let mut local_extra: ParticleCollection<T> =
                             ParticleCollection::with_capacity(extra_capacity);
                         particles.iter_mut().for_each(|particle| {
-                            par_cycle_tracking_guts(mcdata, mcunit, particle, &mut local_extra)
+                            par_cycle_tracking_guts(
+                                mcdata,
+                                mcunit,
+                                particle,
+                                &mut local_balance,
+                                &mut local_extra,
+                            )
                         });
                         extra.lock().unwrap().append(&mut local_extra);
                         local_balance
-                    })
-                    .fold_with(Balance::default(), |a, b| a.add(&b));
+                    });
+                //.fold_with(Balance::default(), |a, b| a.add(&b));
             }
         }
         self.processing_particles
