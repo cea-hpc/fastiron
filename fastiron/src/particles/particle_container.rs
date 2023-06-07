@@ -101,12 +101,19 @@ impl<T: CustomFloat> ParticleContainer<T> {
         match mcdata.exec_info.exec_policy {
             // Process unit sequentially
             ExecPolicy::Sequential | ExecPolicy::Distributed => {
+                let mut tmp = Balance::default();
                 (&mut self.processing_particles)
                     .into_iter()
                     .for_each(|particle| {
-                        unimplemented!()
-                        //par_cycle_tracking_guts(mcdata, mcunit, particle, &mut self.extra_particles)
+                        par_cycle_tracking_guts(
+                            mcdata,
+                            mcunit,
+                            particle,
+                            &mut tmp,
+                            &mut self.extra_particles,
+                        )
                     });
+                mcunit.tallies.balance_cycle.add_to_self(&tmp);
             }
             // Process unit in parallel
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
