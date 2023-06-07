@@ -74,6 +74,26 @@ impl<T: CustomFloat> FluenceDomain<T> {
 // Balance
 //========
 
+pub const N_TALLIED_EVENT: usize = 14;
+
+#[derive(Debug)]
+pub enum TalliedEvent {
+    Absorb,
+    Census,
+    Escape,
+    Collision,
+    End,
+    Fission,
+    Produce,
+    Scatter,
+    Start,
+    Source,
+    OverRr,
+    WeightRr,
+    Split,
+    NumSegments,
+}
+
 /// Structure used to keep track of the number of event in the simulation.
 ///
 /// During the simulation, each time an event of interest occurs, the counters
