@@ -1,8 +1,8 @@
 use std::iter::zip;
-use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 use clap::Parser;
+use fastiron::data::tallies::TalliedEvent;
 use num::{one, zero, FromPrimitive};
 use rayon::ThreadPoolBuilder;
 
@@ -112,11 +112,7 @@ pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunits: &mut [Mont
             mcunit.fast_timer.update_main_stats();
 
             mcunit.fast_timer.cumulative_report(
-                mcunit
-                    .tallies
-                    .balance_cumulative
-                    .num_segments
-                    .load(Ordering::Relaxed),
+                mcunit.tallies.balance_cumulative[TalliedEvent::NumSegments],
                 mcdata.params.simulation_params.csv,
             );
 
@@ -144,10 +140,8 @@ pub fn cycle_sync<T: CustomFloat>(
         match mcdata.exec_info.exec_policy {
             ExecPolicy::Sequential | ExecPolicy::Rayon => {
                 // if sequential/rayon-only, just use the single Monte-Carlo unit
-                mcunits[0].tallies.balance_cycle.end.store(
-                    containers[0].processed_particles.len() as u64,
-                    Ordering::SeqCst,
-                );
+                mcunits[0].tallies.balance_cycle[TalliedEvent::End] =
+                    containers[0].processed_particles.len() as u64;
                 mcunits[0].tallies.print_summary(
                     &mut mcunits[0].fast_timer,
                     step - 1,
@@ -177,11 +171,7 @@ pub fn cycle_sync<T: CustomFloat>(
         mcunit.clear_cross_section_cache();
         container.swap_processing_processed();
         let local_n_particles = container.processing_particles.len();
-        mcunit
-            .tallies
-            .balance_cycle
-            .start
-            .store(local_n_particles as u64, Ordering::SeqCst);
+        mcunit.tallies.balance_cycle[TalliedEvent::Start] = local_n_particles as u64;
         current_n_particles += local_n_particles;
         total_problem_weight += mcunit.unit_weight;
     });
@@ -221,14 +211,14 @@ pub fn cycle_process<T: CustomFloat>(
             split_rr_factor,
             mcdata.params.simulation_params.low_weight_cutoff,
             mcdata.source_particle_weight,
-            &mcunit.tallies.balance_cycle,
+            &mut mcunit.tallies.balance_cycle,
         );
     } else if split_rr_factor > one() {
         container.split_population(
             split_rr_factor,
             mcdata.params.simulation_params.low_weight_cutoff,
             mcdata.source_particle_weight,
-            &mcunit.tallies.balance_cycle,
+            &mut mcunit.tallies.balance_cycle,
         )
     }
 

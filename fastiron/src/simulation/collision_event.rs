@@ -4,13 +4,14 @@
 //! from beginning to end. Note that _collision_ refers to reaction with the
 //! particle's environment, not in-between particles.
 
-use std::sync::atomic::Ordering;
-
 use num::{zero, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
-    data::{nuclear_data::ReactionType, tallies::Balance},
+    data::{
+        nuclear_data::ReactionType,
+        tallies::{Balance, TalliedEvent},
+    },
     montecarlo::MonteCarloData,
     particles::{mc_particle::MCParticle, particle_collection::ParticleCollection},
 };
@@ -75,17 +76,17 @@ pub fn collision_event<T: CustomFloat>(
     //====================
     // Tally the collision
 
-    balance.collision.fetch_add(1, Ordering::Relaxed);
+    balance[TalliedEvent::Collision] += 1;
     match reaction.reaction_type {
         ReactionType::Scatter => {
-            balance.scatter.fetch_add(1, Ordering::Relaxed);
+            balance[TalliedEvent::Scatter] += 1;
         }
         ReactionType::Absorption => {
-            balance.absorb.fetch_add(1, Ordering::Relaxed);
+            balance[TalliedEvent::Absorb] += 1;
         }
         ReactionType::Fission => {
-            balance.fission.fetch_add(1, Ordering::Relaxed);
-            balance.produce.fetch_add(n_out as u64, Ordering::Relaxed);
+            balance[TalliedEvent::Fission] += 1;
+            balance[TalliedEvent::Produce] += n_out as u64;
         }
     };
 

@@ -2,13 +2,13 @@
 //!
 //! This module contains code used for the main structure holding particles.
 
-use std::sync::{atomic::Ordering, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 
 use rayon::prelude::*;
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::Balance,
+    data::tallies::{Balance, TalliedEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     simulation::cycle_tracking::par_cycle_tracking_guts,
     utils::mc_processor_info::ExecPolicy,
@@ -58,7 +58,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
         split_rr_factor: T,
         relative_weight_cutoff: T,
         source_particle_weight: T,
-        balance: &Balance,
+        balance: &mut Balance,
     ) {
         let old_len = self.processing_particles.len();
         self.processing_particles.retain_mut(|pp| {
@@ -66,10 +66,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
             let survive_twice = pp.low_weight_rr(relative_weight_cutoff, source_particle_weight);
             survive_once & survive_twice
         });
-        balance.rr.fetch_add(
-            (old_len - self.processing_particles.len()) as u64,
-            Ordering::Relaxed,
-        );
+        balance[TalliedEvent::OverRr] = (old_len - self.processing_particles.len()) as u64;
     }
 
     /// Split particles to reach the desired number of particles for
@@ -79,7 +76,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
         split_rr_factor: T,
         relative_weight_cutoff: T,
         source_particle_weight: T,
-        balance: &Balance,
+        balance: &mut Balance,
     ) {
         let mut old_len = self.processing_particles.len();
         (&mut self.processing_particles).into_iter().for_each(|pp| {
@@ -87,17 +84,11 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 .extend(pp.under_populated_split(split_rr_factor));
         });
         self.clean_extra_vaults();
-        balance.split.fetch_add(
-            (self.processing_particles.len() - old_len) as u64,
-            Ordering::Relaxed,
-        );
+        balance[TalliedEvent::Split] = (self.processing_particles.len() - old_len) as u64;
         old_len = self.processing_particles.len();
         self.processing_particles
             .retain_mut(|pp| pp.low_weight_rr(relative_weight_cutoff, source_particle_weight));
-        balance.rr.fetch_add(
-            (old_len - self.processing_particles.len()) as u64,
-            Ordering::Relaxed,
-        );
+        balance[TalliedEvent::WeightRr] = (old_len - self.processing_particles.len()) as u64;
     }
 
     /// Track particles and transfer them to the processed storage when done.

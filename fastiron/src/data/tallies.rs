@@ -12,7 +12,7 @@ use std::{
     io::Write,
     iter::zip,
     ops::{Index, IndexMut},
-    sync::atomic::{AtomicU64, Ordering},
+    sync::atomic::Ordering,
 };
 
 use atomic::Atomic;

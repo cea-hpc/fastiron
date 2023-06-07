@@ -9,7 +9,7 @@ use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::{Balance, MCTallyEvent},
+    data::tallies::{Balance, MCTallyEvent, TalliedEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{
         mc_particle::{MCParticle, Species},
@@ -63,7 +63,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
         // compute event for segment
         let segment_outcome = outcome(mcdata, mcunit, particle);
         // update # of segments
-        balance.num_segments.fetch_add(1, Ordering::SeqCst);
+        balance[TalliedEvent::NumSegments] += 1;
         particle.num_segments += one();
         // update scalar flux tally
         mcunit.tallies.scalar_flux_domain.cell[particle.cell][particle.energy_group]
@@ -126,7 +126,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                     }
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {
-                        balance.escape.fetch_add(1, Ordering::Relaxed);
+                        balance[TalliedEvent::Escape] += 1;
                         particle.last_event = MCTallyEvent::FacetCrossingEscape;
                         particle.species = Species::Unknown;
                         false
@@ -136,7 +136,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                 };
             }
             MCSegmentOutcome::Census => {
-                balance.census.fetch_add(1, Ordering::Relaxed);
+                balance[TalliedEvent::Census] += 1;
                 // we're done tracking the particle FOR THIS STEP; Species stays valid
                 keep_tracking = false;
             }
