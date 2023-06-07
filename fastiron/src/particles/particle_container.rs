@@ -92,7 +92,11 @@ impl<T: CustomFloat> ParticleContainer<T> {
     }
 
     /// Track particles and transfer them to the processed storage when done.
-    pub fn process_particles(&mut self, mcdata: &MonteCarloData<T>, mcunit: &MonteCarloUnit<T>) {
+    pub fn process_particles(
+        &mut self,
+        mcdata: &MonteCarloData<T>,
+        mcunit: &mut MonteCarloUnit<T>,
+    ) {
         self.sort_processing();
         match mcdata.exec_info.exec_policy {
             // Process unit sequentially
@@ -112,7 +116,8 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 let chunk_size: usize =
                     (self.processing_particles.len() / mcdata.exec_info.n_rayon_threads) + 1;
 
-                self.processing_particles
+                let res: Balance = self
+                    .processing_particles
                     .par_iter_mut()
                     .chunks(chunk_size)
                     .map(|mut particles| {
@@ -136,8 +141,14 @@ impl<T: CustomFloat> ParticleContainer<T> {
                         });
                         extra.lock().unwrap().append(&mut local_extra);
                         local_balance
-                    });
-                //.fold_with(Balance::default(), |a, b| a.add(&b));
+                    })
+                    .fold_with(Balance::default(), |a, b| a + b)
+                    .sum::<Balance>();
+                // It should be safe to simply add this to the one in mcunit
+                assert_eq!(res[TalliedEvent::Start], 0);
+                assert_eq!(res[TalliedEvent::End], 0);
+                assert_eq!(res[TalliedEvent::Source], 0);
+                mcunit.tallies.balance_cycle.add_to_self(&res);
             }
         }
         self.processing_particles

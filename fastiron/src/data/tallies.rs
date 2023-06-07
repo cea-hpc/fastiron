@@ -100,7 +100,7 @@ pub enum TalliedEvent {
 /// During the simulation, each time an event of interest occurs, the counters
 /// are incremented accordingly. In a parallel context, this structure should be
 /// operated on using atomic operations.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Balance {
     /// Array used to store tallied event. See [TalliedEvent] for more information.
     pub data: [u64; N_TALLIED_EVENT],
@@ -114,21 +114,44 @@ impl Balance {
 
     /// Add another [Balance]'s value to its own.
     pub fn add_to_self(&mut self, bal: &Balance) {
-        todo!()
+        self.data
+            .iter_mut()
+            .zip(bal.data.iter())
+            .for_each(|(lhs, rhs)| *lhs += *rhs);
     }
 }
+
+// Indexing operators
 
 impl Index<TalliedEvent> for Balance {
     type Output = u64;
 
     fn index(&self, index: TalliedEvent) -> &Self::Output {
-        todo!()
+        &self.data[index as usize]
     }
 }
 
 impl IndexMut<TalliedEvent> for Balance {
     fn index_mut(&mut self, index: TalliedEvent) -> &mut Self::Output {
-        todo!()
+        &mut self.data[index as usize]
+    }
+}
+
+// Add op (useful when folding)
+
+impl std::ops::Add<Balance> for Balance {
+    type Output = Balance;
+
+    fn add(self, rhs: Balance) -> Self::Output {
+        let mut tmp = self;
+        tmp.add_to_self(&rhs);
+        tmp
+    }
+}
+
+impl std::iter::Sum<Balance> for Balance {
+    fn sum<I: Iterator<Item = Balance>>(iter: I) -> Self {
+        iter.fold(Self::default(), |b1, b2| b1 + b2)
     }
 }
 
