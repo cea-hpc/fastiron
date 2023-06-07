@@ -3,7 +3,7 @@
 //! This module contains the function individually tracking particles during the
 //! main simulation section.
 
-use std::sync::{atomic::Ordering, Arc, Mutex};
+use std::sync::atomic::Ordering;
 
 use num::{one, zero};
 
@@ -60,7 +60,6 @@ fn cycle_tracking_function<T: CustomFloat>(
     extra: &mut ParticleCollection<T>,
 ) {
     let mut keep_tracking: bool;
-    let tmp = Arc::new(Mutex::new(extra));
 
     loop {
         // compute event for segment
@@ -89,7 +88,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                     mat_gid,
                     cell_nb_density,
                     particle,
-                    Arc::clone(&tmp),
+                    extra,
                 );
 
                 particle.energy_group = mcdata
@@ -180,7 +179,7 @@ pub fn par_cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: Arc<Mutex<&mut ParticleCollection<T>>>,
+    extra: &mut ParticleCollection<T>,
 ) {
     // set age & time to census
     if particle.time_to_census <= zero() {
@@ -201,7 +200,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: Arc<Mutex<&mut ParticleCollection<T>>>,
+    extra: &mut ParticleCollection<T>,
 ) {
     let mut keep_tracking: bool;
 
@@ -233,7 +232,7 @@ fn par_cycle_tracking_function<T: CustomFloat>(
                     mat_gid,
                     cell_nb_density,
                     particle,
-                    Arc::clone(&extra),
+                    extra,
                 );
 
                 particle.energy_group = mcdata

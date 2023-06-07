@@ -114,6 +114,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
             }
             // Process unit in parallel
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
+                let extra_capacity = self.extra_particles.capacity() / 4;
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
                 // choose chunk size to get one chunk per thread
                 let chunk_size: usize =
@@ -122,12 +123,23 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 self.processing_particles
                     .par_iter_mut()
                     .chunks(chunk_size)
-                    .for_each(|mut particles| {
-                        // par_bridge for job stealing when load isn't balanced?
+                    .map(|mut particles| {
+                        // Strategy used to reduce ressource (memory) contention
+                        // 1. Give each chunks (==thread with our chunk_size value) its own balance
+                        //    This removes the need for atomics type. The tradeoff: folding results
+                        //    of the iterators
+                        // 2. Use a local extra collection that is later used to extend the global
+                        //    container. This reduces the total number of lock (and prolly lock time)
+                        let mut local_balance: Balance = Balance::default();
+                        let mut local_extra: ParticleCollection<T> =
+                            ParticleCollection::with_capacity(extra_capacity);
                         particles.iter_mut().for_each(|particle| {
-                            par_cycle_tracking_guts(mcdata, mcunit, particle, Arc::clone(&extra))
-                        })
-                    });
+                            par_cycle_tracking_guts(mcdata, mcunit, particle, &mut local_extra)
+                        });
+                        extra.lock().unwrap().append(&mut local_extra);
+                        local_balance
+                    })
+                    .fold_with(Balance::default(), |a, b| a.add(&b));
             }
         }
         self.processing_particles

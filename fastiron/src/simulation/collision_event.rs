@@ -4,7 +4,7 @@
 //! from beginning to end. Note that _collision_ refers to reaction with the
 //! particle's environment, not in-between particles.
 
-use std::sync::{atomic::Ordering, Arc, Mutex};
+use std::sync::atomic::Ordering;
 
 use num::{zero, FromPrimitive};
 
@@ -31,7 +31,7 @@ pub fn collision_event<T: CustomFloat>(
     mat_gid: usize,
     cell_nb_density: T,
     particle: &mut MCParticle<T>,
-    extra: Arc<Mutex<&mut ParticleCollection<T>>>,
+    extra: &mut ParticleCollection<T>,
 ) -> bool {
     // ==========================
     // Pick an isotope & reaction
