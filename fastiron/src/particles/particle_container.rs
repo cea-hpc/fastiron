@@ -2,16 +2,19 @@
 //!
 //! This module contains code used for the main structure holding particles.
 
-use std::sync::{atomic::Ordering, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 
 use rayon::prelude::*;
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::Balance,
+    data::tallies::{Balance, TalliedEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
-    simulation::cycle_tracking::{cycle_tracking_guts, par_cycle_tracking_guts},
-    utils::mc_processor_info::ExecPolicy,
+    simulation::cycle_tracking::cycle_tracking_guts,
+    utils::{
+        mc_fast_timer::{self, Section},
+        mc_processor_info::ExecPolicy,
+    },
 };
 
 use super::{mc_particle::Species, particle_collection::ParticleCollection};
@@ -58,7 +61,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
         split_rr_factor: T,
         relative_weight_cutoff: T,
         source_particle_weight: T,
-        balance: &Balance,
+        balance: &mut Balance,
     ) {
         let old_len = self.processing_particles.len();
         self.processing_particles.retain_mut(|pp| {
@@ -66,10 +69,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
             let survive_twice = pp.low_weight_rr(relative_weight_cutoff, source_particle_weight);
             survive_once & survive_twice
         });
-        balance.rr.fetch_add(
-            (old_len - self.processing_particles.len()) as u64,
-            Ordering::Relaxed,
-        );
+        balance[TalliedEvent::OverRr] = (old_len - self.processing_particles.len()) as u64;
     }
 
     /// Split particles to reach the desired number of particles for
@@ -79,7 +79,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
         split_rr_factor: T,
         relative_weight_cutoff: T,
         source_particle_weight: T,
-        balance: &Balance,
+        balance: &mut Balance,
     ) {
         let mut old_len = self.processing_particles.len();
         (&mut self.processing_particles).into_iter().for_each(|pp| {
@@ -87,47 +87,81 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 .extend(pp.under_populated_split(split_rr_factor));
         });
         self.clean_extra_vaults();
-        balance.split.fetch_add(
-            (self.processing_particles.len() - old_len) as u64,
-            Ordering::Relaxed,
-        );
+        balance[TalliedEvent::Split] = (self.processing_particles.len() - old_len) as u64;
         old_len = self.processing_particles.len();
         self.processing_particles
             .retain_mut(|pp| pp.low_weight_rr(relative_weight_cutoff, source_particle_weight));
-        balance.rr.fetch_add(
-            (old_len - self.processing_particles.len()) as u64,
-            Ordering::Relaxed,
-        );
+        balance[TalliedEvent::WeightRr] = (old_len - self.processing_particles.len()) as u64;
     }
 
     /// Track particles and transfer them to the processed storage when done.
-    pub fn process_particles(&mut self, mcdata: &MonteCarloData<T>, mcunit: &MonteCarloUnit<T>) {
+    pub fn process_particles(
+        &mut self,
+        mcdata: &MonteCarloData<T>,
+        mcunit: &mut MonteCarloUnit<T>,
+    ) {
+        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
         self.sort_processing();
+        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
+
         match mcdata.exec_info.exec_policy {
             // Process unit sequentially
             ExecPolicy::Sequential | ExecPolicy::Distributed => {
+                let mut tmp = Balance::default();
                 (&mut self.processing_particles)
                     .into_iter()
                     .for_each(|particle| {
-                        cycle_tracking_guts(mcdata, mcunit, particle, &mut self.extra_particles)
+                        cycle_tracking_guts(
+                            mcdata,
+                            mcunit,
+                            particle,
+                            &mut tmp,
+                            &mut self.extra_particles,
+                        )
                     });
+                mcunit.tallies.balance_cycle.add_to_self(&tmp);
             }
             // Process unit in parallel
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
+                let extra_capacity = self.extra_particles.capacity() / 4;
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
                 // choose chunk size to get one chunk per thread
                 let chunk_size: usize =
                     (self.processing_particles.len() / mcdata.exec_info.n_rayon_threads) + 1;
 
-                self.processing_particles
+                let res: Balance = self
+                    .processing_particles
                     .par_iter_mut()
                     .chunks(chunk_size)
-                    .for_each(|mut particles| {
-                        // par_bridge for job stealing when load isn't balanced?
+                    .map(|mut particles| {
+                        // Strategy used to reduce ressource (memory) contention
+                        // 1. Give each chunks (==thread with our chunk_size value) its own balance
+                        //    This removes the need for atomics type. The tradeoff: folding results
+                        //    of the iterators
+                        // 2. Use a local extra collection that is later used to extend the global
+                        //    container. This reduces the total number of lock (and prolly lock time)
+                        let mut local_balance: Balance = Balance::default();
+                        let mut local_extra: ParticleCollection<T> =
+                            ParticleCollection::with_capacity(extra_capacity);
                         particles.iter_mut().for_each(|particle| {
-                            par_cycle_tracking_guts(mcdata, mcunit, particle, Arc::clone(&extra))
-                        })
-                    });
+                            cycle_tracking_guts(
+                                mcdata,
+                                mcunit,
+                                particle,
+                                &mut local_balance,
+                                &mut local_extra,
+                            )
+                        });
+                        extra.lock().unwrap().append(&mut local_extra);
+                        local_balance
+                    })
+                    .fold_with(Balance::default(), |a, b| a + b)
+                    .sum::<Balance>();
+                // It should be safe to simply add this to the one in mcunit
+                assert_eq!(res[TalliedEvent::Start], 0);
+                assert_eq!(res[TalliedEvent::End], 0);
+                assert_eq!(res[TalliedEvent::Source], 0);
+                mcunit.tallies.balance_cycle.add_to_self(&res);
             }
         }
         self.processing_particles
@@ -174,7 +208,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
     /// - extra storage is empty
     /// - processing storage is empty
     /// - send queue is empty
-    pub fn test_done_new(&self) -> bool {
+    pub fn is_done_processing(&self) -> bool {
         self.extra_particles.is_empty() & self.processing_particles.is_empty()
     }
 }

@@ -28,6 +28,10 @@ impl<T: CustomFloat> ParticleCollection<T> {
         }
     }
 
+    pub fn capacity(&self) -> usize {
+        self.data.capacity()
+    }
+
     pub fn len(&self) -> usize {
         self.data.len()
     }

@@ -4,11 +4,13 @@
 //! If there is a need for additional checks on data yielded by a _homemade_
 //! example, this is where to start.
 
-use std::sync::atomic::Ordering;
-
 use num::{one, zero, FromPrimitive};
 
-use crate::{constants::CustomFloat, data::tallies::Tallies, parameters::BenchType};
+use crate::{
+    constants::CustomFloat,
+    data::tallies::{TalliedEvent, Tallies},
+    parameters::BenchType,
+};
 
 /// Runs additionnal tests according to the [BenchType].
 pub fn coral_benchmark_correctness<T: CustomFloat>(bench_type: BenchType, tallies: &Tallies<T>) {
@@ -33,11 +35,9 @@ pub fn balance_ratio_test<T: CustomFloat>(bench_type: BenchType, tallies: &Talli
     println!("Testing if ratios for absorbtion, fission & scattering are maintained...");
 
     let balance_tally = &tallies.balance_cumulative;
-    let absorb: T = FromPrimitive::from_u64(balance_tally.absorb.load(Ordering::Relaxed)).unwrap();
-    let fission: T =
-        FromPrimitive::from_u64(balance_tally.fission.load(Ordering::Relaxed)).unwrap();
-    let scatter: T =
-        FromPrimitive::from_u64(balance_tally.scatter.load(Ordering::Relaxed)).unwrap();
+    let absorb: T = FromPrimitive::from_u64(balance_tally[TalliedEvent::Absorb]).unwrap();
+    let fission: T = FromPrimitive::from_u64(balance_tally[TalliedEvent::Fission]).unwrap();
+    let scatter: T = FromPrimitive::from_u64(balance_tally[TalliedEvent::Scatter]).unwrap();
     let (fission_ratio, scatter_ratio, absorb_ratio, percent_tolerance): (T, T, T, T) =
         if bench_type == BenchType::Coral1 {
             (
@@ -95,13 +95,12 @@ pub fn balance_event_test<T: CustomFloat>(tallies: &Tallies<T>) {
 
     let balance_tally = &tallies.balance_cumulative;
     let facet_crossing: T = FromPrimitive::from_u64(
-        balance_tally.num_segments.load(Ordering::Relaxed)
-            - balance_tally.collision.load(Ordering::Relaxed)
-            - balance_tally.census.load(Ordering::Relaxed),
+        balance_tally[TalliedEvent::NumSegments]
+            - balance_tally[TalliedEvent::Collision]
+            - balance_tally[TalliedEvent::Census],
     )
     .unwrap();
-    let collision: T =
-        FromPrimitive::from_u64(balance_tally.collision.load(Ordering::Relaxed)).unwrap();
+    let collision: T = FromPrimitive::from_u64(balance_tally[TalliedEvent::Collision]).unwrap();
 
     let ratio: T = (facet_crossing / collision - one()).abs();
     let percent_tolerance: T = one();
@@ -124,15 +123,16 @@ pub fn missing_particle_test<T: CustomFloat>(tallies: &Tallies<T>) {
     println!("Testing for lost / unaccounted for particles in this simulation...");
 
     let bt = &tallies.balance_cumulative;
-    let gains: u64 = bt.start.load(Ordering::Relaxed)
-        + bt.source.load(Ordering::Relaxed)
-        + bt.produce.load(Ordering::Relaxed)
-        + bt.split.load(Ordering::Relaxed);
-    let losses: u64 = bt.absorb.load(Ordering::Relaxed)
-        + bt.census.load(Ordering::Relaxed)
-        + bt.escape.load(Ordering::Relaxed)
-        + bt.rr.load(Ordering::Relaxed)
-        + bt.fission.load(Ordering::Relaxed);
+    let gains: u64 = bt[TalliedEvent::Start]
+        + bt[TalliedEvent::Source]
+        + bt[TalliedEvent::Produce]
+        + bt[TalliedEvent::Split];
+    let losses: u64 = bt[TalliedEvent::Absorb]
+        + bt[TalliedEvent::Census]
+        + bt[TalliedEvent::Escape]
+        + bt[TalliedEvent::OverRr]
+        + bt[TalliedEvent::WeightRr]
+        + bt[TalliedEvent::Fission];
 
     if gains == losses {
         println!("PASS:: No particles lost during run");
