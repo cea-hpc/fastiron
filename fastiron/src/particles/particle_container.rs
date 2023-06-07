@@ -11,7 +11,10 @@ use crate::{
     data::tallies::{Balance, TalliedEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     simulation::cycle_tracking::par_cycle_tracking_guts,
-    utils::mc_processor_info::ExecPolicy,
+    utils::{
+        mc_fast_timer::{self, Section},
+        mc_processor_info::ExecPolicy,
+    },
 };
 
 use super::{mc_particle::Species, particle_collection::ParticleCollection};
@@ -97,7 +100,10 @@ impl<T: CustomFloat> ParticleContainer<T> {
         mcdata: &MonteCarloData<T>,
         mcunit: &mut MonteCarloUnit<T>,
     ) {
+        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
         self.sort_processing();
+        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
+
         match mcdata.exec_info.exec_policy {
             // Process unit sequentially
             ExecPolicy::Sequential | ExecPolicy::Distributed => {
@@ -202,7 +208,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
     /// - extra storage is empty
     /// - processing storage is empty
     /// - send queue is empty
-    pub fn test_done_new(&self) -> bool {
+    pub fn is_done_processing(&self) -> bool {
         self.extra_particles.is_empty() & self.processing_particles.is_empty()
     }
 }

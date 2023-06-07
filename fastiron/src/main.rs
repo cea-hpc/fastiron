@@ -226,22 +226,19 @@ pub fn cycle_process<T: CustomFloat>(
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
 
     loop {
-        while !container.test_done_new() {
-            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
+        while !container.is_done_processing() {
+            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
 
             // track particles
             container.process_particles(mcdata, mcunit);
 
-            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
-            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingComm);
+            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
 
             // clean extra here
             container.clean_extra_vaults();
-
-            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingComm);
         }
-        // change this if in parallel to also check pending/buffered particles
-        if container.test_done_new() {
+
+        if container.is_done_processing() {
             break;
         }
     }
