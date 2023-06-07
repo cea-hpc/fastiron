@@ -10,7 +10,7 @@ use crate::{
     constants::CustomFloat,
     data::tallies::Balance,
     montecarlo::{MonteCarloData, MonteCarloUnit},
-    simulation::cycle_tracking::{cycle_tracking_guts, par_cycle_tracking_guts},
+    simulation::cycle_tracking::par_cycle_tracking_guts,
     utils::mc_processor_info::ExecPolicy,
 };
 
@@ -109,7 +109,8 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 (&mut self.processing_particles)
                     .into_iter()
                     .for_each(|particle| {
-                        cycle_tracking_guts(mcdata, mcunit, particle, &mut self.extra_particles)
+                        unimplemented!()
+                        //par_cycle_tracking_guts(mcdata, mcunit, particle, &mut self.extra_particles)
                     });
             }
             // Process unit in parallel
