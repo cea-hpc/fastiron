@@ -15,7 +15,7 @@ fi
 
 # target folder
 TARGET_FOLDER=CTS2_strong_scaling/$N_PARTICLES
-mkdir $TARGET_FOLDER
+mkdir -p $TARGET_FOLDER
 
 # 32*16*16 mesh -- 1 thread 
 fastiron \
