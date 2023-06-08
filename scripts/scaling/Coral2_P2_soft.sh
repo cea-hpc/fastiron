@@ -11,7 +11,7 @@ mkdir -p $TARGET_FOLDER
 
 # 53240 particles -- 11*11*11 mesh -- 1 thread 
 fastiron \
-    -i ./input_files/profiling/Coral2 \
+    -i ./input_files/profiling/Coral2_P2.inp \
     -n 53240 \
     -X 1 \
     -Y 1 \
@@ -27,7 +27,7 @@ mv timers_report.csv $TARGET_FOLDER/timers_r1n53240.csv
 
 # 106480 particles -- 22*11*11 mesh -- 2 threads 
 fastiron \
-    -i ./input_files/profiling/Coral2 \
+    -i ./input_files/profiling/Coral2_P2.inp \
     -n 53240 \
     -X 2 \
     -Y 1 \
@@ -43,7 +43,7 @@ mv timers_report.csv $TARGET_FOLDER/timers_r2n106480.csv
 
 # 212960 particles -- 22*22*11 mesh -- 4 threads 
 fastiron \
-    -i ./input_files/profiling/Coral2 \
+    -i ./input_files/profiling/Coral2_P2.inp \
     -n 212960 \
     -X 2 \
     -Y 2 \
@@ -59,7 +59,7 @@ mv timers_report.csv $TARGET_FOLDER/timers_r2n212960.csv
 
 # 425920 particles -- 22*22*22 mesh -- 8 threads 
 fastiron \
-    -i ./input_files/profiling/Coral2 \
+    -i ./input_files/profiling/Coral2_P2.inp \
     -n 425920 \
     -X 2 \
     -Y 2 \
@@ -75,7 +75,7 @@ mv timers_report.csv $TARGET_FOLDER/timers_r8n425920.csv
 
 # 851840 particles -- 44*22*22 mesh -- 16 threads 
 fastiron \
-    -i ./input_files/profiling/Coral2 \
+    -i ./input_files/profiling/Coral2_P2.inp \
     -n 851840  \
     -X 4 \
     -Y 2 \
@@ -91,7 +91,7 @@ mv timers_report.csv $TARGET_FOLDER/timers_r16n851840 .csv
 
 # 1703680 particles -- 44*44*22 mesh -- 32 threads 
 fastiron \
-    -i ./input_files/profiling/Coral2 \
+    -i ./input_files/profiling/Coral2_P2.inp \
     -n 1703680 \
     -X 4 \
     -Y 4 \
@@ -107,7 +107,7 @@ mv timers_report.csv $TARGET_FOLDER/timers_r32n1703680.csv
 
 # 3407360 particles -- 44*44*44 mesh -- 64 threads 
 fastiron \
-    -i ./input_files/profiling/Coral2 \
+    -i ./input_files/profiling/Coral2_P2.inp \
     -n 3407360 \
     -X 4 \
     -Y 4 \
@@ -123,7 +123,7 @@ mv timers_report.csv $TARGET_FOLDER/timers_r64n3407360.csv
 
 # 6814720 particles -- 88*44*44 mesh -- 128 threads
 fastiron \
-    -i ./input_files/profiling/Coral2 \
+    -i ./input_files/profiling/Coral2_P2.inp \
     -n 6814720 \
     -X 8 \
     -Y 4 \
