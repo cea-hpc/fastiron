@@ -103,8 +103,8 @@ impl<T: CustomFloat> ParticleContainer<T> {
         mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
         self.sort_processing();
         mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
-
-        match mcdata.exec_info.exec_policy {
+        let exinf = &mcdata.exec_info;
+        match exinf.exec_policy {
             // Process unit sequentially
             ExecPolicy::Sequential | ExecPolicy::Distributed => {
                 let mut tmp = Balance::default();
@@ -126,8 +126,10 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 let extra_capacity = self.extra_particles.capacity() / 4;
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
                 // choose chunk size to get one chunk per thread
-                let chunk_size: usize =
-                    (self.processing_particles.len() / mcdata.exec_info.n_rayon_threads) + 1;
+                let chunk_size: usize = match exinf.chunk_size {
+                    0 => (self.processing_particles.len() / exinf.n_rayon_threads) + 1,
+                    _ => exinf.chunk_size,
+                };
 
                 let res: Balance = self
                     .processing_particles
