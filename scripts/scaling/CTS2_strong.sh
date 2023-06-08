@@ -16,7 +16,7 @@ fi
 TARGET_FOLDER=CTS2_strong_scaling/$N_PARTICLES
 mkdir $TARGET_FOLDER
 
-# 81920 particles -- 32*16*16 mesh -- 1 thread 
+# 32*16*16 mesh -- 1 thread 
 fastiron \
     -i ./input_files/profiling/CTS2_sized.inp \
     -n $N_PARTICLES \
