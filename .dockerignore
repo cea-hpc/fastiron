@@ -3,3 +3,4 @@ target
 .github
 *.md
 !README*.md
+scripts/laptop/*

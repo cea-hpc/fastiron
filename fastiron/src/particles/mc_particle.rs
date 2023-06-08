@@ -3,10 +3,7 @@
 //! This module contains code of an extended particle structure used
 //! for computations.
 
-use std::{
-    iter::zip,
-    sync::{Arc, Mutex},
-};
+use std::iter::zip;
 
 use num::{one, zero, FromPrimitive};
 use tinyvec::ArrayVec;
@@ -138,7 +135,7 @@ impl<T: CustomFloat> MCParticle<T> {
         &mut self,
         reaction: &NuclearDataReaction<T>,
         material_mass: T,
-        extra: Arc<Mutex<&mut ParticleCollection<T>>>,
+        extra: &mut ParticleCollection<T>,
     ) -> usize {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
@@ -197,7 +194,7 @@ impl<T: CustomFloat> MCParticle<T> {
                             sec_particle.update_trajectory(energy, angle);
                             sec_particle
                         });
-                        extra.lock().unwrap().extend(sec_particles);
+                        extra.extend(sec_particles);
 
                         self.update_trajectory(energy, angle);
                     }

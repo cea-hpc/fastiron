@@ -1,22 +1,12 @@
 Simulation:
-   dt: 1.1e-07
+   dt: 1e-08
    fMax: 0.1
    boundaryCondition: reflect
    loadBalance: 0
    cycleTimers: 0
    debugThreads: 0
-   lx: 16
-   ly: 16
-   lz: 16
-   nParticles: 40960
-   nSteps: 20
-   nx: 16
-   ny: 16
-   nz: 16
+   nSteps: 100
    seed: 1029384756
-   xDom: 1
-   yDom: 1
-   zDom: 1
    eMax: 20
    eMin: 1e-08
    nGroups: 230
@@ -39,10 +29,10 @@ Geometry:
 Material:
    name: sourceMaterial
    mass: 1.5
-   nIsotopes: 20
-   nReactions: 9
+   nIsotopes: 10
+   nReactions: 3
    sourceRate: 1e+10
-   totalCrossSection: 1.5227
+   totalCrossSection: 16.75
    absorptionCrossSection: absorb
    fissionCrossSection: fission
    scatteringCrossSection: scatter

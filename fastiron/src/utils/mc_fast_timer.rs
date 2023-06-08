@@ -21,11 +21,11 @@ pub enum Section {
     PopulationControl,
     /// `cycle_tracking()` execution time.
     CycleTracking,
-    /// Tracking loop of `cycle_tracking()` execution time.
-    CycleTrackingKernel,
-    /// Communication phase of `cycle_tracking()` execution time.
-    CycleTrackingComm,
-    /// `cycle_finalize()` execution time.
+    /// Processing phase of `cycle_tracking()` execution time.
+    CycleTrackingProcess,
+    /// Sorting phase of `cycle_tracking()` execution time.
+    CycleTrackingSort,
+    /// `cycle_sync()` execution time.
     CycleSync,
 }
 
@@ -35,8 +35,8 @@ impl Display for Section {
             Section::Main => write!(f, "Section::Main                 "),
             Section::PopulationControl => write!(f, "Section::PopulationControl    "),
             Section::CycleTracking => write!(f, "Section::CycleTracking        "),
-            Section::CycleTrackingKernel => write!(f, "Section::CycleTrackingKernel  "),
-            Section::CycleTrackingComm => write!(f, "Section::CycleTrackingComm    "),
+            Section::CycleTrackingProcess => write!(f, "Section::CycleTrackingProcess "),
+            Section::CycleTrackingSort => write!(f, "Section::CycleTrackingSort    "),
             Section::CycleSync => write!(f, "Section::CycleSync            "),
         }
     }
@@ -103,8 +103,8 @@ impl MCFastTimerContainer {
     /// Section::Main                  |                1 |     1.027135e7      |        1.027135e7      |    1.027135e7      |       1.027135e7      |             100.0
     /// Section::PopulationControl     |               10 |     9.609000e3      |        1.179200e4      |    1.645900e4      |       1.179200e5      |              71.6
     /// Section::CycleTracking         |               10 |     9.942510e5      |        1.014646e6      |    1.024305e6      |       1.014647e7      |              99.1
-    /// Section::CycleTrackingKernel   |               10 |     9.942500e5      |        1.014646e6      |    1.024305e6      |       1.014646e7      |              99.1
-    /// Section::CycleTrackingComm     |               10 |     0.000000e0      |        0.000000e0      |    0.000000e0      |       2.000000e0      |              38.5
+    /// Section::CycleTrackingProcess  |               10 |     9.942500e5      |        1.014646e6      |    1.024305e6      |       1.014646e7      |              99.1
+    /// Section::CycleTrackingSort     |               10 |     0.000000e0      |        0.000000e0      |    0.000000e0      |       2.000000e0      |              38.5
     /// Section::CycleSync             |               11 |     2.540000e2      |        6.280000e2      |    8.360000e2      |       6.283000e3      |              75.1
     /// Figure of merit: 2.203e6 [segments / cycle tracking time]
     /// ```
@@ -146,8 +146,8 @@ impl MCFastTimerContainer {
                     0 => Section::Main,
                     1 => Section::PopulationControl,
                     2 => Section::CycleTracking,
-                    3 => Section::CycleTrackingKernel,
-                    4 => Section::CycleTrackingComm,
+                    3 => Section::CycleTrackingProcess,
+                    4 => Section::CycleTrackingSort,
                     5 => Section::CycleSync,
                     _ => unreachable!(),
                 };

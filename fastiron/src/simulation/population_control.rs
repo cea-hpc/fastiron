@@ -4,12 +4,11 @@
 //! of particles in the simulation as well as two internal functions used by
 //! those.
 
-use std::sync::atomic::Ordering;
-
 use num::{one, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
+    data::tallies::TalliedEvent,
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
@@ -105,11 +104,7 @@ pub fn source_now<T: CustomFloat>(
                 seeds.push(rand_n_seed);
             }
 
-            mcunit
-                .tallies
-                .balance_cycle
-                .source
-                .fetch_add(seeds.len() as u64, Ordering::Relaxed);
+            mcunit.tallies.balance_cycle[TalliedEvent::Source] += seeds.len() as u64;
 
             container
                 .processing_particles

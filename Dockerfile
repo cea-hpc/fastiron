@@ -14,8 +14,13 @@ RUN --mount=type=cache,target=/cargo CARGO_HOME=/cargo cargo install --path=fast
 
 FROM debian:bullseye-slim
 
+RUN apt-get update
+RUN apt-get install -y linux-perf linux-base
+
 WORKDIR /fastiron
 
 COPY --from=builder /builder/install/bin /usr/bin
 
-CMD ["/usr/bin/fastiron"]
+COPY --from=builder /builder/input_files/ /fastiron/input_files/
+
+COPY --from=builder /builder/scripts/ /fastiron/scripts/
