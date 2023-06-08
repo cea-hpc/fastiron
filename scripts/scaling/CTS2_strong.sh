@@ -26,7 +26,7 @@ fastiron \
 mv tallies_report.csv $TARGET_FOLDER/tallies_r1.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r1.csv
 
-# 32*16*16 mesh -- 2 thread 
+# 32*16*16 mesh -- 2 threads 
 fastiron \
     -i ./input_files/profiling/CTS2_sized.inp \
     -n $N_PARTICLES \
@@ -36,7 +36,7 @@ fastiron \
 mv tallies_report.csv $TARGET_FOLDER/tallies_r2.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r2.csv
 
-# 32*16*16 mesh -- 4 thread 
+# 32*16*16 mesh -- 4 threads
 fastiron \
     -i ./input_files/profiling/CTS2_sized.inp \
     -n $N_PARTICLES \
@@ -46,7 +46,7 @@ fastiron \
 mv tallies_report.csv $TARGET_FOLDER/tallies_r4.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r4.csv
 
-# 32*16*16 mesh -- 8 thread 
+# 32*16*16 mesh -- 8 threads
 fastiron \
     -i ./input_files/profiling/CTS2_sized.inp \
     -n $N_PARTICLES \
@@ -56,7 +56,7 @@ fastiron \
 mv tallies_report.csv $TARGET_FOLDER/tallies_r8.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r8.csv
 
-# 32*16*16 mesh -- 16 thread 
+# 32*16*16 mesh -- 16 threads 
 fastiron \
     -i ./input_files/profiling/CTS2_sized.inp \
     -n $N_PARTICLES \
@@ -66,7 +66,7 @@ fastiron \
 mv tallies_report.csv $TARGET_FOLDER/tallies_r16.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r16.csv
 
-# 32*16*16 mesh -- 32 thread 
+# 32*16*16 mesh -- 32 threads
 fastiron \
     -i ./input_files/profiling/CTS2_sized.inp \
     -n $N_PARTICLES \
@@ -76,7 +76,7 @@ fastiron \
 mv tallies_report.csv $TARGET_FOLDER/tallies_r32.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r32.csv
 
-# 32*16*16 mesh -- 36 thread 
+# 32*16*16 mesh -- 36 threads
 fastiron \
     -i ./input_files/profiling/CTS2_sized.inp \
     -n $N_PARTICLES \

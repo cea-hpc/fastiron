@@ -24,7 +24,7 @@ fastiron \
 mv tallies_report.csv CTS2_soft_scaling/tallies_r1n40960.csv
 mv timers_report.csv CTS2_soft_scaling/timers_r1n40960.csv
 
-# 81920 particles -- 32*16*16 mesh -- 2 thread 
+# 81920 particles -- 32*16*16 mesh -- 2 threads
 fastiron \
     -i ./input_files/profiling/CTS2.inp \
     -n 81920 \
@@ -40,7 +40,7 @@ fastiron \
 mv tallies_report.csv CTS2_soft_scaling/tallies_r2n81920.csv
 mv timers_report.csv CTS2_soft_scaling/timers_r2n81920.csv
 
-# 163840 particles -- 32*32*16 mesh -- 4 thread 
+# 163840 particles -- 32*32*16 mesh -- 4 threads 
 fastiron \
     -i ./input_files/profiling/CTS2.inp \
     -n 163840 \
@@ -56,7 +56,7 @@ fastiron \
 mv tallies_report.csv CTS2_soft_scaling/tallies_r4n163840.csv
 mv timers_report.csv CTS2_soft_scaling/timers_r4n163840.csv
 
-# 327680 particles -- 32*32*32 mesh -- 8 thread 
+# 327680 particles -- 32*32*32 mesh -- 8 threads 
 fastiron \
     -i ./input_files/profiling/CTS2.inp \
     -n 327680 \
@@ -72,7 +72,7 @@ fastiron \
 mv tallies_report.csv CTS2_soft_scaling/tallies_r8n327680.csv
 mv timers_report.csv CTS2_soft_scaling/timers_r8n327680.csv
 
-# 655360 particles -- 64*32*32 mesh -- 16 thread 
+# 655360 particles -- 64*32*32 mesh -- 16 threads 
 fastiron \
     -i ./input_files/profiling/CTS2.inp \
     -n 655360 \
@@ -88,7 +88,7 @@ fastiron \
 mv tallies_report.csv CTS2_soft_scaling/tallies_r16n655360.csv
 mv timers_report.csv CTS2_soft_scaling/timers_r16n655360.csv
 
-# 1310720 particles -- 64*64*32 mesh -- 32 thread 
+# 1310720 particles -- 64*64*32 mesh -- 32 threads
 fastiron \
     -i ./input_files/profiling/CTS2.inp \
     -n 1310720 \
@@ -104,7 +104,7 @@ fastiron \
 mv tallies_report.csv CTS2_soft_scaling/tallies_r32n1310720.csv
 mv timers_report.csv CTS2_soft_scaling/timers_r32n1310720.csv
 
-# 1474560 particles -- 48*48*48 mesh -- 36 thread 
+# 1474560 particles -- 48*48*48 mesh -- 36 threads 
 fastiron \
     -i ./input_files/profiling/CTS2.inp \
     -n 1474560 \
