@@ -6,8 +6,7 @@
 # Values are taken from Quicksilver's scripts & adapted to our parallel implem.
 
 # target folder
-TARGET_FOLDER=sim_out/CTS2_soft_scaling
-mkdir -p $TARGET_FOLDER
+mkdir CTS2_soft_scaling
 
 # 40960 particles -- 16*16*16 mesh -- 1 thread 
 fastiron \
@@ -22,8 +21,8 @@ fastiron \
     -r 1 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r1n40960.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r1n40960.csv
+mv tallies_report.csv CTS2_soft_scaling/tallies_r1n40960.csv
+mv timers_report.csv CTS2_soft_scaling/timers_r1n40960.csv
 
 # 81920 particles -- 32*16*16 mesh -- 2 thread 
 fastiron \
@@ -38,8 +37,8 @@ fastiron \
     -r 2 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r2n81920.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r2n81920.csv
+mv tallies_report.csv CTS2_soft_scaling/tallies_r2n81920.csv
+mv timers_report.csv CTS2_soft_scaling/timers_r2n81920.csv
 
 # 163840 particles -- 32*32*16 mesh -- 4 thread 
 fastiron \
@@ -54,8 +53,8 @@ fastiron \
     -r 4 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r4n163840.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r4n163840.csv
+mv tallies_report.csv CTS2_soft_scaling/tallies_r4n163840.csv
+mv timers_report.csv CTS2_soft_scaling/timers_r4n163840.csv
 
 # 327680 particles -- 32*32*32 mesh -- 8 thread 
 fastiron \
@@ -70,8 +69,8 @@ fastiron \
     -r 8 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r8n327680.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r8n327680.csv
+mv tallies_report.csv CTS2_soft_scaling/tallies_r8n327680.csv
+mv timers_report.csv CTS2_soft_scaling/timers_r8n327680.csv
 
 # 655360 particles -- 64*32*32 mesh -- 16 thread 
 fastiron \
@@ -86,8 +85,8 @@ fastiron \
     -r 16 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r16n655360.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r16n655360.csv
+mv tallies_report.csv CTS2_soft_scaling/tallies_r16n655360.csv
+mv timers_report.csv CTS2_soft_scaling/timers_r16n655360.csv
 
 # 1310720 particles -- 64*64*32 mesh -- 32 thread 
 fastiron \
@@ -102,8 +101,8 @@ fastiron \
     -r 32 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r32n1310720.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r32n1310720.csv
+mv tallies_report.csv CTS2_soft_scaling/tallies_r32n1310720.csv
+mv timers_report.csv CTS2_soft_scaling/timers_r32n1310720.csv
 
 # 1474560 particles -- 48*48*48 mesh -- 36 thread 
 fastiron \
@@ -118,5 +117,5 @@ fastiron \
     -r 36 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r36n1474560.csv
-mv timers_report.csv $TARGET_FOLDER/timers_rr36n1474560.csv
+mv tallies_report.csv CTS2_soft_scaling/tallies_r36n1474560.csv
+mv timers_report.csv CTS2_soft_scaling/timers_rr36n1474560.csv

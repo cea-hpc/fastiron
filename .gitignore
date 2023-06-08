@@ -2,7 +2,6 @@
 /target
 /tmp
 /out
-/sim_out
 *.csv
 *.dat
 *.data
