@@ -4,6 +4,7 @@
 
 # Only the number of threads scales
 # Target number of particles can be specified but a default value is provided
+# The default value correspond to the fixed size of the problem
 
 N_PARTICLES=81920
 

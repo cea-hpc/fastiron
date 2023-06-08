@@ -5,12 +5,12 @@ Simulation:
    loadBalance: 0
    cycleTimers: 0
    debugThreads: 0
-   lx: 16
-   ly: 16
-   lz: 16
-   nx: 16
-   ny: 16
-   nz: 16
+   lx: 32
+   ly: 32
+   lz: 32
+   nx: 32
+   ny: 32
+   nz: 32
    nSteps: 100 
    seed: 1029384756
    eMax: 20
