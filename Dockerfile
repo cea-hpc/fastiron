@@ -21,6 +21,6 @@ WORKDIR /fastiron
 
 COPY --from=builder /builder/install/bin /usr/bin
 
-COPY --from=builder /builder/input_files/ /fastiron/input_files/
+COPY --from=builder /builder/input_files/* /fastiron/input_files/*
 
-COPY --from=builder /builder/scripts/ /fastiron/scripts/
+COPY --from=builder /builder/scripts/* /fastiron/scripts/*
