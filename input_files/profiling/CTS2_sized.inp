@@ -5,10 +5,10 @@ Simulation:
    loadBalance: 0
    cycleTimers: 0
    debugThreads: 0
-   lx: 16
+   lx: 32
    ly: 16
    lz: 16
-   nx: 16
+   nx: 32
    ny: 16
    nz: 16
    seed: 1029384756
