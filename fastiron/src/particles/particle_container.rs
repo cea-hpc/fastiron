@@ -126,6 +126,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
                         )
                     });
                 tallies.balance_cycle.add_to_self(&tmp);
+                tallies.scalar_flux_domain.add_to_self(&scalar_flux);
             }
             // Process unit in parallel
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
