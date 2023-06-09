@@ -103,8 +103,8 @@ impl<T: CustomFloat> ParticleContainer<T> {
         mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
         self.sort_processing();
         mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
-
-        match mcdata.exec_info.exec_policy {
+        let exinf = &mcdata.exec_info;
+        match exinf.exec_policy {
             // Process unit sequentially
             ExecPolicy::Sequential | ExecPolicy::Distributed => {
                 let mut tmp = Balance::default();
@@ -123,11 +123,12 @@ impl<T: CustomFloat> ParticleContainer<T> {
             }
             // Process unit in parallel
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
-                let extra_capacity = self.extra_particles.capacity() / 4;
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
                 // choose chunk size to get one chunk per thread
-                let chunk_size: usize =
-                    (self.processing_particles.len() / mcdata.exec_info.n_rayon_threads) + 1;
+                let chunk_size: usize = match exinf.chunk_size {
+                    0 => (self.processing_particles.len() / exinf.n_rayon_threads) + 1,
+                    _ => exinf.chunk_size,
+                };
 
                 let res: Balance = self
                     .processing_particles
@@ -141,8 +142,10 @@ impl<T: CustomFloat> ParticleContainer<T> {
                         // 2. Use a local extra collection that is later used to extend the global
                         //    container. This reduces the total number of lock (and prolly lock time)
                         let mut local_balance: Balance = Balance::default();
+                        // chunk_size * 5 is enough capacity to handle all particles undergoing
+                        // fission & splitting into the max possible nb of particles.
                         let mut local_extra: ParticleCollection<T> =
-                            ParticleCollection::with_capacity(extra_capacity);
+                            ParticleCollection::with_capacity(chunk_size * 5);
                         particles.iter_mut().for_each(|particle| {
                             cycle_tracking_guts(
                                 mcdata,

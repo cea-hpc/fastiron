@@ -79,6 +79,15 @@ pub struct Cli {
     )]
     pub n_particles: Option<u64>,
 
+    /// size of the chunks when executing in parallel -- if absent or set to 0, use dynamic chunk size
+    #[arg(
+        short = 'C',
+        long = "chunk-size",
+        num_args(1),
+        allow_negative_numbers(false)
+    )]
+    pub chunk_size: Option<u64>,
+
     /// number of rayon threads that should be used to run the simulation -- set to 0 for rayon's default config
     #[arg(
         short = 'r',

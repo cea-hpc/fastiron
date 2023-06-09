@@ -6,7 +6,7 @@
 # Values are taken from Quicksilver's scripts & adapted to our parallel implem.
 
 # target folder
-mkdir CTS2_soft_scaling
+mkdir -p CTS2_soft_scaling
 
 # 40960 particles -- 16*16*16 mesh -- 1 thread 
 fastiron \
@@ -104,16 +104,16 @@ fastiron \
 mv tallies_report.csv CTS2_soft_scaling/tallies_r32n1310720.csv
 mv timers_report.csv CTS2_soft_scaling/timers_r32n1310720.csv
 
-# 1474560 particles -- 48*48*48 mesh -- 36 threads 
+# 1474560 particles -- 48*48*64 mesh -- 36 threads 
 fastiron \
     -i ./input_files/profiling/CTS2.inp \
     -n 1474560 \
     -X 48 \
     -Y 48 \
-    -Z 48 \
+    -Z 64 \
     -x 48 \
     -y 48 \
-    -z 48 \
+    -z 64 \
     -r 36 \
     -c \
 

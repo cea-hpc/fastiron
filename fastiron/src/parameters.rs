@@ -325,6 +325,8 @@ pub struct SimulationParameters<T: CustomFloat> {
     /// Target number of particle for the simulation. Population will be controled
     /// according to this value.
     pub n_particles: u64,
+    /// Size of the chunks used when executing in parallel.
+    pub chunk_size: u64,
     /// Number of threads that should be used to run the simulation.
     pub n_rayon_threads: u64,
     /// Number of units that should be used to run the simulation.
@@ -399,6 +401,7 @@ impl<T: CustomFloat> SimulationParameters<T> {
         fetch_from_cli!(ly);
         fetch_from_cli!(lz);
         fetch_from_cli!(n_particles);
+        fetch_from_cli!(chunk_size);
         fetch_from_cli!(n_rayon_threads);
         fetch_from_cli!(n_units);
         fetch_from_cli!(n_steps);
@@ -422,6 +425,7 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             csv: false,
             debug_threads: false,
             n_particles: 1000000,
+            chunk_size: 0,
             n_rayon_threads: 1,
             n_units: 1,
             n_steps: 10,
