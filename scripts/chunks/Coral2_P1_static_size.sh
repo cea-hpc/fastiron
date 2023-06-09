@@ -6,7 +6,7 @@
 
 
 # 10485760 particles -- 64*64*64 mesh -- 64 threads 
-# This is basically the same density as the soft scaling case, adapted for 40 threads usage.
+# This is basically the same density as the soft scaling case, adapted for 64 threads usage.
 
 # Chunk size ranges from 64 up to (n_particles/n_threads).log2().ceil(),
 # basically the lowest power of 2 so that the number of chunks is equal or inferior to the number
