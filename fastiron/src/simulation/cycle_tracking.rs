@@ -3,13 +3,11 @@
 //! This module contains the function individually tracking particles during the
 //! main simulation section.
 
-use std::sync::atomic::Ordering;
-
 use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::{Balance, MCTallyEvent, TalliedEvent},
+    data::tallies::{Balance, MCTallyEvent, ScalarFluxDomain, TalliedEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{
         mc_particle::{MCParticle, Species},
@@ -33,6 +31,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
     balance: &mut Balance,
+    scalar_flux: &mut ScalarFluxDomain<T>,
     extra: &mut ParticleCollection<T>,
 ) {
     // set age & time to census
@@ -47,7 +46,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
 
-    cycle_tracking_function(mcdata, mcunit, particle, balance, extra);
+    cycle_tracking_function(mcdata, mcunit, particle, balance, scalar_flux, extra);
 }
 
 fn cycle_tracking_function<T: CustomFloat>(
@@ -55,6 +54,7 @@ fn cycle_tracking_function<T: CustomFloat>(
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
     balance: &mut Balance,
+    scalar_flux: &mut ScalarFluxDomain<T>,
     extra: &mut ParticleCollection<T>,
 ) {
     let mut keep_tracking: bool;
@@ -67,11 +67,8 @@ fn cycle_tracking_function<T: CustomFloat>(
         particle.num_segments += one();
         // update scalar flux tally
         // THIS CAN BE REPLACED BY A THREAD-LOCAL VARIABLE
-        mcunit.tallies.scalar_flux_domain.cell[particle.cell][particle.energy_group]
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| {
-                Some(x + particle.segment_path_length * particle.weight)
-            })
-            .unwrap();
+        scalar_flux.cell[particle.cell][particle.energy_group] +=
+            particle.segment_path_length * particle.weight;
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {

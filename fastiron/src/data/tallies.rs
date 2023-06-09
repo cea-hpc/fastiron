@@ -12,10 +12,8 @@ use std::{
     io::Write,
     iter::zip,
     ops::{Index, IndexMut},
-    sync::atomic::Ordering,
 };
 
-use atomic::Atomic;
 use num::zero;
 
 use crate::{
@@ -60,7 +58,7 @@ impl<T: CustomFloat> FluenceDomain<T> {
     pub fn compute(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
         let cell_iter = zip(self.cell.iter_mut(), scalar_flux_domain.cell.iter());
         cell_iter.for_each(|(fl_cell, sf_cell)| {
-            let sum = sf_cell.iter().map(|val| val.load(Ordering::Relaxed)).sum();
+            let sum = sf_cell.iter().sum();
             *fl_cell += sum;
         })
     }
@@ -162,7 +160,7 @@ impl std::iter::Sum<Balance> for Balance {
 ///
 /// Each element of the vector is corresponds to an energy
 /// level specific data of the cell.
-type ScalarFluxCell<T> = Vec<Atomic<T>>;
+type ScalarFluxCell<T> = Vec<T>;
 
 /// Domain-sorted _scalar-flux-data-holding_ sub-structure.
 #[derive(Debug, Default)]
@@ -174,20 +172,30 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
     /// Constructor.
     pub fn new(n_cells: usize, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
-        let mut cell = Vec::with_capacity(n_cells);
-        (0..n_cells).for_each(|_| {
-            let sf_cell = (0..num_groups).map(|_| Atomic::<T>::default()).collect();
-            cell.push(sf_cell);
-        });
-        Self { cell }
+        Self {
+            cell: vec![vec![zero(); num_groups]; n_cells],
+        }
     }
 
     /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
-        let num_groups = self.cell[0].len();
         self.cell.iter_mut().for_each(|sf_cell| {
-            *sf_cell = (0..num_groups).map(|_| Atomic::<T>::default()).collect();
+            sf_cell.fill(zero());
         });
+    }
+
+    pub fn add_to_self(&mut self, other: &ScalarFluxDomain<T>) {
+        self.cell
+            .iter_mut()
+            .zip(other.cell.iter())
+            .for_each(|(self_vec, other_vec)| {
+                self_vec
+                    .iter_mut()
+                    .zip(other_vec.iter())
+                    .for_each(|(lhs, rhs)| {
+                        *lhs += *rhs;
+                    })
+            })
     }
 }
 
@@ -350,12 +358,7 @@ impl<T: CustomFloat> Tallies<T> {
         self.scalar_flux_domain
             .cell
             .iter()
-            .map(|sf_cell| {
-                sf_cell
-                    .iter()
-                    .map(|val| val.load(Ordering::Relaxed))
-                    .sum::<T>()
-            })
+            .map(|sf_cell| sf_cell.iter().sum::<T>())
             .sum::<T>()
     }
 

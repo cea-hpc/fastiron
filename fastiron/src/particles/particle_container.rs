@@ -8,7 +8,7 @@ use rayon::prelude::*;
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::{Balance, TalliedEvent},
+    data::tallies::{Balance, ScalarFluxDomain, TalliedEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     simulation::cycle_tracking::cycle_tracking_guts,
     utils::{
@@ -108,6 +108,10 @@ impl<T: CustomFloat> ParticleContainer<T> {
             // Process unit sequentially
             ExecPolicy::Sequential | ExecPolicy::Distributed => {
                 let mut tmp = Balance::default();
+                let mut scalar_flux = ScalarFluxDomain::new(
+                    mcunit.domain.cell_state.len(),
+                    mcdata.params.simulation_params.n_groups,
+                );
                 (&mut self.processing_particles)
                     .into_iter()
                     .for_each(|particle| {
@@ -116,6 +120,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
                             mcunit,
                             particle,
                             &mut tmp,
+                            &mut scalar_flux,
                             &mut self.extra_particles,
                         )
                     });
@@ -124,6 +129,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
             // Process unit in parallel
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
+                let scalar_flux = Arc::new(Mutex::new(&mut mcunit.tallies.scalar_flux_domain));
                 // choose chunk size to get one chunk per thread
                 let chunk_size: usize = match exinf.chunk_size {
                     0 => (self.processing_particles.len() / exinf.n_rayon_threads) + 1,
@@ -141,21 +147,29 @@ impl<T: CustomFloat> ParticleContainer<T> {
                         //    of the iterators
                         // 2. Use a local extra collection that is later used to extend the global
                         //    container. This reduces the total number of lock (and prolly lock time)
+
                         let mut local_balance: Balance = Balance::default();
                         // chunk_size * 5 is enough capacity to handle all particles undergoing
                         // fission & splitting into the max possible nb of particles.
                         let mut local_extra: ParticleCollection<T> =
                             ParticleCollection::with_capacity(chunk_size * 5);
+                        let mut local_scalar_flux = ScalarFluxDomain::new(
+                            mcunit.domain.cell_state.len(),
+                            mcdata.params.simulation_params.n_groups,
+                        );
+
                         particles.iter_mut().for_each(|particle| {
                             cycle_tracking_guts(
                                 mcdata,
                                 mcunit,
                                 particle,
                                 &mut local_balance,
+                                &mut local_scalar_flux,
                                 &mut local_extra,
                             )
                         });
                         extra.lock().unwrap().append(&mut local_extra);
+                        scalar_flux.lock().unwrap().add_to_self(&local_scalar_flux);
                         local_balance
                     })
                     .fold_with(Balance::default(), |a, b| a + b)
