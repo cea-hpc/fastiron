@@ -59,7 +59,12 @@ pub struct FluenceDomain<T: CustomFloat> {
 
 impl<T: CustomFloat> FluenceDomain<T> {
     pub fn compute(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
-        let cell_iter = zip(self.cell.iter_mut(), scalar_flux_domain.cell.iter());
+        let cell_iter = zip(
+            self.cell.iter_mut(),
+            scalar_flux_domain
+                .cell
+                .chunks(scalar_flux_domain.num_groups),
+        );
         cell_iter.for_each(|(fl_cell, sf_cell)| {
             let sum = sf_cell.iter().map(|val| val.load(Ordering::Relaxed)).sum();
             *fl_cell += sum;
@@ -159,36 +164,43 @@ impl std::iter::Sum<Balance> for Balance {
 // Scalar flux data
 //=================
 
-/// Cell-specific scalar flux data.
-///
-/// Each element of the vector is corresponds to an energy
-/// level specific data of the cell.
-type ScalarFluxCell<T> = Vec<Atomic<T>>;
-
 /// Domain-sorted _scalar-flux-data-holding_ sub-structure.
 #[derive(Debug, Default)]
 pub struct ScalarFluxDomain<T: CustomFloat> {
-    pub cell: Vec<ScalarFluxCell<T>>,
+    pub num_groups: usize,
+    pub cell: Vec<Atomic<T>>,
 }
 
 impl<T: CustomFloat> ScalarFluxDomain<T> {
     /// Constructor.
     pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
-        let mut cell = Vec::with_capacity(domain.cell_state.len());
-        (0..domain.cell_state.len()).for_each(|_| {
-            let sf_cell = (0..num_groups).map(|_| Atomic::<T>::default()).collect();
-            cell.push(sf_cell);
-        });
-        Self { cell }
+        let cell = (0..domain.cell_state.len() * num_groups)
+            .map(|_| Atomic::new(zero()))
+            .collect();
+        Self { num_groups, cell }
     }
 
     /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
-        let num_groups = self.cell[0].len();
-        self.cell.iter_mut().for_each(|sf_cell| {
-            *sf_cell = (0..num_groups).map(|_| Atomic::<T>::default()).collect();
-        });
+        self.cell
+            .iter_mut()
+            .for_each(|elem| elem.store(zero(), Ordering::Relaxed))
+    }
+}
+
+// maybe make theses accesses unchecked?
+impl<T: CustomFloat> Index<(usize, usize)> for ScalarFluxDomain<T> {
+    type Output = Atomic<T>;
+
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        &self.cell[index.0 * self.num_groups + index.1]
+    }
+}
+
+impl<T: CustomFloat> IndexMut<(usize, usize)> for ScalarFluxDomain<T> {
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        &mut self.cell[index.0 * self.num_groups + index.1]
     }
 }
 
@@ -351,12 +363,7 @@ impl<T: CustomFloat> Tallies<T> {
         self.scalar_flux_domain
             .cell
             .iter()
-            .map(|sf_cell| {
-                sf_cell
-                    .iter()
-                    .map(|val| val.load(Ordering::Relaxed))
-                    .sum::<T>()
-            })
+            .map(|sf_cell| sf_cell.load(Ordering::Relaxed))
             .sum::<T>()
     }
 
