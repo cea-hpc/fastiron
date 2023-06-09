@@ -8,7 +8,7 @@ use rayon::prelude::*;
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::{Balance, ScalarFluxDomain, TalliedEvent},
+    data::tallies::{Balance, ScalarFluxDomain, TalliedEvent, Tallies},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     simulation::cycle_tracking::cycle_tracking_guts,
     utils::{
@@ -99,6 +99,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
         &mut self,
         mcdata: &MonteCarloData<T>,
         mcunit: &mut MonteCarloUnit<T>,
+        tallies: &mut Tallies<T>,
     ) {
         mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
         self.sort_processing();
@@ -124,12 +125,12 @@ impl<T: CustomFloat> ParticleContainer<T> {
                             &mut self.extra_particles,
                         )
                     });
-                mcunit.tallies.balance_cycle.add_to_self(&tmp);
+                tallies.balance_cycle.add_to_self(&tmp);
             }
             // Process unit in parallel
             ExecPolicy::Rayon | ExecPolicy::Hybrid => {
                 let extra = Arc::new(Mutex::new(&mut self.extra_particles));
-                let scalar_flux = Arc::new(Mutex::new(&mut mcunit.tallies.scalar_flux_domain));
+                let scalar_flux = Arc::new(Mutex::new(&mut tallies.scalar_flux_domain));
                 // choose chunk size to get one chunk per thread
                 let chunk_size: usize = match exinf.chunk_size {
                     0 => (self.processing_particles.len() / exinf.n_rayon_threads) + 1,
@@ -178,7 +179,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 assert_eq!(res[TalliedEvent::Start], 0);
                 assert_eq!(res[TalliedEvent::End], 0);
                 assert_eq!(res[TalliedEvent::Source], 0);
-                mcunit.tallies.balance_cycle.add_to_self(&res);
+                tallies.balance_cycle.add_to_self(&res);
             }
         }
         self.processing_particles

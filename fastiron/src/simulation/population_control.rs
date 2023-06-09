@@ -8,7 +8,7 @@ use num::{one, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::TalliedEvent,
+    data::tallies::{TalliedEvent, Tallies},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
@@ -70,6 +70,7 @@ pub fn compute_split_factor<T: CustomFloat>(
 pub fn source_now<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &mut MonteCarloUnit<T>,
+    tallie: &mut Tallies<T>,
     container: &mut ParticleContainer<T>,
 ) {
     let time_step = mcdata.params.simulation_params.dt;
@@ -104,7 +105,7 @@ pub fn source_now<T: CustomFloat>(
                 seeds.push(rand_n_seed);
             }
 
-            mcunit.tallies.balance_cycle[TalliedEvent::Source] += seeds.len() as u64;
+            tallie.balance_cycle[TalliedEvent::Source] += seeds.len() as u64;
 
             container
                 .processing_particles

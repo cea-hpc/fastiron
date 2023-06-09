@@ -13,7 +13,6 @@ use num::zero;
 use crate::constants::CustomFloat;
 use crate::data::material_database::MaterialDatabase;
 use crate::data::nuclear_data::NuclearData;
-use crate::data::tallies::Tallies;
 use crate::geometry::mc_domain::MCDomain;
 use crate::parameters::Parameters;
 use crate::utils::mc_fast_timer::MCFastTimerContainer;
@@ -56,12 +55,10 @@ impl<T: CustomFloat> MonteCarloData<T> {
 
 /// Super-structure used to contain unit-specific data of the Monte-Carlo problem.
 /// The notion of unit is specified ....
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MonteCarloUnit<T: CustomFloat> {
     /// List of spatial domains.
     pub domain: MCDomain<T>,
-    /// Object storing all tallies of the simulation.
-    pub tallies: Tallies<T>,
     /// Object storing all tallies of the simulation.
     pub fast_timer: MCFastTimerContainer,
     /// Weight of the particles at creation in a source zone.
@@ -71,23 +68,6 @@ pub struct MonteCarloUnit<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> MonteCarloUnit<T> {
-    /// Constructor.
-    pub fn new(params: &Parameters<T>) -> Self {
-        let tallies: Tallies<T> = Tallies::new(
-            params.simulation_params.energy_spectrum.to_owned(),
-            params.simulation_params.n_groups,
-        );
-        let fast_timer: MCFastTimerContainer = MCFastTimerContainer::default();
-
-        Self {
-            domain: Default::default(),
-            tallies,
-            fast_timer,
-            unit_weight: zero(),
-            xs_cache: Default::default(),
-        }
-    }
-
     /// Clear the cross section cache for each domain.
     pub fn clear_cross_section_cache(&mut self) {
         self.xs_cache

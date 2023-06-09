@@ -8,6 +8,7 @@ use crate::{
         material_database::{Isotope, Material},
         mc_vector::MCVector,
         nuclear_data::{NuclearData, Polynomial, ReactionType},
+        tallies::Tallies,
     },
     geometry::{
         global_fcc_grid::GlobalFccGrid, mc_domain::MCDomain, mesh_partition::MeshPartition,
@@ -84,25 +85,42 @@ pub fn init_particle_containers<T: CustomFloat>(
     vec![container; n_container]
 }
 
-pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarloUnit<T>> {
+pub fn init_mcunits<T: CustomFloat>(
+    mcdata: &MonteCarloData<T>,
+) -> (Vec<MonteCarloUnit<T>>, Vec<Tallies<T>>) {
     let mut units: Vec<MonteCarloUnit<T>> = (0..mcdata.params.simulation_params.n_units)
-        .map(|_| MonteCarloUnit::new(&mcdata.params))
+        .map(|_| MonteCarloUnit::default())
         .collect();
 
     // inits
     println!("  [MonteCarloUnit Initialization]: Start");
     init_mesh(&mut units, mcdata);
-    init_tallies(&mut units, &mcdata.params);
+    //init_tallies(&mut units, &mcdata.params);
     init_xs_cache(&mut units, mcdata.params.simulation_params.n_groups);
     println!("  [MonteCarloUnit Initialization]: Done");
 
+    let tallies: Vec<Tallies<T>> = units
+        .iter()
+        .map(|mcunit| {
+            let mut tt = Tallies::new(
+                mcdata.params.simulation_params.energy_spectrum.to_owned(),
+                mcdata.params.simulation_params.n_groups,
+            );
+            tt.initialize_tallies(
+                mcunit.domain.cell_state.len(),
+                mcdata.params.simulation_params.n_groups,
+                mcdata.params.simulation_params.coral_benchmark,
+            );
+            tt
+        })
+        .collect();
+
     // checks
     println!("  [Consistency Check]: Start");
-    // TODO: implement the check correctly according to new init
     consistency_check(&units);
     println!("  [Consistency Check]: Done");
 
-    units
+    (units, tallies)
 }
 
 //==================
@@ -298,16 +316,6 @@ fn init_mesh<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], mcdata: &MonteCa
     //        .domain
     //        .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, mat_db))
     //});
-}
-
-fn init_tallies<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], params: &Parameters<T>) {
-    mcunits.iter_mut().for_each(|mcunit| {
-        mcunit.tallies.initialize_tallies(
-            mcunit.domain.cell_state.len(),
-            params.simulation_params.n_groups,
-            params.simulation_params.coral_benchmark,
-        )
-    })
 }
 
 fn init_xs_cache<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], n_energy_groups: usize) {
