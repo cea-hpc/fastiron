@@ -13,6 +13,8 @@
 # We run a simulation for every power of 2 in the range as well as the exact chunk size yielding
 # one chunk per thread for n_particles (this corresponds to 27649 here).
 
+echo "~~~~~~~~~~~NON FUNCTIONNAL~~~~~~~~~~~"
+
 # target folder
 TARGET_FOLDER=CTS2_chunk_size/static
 mkdir -p $TARGET_FOLDER
