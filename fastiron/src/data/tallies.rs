@@ -246,7 +246,7 @@ impl<T: CustomFloat> Tallies<T> {
 
         // Initialize Fluence if necessary
         if bench_type != BenchType::Standard {
-            self.fluence.cell = vec![zero(); self.scalar_flux_domain.cell.len()];
+            self.fluence.cell = vec![zero(); n_cells];
         }
     }
 
