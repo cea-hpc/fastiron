@@ -20,7 +20,6 @@ use num::zero;
 
 use crate::{
     constants::CustomFloat,
-    geometry::mc_domain::MCDomain,
     parameters::BenchType,
     particles::{particle_collection::ParticleCollection, particle_container::ParticleContainer},
     utils::mc_fast_timer::{self, MCFastTimerContainer, Section},
@@ -173,9 +172,9 @@ pub struct ScalarFluxDomain<T: CustomFloat> {
 
 impl<T: CustomFloat> ScalarFluxDomain<T> {
     /// Constructor.
-    pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
+    pub fn new(n_cells: usize, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
-        let cell = (0..domain.cell_state.len() * num_groups)
+        let cell = (0..n_cells * num_groups)
             .map(|_| Atomic::new(zero()))
             .collect();
         Self { num_groups, cell }
@@ -239,11 +238,11 @@ impl<T: CustomFloat> Tallies<T> {
     /// Prepare the tallies for use.
     pub fn initialize_tallies(
         &mut self,
-        domain: &MCDomain<T>,
+        n_cells: usize,
         num_energy_groups: usize,
         bench_type: BenchType,
     ) {
-        self.scalar_flux_domain = ScalarFluxDomain::new(domain, num_energy_groups);
+        self.scalar_flux_domain = ScalarFluxDomain::new(n_cells, num_energy_groups);
 
         // Initialize Fluence if necessary
         if bench_type != BenchType::Standard {

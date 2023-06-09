@@ -303,7 +303,7 @@ fn init_mesh<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], mcdata: &MonteCa
 fn init_tallies<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], params: &Parameters<T>) {
     mcunits.iter_mut().for_each(|mcunit| {
         mcunit.tallies.initialize_tallies(
-            &mcunit.domain,
+            mcunit.domain.cell_state.len(),
             params.simulation_params.n_groups,
             params.simulation_params.coral_benchmark,
         )
