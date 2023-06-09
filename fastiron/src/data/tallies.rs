@@ -20,7 +20,6 @@ use num::zero;
 
 use crate::{
     constants::CustomFloat,
-    geometry::mc_domain::MCDomain,
     parameters::BenchType,
     particles::{particle_collection::ParticleCollection, particle_container::ParticleContainer},
     utils::mc_fast_timer::{self, MCFastTimerContainer, Section},
@@ -173,10 +172,10 @@ pub struct ScalarFluxDomain<T: CustomFloat> {
 
 impl<T: CustomFloat> ScalarFluxDomain<T> {
     /// Constructor.
-    pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
+    pub fn new(n_cells: usize, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
-        let mut cell = Vec::with_capacity(domain.cell_state.len());
-        (0..domain.cell_state.len()).for_each(|_| {
+        let mut cell = Vec::with_capacity(n_cells);
+        (0..n_cells).for_each(|_| {
             let sf_cell = (0..num_groups).map(|_| Atomic::<T>::default()).collect();
             cell.push(sf_cell);
         });
@@ -227,11 +226,11 @@ impl<T: CustomFloat> Tallies<T> {
     /// Prepare the tallies for use.
     pub fn initialize_tallies(
         &mut self,
-        domain: &MCDomain<T>,
+        n_cells_in_domain: usize,
         num_energy_groups: usize,
         bench_type: BenchType,
     ) {
-        self.scalar_flux_domain = ScalarFluxDomain::new(domain, num_energy_groups);
+        self.scalar_flux_domain = ScalarFluxDomain::new(n_cells_in_domain, num_energy_groups);
 
         // Initialize Fluence if necessary
         if bench_type != BenchType::Standard {
