@@ -192,38 +192,6 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
     }
 }
 
-//================
-// Cell tally data
-//================
-
-/// Domain-specific _cell-tallied-data-holding_ sub-structure.
-#[derive(Debug, Default, Clone)]
-pub struct CellTallyDomain<T: CustomFloat> {
-    pub cell: Vec<T>,
-}
-
-impl<T: CustomFloat> CellTallyDomain<T> {
-    /// Constructor.
-    pub fn new(domain: &MCDomain<T>) -> Self {
-        Self {
-            cell: vec![zero(); domain.cell_state.len()],
-        }
-    }
-
-    /// Reset fields to their default value i.e. 0.
-    pub fn reset(&mut self) {
-        self.cell = vec![zero(); self.cell.len()];
-    }
-
-    /// Add another [CellTallyDomain]'s value to its own.
-    pub fn add(&mut self, other: &CellTallyDomain<T>) {
-        // zip iterators from the two objects' values.
-        let iter = zip(self.cell.iter_mut(), other.cell.iter());
-        // sum other to self
-        iter.for_each(|(lhs, rhs)| *lhs += *rhs);
-    }
-}
-
 //========
 // Tallies
 //========
@@ -237,8 +205,6 @@ pub struct Tallies<T: CustomFloat> {
     pub balance_cycle: Balance,
     /// Top-level structure holding scalar flux data.
     pub scalar_flux_domain: ScalarFluxDomain<T>,
-    /// Top-level structure holding cell tallied data.
-    pub cell_tally_domain: CellTallyDomain<T>,
     /// Top-level structure used to compute fluence data.
     pub fluence: FluenceDomain<T>,
     /// Energy spectrum of the problem.
@@ -253,7 +219,6 @@ impl<T: CustomFloat> Tallies<T> {
             balance_cumulative: Default::default(),
             balance_cycle: Default::default(),
             scalar_flux_domain: Default::default(),
-            cell_tally_domain: Default::default(),
             fluence: Default::default(),
             spectrum,
         }
@@ -266,7 +231,6 @@ impl<T: CustomFloat> Tallies<T> {
         num_energy_groups: usize,
         bench_type: BenchType,
     ) {
-        self.cell_tally_domain = CellTallyDomain::new(domain);
         self.scalar_flux_domain = ScalarFluxDomain::new(domain, num_energy_groups);
 
         // Initialize Fluence if necessary
@@ -432,7 +396,6 @@ impl<T: CustomFloat> Tallies<T> {
             self.fluence.compute(&self.scalar_flux_domain);
         }
 
-        self.cell_tally_domain.reset();
         self.scalar_flux_domain.reset();
     }
 }
