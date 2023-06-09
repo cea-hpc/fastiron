@@ -56,7 +56,12 @@ pub struct FluenceDomain<T: CustomFloat> {
 
 impl<T: CustomFloat> FluenceDomain<T> {
     pub fn compute(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
-        let cell_iter = zip(self.cell.iter_mut(), scalar_flux_domain.cell.iter());
+        let cell_iter = zip(
+            self.cell.iter_mut(),
+            scalar_flux_domain
+                .cell
+                .chunks(scalar_flux_domain.num_groups),
+        );
         cell_iter.for_each(|(fl_cell, sf_cell)| {
             let sum = sf_cell.iter().sum();
             *fl_cell += sum;
@@ -156,16 +161,11 @@ impl std::iter::Sum<Balance> for Balance {
 // Scalar flux data
 //=================
 
-/// Cell-specific scalar flux data.
-///
-/// Each element of the vector is corresponds to an energy
-/// level specific data of the cell.
-type ScalarFluxCell<T> = Vec<T>;
-
 /// Domain-sorted _scalar-flux-data-holding_ sub-structure.
 #[derive(Debug, Default)]
 pub struct ScalarFluxDomain<T: CustomFloat> {
-    pub cell: Vec<ScalarFluxCell<T>>,
+    pub num_groups: usize,
+    pub cell: Vec<T>,
 }
 
 impl<T: CustomFloat> ScalarFluxDomain<T> {
@@ -173,29 +173,38 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
     pub fn new(n_cells: usize, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
         Self {
-            cell: vec![vec![zero(); num_groups]; n_cells],
+            num_groups,
+            cell: vec![zero(); n_cells * num_groups],
         }
     }
 
     /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
-        self.cell.iter_mut().for_each(|sf_cell| {
-            sf_cell.fill(zero());
-        });
+        self.cell.fill(zero())
     }
 
     pub fn add_to_self(&mut self, other: &ScalarFluxDomain<T>) {
         self.cell
             .iter_mut()
             .zip(other.cell.iter())
-            .for_each(|(self_vec, other_vec)| {
-                self_vec
-                    .iter_mut()
-                    .zip(other_vec.iter())
-                    .for_each(|(lhs, rhs)| {
-                        *lhs += *rhs;
-                    })
+            .for_each(|(lhs, rhs)| {
+                *lhs += *rhs;
             })
+    }
+}
+
+// maybe make theses accesses unchecked?
+impl<T: CustomFloat> Index<(usize, usize)> for ScalarFluxDomain<T> {
+    type Output = T;
+
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        &self.cell[index.0 * self.num_groups + index.1]
+    }
+}
+
+impl<T: CustomFloat> IndexMut<(usize, usize)> for ScalarFluxDomain<T> {
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        &mut self.cell[index.0 * self.num_groups + index.1]
     }
 }
 
@@ -242,7 +251,7 @@ impl<T: CustomFloat> Tallies<T> {
 
         // Initialize Fluence if necessary
         if bench_type != BenchType::Standard {
-            self.fluence.cell = vec![zero(); self.scalar_flux_domain.cell.len()];
+            self.fluence.cell = vec![zero(); n_cells_in_domain];
         }
     }
 
@@ -355,11 +364,7 @@ impl<T: CustomFloat> Tallies<T> {
 
     /// Computes the global scalar flux value of the problem.
     pub fn scalar_flux_sum(&self) -> T {
-        self.scalar_flux_domain
-            .cell
-            .iter()
-            .map(|sf_cell| sf_cell.iter().sum::<T>())
-            .sum::<T>()
+        self.scalar_flux_domain.cell.iter().sum::<T>()
     }
 
     /// Update the energy spectrum by going over all the currently valid particles.
