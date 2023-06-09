@@ -66,7 +66,6 @@ fn cycle_tracking_function<T: CustomFloat>(
         balance[TalliedEvent::NumSegments] += 1;
         particle.num_segments += one();
         // update scalar flux tally
-        // THIS CAN BE REPLACED BY A THREAD-LOCAL VARIABLE
         scalar_flux.cell[particle.cell][particle.energy_group] +=
             particle.segment_path_length * particle.weight;
 
