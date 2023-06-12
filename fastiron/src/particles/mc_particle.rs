@@ -26,7 +26,7 @@ pub enum Species {
     /// Invalid value.
     Unknown = -1,
     #[default]
-    /// Valid value. Quicksilver only supportedone particle type.
+    /// Valid value. Quicksilver only supported one particle type.
     Known = 0, // \o/
 }
 

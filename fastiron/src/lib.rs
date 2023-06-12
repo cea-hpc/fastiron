@@ -47,6 +47,8 @@
 //!           z-size of simulation in cm
 //!   -n, --n-particles <N_PARTICLES>
 //!           total number of particules
+//!   -C, --chunk-size <CHUNK_SIZE>
+//!           size of the chunks when executing in parallel -- if absent or set to 0, use dynamic chunk size
 //!   -r, --rayon <N_RAYON_THREADS>
 //!           number of rayon threads that should be used to run the simulation -- set to 0 for rayon's default config
 //!   -u, --units <N_UNITS>

@@ -16,46 +16,57 @@ use super::mc_particle::MCParticle;
 // Base structures & methods
 //==========================
 
+/// Custome data structure used to implement [rayon]'s iterator.
 #[derive(Debug, Clone)]
 pub struct ParticleCollection<T: CustomFloat> {
+    /// Vector holding all the particles of the collection.
     data: Vec<MCParticle<T>>,
 }
 
 impl<T: CustomFloat> ParticleCollection<T> {
+    /// Propagating method.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             data: Vec::with_capacity(capacity),
         }
     }
 
+    /// Propagating method.
     pub fn capacity(&self) -> usize {
         self.data.capacity()
     }
 
+    /// Propagating method.
     pub fn len(&self) -> usize {
         self.data.len()
     }
 
+    /// Propagating method.
     pub fn is_empty(&self) -> bool {
         self.data.len() == 0
     }
 
+    /// Propagating method.
     pub fn retain<F: Fn(&MCParticle<T>) -> bool>(&mut self, f: F) {
         self.data.retain(f);
     }
 
+    /// Propagating method.
     pub fn retain_mut<F: FnMut(&mut MCParticle<T>) -> bool>(&mut self, f: F) {
         self.data.retain_mut(f);
     }
 
+    /// Propagating method.
     pub fn append(&mut self, other: &mut Self) {
         self.data.append(&mut other.data)
     }
 
+    /// Propagating method.
     pub fn extend<I: IntoIterator<Item = MCParticle<T>>>(&mut self, iter: I) {
         self.data.extend(iter);
     }
 
+    /// Propagating method.
     pub fn sort_by<F: FnMut(&MCParticle<T>, &MCParticle<T>) -> std::cmp::Ordering>(
         &mut self,
         compare: F,
@@ -64,18 +75,22 @@ impl<T: CustomFloat> ParticleCollection<T> {
     }
 }
 
+/// Custom immutable iterator structure.
 pub struct ParParIter<'a, T: CustomFloat> {
     data_slice: &'a [MCParticle<T>],
 }
 
+/// Custom mutable iterator structure.
 pub struct ParParIterMut<'a, T: CustomFloat> {
     data_slice: &'a mut [MCParticle<T>],
 }
 
+/// Custom immutable producer for the iterator to use.
 pub struct ParticleProducer<'a, T: CustomFloat> {
     data_slice: &'a [MCParticle<T>],
 }
 
+/// Custom mutable producer for the iterator to use.
 pub struct ParticleProducerMut<'a, T: CustomFloat> {
     data_slice: &'a mut [MCParticle<T>],
 }
