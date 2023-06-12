@@ -20,7 +20,6 @@ use num::zero;
 
 use crate::{
     constants::CustomFloat,
-    parameters::BenchType,
     utils::mc_fast_timer::{self, MCFastTimerContainer, Section},
 };
 
@@ -211,24 +210,12 @@ pub struct Tallies<T: CustomFloat> {
     pub balance_cycle: Balance,
     /// Top-level structure holding scalar flux data.
     pub scalar_flux_domain: ScalarFluxDomain<T>,
-    /// Top-level structure used to compute fluence data.
-    pub fluence: FluenceDomain<T>,
 }
 
 impl<T: CustomFloat> Tallies<T> {
     /// Prepare the tallies for use.
-    pub fn initialize_tallies(
-        &mut self,
-        n_cells: usize,
-        num_energy_groups: usize,
-        bench_type: BenchType,
-    ) {
+    pub fn initialize_tallies(&mut self, n_cells: usize, num_energy_groups: usize) {
         self.scalar_flux_domain = ScalarFluxDomain::new(n_cells, num_energy_groups);
-
-        // Initialize Fluence if necessary
-        if bench_type != BenchType::Standard {
-            self.fluence.cell = vec![zero(); n_cells];
-        }
     }
 
     /// Prints summarized data recorded by the tallies.

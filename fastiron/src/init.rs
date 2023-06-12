@@ -301,11 +301,6 @@ fn init_mesh<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], mcdata: &MonteCa
         mcunits[gid].domain =
             MCDomain::new(&comm.partition[gid], &global_grid, &ddc, params, mat_db);
     });
-    //comm.partition.iter().for_each(|mesh_p| {
-    //    mcunit
-    //        .domain
-    //        .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, mat_db))
-    //});
 }
 
 fn init_tallies<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], params: &Parameters<T>) {
@@ -313,7 +308,6 @@ fn init_tallies<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], params: &Para
         mcunit.tallies.initialize_tallies(
             mcunit.domain.cell_state.len(),
             params.simulation_params.n_groups,
-            params.simulation_params.coral_benchmark,
         )
     })
 }

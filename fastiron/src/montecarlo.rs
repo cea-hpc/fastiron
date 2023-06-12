@@ -132,7 +132,7 @@ pub struct MonteCarloResults<T: CustomFloat> {
     pub fluence: FluenceDomain<T>,
     /// Energy spectrum of the problem.
     pub spectrum: EnergySpectrum,
-    /// Enum used to ...
+    /// Enum used to adapt additional checks after simulation.
     pub bench_type: BenchType,
 }
 
