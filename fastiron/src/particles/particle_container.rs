@@ -11,10 +11,7 @@ use crate::{
     data::tallies::{Balance, TalliedEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     simulation::cycle_tracking::cycle_tracking_guts,
-    utils::{
-        mc_fast_timer::{self, Section},
-        mc_processor_info::ExecPolicy,
-    },
+    utils::mc_processor_info::ExecPolicy,
 };
 
 use super::{mc_particle::Species, particle_collection::ParticleCollection};
@@ -100,9 +97,6 @@ impl<T: CustomFloat> ParticleContainer<T> {
         mcdata: &MonteCarloData<T>,
         mcunit: &mut MonteCarloUnit<T>,
     ) {
-        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
-        self.sort_processing();
-        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
         let exinf = &mcdata.exec_info;
         match exinf.exec_policy {
             // Process unit sequentially

@@ -240,11 +240,14 @@ pub fn cycle_process<T: CustomFloat>(
 
     loop {
         while !container.is_done_processing() {
-            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
+            // sort particles
+            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
+            container.sort_processing();
+            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
 
             // track particles
+            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
             container.process_particles(mcdata, mcunit);
-
             mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
 
             // clean extra here
