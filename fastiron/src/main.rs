@@ -8,8 +8,8 @@ use rayon::ThreadPoolBuilder;
 
 use fastiron::constants::sim::SRC_FRACTION;
 use fastiron::constants::CustomFloat;
-use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers};
-use fastiron::montecarlo::{MonteCarloData, MonteCarloUnit};
+use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers, init_results};
+use fastiron::montecarlo::{MonteCarloData, MonteCarloResults, MonteCarloUnit};
 use fastiron::parameters::Parameters;
 use fastiron::particles::particle_container::ParticleContainer;
 use fastiron::simulation::population_control;
@@ -50,6 +50,7 @@ fn main() {
     let mut mcdata = init_mcdata(params);
     let mut containers = init_particle_containers(&mcdata.params, &mcdata.exec_info);
     let mut mcunits = init_mcunits(&mcdata);
+    let mut mcresults = init_results(&mcdata.params);
 
     // rayon only => one global thread pool
     if mcdata.exec_info.exec_policy == ExecPolicy::Rayon {
@@ -82,10 +83,22 @@ fn main() {
             mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::Main);
 
             for step in 0..n_steps {
-                cycle_sync(&mut mcdata, &mut mcunits, &mut containers, step);
+                cycle_sync(
+                    &mut mcdata,
+                    &mut mcunits,
+                    &mut containers,
+                    step,
+                    &mut mcresults,
+                );
                 cycle_process(&mcdata, &mut mcunits[0], &mut containers[0]);
             }
-            cycle_sync(&mut mcdata, &mut mcunits, &mut containers, n_steps);
+            cycle_sync(
+                &mut mcdata,
+                &mut mcunits,
+                &mut containers,
+                n_steps,
+                &mut mcresults,
+            );
 
             mc_fast_timer::stop(&mut mcunits[0].fast_timer, Section::Main);
         }
@@ -97,26 +110,27 @@ fn main() {
     // Wrap-up
     //========
 
-    game_over(&mcdata, &mut mcunits);
+    game_over(&mcdata, &mut mcunits, &mcresults);
 
-    coral_benchmark_correctness(
-        mcdata.params.simulation_params.coral_benchmark,
-        &mcunits[0].tallies,
-    );
+    coral_benchmark_correctness(&mcresults);
 }
 
-pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunits: &mut [MonteCarloUnit<T>]) {
+pub fn game_over<T: CustomFloat>(
+    mcdata: &MonteCarloData<T>,
+    mcunits: &mut [MonteCarloUnit<T>],
+    mcresults: &MonteCarloResults<T>,
+) {
     match mcdata.exec_info.exec_policy {
         ExecPolicy::Sequential | ExecPolicy::Rayon => {
             let mcunit = &mut mcunits[0];
             mcunit.fast_timer.update_main_stats();
 
             mcunit.fast_timer.cumulative_report(
-                mcunit.tallies.balance_cumulative[TalliedEvent::NumSegments],
+                mcresults.balance_cumulative[TalliedEvent::NumSegments],
                 mcdata.params.simulation_params.csv,
             );
 
-            mcunit.tallies.spectrum.print_spectrum(mcdata);
+            mcresults.spectrum.print_spectrum(mcdata);
         }
         ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
     }
@@ -131,6 +145,7 @@ pub fn cycle_sync<T: CustomFloat>(
     mcunits: &mut [MonteCarloUnit<T>],
     containers: &mut [ParticleContainer<T>],
     step: usize,
+    mcresults: &mut MonteCarloResults<T>,
 ) {
     mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::CycleSync);
 
@@ -147,10 +162,8 @@ pub fn cycle_sync<T: CustomFloat>(
                     step - 1,
                     mcdata.params.simulation_params.csv,
                 );
-                mcunits[0]
-                    .tallies
-                    .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
-                mcunits[0].tallies.update_spectrum(&containers[0]);
+                mcresults.update_stats(mcunits);
+                mcresults.update_spectrum(containers);
                 mcunits[0].fast_timer.clear_last_cycle_timers();
             }
             ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(), // need to reduce
