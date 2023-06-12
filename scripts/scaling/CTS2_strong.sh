@@ -77,6 +77,7 @@ fastiron \
 mv tallies_report.csv $TARGET_FOLDER/tallies_r32.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r32.csv
 
+# QS original scripts only went up to this for CTS2 benchmark
 # 32*16*16 mesh -- 36 threads
 fastiron \
     -i ./input_files/profiling/CTS2_sized.inp \

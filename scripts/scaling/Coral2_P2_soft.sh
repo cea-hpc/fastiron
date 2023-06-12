@@ -136,3 +136,19 @@ fastiron \
 
 mv tallies_report.csv $TARGET_FOLDER/tallies_r128n6814720.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r128n6814720.csv
+
+# 13629440 particles -- 88*88*44 mesh -- 256 threads
+fastiron \
+    -i ./input_files/profiling/Coral2_P2.inp \
+    -n 13629440 \
+    -X 8 \
+    -Y 8 \
+    -Z 4 \
+    -x 88 \
+    -y 88 \
+    -z 44 \
+    -r 256 \
+    -c \
+
+mv tallies_report.csv $TARGET_FOLDER/tallies_r256n13629440.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r256n13629440.csv
