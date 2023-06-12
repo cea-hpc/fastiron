@@ -84,6 +84,9 @@ pub fn init_particle_containers<T: CustomFloat>(
     vec![container; n_container]
 }
 
+/// Creates & initialize the correct number of Monte-Carlo units for simulation.
+///
+/// The correct number is determined according to simulation parameters & execution policy.
 pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarloUnit<T>> {
     let mut units: Vec<MonteCarloUnit<T>> = (0..mcdata.params.simulation_params.n_units)
         .map(|_| MonteCarloUnit::default())
@@ -105,6 +108,7 @@ pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarl
     units
 }
 
+/// Initialize the structure used to keep track & process results of the simulation.
 pub fn init_results<T: CustomFloat>(params: &Parameters<T>) -> MonteCarloResults<T> {
     MonteCarloResults::new(
         params.simulation_params.energy_spectrum.to_owned(),
