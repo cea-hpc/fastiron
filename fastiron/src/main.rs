@@ -211,7 +211,7 @@ pub fn cycle_process<T: CustomFloat>(
 
     // source 10% of target number of particles
     population_control::source_now(mcdata, mcunit, container);
-    // compute split factor & regulate accordingly; regulation include the low weight rr
+    // compute split factor
     let split_rr_factor: T = population_control::compute_split_factor(
         mcdata.params.simulation_params.n_particles as usize,
         mcdata.global_n_particles,
@@ -219,6 +219,7 @@ pub fn cycle_process<T: CustomFloat>(
         mcdata.exec_info.n_units,
         mcdata.params.simulation_params.load_balance,
     );
+    // regulate accordingly
     if split_rr_factor < one() {
         container.regulate_population(
             split_rr_factor,
