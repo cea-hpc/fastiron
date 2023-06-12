@@ -58,7 +58,8 @@ impl<T: CustomFloat> MonteCarloData<T> {
 }
 
 /// Super-structure used to contain unit-specific data of the Monte-Carlo problem.
-/// The notion of unit is specified ....
+/// A unit corresponds to a single domain of the mesh. This is somewhat analog to
+/// the MPI ranks of Quicksilver that were used to divide the mesh into smaller parts.
 #[derive(Debug, Default)]
 pub struct MonteCarloUnit<T: CustomFloat> {
     /// List of spatial domains.
@@ -104,9 +105,14 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
     }
 }
 
+/// Structure used to lazily compute cross-sections during simulation.
 #[derive(Debug, Default)]
 pub struct XSCache<T: CustomFloat> {
+    /// Number of energy groups in the discretized spectrum. Used to compute
+    /// index when acessing a cross-section.
     pub num_groups: usize,
+    /// Flattened cache for cross-setion storage. The structure is indexed using
+    /// cell ID & energy group.
     pub cache: Vec<Atomic<T>>,
 }
 
@@ -125,6 +131,10 @@ impl<T: CustomFloat> IndexMut<(usize, usize)> for XSCache<T> {
     }
 }
 
+/// Structure used to hold final results of the simulation. This includes
+/// cumulative balance, fluence of the mesh & energy spectrum. The structure
+/// is only updated lightly updated at each cycle before being used at the
+/// end of the simulation.
 pub struct MonteCarloResults<T: CustomFloat> {
     /// Balance used for cumulative and centralized statistics.
     pub balance_cumulative: Balance,
@@ -137,6 +147,7 @@ pub struct MonteCarloResults<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> MonteCarloResults<T> {
+    /// Constructor.
     pub fn new(spectrum_name: String, spectrum_size: usize, bench_type: BenchType) -> Self {
         Self {
             balance_cumulative: Default::default(),
@@ -173,6 +184,7 @@ impl<T: CustomFloat> MonteCarloResults<T> {
         })
     }
 
+    /// Update internal structure from data tallied during the cycle.
     pub fn update_stats(&mut self, mcunits: &mut [MonteCarloUnit<T>]) {
         mcunits.iter_mut().for_each(|mcunit| {
             self.balance_cumulative
