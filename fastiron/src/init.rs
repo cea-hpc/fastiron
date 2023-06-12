@@ -12,7 +12,7 @@ use crate::{
     geometry::{
         global_fcc_grid::GlobalFccGrid, mc_domain::MCDomain, mesh_partition::MeshPartition,
     },
-    montecarlo::{MonteCarloData, MonteCarloUnit},
+    montecarlo::{MonteCarloData, MonteCarloResults, MonteCarloUnit},
     parameters::Parameters,
     particles::particle_container::ParticleContainer,
     utils::{
@@ -86,7 +86,7 @@ pub fn init_particle_containers<T: CustomFloat>(
 
 pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarloUnit<T>> {
     let mut units: Vec<MonteCarloUnit<T>> = (0..mcdata.params.simulation_params.n_units)
-        .map(|_| MonteCarloUnit::new(&mcdata.params))
+        .map(|_| MonteCarloUnit::default())
         .collect();
 
     // inits
@@ -103,6 +103,14 @@ pub fn init_mcunits<T: CustomFloat>(mcdata: &MonteCarloData<T>) -> Vec<MonteCarl
     println!("  [Consistency Check]: Done");
 
     units
+}
+
+pub fn init_results<T: CustomFloat>(params: &Parameters<T>) -> MonteCarloResults<T> {
+    MonteCarloResults::new(
+        params.simulation_params.energy_spectrum.to_owned(),
+        params.simulation_params.n_groups,
+        params.simulation_params.coral_benchmark,
+    )
 }
 
 //==================
@@ -293,19 +301,13 @@ fn init_mesh<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], mcdata: &MonteCa
         mcunits[gid].domain =
             MCDomain::new(&comm.partition[gid], &global_grid, &ddc, params, mat_db);
     });
-    //comm.partition.iter().for_each(|mesh_p| {
-    //    mcunit
-    //        .domain
-    //        .push(MCDomain::new(mesh_p, &global_grid, &ddc, params, mat_db))
-    //});
 }
 
 fn init_tallies<T: CustomFloat>(mcunits: &mut [MonteCarloUnit<T>], params: &Parameters<T>) {
     mcunits.iter_mut().for_each(|mcunit| {
         mcunit.tallies.initialize_tallies(
-            &mcunit.domain,
+            mcunit.domain.cell_state.len(),
             params.simulation_params.n_groups,
-            params.simulation_params.coral_benchmark,
         )
     })
 }

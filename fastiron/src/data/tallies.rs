@@ -20,13 +20,8 @@ use num::zero;
 
 use crate::{
     constants::CustomFloat,
-    geometry::mc_domain::MCDomain,
-    parameters::BenchType,
-    particles::{particle_collection::ParticleCollection, particle_container::ParticleContainer},
     utils::mc_fast_timer::{self, MCFastTimerContainer, Section},
 };
-
-use super::energy_spectrum::EnergySpectrum;
 
 /// Enum representing a tally event.
 #[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Default)]
@@ -59,7 +54,12 @@ pub struct FluenceDomain<T: CustomFloat> {
 
 impl<T: CustomFloat> FluenceDomain<T> {
     pub fn compute(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
-        let cell_iter = zip(self.cell.iter_mut(), scalar_flux_domain.cell.iter());
+        let cell_iter = zip(
+            self.cell.iter_mut(),
+            scalar_flux_domain
+                .cell
+                .chunks(scalar_flux_domain.num_groups),
+        );
         cell_iter.for_each(|(fl_cell, sf_cell)| {
             let sum = sf_cell.iter().map(|val| val.load(Ordering::Relaxed)).sum();
             *fl_cell += sum;
@@ -159,68 +159,43 @@ impl std::iter::Sum<Balance> for Balance {
 // Scalar flux data
 //=================
 
-/// Cell-specific scalar flux data.
-///
-/// Each element of the vector is corresponds to an energy
-/// level specific data of the cell.
-type ScalarFluxCell<T> = Vec<Atomic<T>>;
-
 /// Domain-sorted _scalar-flux-data-holding_ sub-structure.
 #[derive(Debug, Default)]
 pub struct ScalarFluxDomain<T: CustomFloat> {
-    pub cell: Vec<ScalarFluxCell<T>>,
+    pub num_groups: usize,
+    pub cell: Vec<Atomic<T>>,
 }
 
 impl<T: CustomFloat> ScalarFluxDomain<T> {
     /// Constructor.
-    pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
+    pub fn new(n_cells: usize, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
-        let mut cell = Vec::with_capacity(domain.cell_state.len());
-        (0..domain.cell_state.len()).for_each(|_| {
-            let sf_cell = (0..num_groups).map(|_| Atomic::<T>::default()).collect();
-            cell.push(sf_cell);
-        });
-        Self { cell }
+        let cell = (0..n_cells * num_groups)
+            .map(|_| Atomic::new(zero()))
+            .collect();
+        Self { num_groups, cell }
     }
 
     /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
-        let num_groups = self.cell[0].len();
-        self.cell.iter_mut().for_each(|sf_cell| {
-            *sf_cell = (0..num_groups).map(|_| Atomic::<T>::default()).collect();
-        });
+        self.cell
+            .iter_mut()
+            .for_each(|elem| elem.store(zero(), Ordering::Relaxed))
     }
 }
 
-//================
-// Cell tally data
-//================
+// maybe make theses accesses unchecked?
+impl<T: CustomFloat> Index<(usize, usize)> for ScalarFluxDomain<T> {
+    type Output = Atomic<T>;
 
-/// Domain-specific _cell-tallied-data-holding_ sub-structure.
-#[derive(Debug, Default, Clone)]
-pub struct CellTallyDomain<T: CustomFloat> {
-    pub cell: Vec<T>,
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        &self.cell[index.0 * self.num_groups + index.1]
+    }
 }
 
-impl<T: CustomFloat> CellTallyDomain<T> {
-    /// Constructor.
-    pub fn new(domain: &MCDomain<T>) -> Self {
-        Self {
-            cell: vec![zero(); domain.cell_state.len()],
-        }
-    }
-
-    /// Reset fields to their default value i.e. 0.
-    pub fn reset(&mut self) {
-        self.cell = vec![zero(); self.cell.len()];
-    }
-
-    /// Add another [CellTallyDomain]'s value to its own.
-    pub fn add(&mut self, other: &CellTallyDomain<T>) {
-        // zip iterators from the two objects' values.
-        let iter = zip(self.cell.iter_mut(), other.cell.iter());
-        // sum other to self
-        iter.for_each(|(lhs, rhs)| *lhs += *rhs);
+impl<T: CustomFloat> IndexMut<(usize, usize)> for ScalarFluxDomain<T> {
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        &mut self.cell[index.0 * self.num_groups + index.1]
     }
 }
 
@@ -229,50 +204,18 @@ impl<T: CustomFloat> CellTallyDomain<T> {
 //========
 
 /// Super-structure holding all recorded data besides time statistics.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Tallies<T: CustomFloat> {
-    /// Balance used for cumulative and centralized statistics.
-    pub balance_cumulative: Balance,
     /// Cyclic balances.
     pub balance_cycle: Balance,
     /// Top-level structure holding scalar flux data.
     pub scalar_flux_domain: ScalarFluxDomain<T>,
-    /// Top-level structure holding cell tallied data.
-    pub cell_tally_domain: CellTallyDomain<T>,
-    /// Top-level structure used to compute fluence data.
-    pub fluence: FluenceDomain<T>,
-    /// Energy spectrum of the problem.
-    pub spectrum: EnergySpectrum,
 }
 
 impl<T: CustomFloat> Tallies<T> {
-    /// Constructor.
-    pub fn new(spectrum_name: String, spectrum_size: usize) -> Self {
-        let spectrum = EnergySpectrum::new(spectrum_name, spectrum_size);
-        Self {
-            balance_cumulative: Default::default(),
-            balance_cycle: Default::default(),
-            scalar_flux_domain: Default::default(),
-            cell_tally_domain: Default::default(),
-            fluence: Default::default(),
-            spectrum,
-        }
-    }
-
     /// Prepare the tallies for use.
-    pub fn initialize_tallies(
-        &mut self,
-        domain: &MCDomain<T>,
-        num_energy_groups: usize,
-        bench_type: BenchType,
-    ) {
-        self.cell_tally_domain = CellTallyDomain::new(domain);
-        self.scalar_flux_domain = ScalarFluxDomain::new(domain, num_energy_groups);
-
-        // Initialize Fluence if necessary
-        if bench_type != BenchType::Standard {
-            self.fluence.cell = vec![zero(); self.scalar_flux_domain.cell.len()];
-        }
+    pub fn initialize_tallies(&mut self, n_cells: usize, num_energy_groups: usize) {
+        self.scalar_flux_domain = ScalarFluxDomain::new(n_cells, num_energy_groups);
     }
 
     /// Prints summarized data recorded by the tallies.
@@ -387,52 +330,16 @@ impl<T: CustomFloat> Tallies<T> {
         self.scalar_flux_domain
             .cell
             .iter()
-            .map(|sf_cell| {
-                sf_cell
-                    .iter()
-                    .map(|val| val.load(Ordering::Relaxed))
-                    .sum::<T>()
-            })
+            .map(|sf_cell| sf_cell.load(Ordering::Relaxed))
             .sum::<T>()
     }
 
-    /// Update the energy spectrum by going over all the currently valid particles.
-    pub fn update_spectrum(&mut self, container: &ParticleContainer<T>) {
-        if self.spectrum.file_name.is_empty() {
-            return;
-        }
-
-        let update_function = |particle_list: &ParticleCollection<T>, spectrum: &mut [u64]| {
-            particle_list.into_iter().for_each(|particle| {
-                spectrum[particle.energy_group] += 1;
-            });
-        };
-
-        // Iterate on processing particles
-        update_function(
-            &container.processing_particles,
-            &mut self.spectrum.census_energy_spectrum,
-        );
-        // Iterate on processed particles
-        update_function(
-            &container.processed_particles,
-            &mut self.spectrum.census_energy_spectrum,
-        );
-    }
-
     /// Print stats of the current cycle and update the cumulative counters.
-    pub fn cycle_finalize(&mut self, bench_type: BenchType) {
-        self.balance_cumulative.add_to_self(&self.balance_cycle);
-
+    pub fn cycle_finalize(&mut self) {
         let new_start: u64 = self.balance_cycle[TalliedEvent::End];
         self.balance_cycle.reset();
         self.balance_cycle[TalliedEvent::Start] = new_start;
 
-        if bench_type != BenchType::Standard {
-            self.fluence.compute(&self.scalar_flux_domain);
-        }
-
-        self.cell_tally_domain.reset();
         self.scalar_flux_domain.reset();
     }
 }
