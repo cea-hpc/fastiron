@@ -45,10 +45,6 @@ impl<T: CustomFloat> ParticleContainer<T> {
     pub fn swap_processing_processed(&mut self) {
         self.processing_particles
             .append(&mut self.processed_particles);
-        //core::mem::swap(
-        //    &mut self.processing_particles,
-        //    &mut self.processed_particles,
-        //);
     }
 
     /// Randomly delete particles to reach the desired number of particles for
@@ -176,25 +172,6 @@ impl<T: CustomFloat> ParticleContainer<T> {
                 std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
             });
     }
-
-    /// Processes the particles stored in the send queue.
-    /// - In a shared memory context, this is just a transfer from the send queue
-    ///   to the extra storage
-    /// - In a message-passing context, this would include sending and receiving
-    ///   particles
-    /*
-        pub fn process_sq(&mut self) {
-            self.extra_particles.extend(
-                self.send_queue
-                    .data
-                    .iter()
-                    .map(|sq_tuple| sq_tuple.particle.clone()),
-            );
-            self.send_queue.clear();
-            // Here we would add the receiver part
-            // while rx.try_recv().is_ok() {...}
-        }
-    */
 
     /// Adds back to the processing storage the extra particles.
     pub fn clean_extra_vaults(&mut self) {
