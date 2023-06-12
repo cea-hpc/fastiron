@@ -77,6 +77,7 @@ fastiron \
 mv tallies_report.csv $TARGET_FOLDER/tallies_r32.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r32.csv
 
+# QS original scripts only went up to this for CTS2 benchmark
 # 32*16*16 mesh -- 36 threads
 fastiron \
     -i ./input_files/profiling/CTS2_sized.inp \
@@ -86,3 +87,33 @@ fastiron \
 
 mv tallies_report.csv $TARGET_FOLDER/tallies_r36.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r36.csv
+
+# 32*16*16 mesh -- 64 threads
+fastiron \
+    -i ./input_files/profiling/CTS2_sized.inp \
+    -n $N_PARTICLES \
+    -r 64 \
+    -c \
+
+mv tallies_report.csv $TARGET_FOLDER/tallies_r64.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r64.csv
+
+# 32*16*16 mesh -- 128 threads
+fastiron \
+    -i ./input_files/profiling/CTS2_sized.inp \
+    -n $N_PARTICLES \
+    -r 128 \
+    -c \
+
+mv tallies_report.csv $TARGET_FOLDER/tallies_r128.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r128.csv
+
+# 32*16*16 mesh -- 256 threads
+fastiron \
+    -i ./input_files/profiling/CTS2_sized.inp \
+    -n $N_PARTICLES \
+    -r 256 \
+    -c \
+
+mv tallies_report.csv $TARGET_FOLDER/tallies_r256.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r256.csv

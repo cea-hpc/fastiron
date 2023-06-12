@@ -104,6 +104,7 @@ fastiron \
 mv tallies_report.csv CTS2_soft_scaling/tallies_r32n1310720.csv
 mv timers_report.csv CTS2_soft_scaling/timers_r32n1310720.csv
 
+# QS original scripts only went up to this for CTS2 benchmark
 # 1474560 particles -- 48*48*64 mesh -- 36 threads 
 fastiron \
     -i ./input_files/profiling/CTS2.inp \
@@ -119,3 +120,51 @@ fastiron \
 
 mv tallies_report.csv CTS2_soft_scaling/tallies_r36n1474560.csv
 mv timers_report.csv CTS2_soft_scaling/timers_rr36n1474560.csv
+
+# 2621440 particles -- 64*64*64 mesh -- 64 threads
+fastiron \
+    -i ./input_files/profiling/CTS2.inp \
+    -n 2621440 \
+    -X 64 \
+    -Y 64 \
+    -Z 64 \
+    -x 64 \
+    -y 64 \
+    -z 64 \
+    -r 64 \
+    -c \
+
+mv tallies_report.csv CTS2_soft_scaling/tallies_r64n2621440.csv
+mv timers_report.csv CTS2_soft_scaling/timers_r64n2621440.csv
+
+# 5242880 particles -- 128*64*64 mesh -- 128 threads
+fastiron \
+    -i ./input_files/profiling/CTS2.inp \
+    -n 5242880 \
+    -X 128 \
+    -Y 64 \
+    -Z 64 \
+    -x 128 \
+    -y 64 \
+    -z 64 \
+    -r 128 \
+    -c \
+
+mv tallies_report.csv CTS2_soft_scaling/tallies_r128n5242880.csv
+mv timers_report.csv CTS2_soft_scaling/timers_r128n5242880.csv
+
+# 10485760 particles -- 128*128*64 mesh -- 256 threads
+fastiron \
+    -i ./input_files/profiling/CTS2.inp \
+    -n 10485760 \
+    -X 128 \
+    -Y 128 \
+    -Z 64 \
+    -x 128 \
+    -y 128 \
+    -z 64 \
+    -r 256 \
+    -c \
+
+mv tallies_report.csv CTS2_soft_scaling/tallies_r256n10485760.csv
+mv timers_report.csv CTS2_soft_scaling/timers_r256n10485760.csv
