@@ -119,7 +119,7 @@ fastiron \
     -c \
 
 mv tallies_report.csv CTS2_soft_scaling/tallies_r36n1474560.csv
-mv timers_report.csv CTS2_soft_scaling/timers_rr36n1474560.csv
+mv timers_report.csv CTS2_soft_scaling/timers_r36n1474560.csv
 
 # 2621440 particles -- 64*64*64 mesh -- 64 threads
 fastiron \
