@@ -1,12 +1,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Soft scaling study using Coral2 P2 bench specs
+# weak scaling study using Coral2 P2 bench specs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Problem volume, particles & number of threads all scale together
 # Values are taken from Quicksilver's scripts & adapted to our parallel implem.
 
 # target folder
-TARGET_FOLDER=Coral2_P2_soft_scaling
+TARGET_FOLDER=Coral2_P2_weak_scaling
 mkdir -p $TARGET_FOLDER
 
 # 53240 particles -- 11*11*11 mesh -- 1 thread 

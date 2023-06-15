@@ -1,12 +1,13 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Soft scaling study using CTS2 bench specs
+# weak scaling study using CTS2 bench specs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Problem volume, particles & number of threads all scale together
 # Values are taken from Quicksilver's scripts & adapted to our parallel implem.
 
 # target folder
-mkdir -p CTS2_soft_scaling
+TARGET_FOLDER=CTS2_weak_scaling
+mkdir -p $TARGET_FOLDER
 
 # 40960 particles -- 16*16*16 mesh -- 1 thread 
 fastiron \
@@ -21,8 +22,8 @@ fastiron \
     -r 1 \
     -c \
 
-mv tallies_report.csv CTS2_soft_scaling/tallies_r1n40960.csv
-mv timers_report.csv CTS2_soft_scaling/timers_r1n40960.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r1n40960.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r1n40960.csv
 
 # 81920 particles -- 32*16*16 mesh -- 2 threads
 fastiron \
@@ -37,8 +38,8 @@ fastiron \
     -r 2 \
     -c \
 
-mv tallies_report.csv CTS2_soft_scaling/tallies_r2n81920.csv
-mv timers_report.csv CTS2_soft_scaling/timers_r2n81920.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r2n81920.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r2n81920.csv
 
 # 163840 particles -- 32*32*16 mesh -- 4 threads 
 fastiron \
@@ -53,8 +54,8 @@ fastiron \
     -r 4 \
     -c \
 
-mv tallies_report.csv CTS2_soft_scaling/tallies_r4n163840.csv
-mv timers_report.csv CTS2_soft_scaling/timers_r4n163840.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r4n163840.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r4n163840.csv
 
 # 327680 particles -- 32*32*32 mesh -- 8 threads 
 fastiron \
@@ -69,8 +70,8 @@ fastiron \
     -r 8 \
     -c \
 
-mv tallies_report.csv CTS2_soft_scaling/tallies_r8n327680.csv
-mv timers_report.csv CTS2_soft_scaling/timers_r8n327680.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r8n327680.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r8n327680.csv
 
 # 655360 particles -- 64*32*32 mesh -- 16 threads 
 fastiron \
@@ -85,8 +86,8 @@ fastiron \
     -r 16 \
     -c \
 
-mv tallies_report.csv CTS2_soft_scaling/tallies_r16n655360.csv
-mv timers_report.csv CTS2_soft_scaling/timers_r16n655360.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r16n655360.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r16n655360.csv
 
 # 1310720 particles -- 64*64*32 mesh -- 32 threads
 fastiron \
@@ -101,8 +102,8 @@ fastiron \
     -r 32 \
     -c \
 
-mv tallies_report.csv CTS2_soft_scaling/tallies_r32n1310720.csv
-mv timers_report.csv CTS2_soft_scaling/timers_r32n1310720.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r32n1310720.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r32n1310720.csv
 
 # QS original scripts only went up to this for CTS2 benchmark
 # 1474560 particles -- 48*48*64 mesh -- 36 threads 
@@ -118,8 +119,8 @@ fastiron \
     -r 36 \
     -c \
 
-mv tallies_report.csv CTS2_soft_scaling/tallies_r36n1474560.csv
-mv timers_report.csv CTS2_soft_scaling/timers_r36n1474560.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r36n1474560.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r36n1474560.csv
 
 # 2621440 particles -- 64*64*64 mesh -- 64 threads
 fastiron \
@@ -134,8 +135,8 @@ fastiron \
     -r 64 \
     -c \
 
-mv tallies_report.csv CTS2_soft_scaling/tallies_r64n2621440.csv
-mv timers_report.csv CTS2_soft_scaling/timers_r64n2621440.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r64n2621440.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r64n2621440.csv
 
 # 5242880 particles -- 128*64*64 mesh -- 128 threads
 fastiron \
@@ -150,8 +151,8 @@ fastiron \
     -r 128 \
     -c \
 
-mv tallies_report.csv CTS2_soft_scaling/tallies_r128n5242880.csv
-mv timers_report.csv CTS2_soft_scaling/timers_r128n5242880.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r128n5242880.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r128n5242880.csv
 
 # 10485760 particles -- 128*128*64 mesh -- 256 threads
 fastiron \
@@ -166,5 +167,5 @@ fastiron \
     -r 256 \
     -c \
 
-mv tallies_report.csv CTS2_soft_scaling/tallies_r256n10485760.csv
-mv timers_report.csv CTS2_soft_scaling/timers_r256n10485760.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r256n10485760.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r256n10485760.csv
