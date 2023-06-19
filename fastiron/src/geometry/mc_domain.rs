@@ -91,7 +91,7 @@ impl<T: CustomFloat> MCMeshDomain<T> {
         boundary_condition: &[MCSubfacetAdjacencyEvent],
     ) -> Self {
         // nbr_domain_gid
-        let nbr_domain_gid: Vec<usize> = mesh_partition.nbr_domains.clone();
+        let nbr_domain_gid: Vec<usize> = mesh_partition.nbr_domains.iter().copied().collect();
 
         // nbr_rank
         let mut nbr_rank: Vec<usize> = Vec::with_capacity(nbr_domain_gid.len());

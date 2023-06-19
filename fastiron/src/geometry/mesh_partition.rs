@@ -4,7 +4,7 @@
 
 use std::collections::VecDeque;
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     constants::{CustomFloat, Tuple3},
@@ -40,7 +40,7 @@ pub struct MeshPartition {
     /// Map linking cell global identifier to their [CellInfo] structure
     pub cell_info_map: MapType,
     /// List of neighboring domain identifiers. **Should be replaced by a set**.
-    pub nbr_domains: Vec<usize>,
+    pub nbr_domains: FxHashSet<usize>,
 }
 
 impl MeshPartition {
@@ -59,7 +59,7 @@ impl MeshPartition {
         &mut self,
         grid: &GlobalFccGrid<T>,
         centers: &[MCVector<T>],
-    ) -> Vec<(usize, usize)> {
+    ) -> FxHashSet<(usize, usize)> {
         self.assign_cells_to_domain(centers, grid);
 
         self.build_cell_idx_map(grid)
@@ -95,9 +95,9 @@ impl MeshPartition {
             if domain == self.domain_gid {
                 // if current cell is in domain, check neighbor
                 Self::add_nbrs_to_flood(cell_idx, grid, &mut flood_queue, &mut wet_cells);
-            } else if !self.nbr_domains.contains(&domain) {
+            } else {
                 // else, keep track of neighbor domains
-                self.nbr_domains.push(domain);
+                self.nbr_domains.insert(domain);
             }
         }
     }
@@ -105,8 +105,8 @@ impl MeshPartition {
     fn build_cell_idx_map<T: CustomFloat>(
         &mut self,
         grid: &GlobalFccGrid<T>,
-    ) -> Vec<(usize, usize)> {
-        let mut remote_cells: Vec<(usize, usize)> = Vec::new();
+    ) -> FxHashSet<(usize, usize)> {
+        let mut remote_cells: FxHashSet<(usize, usize)> = Default::default();
 
         let mut n_local_cells: usize = 0;
 
@@ -129,9 +129,7 @@ impl MeshPartition {
                             continue;
                         }
                         // replace the update to sendSet
-                        if !remote_cells.contains(&(domain_gid, j_cell_gid)) {
-                            remote_cells.push((domain_gid, j_cell_gid));
-                        }
+                        remote_cells.insert((domain_gid, j_cell_gid));
                     }
                 }
             }
