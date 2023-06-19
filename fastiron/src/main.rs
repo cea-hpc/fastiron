@@ -2,10 +2,14 @@ use std::iter::zip;
 use std::time::Instant;
 
 use clap::Parser;
+use fastiron::data::tallies::TalliedEvent;
+use num::{one, zero, FromPrimitive};
+use rayon::ThreadPoolBuilder;
+
 use fastiron::constants::sim::SRC_FRACTION;
 use fastiron::constants::CustomFloat;
-use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers};
-use fastiron::montecarlo::{MonteCarloData, MonteCarloUnit};
+use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers, init_results};
+use fastiron::montecarlo::{MonteCarloData, MonteCarloResults, MonteCarloUnit};
 use fastiron::parameters::Parameters;
 use fastiron::particles::particle_container::ParticleContainer;
 use fastiron::simulation::population_control;
@@ -13,7 +17,6 @@ use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
 use fastiron::utils::io_utils::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
-use num::{one, zero, FromPrimitive};
 
 //================================
 // Which float type are we using ?
@@ -34,6 +37,11 @@ fn main() {
 
     let params: Parameters<FloatType> = Parameters::get_parameters(cli).unwrap();
     println!("[Simulation Parameters]\n{:#?}", params.simulation_params);
+
+    //===============
+    // Initialization
+    //===============
+
     let start_init = Instant::now();
     println!("[Initialization]: Start");
 
@@ -42,6 +50,19 @@ fn main() {
     let mut mcdata = init_mcdata(params);
     let mut containers = init_particle_containers(&mcdata.params, &mcdata.exec_info);
     let mut mcunits = init_mcunits(&mcdata);
+    let mut mcresults = init_results(&mcdata.params);
+
+    // rayon only => one global thread pool
+    if mcdata.exec_info.exec_policy == ExecPolicy::Rayon {
+        // custom threadpool init in this case
+        if mcdata.exec_info.n_rayon_threads != 0 {
+            ThreadPoolBuilder::new()
+                .num_threads(mcdata.exec_info.n_rayon_threads)
+                .build_global()
+                .unwrap();
+        }
+        mcdata.exec_info.n_rayon_threads = rayon::current_num_threads();
+    }
 
     println!("[Initialization]: Done");
     println!(
@@ -49,40 +70,70 @@ fn main() {
         start_init.elapsed().as_millis()
     );
 
+    println!("[Execution Info]");
+    println!("{}", mcdata.exec_info);
+
+    //==========
+    // Core loop
+    //==========
+
     match mcdata.exec_info.exec_policy {
-        ExecPolicy::Sequential => {
+        // single unit
+        ExecPolicy::Sequential | ExecPolicy::Rayon => {
             mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::Main);
 
             for step in 0..n_steps {
-                cycle_sync(&mut mcdata, &mut mcunits, &mut containers, step);
+                cycle_sync(
+                    &mut mcdata,
+                    &mut mcunits,
+                    &mut containers,
+                    step,
+                    &mut mcresults,
+                );
                 cycle_process(&mcdata, &mut mcunits[0], &mut containers[0]);
             }
-            cycle_sync(&mut mcdata, &mut mcunits, &mut containers, n_steps);
+            cycle_sync(
+                &mut mcdata,
+                &mut mcunits,
+                &mut containers,
+                n_steps,
+                &mut mcresults,
+            );
 
             mc_fast_timer::stop(&mut mcunits[0].fast_timer, Section::Main);
         }
-        ExecPolicy::Parallel => {
-            todo!()
-        }
+        // multiple units
+        ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
     }
 
-    game_over(&mcdata, &mut mcunits[0]);
+    //========
+    // Wrap-up
+    //========
 
-    coral_benchmark_correctness(
-        mcdata.params.simulation_params.coral_benchmark,
-        &mcunits[0].tallies,
-    );
+    game_over(&mcdata, &mut mcunits, &mcresults);
+
+    coral_benchmark_correctness(&mcresults);
 }
 
-pub fn game_over<T: CustomFloat>(mcdata: &MonteCarloData<T>, mcunit: &mut MonteCarloUnit<T>) {
-    mcunit.fast_timer.update_main_stats();
+pub fn game_over<T: CustomFloat>(
+    mcdata: &MonteCarloData<T>,
+    mcunits: &mut [MonteCarloUnit<T>],
+    mcresults: &MonteCarloResults<T>,
+) {
+    match mcdata.exec_info.exec_policy {
+        ExecPolicy::Sequential | ExecPolicy::Rayon => {
+            let mcunit = &mut mcunits[0];
+            mcunit.fast_timer.update_main_stats();
 
-    mcunit.fast_timer.cumulative_report(
-        mcunit.tallies.balance_cumulative.num_segments,
-        mcdata.params.simulation_params.csv,
-    );
+            mcunit.fast_timer.cumulative_report(
+                mcresults.balance_cumulative[TalliedEvent::NumSegments],
+                mcdata.params.simulation_params.csv,
+            );
 
-    mcunit.tallies.spectrum.print_spectrum(mcdata);
+            mcresults.spectrum.print_spectrum(mcdata);
+        }
+        ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
+    }
 }
 
 //============================
@@ -94,6 +145,7 @@ pub fn cycle_sync<T: CustomFloat>(
     mcunits: &mut [MonteCarloUnit<T>],
     containers: &mut [ParticleContainer<T>],
     step: usize,
+    mcresults: &mut MonteCarloResults<T>,
 ) {
     mc_fast_timer::start(&mut mcunits[0].fast_timer, Section::CycleSync);
 
@@ -101,25 +153,20 @@ pub fn cycle_sync<T: CustomFloat>(
         // Finalize after processing; centralize data at each step or just use as it progress?
 
         match mcdata.exec_info.exec_policy {
-            ExecPolicy::Sequential => {
-                // if sequential, just use the single Monte-Carlo unit
-                mcunits[0].tallies.balance_cycle.end =
+            ExecPolicy::Sequential | ExecPolicy::Rayon => {
+                // if sequential/rayon-only, just use the single Monte-Carlo unit
+                mcunits[0].tallies.balance_cycle[TalliedEvent::End] =
                     containers[0].processed_particles.len() as u64;
                 mcunits[0].tallies.print_summary(
                     &mut mcunits[0].fast_timer,
                     step - 1,
                     mcdata.params.simulation_params.csv,
                 );
-                mcunits[0]
-                    .tallies
-                    .cycle_finalize(mcdata.params.simulation_params.coral_benchmark);
-                mcunits[0].tallies.update_spectrum(&containers[0]);
+                mcresults.update_stats(mcunits);
+                mcresults.update_spectrum(containers);
                 mcunits[0].fast_timer.clear_last_cycle_timers();
             }
-            ExecPolicy::Parallel => {
-                // centralize / finalize
-                todo!()
-            }
+            ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(), // need to reduce
         }
 
         if step == mcdata.params.simulation_params.n_steps + 1 {
@@ -137,7 +184,7 @@ pub fn cycle_sync<T: CustomFloat>(
         mcunit.clear_cross_section_cache();
         container.swap_processing_processed();
         let local_n_particles = container.processing_particles.len();
-        mcunit.tallies.balance_cycle.start = local_n_particles as u64;
+        mcunit.tallies.balance_cycle[TalliedEvent::Start] = local_n_particles as u64;
         current_n_particles += local_n_particles;
         total_problem_weight += mcunit.unit_weight;
     });
@@ -164,14 +211,15 @@ pub fn cycle_process<T: CustomFloat>(
 
     // source 10% of target number of particles
     population_control::source_now(mcdata, mcunit, container);
-    // compute split factor & regulate accordingly; regulation include the low weight rr
+    // compute split factor
     let split_rr_factor: T = population_control::compute_split_factor(
         mcdata.params.simulation_params.n_particles as usize,
         mcdata.global_n_particles,
         container.processing_particles.len(),
-        mcdata.exec_info.num_threads,
+        mcdata.exec_info.n_units,
         mcdata.params.simulation_params.load_balance,
     );
+    // regulate accordingly
     if split_rr_factor < one() {
         container.regulate_population(
             split_rr_factor,
@@ -192,23 +240,22 @@ pub fn cycle_process<T: CustomFloat>(
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
 
     loop {
-        while !container.test_done_new() {
-            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
+        while !container.is_done_processing() {
+            // sort particles
+            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
+            container.sort_processing();
+            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
 
             // track particles
+            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
             container.process_particles(mcdata, mcunit);
-
-            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingKernel);
-            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingComm);
+            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
 
             // clean extra here
-            container.process_sq();
             container.clean_extra_vaults();
-
-            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingComm);
         }
-        // change this if in parallel to also check pending/buffered particles
-        if container.test_done_new() {
+
+        if container.is_done_processing() {
             break;
         }
     }

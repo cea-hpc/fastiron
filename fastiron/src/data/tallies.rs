@@ -6,22 +6,25 @@
 //! Note that this module isn't used to compute time-related data, this is done in
 //! the [utils::mc_fast_timer][crate::utils::mc_fast_timer] module.
 
-use std::{fmt::Debug, fs::OpenOptions, io::Write, iter::zip};
+use std::{
+    fmt::Debug,
+    fs::OpenOptions,
+    io::Write,
+    iter::zip,
+    ops::{Index, IndexMut},
+    sync::atomic::Ordering,
+};
 
+use atomic::Atomic;
 use num::zero;
 
 use crate::{
     constants::CustomFloat,
-    geometry::mc_domain::MCDomain,
-    parameters::BenchType,
-    particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     utils::mc_fast_timer::{self, MCFastTimerContainer, Section},
 };
 
-use super::energy_spectrum::EnergySpectrum;
-
 /// Enum representing a tally event.
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Default)]
 pub enum MCTallyEvent {
     /// Value for a collision event.
     Collision,
@@ -43,15 +46,6 @@ pub enum MCTallyEvent {
 // Fluence
 //========
 
-/// Structure used to compute fluence.
-///
-/// The data of each cell is grouped by domains using the [FluenceDomain]
-/// sub-structure.
-#[derive(Debug, Default)]
-pub struct Fluence<T: CustomFloat> {
-    pub domain: Vec<FluenceDomain<T>>,
-}
-
 /// Domain-sorted fluence-data-holding sub-structure.
 #[derive(Debug, Default)]
 pub struct FluenceDomain<T: CustomFloat> {
@@ -60,9 +54,15 @@ pub struct FluenceDomain<T: CustomFloat> {
 
 impl<T: CustomFloat> FluenceDomain<T> {
     pub fn compute(&mut self, scalar_flux_domain: &ScalarFluxDomain<T>) {
-        let cell_iter = zip(self.cell.iter_mut(), scalar_flux_domain.cell.iter());
+        let cell_iter = zip(
+            self.cell.iter_mut(),
+            scalar_flux_domain
+                .cell
+                .chunks(scalar_flux_domain.num_groups),
+        );
         cell_iter.for_each(|(fl_cell, sf_cell)| {
-            *fl_cell += sf_cell.iter().copied().sum();
+            let sum = sf_cell.iter().map(|val| val.load(Ordering::Relaxed)).sum();
+            *fl_cell += sum;
         })
     }
 
@@ -75,62 +75,83 @@ impl<T: CustomFloat> FluenceDomain<T> {
 // Balance
 //========
 
+pub const N_TALLIED_EVENT: usize = 14;
+
+#[derive(Debug)]
+pub enum TalliedEvent {
+    Absorb,
+    Census,
+    Escape,
+    Collision,
+    End,
+    Fission,
+    Produce,
+    Scatter,
+    Start,
+    Source,
+    OverRr,
+    WeightRr,
+    Split,
+    NumSegments,
+}
+
 /// Structure used to keep track of the number of event in the simulation.
 ///
 /// During the simulation, each time an event of interest occurs, the counters
 /// are incremented accordingly. In a parallel context, this structure should be
 /// operated on using atomic operations.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Balance {
-    /// Number of particles absorbed.
-    pub absorb: u64,
-    /// Number of particles that enter census.
-    pub census: u64,
-    /// Number of particles that escape.
-    pub escape: u64,
-    /// Number of collisions.
-    pub collision: u64,
-    /// Number of particles at end of cycle.
-    pub end: u64,
-    /// Number of fission events.
-    pub fission: u64,
-    /// Number of particles created by collisions.
-    pub produce: u64,
-    /// Number of scatters.
-    pub scatter: u64,
-    /// Number of particles at beginning of cycle.
-    pub start: u64,
-    /// Number of particles sourced in.
-    pub source: u64,
-    /// Number of particles Russian Rouletted in population control.
-    pub rr: u64,
-    /// Number of particles split in population control.
-    pub split: u64,
-    /// Number of segements.
-    pub num_segments: u64,
+    /// Array used to store tallied event. See [TalliedEvent] for more information.
+    pub data: [u64; N_TALLIED_EVENT],
 }
 
 impl Balance {
     /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
-        *self = Self::default(); // is the old value correctly dropped or just shadowed?
+        self.data.fill(0_u64);
     }
 
     /// Add another [Balance]'s value to its own.
-    pub fn add(&mut self, bal: &Balance) {
-        self.absorb += bal.absorb;
-        self.census += bal.census;
-        self.escape += bal.escape;
-        self.collision += bal.collision;
-        self.end += bal.end;
-        self.fission += bal.fission;
-        self.produce += bal.produce;
-        self.scatter += bal.scatter;
-        self.start += bal.start;
-        self.source += bal.source;
-        self.rr += bal.rr;
-        self.split += bal.split;
-        self.num_segments += bal.num_segments;
+    pub fn add_to_self(&mut self, bal: &Balance) {
+        self.data
+            .iter_mut()
+            .zip(bal.data.iter())
+            .for_each(|(lhs, rhs)| *lhs += *rhs);
+    }
+}
+
+// Indexing operators
+
+impl Index<TalliedEvent> for Balance {
+    type Output = u64;
+
+    fn index(&self, index: TalliedEvent) -> &Self::Output {
+        &self.data[index as usize]
+    }
+}
+
+impl IndexMut<TalliedEvent> for Balance {
+    fn index_mut(&mut self, index: TalliedEvent) -> &mut Self::Output {
+        &mut self.data[index as usize]
+    }
+}
+
+// Add op (useful when folding)
+
+impl std::ops::Add<Balance> for Balance {
+    type Output = Balance;
+
+    fn add(self, rhs: Balance) -> Self::Output {
+        let mut tmp = self;
+        tmp.add_to_self(&rhs);
+        tmp
+    }
+}
+
+impl std::iter::Sum<Balance> for Balance {
+    fn sum<I: Iterator<Item = Balance>>(iter: I) -> Self {
+        iter.fold(Self::default(), |b1, b2| b1 + b2)
     }
 }
 
@@ -138,74 +159,43 @@ impl Balance {
 // Scalar flux data
 //=================
 
-/// Cell-specific scalar flux data.
-///
-/// Each element of the vector is corresponds to a cell's data.
-type ScalarFluxCell<T> = Vec<T>;
-
 /// Domain-sorted _scalar-flux-data-holding_ sub-structure.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default)]
 pub struct ScalarFluxDomain<T: CustomFloat> {
-    pub cell: Vec<ScalarFluxCell<T>>,
+    pub num_groups: usize,
+    pub cell: Vec<Atomic<T>>,
 }
 
 impl<T: CustomFloat> ScalarFluxDomain<T> {
     /// Constructor.
-    pub fn new(domain: &MCDomain<T>, num_groups: usize) -> Self {
+    pub fn new(n_cells: usize, num_groups: usize) -> Self {
         // originally uses BulkStorage object for contiguous memory
-        let cell = vec![vec![zero::<T>(); num_groups]; domain.cell_state.len()];
-        Self { cell }
+        let cell = (0..n_cells * num_groups)
+            .map(|_| Atomic::new(zero()))
+            .collect();
+        Self { num_groups, cell }
     }
 
     /// Reset fields to their default value i.e. `0`.
     pub fn reset(&mut self) {
-        self.cell.iter_mut().for_each(|sf_cell| {
-            sf_cell.fill(zero());
-        });
-    }
-
-    /// Add another [ScalarFluxDomain]'s value to its own.
-    pub fn add(&mut self, other: &ScalarFluxDomain<T>) {
-        // zip iterators from the two objects' values.
-        let cell_iter = zip(self.cell.iter_mut(), other.cell.iter());
-        cell_iter.for_each(|(cell_lhs, cell_rhs)| {
-            // zip iterators from the two objects' values.
-            let group_iter = zip(cell_lhs.iter_mut(), cell_rhs.iter());
-            // sum other to self
-            group_iter.for_each(|(group_lhs, group_rhs)| *group_lhs += *group_rhs);
-        })
+        self.cell
+            .iter_mut()
+            .for_each(|elem| elem.store(zero(), Ordering::Relaxed))
     }
 }
 
-//================
-// Cell tally data
-//================
+// maybe make theses accesses unchecked?
+impl<T: CustomFloat> Index<(usize, usize)> for ScalarFluxDomain<T> {
+    type Output = Atomic<T>;
 
-/// Domain-specific _cell-tallied-data-holding_ sub-structure.
-#[derive(Debug, Default, Clone)]
-pub struct CellTallyDomain<T: CustomFloat> {
-    pub cell: Vec<T>,
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        &self.cell[index.0 * self.num_groups + index.1]
+    }
 }
 
-impl<T: CustomFloat> CellTallyDomain<T> {
-    /// Constructor.
-    pub fn new(domain: &MCDomain<T>) -> Self {
-        Self {
-            cell: vec![zero(); domain.cell_state.len()],
-        }
-    }
-
-    /// Reset fields to their default value i.e. 0.
-    pub fn reset(&mut self) {
-        self.cell = vec![zero(); self.cell.len()];
-    }
-
-    /// Add another [CellTallyDomain]'s value to its own.
-    pub fn add(&mut self, other: &CellTallyDomain<T>) {
-        // zip iterators from the two objects' values.
-        let iter = zip(self.cell.iter_mut(), other.cell.iter());
-        // sum other to self
-        iter.for_each(|(lhs, rhs)| *lhs += *rhs);
+impl<T: CustomFloat> IndexMut<(usize, usize)> for ScalarFluxDomain<T> {
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        &mut self.cell[index.0 * self.num_groups + index.1]
     }
 }
 
@@ -214,64 +204,18 @@ impl<T: CustomFloat> CellTallyDomain<T> {
 //========
 
 /// Super-structure holding all recorded data besides time statistics.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Tallies<T: CustomFloat> {
-    /// Balance used for cumulative and centralized statistics.
-    pub balance_cumulative: Balance,
     /// Cyclic balances.
     pub balance_cycle: Balance,
     /// Top-level structure holding scalar flux data.
-    pub scalar_flux_domain: Vec<ScalarFluxDomain<T>>,
-    /// Top-level structure holding cell tallied data.
-    pub cell_tally_domain: Vec<CellTallyDomain<T>>,
-    /// Top-level structure used to compute fluence data.
-    pub fluence: Fluence<T>,
-    /// Energy spectrum of the problem.
-    pub spectrum: EnergySpectrum,
+    pub scalar_flux_domain: ScalarFluxDomain<T>,
 }
 
 impl<T: CustomFloat> Tallies<T> {
-    /// Constructor.
-    pub fn new(spectrum_name: String, spectrum_size: usize) -> Self {
-        let spectrum = EnergySpectrum::new(spectrum_name, spectrum_size);
-        Self {
-            balance_cumulative: Default::default(),
-            balance_cycle: Default::default(),
-            scalar_flux_domain: Default::default(),
-            cell_tally_domain: Default::default(),
-            fluence: Default::default(),
-            spectrum,
-        }
-    }
-
     /// Prepare the tallies for use.
-    pub fn initialize_tallies(
-        &mut self,
-        domain: &[MCDomain<T>],
-        num_energy_groups: usize,
-        bench_type: BenchType,
-    ) {
-        self.cell_tally_domain.reserve(domain.len());
-        self.scalar_flux_domain.reserve(domain.len());
-        domain.iter().for_each(|dom| {
-            // Initialize the cell tallies
-            self.cell_tally_domain.push(CellTallyDomain::new(dom));
-            // Initialize the scalar flux tallies
-            self.scalar_flux_domain
-                .push(ScalarFluxDomain::new(dom, num_energy_groups));
-        });
-
-        // Initialize Fluence if necessary
-        if bench_type != BenchType::Standard {
-            self.scalar_flux_domain
-                .iter()
-                .map(|dom| dom.cell.len())
-                .for_each(|n_cells| {
-                    self.fluence.domain.push(FluenceDomain {
-                        cell: vec![zero(); n_cells],
-                    })
-                });
-        }
+    pub fn initialize_tallies(&mut self, n_cells: usize, num_energy_groups: usize) {
+        self.scalar_flux_domain = ScalarFluxDomain::new(n_cells, num_energy_groups);
     }
 
     /// Prints summarized data recorded by the tallies.
@@ -333,18 +277,18 @@ impl<T: CustomFloat> Tallies<T> {
         let bal = &self.balance_cycle;
         println!("{:>7} |{:>7} |{:>9} |{:>9} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>11} |{:>14.6e} |{:>10.3e}     |{:>14.5e}     |{:>10.3e}",
             step,
-            bal.start,
-            bal.source,
-            bal.rr,
-            bal.split,
-            bal.absorb,
-            bal.scatter,
-            bal.fission,
-            bal.produce,
-            bal.collision,
-            bal.escape,
-            bal.census,
-            bal.num_segments,
+            bal[TalliedEvent::Start],
+            bal[TalliedEvent::Source],
+            bal[TalliedEvent::OverRr] + bal[TalliedEvent::WeightRr],
+            bal[TalliedEvent::Split],
+            bal[TalliedEvent::Absorb],
+            bal[TalliedEvent::Scatter],
+            bal[TalliedEvent::Fission],
+            bal[TalliedEvent::Produce],
+            bal[TalliedEvent::Collision],
+            bal[TalliedEvent::Escape],
+            bal[TalliedEvent::Census],
+            bal[TalliedEvent::NumSegments],
             sf_sum,
             cy_init,
             cy_track,
@@ -360,18 +304,18 @@ impl<T: CustomFloat> Tallies<T> {
                 file,
                 "{};{};{};{};{};{};{};{};{};{};{};{};{};{:e};{:e};{:e};{:e}",
                 step,
-                bal.start,
-                bal.source,
-                bal.rr,
-                bal.split,
-                bal.absorb,
-                bal.scatter,
-                bal.fission,
-                bal.produce,
-                bal.collision,
-                bal.escape,
-                bal.census,
-                bal.num_segments,
+                bal[TalliedEvent::Start],
+                bal[TalliedEvent::Source],
+                bal[TalliedEvent::OverRr] + bal[TalliedEvent::WeightRr],
+                bal[TalliedEvent::Split],
+                bal[TalliedEvent::Absorb],
+                bal[TalliedEvent::Scatter],
+                bal[TalliedEvent::Fission],
+                bal[TalliedEvent::Produce],
+                bal[TalliedEvent::Collision],
+                bal[TalliedEvent::Escape],
+                bal[TalliedEvent::Census],
+                bal[TalliedEvent::NumSegments],
                 sf_sum,
                 cy_init,
                 cy_track,
@@ -383,69 +327,19 @@ impl<T: CustomFloat> Tallies<T> {
 
     /// Computes the global scalar flux value of the problem.
     pub fn scalar_flux_sum(&self) -> T {
-        let summ: T = self
-            .scalar_flux_domain
+        self.scalar_flux_domain
+            .cell
             .iter()
-            .map(|sf_domain| {
-                sf_domain
-                    .cell
-                    .iter()
-                    .map(|sf_cell| sf_cell.iter().copied().sum())
-                    .sum()
-            })
-            .sum();
-        summ
-    }
-
-    /// Update the energy spectrum by going over all the currently valid particles.
-    pub fn update_spectrum(&mut self, container: &ParticleContainer<T>) {
-        if self.spectrum.file_name.is_empty() {
-            return;
-        }
-
-        let update_function = |particle_list: &[MCParticle<T>], spectrum: &mut [u64]| {
-            particle_list.iter().for_each(|particle| {
-                spectrum[particle.energy_group] += 1;
-            });
-        };
-
-        // Iterate on processing particles
-        update_function(
-            &container.processing_particles,
-            &mut self.spectrum.census_energy_spectrum,
-        );
-        // Iterate on processed particles
-        update_function(
-            &container.processed_particles,
-            &mut self.spectrum.census_energy_spectrum,
-        );
+            .map(|sf_cell| sf_cell.load(Ordering::Relaxed))
+            .sum::<T>()
     }
 
     /// Print stats of the current cycle and update the cumulative counters.
-    pub fn cycle_finalize(&mut self, bench_type: BenchType) {
-        self.balance_cumulative.add(&self.balance_cycle);
-
-        let new_start: u64 = self.balance_cycle.end;
+    pub fn cycle_finalize(&mut self) {
+        let new_start: u64 = self.balance_cycle[TalliedEvent::End];
         self.balance_cycle.reset();
-        self.balance_cycle.start = new_start;
+        self.balance_cycle[TalliedEvent::Start] = new_start;
 
-        if bench_type != BenchType::Standard {
-            let fluence_computation_iter = zip(
-                self.fluence.domain.iter_mut(),
-                self.scalar_flux_domain.iter(),
-            );
-            fluence_computation_iter.for_each(|(fl_domain, sf_domain)| {
-                fl_domain.compute(sf_domain);
-            })
-        }
-
-        let dom_iter = zip(
-            self.cell_tally_domain.iter_mut(),
-            self.scalar_flux_domain.iter_mut(),
-        );
-        dom_iter.for_each(|(ct_domain, sf_domain)| {
-            ct_domain.reset();
-            sf_domain.reset();
-        });
+        self.scalar_flux_domain.reset();
     }
 }

@@ -2,14 +2,19 @@
 //!
 //! This module contains code used for the main structure holding particles.
 
+use std::sync::{Arc, Mutex};
+
+use rayon::prelude::*;
+
 use crate::{
     constants::CustomFloat,
-    data::{send_queue::SendQueue, tallies::Balance},
+    data::tallies::{Balance, TalliedEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     simulation::cycle_tracking::cycle_tracking_guts,
+    utils::mc_processor_info::ExecPolicy,
 };
 
-use super::mc_particle::{MCParticle, Species};
+use super::{mc_particle::Species, particle_collection::ParticleCollection};
 
 #[derive(Debug, Clone)]
 /// Structure used as a container for all particles.
@@ -17,36 +22,29 @@ use super::mc_particle::{MCParticle, Species};
 /// The [Clone] implementation should not be used except at the beginning of the program.
 pub struct ParticleContainer<T: CustomFloat> {
     /// Container for particles that have yet to be processed.
-    pub processing_particles: Vec<MCParticle<T>>,
+    pub processing_particles: ParticleCollection<T>,
     /// Container for already processed particles.
-    pub processed_particles: Vec<MCParticle<T>>,
+    pub processed_particles: ParticleCollection<T>,
     /// Container for extra particles. This is used for fission-induced
     /// particles and incoming off-processor particles.
-    pub extra_particles: Vec<MCParticle<T>>,
-    /// Queue used to save particles and neighbor index for any particles
-    /// moving from a domain managed by a different processor than the current
-    /// one.
-    pub send_queue: SendQueue<T>,
+    pub extra_particles: ParticleCollection<T>,
 }
 
 impl<T: CustomFloat> ParticleContainer<T> {
     /// Constructor. The appropriate capacity is computed beforehand.
     pub fn new(regular_capacity: usize, extra_capacity: usize) -> Self {
         Self {
-            processing_particles: Vec::with_capacity(regular_capacity),
-            processed_particles: Vec::with_capacity(regular_capacity),
-            extra_particles: Vec::with_capacity(extra_capacity),
-            send_queue: Default::default(),
+            processing_particles: ParticleCollection::with_capacity(regular_capacity),
+            processed_particles: ParticleCollection::with_capacity(regular_capacity),
+            extra_particles: ParticleCollection::with_capacity(extra_capacity),
         }
     }
 
     /// Swap the processing and processed particle lists. This function is used in-between
     /// iterations.
     pub fn swap_processing_processed(&mut self) {
-        core::mem::swap(
-            &mut self.processing_particles,
-            &mut self.processed_particles,
-        );
+        self.processing_particles
+            .append(&mut self.processed_particles);
     }
 
     /// Randomly delete particles to reach the desired number of particles for
@@ -64,7 +62,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
             let survive_twice = pp.low_weight_rr(relative_weight_cutoff, source_particle_weight);
             survive_once & survive_twice
         });
-        balance.rr += (old_len - self.processing_particles.len()) as u64;
+        balance[TalliedEvent::OverRr] = (old_len - self.processing_particles.len()) as u64;
     }
 
     /// Split particles to reach the desired number of particles for
@@ -77,16 +75,16 @@ impl<T: CustomFloat> ParticleContainer<T> {
         balance: &mut Balance,
     ) {
         let mut old_len = self.processing_particles.len();
-        self.processing_particles.iter_mut().for_each(|pp| {
+        (&mut self.processing_particles).into_iter().for_each(|pp| {
             self.extra_particles
                 .extend(pp.under_populated_split(split_rr_factor));
         });
         self.clean_extra_vaults();
-        balance.split += (self.processing_particles.len() - old_len) as u64;
+        balance[TalliedEvent::Split] = (self.processing_particles.len() - old_len) as u64;
         old_len = self.processing_particles.len();
         self.processing_particles
             .retain_mut(|pp| pp.low_weight_rr(relative_weight_cutoff, source_particle_weight));
-        balance.rr += (old_len - self.processing_particles.len()) as u64;
+        balance[TalliedEvent::WeightRr] = (old_len - self.processing_particles.len()) as u64;
     }
 
     /// Track particles and transfer them to the processed storage when done.
@@ -95,35 +93,84 @@ impl<T: CustomFloat> ParticleContainer<T> {
         mcdata: &MonteCarloData<T>,
         mcunit: &mut MonteCarloUnit<T>,
     ) {
-        self.processing_particles.iter_mut().for_each(|particle| {
-            cycle_tracking_guts(
-                mcdata,
-                mcunit,
-                particle,
-                &mut self.extra_particles,
-                &mut self.send_queue,
-            )
-        });
+        let exinf = &mcdata.exec_info;
+        match exinf.exec_policy {
+            // Process unit sequentially
+            ExecPolicy::Sequential | ExecPolicy::Distributed => {
+                let mut tmp = Balance::default();
+                (&mut self.processing_particles)
+                    .into_iter()
+                    .for_each(|particle| {
+                        cycle_tracking_guts(
+                            mcdata,
+                            mcunit,
+                            particle,
+                            &mut tmp,
+                            &mut self.extra_particles,
+                        )
+                    });
+                mcunit.tallies.balance_cycle.add_to_self(&tmp);
+            }
+            // Process unit in parallel
+            ExecPolicy::Rayon | ExecPolicy::Hybrid => {
+                let extra = Arc::new(Mutex::new(&mut self.extra_particles));
+                // choose chunk size to get one chunk per thread
+                let chunk_size: usize = match exinf.chunk_size {
+                    0 => (self.processing_particles.len() / exinf.n_rayon_threads) + 1,
+                    _ => exinf.chunk_size,
+                };
+
+                let res: Balance = self
+                    .processing_particles
+                    .par_iter_mut()
+                    .chunks(chunk_size)
+                    .map(|mut particles| {
+                        // Strategy used to reduce ressource (memory) contention
+                        // 1. Give each chunks (==thread with our chunk_size value) its own balance
+                        //    This removes the need for atomics type. The tradeoff: folding results
+                        //    of the iterators
+                        // 2. Use a local extra collection that is later used to extend the global
+                        //    container. This reduces the total number of lock (and prolly lock time)
+                        let mut local_balance: Balance = Balance::default();
+                        // chunk_size * 5 is enough capacity to handle all particles undergoing
+                        // fission & splitting into the max possible nb of particles.
+                        let mut local_extra: ParticleCollection<T> =
+                            ParticleCollection::with_capacity(chunk_size * 5);
+                        particles.iter_mut().for_each(|particle| {
+                            cycle_tracking_guts(
+                                mcdata,
+                                mcunit,
+                                particle,
+                                &mut local_balance,
+                                &mut local_extra,
+                            )
+                        });
+                        extra.lock().unwrap().append(&mut local_extra);
+                        local_balance
+                    })
+                    .fold_with(Balance::default(), |a, b| a + b)
+                    .sum::<Balance>();
+                // It should be safe to simply add this to the one in mcunit
+                assert_eq!(res[TalliedEvent::Start], 0);
+                assert_eq!(res[TalliedEvent::End], 0);
+                assert_eq!(res[TalliedEvent::Source], 0);
+                mcunit.tallies.balance_cycle.add_to_self(&res);
+            }
+        }
         self.processing_particles
             .retain(|particle| particle.species != Species::Unknown);
         self.processed_particles
             .append(&mut self.processing_particles);
     }
 
-    /// Processes the particles stored in the send queue.
-    /// - In a shared memory context, this is just a transfer from the send queue
-    ///   to the extra storage
-    /// - In a message-passing context, this would include sending and receiving
-    ///   particles
-    pub fn process_sq(&mut self) {
-        self.send_queue.data.iter().for_each(|sq_tuple| {
-            // Neighbor index would be used here to get the correct sender
-            // match sq_tuple.neighbor {...}
-            self.extra_particles.push(sq_tuple.particle.clone());
-        });
-        self.send_queue.clear();
-        // Here we would add the receiver part
-        // while rx.try_recv().is_ok() {...}
+    /// Sort the processing particles according to where they belong in the mesh.
+    pub fn sort_processing(&mut self) {
+        self.processing_particles
+            .sort_by(|a, b| match a.cell.cmp(&b.cell) {
+                std::cmp::Ordering::Less => std::cmp::Ordering::Less,
+                std::cmp::Ordering::Equal => a.energy_group.cmp(&b.energy_group),
+                std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
+            });
     }
 
     /// Adds back to the processing storage the extra particles.
@@ -135,9 +182,7 @@ impl<T: CustomFloat> ParticleContainer<T> {
     /// - extra storage is empty
     /// - processing storage is empty
     /// - send queue is empty
-    pub fn test_done_new(&self) -> bool {
-        self.extra_particles.is_empty()
-            & self.processing_particles.is_empty()
-            & self.send_queue.data.is_empty()
+    pub fn is_done_processing(&self) -> bool {
+        self.extra_particles.is_empty() & self.processing_particles.is_empty()
     }
 }

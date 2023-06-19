@@ -1,6 +1,9 @@
 use fastiron::{
     parameters::{GeometryParameters, ParameterError, Parameters, Shape, SimulationParameters},
-    utils::io_utils::{parse_input_file, Cli, InputError},
+    utils::{
+        io_utils::{parse_input_file, Cli, InputError},
+        mc_processor_info::{ExecPolicy, MCProcessorInfo},
+    },
 };
 
 #[test]
@@ -12,7 +15,7 @@ fn verify_cli() {
 #[test]
 fn verify_cli_parsing() {
     use clap::Parser;
-    let cmd_line = "./fastiron -i somefile.inp -c -l -e out1 -S out2.dat -X 10 -Y 10 -Z 10.0 -s 123456 -n 1000 -b 10";
+    let cmd_line = "./fastiron -i somefile.inp -c -l -e out1 -S out2.dat -X 10 -Y 10 -Z 10.0 -s 123456 -n 1000 -r 10";
     let cli = Cli::parse_from(cmd_line.split(' '));
     let simulation_params = SimulationParameters::<f64>::from_cli(&cli);
     assert_eq!(simulation_params.input_file, "somefile.inp");
@@ -25,7 +28,51 @@ fn verify_cli_parsing() {
     assert_eq!(simulation_params.lz, 10.0);
     assert_eq!(simulation_params.seed, 123456);
     assert_eq!(simulation_params.n_particles, 1000);
-    assert_eq!(simulation_params.n_threads, 10);
+    assert_eq!(simulation_params.n_rayon_threads, 10);
+}
+
+#[test]
+fn verify_exec_policy_detection() {
+    use clap::Parser;
+    let mut cmd_line = "./fastiron -r 10 -u 1";
+    let mut cli = Cli::parse_from(cmd_line.split(' '));
+    let mut simulation_params = SimulationParameters::<f64>::from_cli(&cli);
+    let mut proc_info = MCProcessorInfo::new(&simulation_params);
+    assert_eq!(proc_info.n_units, 1);
+    assert_eq!(proc_info.n_rayon_threads, 10);
+    assert_eq!(proc_info.exec_policy, ExecPolicy::Rayon);
+
+    cmd_line = "./fastiron -u 4";
+    cli = Cli::parse_from(cmd_line.split(' '));
+    simulation_params = SimulationParameters::<f64>::from_cli(&cli);
+    proc_info = MCProcessorInfo::new(&simulation_params);
+    assert_eq!(proc_info.n_units, 4);
+    assert_eq!(proc_info.n_rayon_threads, 1);
+    assert_eq!(proc_info.exec_policy, ExecPolicy::Distributed);
+
+    cmd_line = "./fastiron -r 1 -u 1";
+    cli = Cli::parse_from(cmd_line.split(' '));
+    simulation_params = SimulationParameters::<f64>::from_cli(&cli);
+    proc_info = MCProcessorInfo::new(&simulation_params);
+    assert_eq!(proc_info.n_units, 1);
+    assert_eq!(proc_info.n_rayon_threads, 1);
+    assert_eq!(proc_info.exec_policy, ExecPolicy::Sequential);
+
+    cmd_line = "./fastiron -i somefile.inp";
+    cli = Cli::parse_from(cmd_line.split(' '));
+    simulation_params = SimulationParameters::<f64>::from_cli(&cli);
+    proc_info = MCProcessorInfo::new(&simulation_params);
+    assert_eq!(proc_info.n_units, 1);
+    assert_eq!(proc_info.n_rayon_threads, 1);
+    assert_eq!(proc_info.exec_policy, ExecPolicy::Sequential);
+
+    cmd_line = "./fastiron -r 4 -u 4";
+    cli = Cli::parse_from(cmd_line.split(' '));
+    simulation_params = SimulationParameters::<f64>::from_cli(&cli);
+    proc_info = MCProcessorInfo::new(&simulation_params);
+    assert_eq!(proc_info.n_units, 4);
+    assert_eq!(proc_info.n_rayon_threads, 4);
+    assert_eq!(proc_info.exec_policy, ExecPolicy::Hybrid);
 }
 
 #[test]

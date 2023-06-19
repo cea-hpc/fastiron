@@ -7,36 +7,6 @@ use num::{zero, FromPrimitive};
 
 use crate::{constants::CustomFloat, montecarlo::MonteCarloData};
 
-/// Computes the reaction-specific number-density-weighted
-/// macroscopic cross section in the cell.
-///
-/// Note that this function is isotope-specific; However the proxy-app
-/// only accounts for simulation of a single isotope type.
-pub fn macroscopic_cross_section<T: CustomFloat>(
-    mcdata: &MonteCarloData<T>,
-    reaction_idx: usize,
-    mat_gid: usize,
-    cell_nb_density: T,
-    isotope_idx: usize,
-    energy_group: usize,
-) -> T {
-    let atom_fraction: T = mcdata.material_database.mat[mat_gid].iso[isotope_idx].atom_fraction;
-
-    if (atom_fraction == zero()) | (cell_nb_density == zero()) {
-        // one of the two is 0
-        let res: T = FromPrimitive::from_f64(1e-20).unwrap();
-        return res;
-    }
-
-    let isotope_gid = mcdata.material_database.mat[mat_gid].iso[isotope_idx].gid;
-    let micro_cross_section: T =
-        mcdata
-            .nuclear_data
-            .get_reaction_cross_section(reaction_idx, isotope_gid, energy_group);
-
-    atom_fraction * cell_nb_density * micro_cross_section
-}
-
 /// Computes the total number-density-weighted macroscopic
 /// cross section in the cell.
 ///

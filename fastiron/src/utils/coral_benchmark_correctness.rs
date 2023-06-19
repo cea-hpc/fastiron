@@ -6,36 +6,39 @@
 
 use num::{one, zero, FromPrimitive};
 
-use crate::{constants::CustomFloat, data::tallies::Tallies, parameters::BenchType};
+use crate::{
+    constants::CustomFloat, data::tallies::TalliedEvent, montecarlo::MonteCarloResults,
+    parameters::BenchType,
+};
 
 /// Runs additionnal tests according to the [BenchType].
-pub fn coral_benchmark_correctness<T: CustomFloat>(bench_type: BenchType, tallies: &Tallies<T>) {
-    if bench_type == BenchType::Standard {
+pub fn coral_benchmark_correctness<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
+    if mcresults.bench_type == BenchType::Standard {
         return;
     }
 
     // only on mpi rank 0 in QS code
-    balance_ratio_test(bench_type, tallies);
-    balance_event_test(tallies);
-    missing_particle_test(tallies);
+    balance_ratio_test(mcresults);
+    balance_event_test(mcresults);
+    missing_particle_test(mcresults);
 
     // add a condition on cycles/total particles?
-    fluence_test(tallies);
+    fluence_test(mcresults);
 }
 
 /// Test Balance Tallies for relative correctness.
 ///
 /// Expected ratios of absorbs, fissions, scatters are maintained
 /// withing some tolerance, based on input expectation.
-pub fn balance_ratio_test<T: CustomFloat>(bench_type: BenchType, tallies: &Tallies<T>) {
+pub fn balance_ratio_test<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
     println!("Testing if ratios for absorbtion, fission & scattering are maintained...");
 
-    let balance_tally = &tallies.balance_cumulative;
-    let absorb: T = FromPrimitive::from_u64(balance_tally.absorb).unwrap();
-    let fission: T = FromPrimitive::from_u64(balance_tally.fission).unwrap();
-    let scatter: T = FromPrimitive::from_u64(balance_tally.scatter).unwrap();
+    let balance_tally = &mcresults.balance_cumulative;
+    let absorb: T = FromPrimitive::from_u64(balance_tally[TalliedEvent::Absorb]).unwrap();
+    let fission: T = FromPrimitive::from_u64(balance_tally[TalliedEvent::Fission]).unwrap();
+    let scatter: T = FromPrimitive::from_u64(balance_tally[TalliedEvent::Scatter]).unwrap();
     let (fission_ratio, scatter_ratio, absorb_ratio, percent_tolerance): (T, T, T, T) =
-        if bench_type == BenchType::Coral1 {
+        if mcresults.bench_type == BenchType::Coral1 {
             (
                 FromPrimitive::from_f64(0.05).unwrap(),
                 FromPrimitive::from_f64(1.0).unwrap(),
@@ -86,15 +89,17 @@ pub fn balance_ratio_test<T: CustomFloat>(bench_type: BenchType, tallies: &Talli
 
 /// Test Balance Tallies for equality in number of facet crossing
 /// and collision events.
-pub fn balance_event_test<T: CustomFloat>(tallies: &Tallies<T>) {
+pub fn balance_event_test<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
     println!("Testing balance between number of facet crossings and reactions...");
 
-    let balance_tally = &tallies.balance_cumulative;
+    let balance_tally = &mcresults.balance_cumulative;
     let facet_crossing: T = FromPrimitive::from_u64(
-        balance_tally.num_segments - balance_tally.collision - balance_tally.census,
+        balance_tally[TalliedEvent::NumSegments]
+            - balance_tally[TalliedEvent::Collision]
+            - balance_tally[TalliedEvent::Census],
     )
     .unwrap();
-    let collision: T = FromPrimitive::from_u64(balance_tally.collision).unwrap();
+    let collision: T = FromPrimitive::from_u64(balance_tally[TalliedEvent::Collision]).unwrap();
 
     let ratio: T = (facet_crossing / collision - one()).abs();
     let percent_tolerance: T = one();
@@ -113,12 +118,20 @@ pub fn balance_event_test<T: CustomFloat>(tallies: &Tallies<T>) {
 /// This test should always succeed unless test for
 /// done was broken, or we are running with 1 MPI rank
 /// and so never preform this test duing test_for_done
-pub fn missing_particle_test<T: CustomFloat>(tallies: &Tallies<T>) {
+pub fn missing_particle_test<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
     println!("Testing for lost / unaccounted for particles in this simulation...");
 
-    let bt = &tallies.balance_cumulative;
-    let gains: u64 = bt.start + bt.source + bt.produce + bt.split;
-    let losses: u64 = bt.absorb + bt.census + bt.escape + bt.rr + bt.fission;
+    let bt = &mcresults.balance_cumulative;
+    let gains: u64 = bt[TalliedEvent::Start]
+        + bt[TalliedEvent::Source]
+        + bt[TalliedEvent::Produce]
+        + bt[TalliedEvent::Split];
+    let losses: u64 = bt[TalliedEvent::Absorb]
+        + bt[TalliedEvent::Census]
+        + bt[TalliedEvent::Escape]
+        + bt[TalliedEvent::OverRr]
+        + bt[TalliedEvent::WeightRr]
+        + bt[TalliedEvent::Fission];
 
     if gains == losses {
         println!("PASS:: No particles lost during run");
@@ -131,20 +144,22 @@ pub fn missing_particle_test<T: CustomFloat>(tallies: &Tallies<T>) {
 ///
 /// This test really requires alot of particles or cycles or both
 /// This solution should converge to a homogenous solution
-pub fn fluence_test<T: CustomFloat>(tallies: &Tallies<T>) {
+pub fn fluence_test<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
     println!("Testing fluence for homogeneity across the cells");
     let mut max_diff: T = zero();
-    tallies.fluence.domain.iter().for_each(|dom| {
-        let mut local_sum: T = zero();
-        dom.cell.iter().for_each(|val| local_sum += *val);
+    let mut local_sum: T = zero();
+    mcresults
+        .fluence
+        .cell
+        .iter()
+        .for_each(|val| local_sum += *val);
 
-        let average: T = local_sum / FromPrimitive::from_usize(dom.size()).unwrap();
-        dom.cell.iter().for_each(|cell_value| {
-            let percent_diff: T = (*cell_value - average).abs()
-                / ((*cell_value + average) / FromPrimitive::from_f64(2.0).unwrap())
-                * FromPrimitive::from_f64(100.0).unwrap();
-            max_diff = max_diff.max(percent_diff);
-        });
+    let average: T = local_sum / FromPrimitive::from_usize(mcresults.fluence.size()).unwrap();
+    mcresults.fluence.cell.iter().for_each(|cell_value| {
+        let percent_diff: T = (*cell_value - average).abs()
+            / ((*cell_value + average) / FromPrimitive::from_f64(2.0).unwrap())
+            * FromPrimitive::from_f64(100.0).unwrap();
+        max_diff = max_diff.max(percent_diff);
     });
     let percent_tolerance: T = FromPrimitive::from_f64(6.0).unwrap();
     let pass = max_diff <= percent_tolerance;

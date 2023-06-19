@@ -1,4 +1,9 @@
 !/Fastiron/*/*.csv
 !/Fastiron/*/*.svg
+!/Fastiron/*/*.png
+
+!/RayonOnly/reference_data/*.csv
+!/RayonOnly/figures/*.png
+
 !/SequentialAnalysis/reference_data/*/*.csv
 !/SequentialAnalysis/figures/*/*.png

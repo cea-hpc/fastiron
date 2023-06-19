@@ -1,0 +1,6 @@
+target
+.git
+.github
+*.md
+!README*.md
+scripts/laptop/*

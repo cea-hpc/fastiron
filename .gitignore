@@ -1,3 +1,4 @@
+/config
 /target
 /tmp
 /out
@@ -6,3 +7,5 @@
 *.data
 *.png
 *.svg
+*.old
+build_image.sh

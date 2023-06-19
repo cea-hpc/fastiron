@@ -67,7 +67,7 @@ const OPPOSING_FACET: [usize; N_FACETS_OUT] = [
 ];
 
 /// Structure that manages a data set on a mesh-like geometry.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MCMeshDomain<T: CustomFloat> {
     /// Global identifier associated of the domain.
     pub domain_gid: usize,
@@ -138,10 +138,23 @@ impl<T: CustomFloat> MCMeshDomain<T> {
             cell_geometry,
         }
     }
+
+    pub fn get_facet_coords(
+        &self,
+        cell_idx: usize,
+        facet_idx: usize,
+    ) -> [MCVector<T>; N_POINTS_PER_FACET] {
+        let points = &self.cell_connectivity[cell_idx].facet[facet_idx].point;
+        [
+            self.node[points[0]],
+            self.node[points[1]],
+            self.node[points[2]],
+        ]
+    }
 }
 
 /// Structure used to manage a domain, i.e. a spatial region of the problem.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MCDomain<T: CustomFloat> {
     /// Global domain identifier.
     pub global_domain: usize,
@@ -161,15 +174,14 @@ impl<T: CustomFloat> MCDomain<T> {
         mat_db: &MaterialDatabase<T>,
     ) -> Self {
         let mesh = MCMeshDomain::new(mesh_partition, grid, ddc, &get_boundary_conditions(params));
-        let cell_state: Vec<MCCellState<T>> =
-            vec![MCCellState::default(); mesh.cell_geometry.len()];
+        let cell_state: Vec<MCCellState<T>> = (0..mesh.cell_geometry.len())
+            .map(|_| MCCellState::default())
+            .collect();
         let mut mcdomain = MCDomain {
             global_domain: mesh.domain_gid,
             cell_state,
             mesh,
         };
-
-        let num_energy_groups: usize = params.simulation_params.n_groups;
 
         (0..mcdomain.cell_state.len()).for_each(|ii| {
             mcdomain.cell_state[ii].volume = mcdomain.cell_volume(ii);
@@ -177,7 +189,6 @@ impl<T: CustomFloat> MCDomain<T> {
             let rr = cell_position_3dg(&mcdomain.mesh, ii);
             let mat_name = Self::find_material(&params.geometry_params, &rr);
             mcdomain.cell_state[ii].material = mat_db.find_material(&mat_name).unwrap();
-            mcdomain.cell_state[ii].total = vec![zero(); num_energy_groups];
 
             mcdomain.cell_state[ii].cell_number_density = one();
 
@@ -187,13 +198,6 @@ impl<T: CustomFloat> MCDomain<T> {
         });
 
         mcdomain
-    }
-
-    /// Clears the cross section cache for future uses.
-    pub fn clear_cross_section_cache(&mut self) {
-        self.cell_state
-            .iter_mut()
-            .for_each(|cs| cs.total.fill(zero()))
     }
 
     fn find_material(geometry_params: &[GeometryParameters<T>], rr: &MCVector<T>) -> String {

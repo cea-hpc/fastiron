@@ -2,7 +2,7 @@
 //!
 //! This modules contains a custom type for 3D vectors.
 
-use std::fmt::Debug;
+use std::{fmt::Debug, iter::Sum};
 
 use crate::constants::CustomFloat;
 
@@ -23,7 +23,7 @@ use crate::constants::CustomFloat;
 /// assert!(w.is_almost_equal(&v));
 ///
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Default)]
 pub struct MCVector<T: CustomFloat> {
     /// x axis coordinate.
     pub x: T,
@@ -73,6 +73,18 @@ impl<T: CustomFloat> MCVector<T> {
             y: self.z * vv.x - self.x * vv.z,
             z: self.x * vv.y - self.y * vv.x,
         }
+    }
+}
+
+impl<'a, T: CustomFloat> Sum<&'a MCVector<T>> for MCVector<T> {
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.fold(Self::default(), |uu, vv| uu + *vv)
+    }
+}
+
+impl<T: CustomFloat> Sum<MCVector<T>> for MCVector<T> {
+    fn sum<I: Iterator<Item = MCVector<T>>>(iter: I) -> Self {
+        iter.fold(Self::default(), |uu, vv| uu + vv)
     }
 }
 

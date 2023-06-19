@@ -37,6 +37,8 @@
 //!           write tallies & timer data into csv files if present
 //!   -t, --debug-threads
 //!           enable thread debugging if present
+//!   -p, --single-precision
+//!           enable single-precision float type usage if present
 //!   -X, --lx <LX>
 //!           x-size of simulation in cm
 //!   -Y, --ly <LY>
@@ -45,8 +47,12 @@
 //!           z-size of simulation in cm
 //!   -n, --n-particles <N_PARTICLES>
 //!           total number of particules
-//!   -b, --n-thread <N_THREADS>
-//!           number of threads that should be used to run the simulation
+//!   -C, --chunk-size <CHUNK_SIZE>
+//!           size of the chunks when executing in parallel -- if absent or set to 0, use dynamic chunk size
+//!   -r, --rayon <N_RAYON_THREADS>
+//!           number of rayon threads that should be used to run the simulation -- set to 0 for rayon's default config
+//!   -u, --units <N_UNITS>
+//!           number of units that should be used to run the simulation
 //!   -N, --n-steps <N_STEPS>
 //!           number of steps simulated
 //!   -x, --nx <NX>

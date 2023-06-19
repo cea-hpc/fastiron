@@ -8,6 +8,7 @@ use num::{one, FromPrimitive};
 
 use crate::{
     constants::CustomFloat,
+    data::tallies::TalliedEvent,
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{mc_particle::MCParticle, particle_container::ParticleContainer},
     simulation::mct::generate_coordinate_3dg,
@@ -84,66 +85,60 @@ pub fn source_now<T: CustomFloat>(
     // on each domain
     mcunit
         .domain
+        .cell_state
         .iter_mut()
         .enumerate()
-        .for_each(|(domain_idx, dom)| {
-            // on each cell
-            dom.cell_state
-                .iter_mut()
-                .enumerate()
-                .for_each(|(cell_idx, cell)| {
-                    // compute number of particles to be created in the cell
-                    let cell_weight: T = cell.volume * source_rate[cell.material] * time_step;
-                    let cell_n_particles: usize = (cell_weight / mcdata.source_particle_weight)
-                        .floor()
-                        .to_usize()
-                        .unwrap();
-                    seeds.clear();
+        .for_each(|(cell_idx, cell)| {
+            // compute number of particles to be created in the cell
+            let cell_weight: T = cell.volume * source_rate[cell.material] * time_step;
+            let cell_n_particles: usize = (cell_weight / mcdata.source_particle_weight)
+                .floor()
+                .to_usize()
+                .unwrap();
+            seeds.clear();
 
-                    for _ in 0..cell_n_particles {
-                        // source_tally is fetched & incr atomically in original code
-                        let rand_n_seed = (cell.source_tally + cell.id) as u64;
-                        cell.source_tally += 1;
-                        seeds.push(rand_n_seed);
-                    }
+            for _ in 0..cell_n_particles {
+                // source_tally is fetched & incr atomically in original code
+                let rand_n_seed = (cell.source_tally + cell.id) as u64;
+                cell.source_tally += 1;
+                seeds.push(rand_n_seed);
+            }
 
-                    // atomic in original code
-                    mcunit.tallies.balance_cycle.source += seeds.len() as u64;
+            mcunit.tallies.balance_cycle[TalliedEvent::Source] += seeds.len() as u64;
 
-                    container
-                        .processing_particles
-                        .extend(seeds.iter_mut().map(|rand_n_seed| {
-                            // ~~~ init particle
+            container
+                .processing_particles
+                .extend(seeds.iter_mut().map(|rand_n_seed| {
+                    // ~~~ init particle
 
-                            let mut particle: MCParticle<T> = MCParticle::default();
+                    let mut particle: MCParticle<T> = MCParticle::default();
 
-                            particle.random_number_seed = spawn_rn_seed::<T>(rand_n_seed);
-                            particle.identifier = *rand_n_seed;
-                            particle.coordinate = generate_coordinate_3dg(
-                                &mut particle.random_number_seed,
-                                &dom.mesh,
-                                cell_idx,
-                                cell.volume,
-                            );
-                            particle.domain = domain_idx;
-                            particle.cell = cell_idx;
-                            particle.weight = mcdata.source_particle_weight;
+                    particle.random_number_seed = spawn_rn_seed::<T>(rand_n_seed);
+                    particle.identifier = *rand_n_seed;
+                    particle.coordinate = generate_coordinate_3dg(
+                        &mut particle.random_number_seed,
+                        &mcunit.domain.mesh,
+                        cell_idx,
+                        cell.volume,
+                    );
+                    particle.domain = mcunit.domain.global_domain;
+                    particle.cell = cell_idx;
+                    particle.weight = mcdata.source_particle_weight;
 
-                            // ~~~ random sampling
+                    // ~~~ random sampling
 
-                            particle.sample_isotropic();
-                            // sample energy uniformly in [emin; emax] MeV
-                            let range = mcdata.params.simulation_params.e_max
-                                - mcdata.params.simulation_params.e_min;
-                            particle.kinetic_energy =
-                                rng_sample::<T>(&mut particle.random_number_seed) * range
-                                    + mcdata.params.simulation_params.e_min;
-                            particle.sample_num_mfp();
-                            particle.time_to_census =
-                                time_step * rng_sample::<T>(&mut particle.random_number_seed);
+                    particle.sample_isotropic();
+                    // sample energy uniformly in [emin; emax] MeV
+                    let range = mcdata.params.simulation_params.e_max
+                        - mcdata.params.simulation_params.e_min;
+                    particle.kinetic_energy = rng_sample::<T>(&mut particle.random_number_seed)
+                        * range
+                        + mcdata.params.simulation_params.e_min;
+                    particle.sample_num_mfp();
+                    particle.time_to_census =
+                        time_step * rng_sample::<T>(&mut particle.random_number_seed);
 
-                            particle
-                        }));
-                });
+                    particle
+                }));
         });
 }

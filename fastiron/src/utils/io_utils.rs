@@ -54,6 +54,10 @@ pub struct Cli {
     #[arg(short = 't', long = "debug-threads", num_args(0))]
     pub debug_threads: bool,
 
+    /// enable single-precision float type usage if present
+    #[arg(short = 'p', long = "single-precision", num_args(0))]
+    pub single_precision: bool,
+
     /// x-size of simulation in cm
     #[arg(short = 'X', long = "lx", num_args(1), allow_negative_numbers(false))]
     pub lx: Option<f32>,
@@ -75,14 +79,32 @@ pub struct Cli {
     )]
     pub n_particles: Option<u64>,
 
-    /// number of threads that should be used to run the simulation
+    /// size of the chunks when executing in parallel -- if absent or set to 0, use dynamic chunk size
     #[arg(
-        short = 'b',
-        long = "n-thread",
+        short = 'C',
+        long = "chunk-size",
         num_args(1),
         allow_negative_numbers(false)
     )]
-    pub n_threads: Option<u64>,
+    pub chunk_size: Option<u64>,
+
+    /// number of rayon threads that should be used to run the simulation -- set to 0 for rayon's default config
+    #[arg(
+        short = 'r',
+        long = "rayon",
+        num_args(1),
+        allow_negative_numbers(false)
+    )]
+    pub n_rayon_threads: Option<u64>,
+
+    /// number of units that should be used to run the simulation
+    #[arg(
+        short = 'u',
+        long = "units",
+        num_args(1),
+        allow_negative_numbers(false)
+    )]
+    pub n_units: Option<u64>,
 
     /// number of steps simulated
     #[arg(
@@ -107,7 +129,7 @@ pub struct Cli {
 
     /// random number seed
     #[arg(short = 's', long = "seed", num_args(1), allow_negative_numbers(false))]
-    pub seed: Option<u64>, //maybe allow negative values ? need to test QS behavior
+    pub seed: Option<u64>,
 }
 
 /// Updates the Parameters structure passed as argument using the

@@ -18,20 +18,22 @@ use crate::{
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
+use super::particle_collection::ParticleCollection;
+
 /// Custom enum used to model a particle's species.
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Default)]
 pub enum Species {
     /// Invalid value.
     Unknown = -1,
     #[default]
-    /// Valid value. Quicksilver only supportedone particle type.
+    /// Valid value. Quicksilver only supported one particle type.
     Known = 0, // \o/
 }
 
 /// Structure used to hold all data of a particle.
 ///
 /// This is mostly used for computations during the tracking section.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, PartialOrd, PartialEq, Clone)]
 pub struct MCParticle<T: CustomFloat> {
     /// Current position.
     pub coordinate: MCVector<T>,
@@ -133,7 +135,7 @@ impl<T: CustomFloat> MCParticle<T> {
         &mut self,
         reaction: &NuclearDataReaction<T>,
         material_mass: T,
-        extra: &mut Vec<MCParticle<T>>,
+        extra: &mut ParticleCollection<T>,
     ) -> usize {
         let one: T = FromPrimitive::from_f64(1.0).unwrap();
         let two: T = FromPrimitive::from_f64(2.0).unwrap();
@@ -322,6 +324,8 @@ impl<T: CustomFloat> MCParticle<T> {
         }
     }
 }
+
+unsafe impl<T: CustomFloat> Send for MCParticle<T> {}
 
 //=============
 // Unit tests

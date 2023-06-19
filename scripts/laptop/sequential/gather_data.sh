@@ -6,7 +6,7 @@
 # The only additionnal file that is not provided by this script is the 
 # previous version's timers report.
 
-PROJECTDIR=$(dirname "$0")/..
+PROJECTDIR=$(dirname "$0")/../..
 TARGETDIR=$PROJECTDIR/tmp
 #CARGO=~/.cargo/bin/cargo
 FASTIRON=$PROJECTDIR/target/release/fastiron

@@ -9,7 +9,7 @@ use num::{zero, FromPrimitive};
 use crate::{constants::CustomFloat, parameters::MaterialParameters};
 
 /// Enum used to represent a reaction type.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ReactionType {
     /// Value for a scattering reaction.
     Scatter,

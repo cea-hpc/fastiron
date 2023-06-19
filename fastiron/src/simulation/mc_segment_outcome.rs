@@ -11,6 +11,7 @@
 
 use std::fmt::Debug;
 
+use atomic::Ordering;
 use num::{one, zero};
 
 use crate::{
@@ -98,9 +99,12 @@ impl<T: CustomFloat> Default for DistanceHandler<T> {
 /// - Collision: The distance is computed using probabilities.
 pub fn outcome<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
+    mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
 ) -> MCSegmentOutcome {
+    //==========
+    // Prep work
+
     // initialize distances and constants
     let small_f: T = T::small_float();
     let mut distance_handler = DistanceHandler::default();
@@ -113,31 +117,28 @@ pub fn outcome<T: CustomFloat>(
         particle.num_mean_free_paths = small_f;
     }
 
-    // randomly determines the distance to the next collision
-    // based upon the current cell data
-    let precomputed_cross_section =
-        mcunit.domain[particle.domain].cell_state[particle.cell].total[particle.energy_group];
-    let macroscopic_total_xsection = if precomputed_cross_section > zero() {
-        // XS was already cached
-        precomputed_cross_section
+    // get cross section
+    // lazily computed
+    // This ordering should make it so that we dont compute a XS multiple times?
+    let pcxs = mcunit.xs_cache[(particle.cell, particle.energy_group)].load(Ordering::Acquire);
+    let macroscopic_total_xsection = if pcxs > zero() {
+        // use precomputed value
+        pcxs
     } else {
-        // compute XS
-        let mat_gid: usize = mcunit.domain[particle.domain].cell_state[particle.cell].material;
-        let cell_nb_density: T =
-            mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
-
+        // compute & cache value
+        let mat_gid: usize = mcunit.domain.cell_state[particle.cell].material;
+        let cell_nb_density: T = mcunit.domain.cell_state[particle.cell].cell_number_density;
         let tmp = weighted_macroscopic_cross_section(
             mcdata,
             mat_gid,
             cell_nb_density,
             particle.energy_group,
         );
-        // cache the XS
-        mcunit.domain[particle.domain].cell_state[particle.cell].total[particle.energy_group] = tmp;
-
+        mcunit.xs_cache[(particle.cell, particle.energy_group)].store(tmp, Ordering::Release);
         tmp
     };
 
+    // prepare particle
     particle.total_cross_section = macroscopic_total_xsection;
     if macroscopic_total_xsection == zero() {
         particle.mean_free_path = T::huge_float();
@@ -150,7 +151,8 @@ pub fn outcome<T: CustomFloat>(
         particle.sample_num_mfp();
     }
 
-    // sets distance to collision, nearest facet and census
+    //===========================
+    // Compute distances to event
 
     // collision
     distance_handler.update(
@@ -163,7 +165,7 @@ pub fn outcome<T: CustomFloat>(
         particle_speed * particle.time_to_census,
     );
     // nearest facet
-    let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, &mcunit.domain[particle.domain]);
+    let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, &mcunit.domain.mesh);
     particle.normal_dot = nearest_facet.dot_product;
     distance_handler.update(
         MCSegmentOutcome::FacetCrossing,
@@ -175,13 +177,13 @@ pub fn outcome<T: CustomFloat>(
         distance_handler.force_collision();
     }
 
-    // pick the outcome and update the particle
+    //============================================
+    // Pick the outcome & update particle, tallies
 
-    //let segment_outcome = find_min(&distance);
     let segment_outcome = distance_handler.outcome;
-
     assert!(distance_handler.min_dist >= zero());
 
+    // general update
     particle.segment_path_length = distance_handler.min_dist;
     particle.num_mean_free_paths -= particle.segment_path_length / particle.mean_free_path;
 
@@ -216,11 +218,6 @@ pub fn outcome<T: CustomFloat>(
     if particle.time_to_census < zero() {
         particle.time_to_census = zero();
     }
-
-    // update scalar flux tally
-    // atomic in original code
-    mcunit.tallies.scalar_flux_domain[particle.domain].cell[particle.cell]
-        [particle.energy_group] += particle.segment_path_length * particle.weight;
 
     segment_outcome
 }

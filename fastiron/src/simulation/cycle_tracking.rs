@@ -3,13 +3,18 @@
 //! This module contains the function individually tracking particles during the
 //! main simulation section.
 
+use std::sync::atomic::Ordering;
+
 use num::{one, zero};
 
 use crate::{
     constants::CustomFloat,
-    data::{send_queue::SendQueue, tallies::MCTallyEvent},
+    data::tallies::{Balance, MCTallyEvent, TalliedEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
-    particles::mc_particle::{MCParticle, Species},
+    particles::{
+        mc_particle::{MCParticle, Species},
+        particle_collection::ParticleCollection,
+    },
     simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
 };
 
@@ -25,14 +30,11 @@ use super::{
 /// invalidated.
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
+    mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: &mut Vec<MCParticle<T>>,
-    send_queue: &mut SendQueue<T>,
+    balance: &mut Balance,
+    extra: &mut ParticleCollection<T>,
 ) {
-    // load particle, track it & update the original
-    // next step is to refactor MCParticle / MCBaseParticle to lighten conversion between the types
-
     // set age & time to census
     if particle.time_to_census <= zero() {
         particle.time_to_census += mcdata.params.simulation_params.dt;
@@ -45,15 +47,15 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
 
-    cycle_tracking_function(mcdata, mcunit, particle, extra, send_queue);
+    cycle_tracking_function(mcdata, mcunit, particle, balance, extra);
 }
 
 fn cycle_tracking_function<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
-    mcunit: &mut MonteCarloUnit<T>,
+    mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-    extra: &mut Vec<MCParticle<T>>,
-    send_queue: &mut SendQueue<T>,
+    balance: &mut Balance,
+    extra: &mut ParticleCollection<T>,
 ) {
     let mut keep_tracking: bool;
 
@@ -61,23 +63,23 @@ fn cycle_tracking_function<T: CustomFloat>(
         // compute event for segment
         let segment_outcome = outcome(mcdata, mcunit, particle);
         // update # of segments
-        mcunit.tallies.balance_cycle.num_segments += 1; // atomic in original code
+        balance[TalliedEvent::NumSegments] += 1;
         particle.num_segments += one();
+        // update scalar flux tally
+        mcunit.tallies.scalar_flux_domain[(particle.cell, particle.energy_group)]
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| {
+                Some(x + particle.segment_path_length * particle.weight)
+            })
+            .unwrap();
 
         match segment_outcome {
             MCSegmentOutcome::Collision => {
-                let mat_gid = mcunit.domain[particle.domain].cell_state[particle.cell].material;
-                let cell_nb_density =
-                    mcunit.domain[particle.domain].cell_state[particle.cell].cell_number_density;
+                let mat_gid = mcunit.domain.cell_state[particle.cell].material;
+                let cell_nb_density = mcunit.domain.cell_state[particle.cell].cell_number_density;
 
-                keep_tracking = collision_event(
-                    mcdata,
-                    mat_gid,
-                    cell_nb_density,
-                    particle,
-                    extra,
-                    &mut mcunit.tallies.balance_cycle,
-                );
+                keep_tracking =
+                    collision_event(mcdata, balance, mat_gid, cell_nb_density, particle, extra);
+
                 particle.energy_group = mcdata
                     .nuclear_data
                     .get_energy_groups(particle.kinetic_energy);
@@ -87,9 +89,8 @@ fn cycle_tracking_function<T: CustomFloat>(
             }
             MCSegmentOutcome::FacetCrossing => {
                 // crossed facet data
-                let facet_adjacency = &mcunit.domain[particle.domain].mesh.cell_connectivity
-                    [particle.cell]
-                    .facet[particle.facet]
+                let facet_adjacency = &mcunit.domain.mesh.cell_connectivity[particle.cell].facet
+                    [particle.facet]
                     .subfacet;
 
                 facet_crossing_event(particle, facet_adjacency);
@@ -101,8 +102,8 @@ fn cycle_tracking_function<T: CustomFloat>(
                     // bound reflection
                     MCTallyEvent::FacetCrossingReflection => {
                         // plane on which particle is reflected
-                        let plane = &mcunit.domain[particle.domain].mesh.cell_geometry
-                            [particle.cell][particle.facet];
+                        let plane =
+                            &mcunit.domain.mesh.cell_geometry[particle.cell][particle.facet];
 
                         reflect_particle(particle, plane);
                         true
@@ -111,19 +112,21 @@ fn cycle_tracking_function<T: CustomFloat>(
                     // off-unit transit
                     MCTallyEvent::FacetCrossingCommunication => {
                         // get destination neighbor
+                        unimplemented!()
+                        /*
                         let neighbor_rank: usize = mcunit.domain
                             [facet_adjacency.current.domain.unwrap()]
                         .mesh
                         .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
                         // add to sendqueue
-                        send_queue.push(neighbor_rank, particle);
+                        send_queue.lock().unwrap().push(neighbor_rank, particle);
                         particle.species = Species::Unknown;
                         false
+                        */
                     }
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {
-                        // atomic in original code
-                        mcunit.tallies.balance_cycle.escape += 1;
+                        balance[TalliedEvent::Escape] += 1;
                         particle.last_event = MCTallyEvent::FacetCrossingEscape;
                         particle.species = Species::Unknown;
                         false
@@ -133,8 +136,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                 };
             }
             MCSegmentOutcome::Census => {
-                // atomic in original code
-                mcunit.tallies.balance_cycle.census += 1;
+                balance[TalliedEvent::Census] += 1;
                 // we're done tracking the particle FOR THIS STEP; Species stays valid
                 keep_tracking = false;
             }
