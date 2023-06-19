@@ -8,6 +8,9 @@ WORKDIR /builder
 
 COPY . .
 
+RUN apt-get update
+RUN apt-get install -y libhwloc-dev
+
 RUN --mount=type=cache,target=/cargo CARGO_HOME=/cargo cargo install --path=fastiron --root /builder/install
 
 # FINAL IMAGE
@@ -15,7 +18,7 @@ RUN --mount=type=cache,target=/cargo CARGO_HOME=/cargo cargo install --path=fast
 FROM debian:bullseye-slim
 
 RUN apt-get update
-RUN apt-get install -y linux-perf linux-base
+RUN apt-get install -y linux-perf linux-base libhwloc-dev
 
 WORKDIR /fastiron
 

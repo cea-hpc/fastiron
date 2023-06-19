@@ -1,8 +1,10 @@
 use std::iter::zip;
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 use clap::Parser;
 use fastiron::data::tallies::TalliedEvent;
+use hwloc2::{CpuBindFlags, ObjectType, Topology, TopologyObject};
 use num::{one, zero, FromPrimitive};
 use rayon::ThreadPoolBuilder;
 
@@ -56,8 +58,10 @@ fn main() {
     if mcdata.exec_info.exec_policy == ExecPolicy::Rayon {
         // custom threadpool init in this case
         if mcdata.exec_info.n_rayon_threads != 0 {
+            let topo = Arc::new(Mutex::new(Topology::new().unwrap()));
             ThreadPoolBuilder::new()
                 .num_threads(mcdata.exec_info.n_rayon_threads)
+                .start_handler(move |thread_id| bind_threads(thread_id, &topo))
                 .build_global()
                 .unwrap();
         }
@@ -134,6 +138,44 @@ pub fn game_over<T: CustomFloat>(
         }
         ExecPolicy::Distributed | ExecPolicy::Hybrid => todo!(),
     }
+}
+
+pub fn bind_threads(thread_id: usize, topo: &Arc<Mutex<Topology>>) {
+    // get thread id
+    let pthread_id = unsafe { libc::pthread_self() };
+    // get cpu topology
+    let mut locked_topo = topo.lock().unwrap();
+    // get current thread's cpu affinity
+    let cpu_set = {
+        let ancestor_lvl = locked_topo
+            .depth_or_above_for_type(&ObjectType::NUMANode)
+            .unwrap_or(0);
+        let targets = locked_topo.objects_at_depth(ancestor_lvl);
+        let ancestor = targets.first().expect("No common ancestor found");
+        let processing_units = locked_topo.objects_with_type(&ObjectType::PU).unwrap();
+        let unit = processing_units
+            .iter()
+            .filter(|pu| has_ancestor(pu, ancestor))
+            .cycle()
+            .nth(thread_id)
+            .expect("No cores below given ancestor");
+        unit.cpuset().unwrap()
+    };
+
+    locked_topo
+        .set_cpubind_for_thread(pthread_id, cpu_set, CpuBindFlags::CPUBIND_THREAD)
+        .unwrap();
+}
+
+fn has_ancestor(object: &TopologyObject, ancestor: &TopologyObject) -> bool {
+    let father = object.parent();
+    father
+        .map(|f| {
+            (f.object_type() == ancestor.object_type()
+                && f.logical_index() == ancestor.logical_index())
+                || has_ancestor(f, ancestor)
+        })
+        .unwrap_or(false)
 }
 
 //============================

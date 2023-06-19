@@ -32,6 +32,7 @@ jobs:
           toolchain: stable
           override: true
       - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get install -y libhwloc-dev
       - uses: actions-rs/cargo@v1
         with:
           command: test
