@@ -58,8 +58,10 @@ fn main() {
     if mcdata.exec_info.exec_policy == ExecPolicy::Rayon {
         // custom threadpool init in this case
         if mcdata.exec_info.n_rayon_threads != 0 {
+            let topo = Arc::new(Mutex::new(Topology::new().unwrap()));
             ThreadPoolBuilder::new()
                 .num_threads(mcdata.exec_info.n_rayon_threads)
+                .start_handler(move |thread_id| bind_threads(thread_id, &topo))
                 .build_global()
                 .unwrap();
         }
