@@ -14,6 +14,7 @@ tinyvec = {version="1.6.0"}
 rayon= {version="1.7.0"}
 atomic = {version="0.5"}
 hwloc2 = {version="2.2.0"}
+libc = {version="0.2.146"}
 
 [dev-dependencies]
 criterion = {version="0.3.4", features=["html_reports"]}
