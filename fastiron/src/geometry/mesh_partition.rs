@@ -2,7 +2,9 @@
 //!
 //!
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
+
+use rustc_hash::FxHashMap;
 
 use crate::{
     constants::{CustomFloat, Tuple3},
@@ -11,7 +13,7 @@ use crate::{
 
 use super::{global_fcc_grid::GlobalFccGrid, grid_assignment_object::GridAssignmentObject};
 
-type MapType = HashMap<usize, CellInfo>;
+type MapType = FxHashMap<usize, CellInfo>;
 
 /// Structure used to hold cell information.
 #[derive(Debug, Clone, Copy, Default)]

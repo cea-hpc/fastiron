@@ -103,6 +103,8 @@
 //! [1]: https://github.com/LLNL/Quicksilver
 //! [2]: https://github.com/cea-hpc/fastiron
 
+#![warn(clippy::disallowed_types)]
+
 pub mod constants;
 pub mod data;
 pub mod geometry;

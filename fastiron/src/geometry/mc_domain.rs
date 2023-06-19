@@ -2,9 +2,8 @@
 //!
 //!
 
-use std::collections::HashMap;
-
 use num::{one, zero, FromPrimitive};
+use rustc_hash::FxHashMap;
 
 use crate::{
     constants::CustomFloat,
@@ -270,11 +269,11 @@ impl<T: CustomFloat> MCDomain<T> {
 fn bootstrap_node_map<T: CustomFloat>(
     partition: &MeshPartition,
     grid: &GlobalFccGrid<T>,
-) -> HashMap<usize, usize> {
+) -> FxHashMap<usize, usize> {
     // res
-    let mut node_idx_map: HashMap<usize, usize> = Default::default();
+    let mut node_idx_map: FxHashMap<usize, usize> = Default::default();
     // intermediate struct
-    let mut face_centers: HashMap<usize, usize> = Default::default();
+    let mut face_centers: FxHashMap<usize, usize> = Default::default();
 
     for (k, v) in &partition.cell_info_map {
         // only process partition of our domain
@@ -306,14 +305,14 @@ fn bootstrap_node_map<T: CustomFloat>(
 
 /// Build the cells object of the mesh.
 fn build_cells<T: CustomFloat>(
-    node_idx_map: &HashMap<usize, usize>,
+    node_idx_map: &FxHashMap<usize, usize>,
     nbr_domain: &[usize],
     partition: &MeshPartition,
     grid: &GlobalFccGrid<T>,
     boundary_cond: &[MCSubfacetAdjacencyEvent],
 ) -> Vec<MCFacetAdjacencyCell> {
     // nbr_domain_idx[domain_gid] = local_nbr_idx
-    let mut nbr_domain_idx: HashMap<usize, Option<usize>> = Default::default();
+    let mut nbr_domain_idx: FxHashMap<usize, Option<usize>> = Default::default();
     (0..nbr_domain.len()).for_each(|ii| {
         nbr_domain_idx.insert(nbr_domain[ii], Some(ii));
     });

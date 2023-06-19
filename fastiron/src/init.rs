@@ -1,6 +1,6 @@
 //! Initialization code for the problem
 
-use std::{collections::HashMap, fmt::Debug, fs::File, io::Write};
+use std::{fmt::Debug, fs::File, io::Write};
 
 use crate::{
     constants::{CustomFloat, Tuple3},
@@ -24,6 +24,7 @@ use crate::{
 };
 use atomic::Atomic;
 use num::{one, zero, Float, FromPrimitive};
+use rustc_hash::FxHashMap;
 
 /// Creates a [MonteCarloData] object using the specified parameters.
 pub fn init_mcdata<T: CustomFloat>(params: Parameters<T>) -> MonteCarloData<T> {
@@ -128,7 +129,7 @@ fn init_nuclear_data<T: CustomFloat>(mcdata: &mut MonteCarloData<T>) {
     mcdata.nuclear_data =
         NuclearData::new(params.simulation_params.n_groups, energy_low, energy_high);
 
-    let mut cross_section: HashMap<String, Polynomial<T>> = Default::default();
+    let mut cross_section: FxHashMap<String, Polynomial<T>> = Default::default();
     for xs_params in params.cross_section_params.values() {
         cross_section.insert(
             xs_params.name.to_owned(),
@@ -367,7 +368,7 @@ pub fn check_cross_sections<T: CustomFloat>(mcdata: &MonteCarloData<T>) {
     }
 
     // compute
-    let mut xc_table: HashMap<String, Vec<XSData<T>>> = Default::default();
+    let mut xc_table: FxHashMap<String, Vec<XSData<T>>> = Default::default();
     // for each material
     matdb.mat.iter().for_each(|material| {
         let mat_name = material.name.to_owned();

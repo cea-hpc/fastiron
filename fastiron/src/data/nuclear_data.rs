@@ -2,9 +2,8 @@
 //!
 //! This module contains code used to store, model and compute nuclear data and quantities.
 
-use std::collections::HashMap;
-
 use num::{zero, FromPrimitive};
+use rustc_hash::FxHashMap;
 
 use crate::{constants::CustomFloat, parameters::MaterialParameters};
 
@@ -185,7 +184,7 @@ impl<T: CustomFloat> NuclearData<T> {
     /// specified in the material.
     pub fn add_isotope(
         &mut self,
-        cross_section: &HashMap<String, Polynomial<T>>,
+        cross_section: &FxHashMap<String, Polynomial<T>>,
         mp: &MaterialParameters<T>,
         nu_bar: T,
     ) -> usize {
