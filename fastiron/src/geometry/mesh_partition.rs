@@ -4,7 +4,7 @@
 
 use std::collections::VecDeque;
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     constants::{CustomFloat, Tuple3},
@@ -14,6 +14,7 @@ use crate::{
 use super::{global_fcc_grid::GlobalFccGrid, grid_assignment_object::GridAssignmentObject};
 
 type MapType = FxHashMap<usize, CellInfo>;
+type SetType = FxHashSet<usize>;
 
 /// Structure used to hold cell information.
 #[derive(Debug, Clone, Copy, Default)]
@@ -73,12 +74,12 @@ impl MeshPartition {
     ) {
         let mut assigner = GridAssignmentObject::new(domain_center);
         let mut flood_queue: VecDeque<usize> = VecDeque::new();
-        let mut wet_cells: Vec<usize> = Vec::new();
+        let mut wet_cells: SetType = SetType::default();
 
         let root = grid.which_cell(&domain_center[self.domain_gid]);
 
         flood_queue.push_back(root);
-        wet_cells.push(root);
+        wet_cells.insert(root);
         Self::add_nbrs_to_flood(root, grid, &mut flood_queue, &mut wet_cells);
 
         while !flood_queue.is_empty() {
@@ -149,7 +150,7 @@ impl MeshPartition {
         cell_idx: usize,
         grid: &GlobalFccGrid<T>,
         flood_queue: &mut VecDeque<usize>,
-        wet_cells: &mut Vec<usize>,
+        wet_cells: &mut SetType,
     ) {
         let tt: Tuple3 = grid.cell_idx_to_tuple(cell_idx);
         const NBR_COORDS: [(i32, i32, i32); 26] = [
@@ -195,9 +196,10 @@ impl MeshPartition {
                 grid.cell_tuple_to_idx(&snaped)
             })
             .for_each(|nbr_idx| {
-                if !wet_cells.contains(&nbr_idx) {
+                if wet_cells.insert(nbr_idx) {
+                    // the method return true if the object was inserted,
+                    // i.e. if it was abent before
                     flood_queue.push_back(nbr_idx);
-                    wet_cells.push(nbr_idx);
                 }
             });
     }
