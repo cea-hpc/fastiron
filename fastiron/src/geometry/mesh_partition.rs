@@ -150,23 +150,54 @@ impl MeshPartition {
         wet_cells: &mut Vec<usize>,
     ) {
         let tt: Tuple3 = grid.cell_idx_to_tuple(cell_idx);
+        const NBR_COORDS: [(i32, i32, i32); 26] = [
+            // (-1, x, y)
+            (-1, -1, -1),
+            (-1, -1, 0),
+            (-1, -1, 1),
+            (-1, 0, -1),
+            (-1, 0, 0),
+            (-1, 0, 1),
+            (-1, 1, -1),
+            (-1, 1, 0),
+            (-1, 1, 1),
+            // (0, x, y) except (0, 0, 0)
+            (0, -1, -1),
+            (0, -1, 0),
+            (0, -1, 1),
+            (0, 0, -1),
+            (0, 0, 1),
+            (0, 1, -1),
+            (0, 1, 0),
+            (0, 1, 1),
+            // (1, x, y)
+            (1, -1, -1),
+            (1, -1, 0),
+            (1, -1, 1),
+            (1, 0, -1),
+            (1, 0, 0),
+            (1, 0, 1),
+            (1, 1, -1),
+            (1, 1, 0),
+            (1, 1, 1),
+        ];
 
-        (-1..2).for_each(|ii: i32| {
-            (-1..2).for_each(|jj: i32| {
-                (-1..2).for_each(|kk: i32| {
-                    if (ii == 0) & (jj == 0) & (kk == 0) {
-                        return;
-                    }
-                    let nbr_tuple = (tt.0 as i32 + ii, tt.1 as i32 + jj, tt.2 as i32 + kk);
-                    let snaped_nbr_tuple = grid.snap_turtle(nbr_tuple);
-                    let nbr_idx = grid.cell_tuple_to_idx(&snaped_nbr_tuple);
-                    if !wet_cells.contains(&nbr_idx) {
-                        flood_queue.push_back(nbr_idx);
-                        wet_cells.push(nbr_idx);
-                    }
-                });
+        NBR_COORDS
+            .iter()
+            .map(|offset| {
+                let snaped = grid.snap_turtle((
+                    tt.0 as i32 + offset.0,
+                    tt.1 as i32 + offset.1,
+                    tt.2 as i32 + offset.2,
+                ));
+                grid.cell_tuple_to_idx(&snaped)
+            })
+            .for_each(|nbr_idx| {
+                if !wet_cells.contains(&nbr_idx) {
+                    flood_queue.push_back(nbr_idx);
+                    wet_cells.push(nbr_idx);
+                }
             });
-        });
     }
 }
 
