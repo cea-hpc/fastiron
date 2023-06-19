@@ -14,8 +14,8 @@ use crate::{
 };
 
 use super::{
+    facets::MCFacetGeometryCell,
     facets::{MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent},
-    facets::{MCFacetGeometryCell, MCGeneralPlane},
     global_fcc_grid::GlobalFccGrid,
     mc_cell_state::MCCellState,
     mc_location::MCLocation,
@@ -94,10 +94,10 @@ impl<T: CustomFloat> MCMeshDomain<T> {
         let nbr_domain_gid: Vec<usize> = mesh_partition.nbr_domains.clone();
 
         // nbr_rank
-        let mut nbr_rank: Vec<usize> = Vec::with_capacity(nbr_domain_gid.len());
-        (0..nbr_domain_gid.len()).for_each(|ii| {
-            nbr_rank.push(ddc.rank[nbr_domain_gid[ii]]);
-        });
+        let nbr_rank: Vec<usize> = nbr_domain_gid
+            .iter()
+            .map(|domain_gid| ddc.rank[*domain_gid])
+            .collect();
 
         // cell_connectivity
         let node_idx_map = bootstrap_node_map(mesh_partition, grid);
@@ -116,17 +116,10 @@ impl<T: CustomFloat> MCMeshDomain<T> {
         });
 
         // cell_geometry
-        let mut cell_geometry: Vec<MCFacetGeometryCell<T>> =
-            vec![MCFacetGeometryCell::default(); cell_connectivity.len()];
-        // fill with correct value
-        (0..cell_connectivity.len()).for_each(|cell_idx| {
-            (0..N_FACETS_OUT).for_each(|facet_idx| {
-                let r0: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[0]];
-                let r1: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[1]];
-                let r2: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[2]];
-                cell_geometry[cell_idx][facet_idx] = MCGeneralPlane::new(&r0, &r1, &r2);
-            });
-        });
+        let cell_geometry: Vec<MCFacetGeometryCell<T>> = cell_connectivity
+            .iter()
+            .map(|facet_adjacency_cell| facet_adjacency_cell.get_planes(&node))
+            .collect();
 
         Self {
             domain_gid: mesh_partition.domain_gid,

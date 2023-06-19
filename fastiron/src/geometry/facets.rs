@@ -29,8 +29,12 @@ pub struct MCGeneralPlane<T: CustomFloat> {
 impl<T: CustomFloat> MCGeneralPlane<T> {
     /// Constructor. This creates an object corresponding to the plane formed by the
     /// three points passed as arguments.
-    pub fn new(r0: &MCVector<T>, r1: &MCVector<T>, r2: &MCVector<T>) -> Self {
+    pub fn new(points: &[MCVector<T>]) -> Self {
         let one: T = one();
+        assert_eq!(points.len(), 3);
+        let r0 = points[0];
+        let r1 = points[1];
+        let r2 = points[2];
 
         let mut a = ((r1.y - r0.y) * (r2.z - r0.z)) - ((r1.z - r0.z) * (r2.y - r0.y));
         let mut b = ((r1.z - r0.z) * (r2.x - r0.x)) - ((r1.x - r0.x) * (r2.z - r0.z));
@@ -115,7 +119,7 @@ pub enum MCSubfacetAdjacencyEvent {
 ///
 /// This structure is _oriented_, i.e. there is a current cell and a neighbor
 /// cell.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct SubfacetAdjacency {
     /// Event associated with the facet junction.
     pub event: MCSubfacetAdjacencyEvent,
@@ -132,7 +136,7 @@ pub struct SubfacetAdjacency {
 }
 
 /// Structure for adjacent facet representation.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct MCFacetAdjacency {
     /// Adjacency data.
     pub subfacet: SubfacetAdjacency,
@@ -146,4 +150,16 @@ pub struct MCFacetAdjacency {
 pub struct MCFacetAdjacencyCell {
     pub facet: [MCFacetAdjacency; N_FACETS_OUT],
     pub point: [usize; N_POINTS_INTERSEC],
+}
+
+impl MCFacetAdjacencyCell {
+    pub fn get_planes<T: CustomFloat>(
+        &self,
+        node: &[MCVector<T>],
+    ) -> [MCGeneralPlane<T>; N_FACETS_OUT] {
+        self.facet.map(|facet_adjacency| {
+            let points = facet_adjacency.point.map(|idx| node[idx]);
+            MCGeneralPlane::new(&points)
+        })
+    }
 }
