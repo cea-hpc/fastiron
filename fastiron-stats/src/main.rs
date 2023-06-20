@@ -22,8 +22,8 @@ fn main() {
         // Get data, process it, save results
         let old_timer_report = read_timers(old_timers);
         let new_timer_report = read_timers(new_timers);
-        let percents = compare(old_timer_report, new_timer_report);
-        save_percents(&percents);
+        let percents = compare(&old_timer_report, &new_timer_report);
+        save_percents(old_timer_report, new_timer_report, &percents);
 
         if cli.plot {
             // plot results

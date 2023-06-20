@@ -9,7 +9,7 @@ use std::{
 };
 
 use crate::structures::{
-    FiniteDiscreteRV, ProgressionType, SummarizedVariable, TimerReport, TimerSV, N_TALLIED_DATA,
+    FiniteDiscreteRV, SummarizedVariable, TimerReport, TimerSV, N_TALLIED_DATA, N_TIMERS,
 };
 
 // =======
@@ -51,7 +51,7 @@ pub fn read_tallies(file_name: &str) -> [FiniteDiscreteRV; N_TALLIED_DATA] {
 /// Any change done to the timers data / its representation will
 /// demand an update of this function.
 pub fn read_timers(file_name: &str) -> TimerReport {
-    let mut res = [SummarizedVariable::default(); 6];
+    let mut res = [SummarizedVariable::default(); N_TIMERS];
     let file = File::open(file_name).unwrap();
     let mut reader = csv::ReaderBuilder::new().delimiter(b';').from_reader(file);
 
@@ -78,16 +78,12 @@ pub fn get_scaling_data(
     n_start: usize,
     step: usize,
     n_iter: usize,
-    prog_type: ProgressionType,
 ) -> Vec<(TimerReport, usize)> {
-    let n_particles = (0..n_iter).map(|idx| match prog_type {
-        ProgressionType::Arithmetic => n_start + idx * step,
-        ProgressionType::Geometric => n_start * step.pow(idx as u32),
-    });
-    n_particles
-        .map(|n_particle| {
-            let filename = format!("{}{}.csv", root, n_particle);
-            (read_timers(&filename), n_particle)
+    let n_threads = (0..n_iter).map(|idx| n_start * step.pow(idx as u32));
+    n_threads
+        .map(|n_thread| {
+            let filename = format!("{}{}.csv", root, n_thread);
+            (read_timers(&filename), n_thread)
         })
         .collect()
 }
@@ -95,24 +91,73 @@ pub fn get_scaling_data(
 // =======
 // Writing
 
-/// Save the results of the comparison in a formatted markdown table.
+/// Save the results of the comparison.
 ///
 /// Any change done to the timers data / its representation will
 /// demand an update of this function.
-pub fn save_percents(percents: &[f64]) {
-    // Write the result in a Markdown table; maybe we can generate an entire report?
+pub fn save_percents(old: TimerReport, new: TimerReport, percents: &[f64]) {
+    assert_eq!(percents.len(), N_TIMERS);
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
-        .open("percents.md")
+        .open("comparison.csv")
         .unwrap();
-    writeln!(file, "| Section              | Percent Change |").unwrap();
-    writeln!(file, "|----------------------|----------------|").unwrap();
-    writeln!(file, "| Total execution time | {:>13.1}% |", percents[0]).unwrap();
-    writeln!(file, "| PopulationControl    | {:>13.1}% |", percents[1]).unwrap();
-    writeln!(file, "| CycleTracking        | {:>13.1}% |", percents[2]).unwrap();
-    writeln!(file, "| CycleSync            | {:>13.1}% |", percents[3]).unwrap();
+    writeln!(file, "section,old,new,change").unwrap();
+    writeln!(
+        file,
+        "{},{},{},{}",
+        TimerSV::Main,
+        old[TimerSV::Main].mean,
+        new[TimerSV::Main].mean,
+        percents[0]
+    )
+    .unwrap();
+    writeln!(
+        file,
+        "{},{},{},{}",
+        TimerSV::PopulationControl,
+        old[TimerSV::PopulationControl].mean,
+        new[TimerSV::PopulationControl].mean,
+        percents[1]
+    )
+    .unwrap();
+    writeln!(
+        file,
+        "{},{},{},{}",
+        TimerSV::CycleTracking,
+        old[TimerSV::CycleTracking].mean,
+        new[TimerSV::CycleTracking].mean,
+        percents[2]
+    )
+    .unwrap();
+    writeln!(
+        file,
+        "{},{},{},{}",
+        TimerSV::CycleTrackingProcess,
+        old[TimerSV::CycleTrackingProcess].mean,
+        new[TimerSV::CycleTrackingProcess].mean,
+        percents[3]
+    )
+    .unwrap();
+    writeln!(
+        file,
+        "{},{},{},{}",
+        TimerSV::CycleTrackingSort,
+        old[TimerSV::CycleTrackingSort].mean,
+        new[TimerSV::CycleTrackingSort].mean,
+        percents[4]
+    )
+    .unwrap();
+    writeln!(
+        file,
+        "{},{},{},{}",
+        TimerSV::CycleSync,
+        old[TimerSV::CycleSync].mean,
+        new[TimerSV::CycleSync].mean,
+        percents[5]
+    )
+    .unwrap();
 }
 
 /// Save the results of the correlation study.
@@ -200,14 +245,14 @@ pub fn compile_scaling_data(timer_data: &[(TimerReport, usize)]) {
     // i.e. lowest number of particle to highest
     writeln!(
         file,
-        "n_particles,PopulationControlAvg,CycleTrackingAvg,CycleSyncAvg"
+        "n_threads,PopulationControlAvg,CycleTrackingAvg,CycleSyncAvg"
     )
     .unwrap();
-    timer_data.iter().for_each(|(report, n_particles)| {
+    timer_data.iter().for_each(|(report, n_threads)| {
         writeln!(
             file,
             "{},{},{},{}",
-            n_particles,
+            n_threads,
             report[TimerSV::PopulationControl].mean,
             report[TimerSV::CycleTracking].mean,
             report[TimerSV::CycleSync].mean,

@@ -3,11 +3,13 @@
 //! This module contains all structures used to model the data and
 //! structure the computations.
 
-use std::{iter::zip, ops::Index};
+use std::{fmt::Display, iter::zip, ops::Index};
 
 /// Number of fields presented in the tallies report produced
 /// by `fastiron`.
 pub const N_TALLIED_DATA: usize = 17;
+
+pub const N_TIMERS: usize = 6;
 
 /// Enum used to represent & map tallied data and their indexes.
 #[derive(Debug)]
@@ -37,16 +39,26 @@ pub enum TimerSV {
     Main = 0,
     PopulationControl = 1,
     CycleTracking = 2,
-    CycleTrackingKernel = 3,
-    CycleTrackingComm = 4,
+    CycleTrackingProcess = 3,
+    CycleTrackingSort = 4,
     CycleSync = 5,
 }
 
-/// Enum used to represent the nature of the scaling study.
-#[derive(Debug, Clone, Copy)]
-pub enum ProgressionType {
-    Arithmetic,
-    Geometric,
+impl Display for TimerSV {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match *self {
+                TimerSV::Main => "Section::Main",
+                TimerSV::PopulationControl => "Section::PopulationControl",
+                TimerSV::CycleTracking => "Section::CycleTracking",
+                TimerSV::CycleTrackingProcess => "Section::CycleTrackingProcess",
+                TimerSV::CycleTrackingSort => "Section::CycleTrackingSort",
+                TimerSV::CycleSync => "Section::CycleSync",
+            }
+        )
+    }
 }
 
 /// Structure used to model finite discrete random variables.

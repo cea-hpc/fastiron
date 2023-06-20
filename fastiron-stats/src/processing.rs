@@ -2,7 +2,9 @@
 //!
 //! This module contains all functions used for data processing.
 
-use crate::structures::{correlation, FiniteDiscreteRV, TalliedData, TimerReport, TimerSV};
+use crate::structures::{
+    correlation, FiniteDiscreteRV, TalliedData, TimerReport, TimerSV, N_TIMERS,
+};
 
 /// Pairs of tallied data to be correlated.
 ///
@@ -34,16 +36,19 @@ pub const TRACKING_CORRELATIONS: [(TalliedData, TalliedData); 6] = [
 ///
 /// The actual relative change is multiplied by 100 to have percentages
 /// as a result.
-pub fn compare(old: TimerReport, new: TimerReport) -> [f64; 4] {
+pub fn compare(old: &TimerReport, new: &TimerReport) -> [f64; N_TIMERS] {
     let relative_change =
         |section: TimerSV| (new[section].mean - old[section].mean) / old[section].mean;
 
-    let exec_time = relative_change(TimerSV::Main) * 100.0;
-    let pop_control = relative_change(TimerSV::PopulationControl) * 100.0;
-    let tracking = relative_change(TimerSV::CycleTracking) * 100.0;
-    let sync = relative_change(TimerSV::CycleSync) * 100.0;
-
-    [exec_time, pop_control, tracking, sync]
+    [
+        TimerSV::Main,
+        TimerSV::PopulationControl,
+        TimerSV::CycleTracking,
+        TimerSV::CycleTrackingProcess,
+        TimerSV::CycleTrackingSort,
+        TimerSV::CycleSync,
+    ]
+    .map(|section| relative_change(section) * 100.0)
 }
 
 /// Computes correlation coefficient for the correlation study.
