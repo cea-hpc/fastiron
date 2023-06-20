@@ -1,6 +1,6 @@
 use std::{fs::OpenOptions, io::Write};
 
-use super::raw::{TalliedData, TimerReport, TimerSV, N_TIMERS};
+use super::raw::{correlation, TalliedData, TalliesReport, TimerReport, TimerSV, N_TIMERS};
 
 //~~~~~~~~~~~~~~~~~
 // Comparison data
@@ -105,24 +105,54 @@ impl From<(TimerReport, TimerReport)> for ComparisonResults {
 // Correlation data
 //~~~~~~~~~~~~~~~~~~
 
-pub const CORRELATIONS: ([TalliedData; 11], [TalliedData; 4]) = (
-    [
-        TalliedData::Start,
-        TalliedData::Rr,
-        TalliedData::Split,
-        TalliedData::Absorb,
-        TalliedData::Scatter,
-        TalliedData::Fission,
-        TalliedData::Produce,
-        TalliedData::Collision,
-        TalliedData::Escape,
-        TalliedData::Census,
-        TalliedData::NumSeg,
-    ],
-    [
-        TalliedData::Cycle,
-        TalliedData::PopulationControl,
-        TalliedData::CycleTracking,
-        TalliedData::CycleSync,
-    ],
-);
+pub const CORRELATION_COLS: [TalliedData; 11] = [
+    TalliedData::Start,
+    TalliedData::Rr,
+    TalliedData::Split,
+    TalliedData::Absorb,
+    TalliedData::Scatter,
+    TalliedData::Fission,
+    TalliedData::Produce,
+    TalliedData::Collision,
+    TalliedData::Escape,
+    TalliedData::Census,
+    TalliedData::NumSeg,
+];
+
+pub const CORRELATION_ROWS: [TalliedData; 4] = [
+    TalliedData::Cycle,
+    TalliedData::PopulationControl,
+    TalliedData::CycleTracking,
+    TalliedData::CycleSync,
+];
+
+pub struct CorrelationResults {
+    pub corr_data: [f64; 11 * 4],
+}
+
+impl CorrelationResults {
+    pub fn save(&self) {
+        todo!()
+    }
+
+    pub fn plot(&self) {
+        todo!()
+    }
+}
+
+impl From<TalliesReport> for CorrelationResults {
+    fn from(report: TalliesReport) -> Self {
+        // compute correlations
+        let table = CORRELATION_ROWS.map(|tallied_data| {
+            CORRELATION_COLS
+                .map(|tallied_event| correlation(&report[tallied_data], &report[tallied_event]))
+        });
+
+        // a little black magic to flatten the array
+        let flat_table: &[f64; 11 * 4] = unsafe { std::mem::transmute(&table) };
+
+        Self {
+            corr_data: *flat_table,
+        }
+    }
+}

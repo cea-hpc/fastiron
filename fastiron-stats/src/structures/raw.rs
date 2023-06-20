@@ -14,7 +14,7 @@ use std::{fmt::Display, fs::File, iter::zip, ops::Index};
 pub const N_TALLIED_DATA: usize = 17;
 
 /// Enum used to represent & map tallied data and their indexes.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum TalliedData {
     Cycle = 0,
     Start = 1,

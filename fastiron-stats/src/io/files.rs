@@ -8,7 +8,7 @@ use std::{
     io::Write,
 };
 
-use crate::structures::raw::{TalliedVariable, TimerReport, TimerSV, N_TALLIED_DATA, N_TIMERS};
+use crate::structures::raw::{TalliedVariable, TimerReport, TimerSV, N_TALLIED_DATA};
 
 // =======
 // Reading
@@ -61,75 +61,6 @@ pub fn get_scaling_data(
 
 // =======
 // Writing
-
-/// Save the results of the comparison.
-///
-/// Any change done to the timers data / its representation will
-/// demand an update of this function.
-pub fn save_percents(old: TimerReport, new: TimerReport, percents: &[f64]) {
-    assert_eq!(percents.len(), N_TIMERS);
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open("comparison.csv")
-        .unwrap();
-    writeln!(file, "section,old,new,change").unwrap();
-    writeln!(
-        file,
-        "{},{},{},{}",
-        TimerSV::Main,
-        old[TimerSV::Main].mean,
-        new[TimerSV::Main].mean,
-        percents[0]
-    )
-    .unwrap();
-    writeln!(
-        file,
-        "{},{},{},{}",
-        TimerSV::PopulationControl,
-        old[TimerSV::PopulationControl].mean,
-        new[TimerSV::PopulationControl].mean,
-        percents[1]
-    )
-    .unwrap();
-    writeln!(
-        file,
-        "{},{},{},{}",
-        TimerSV::CycleTracking,
-        old[TimerSV::CycleTracking].mean,
-        new[TimerSV::CycleTracking].mean,
-        percents[2]
-    )
-    .unwrap();
-    writeln!(
-        file,
-        "{},{},{},{}",
-        TimerSV::CycleTrackingProcess,
-        old[TimerSV::CycleTrackingProcess].mean,
-        new[TimerSV::CycleTrackingProcess].mean,
-        percents[3]
-    )
-    .unwrap();
-    writeln!(
-        file,
-        "{},{},{},{}",
-        TimerSV::CycleTrackingSort,
-        old[TimerSV::CycleTrackingSort].mean,
-        new[TimerSV::CycleTrackingSort].mean,
-        percents[4]
-    )
-    .unwrap();
-    writeln!(
-        file,
-        "{},{},{},{}",
-        TimerSV::CycleSync,
-        old[TimerSV::CycleSync].mean,
-        new[TimerSV::CycleSync].mean,
-        percents[5]
-    )
-    .unwrap();
-}
 
 /// Save the results of the correlation study.
 ///
