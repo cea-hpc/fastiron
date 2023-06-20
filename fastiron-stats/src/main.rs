@@ -61,8 +61,12 @@ fn main() {
 
     if let Some(root_path) = cli.strong_scaling_root {
         println!("Processing strong scaling data...");
-        let results =
-            ScalingResults::from((root_path.as_str(), &cli.scaling_params, ScalingType::Strong));
+        let factor = cli.scaling_params.t_factor.unwrap();
+        let results = ScalingResults::from((
+            root_path.as_str(),
+            &cli.scaling_params,
+            ScalingType::Strong(factor),
+        ));
         results.save_tracking();
         results.save_others();
         println!("Done!");

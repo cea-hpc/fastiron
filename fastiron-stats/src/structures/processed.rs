@@ -203,7 +203,7 @@ impl From<TalliesReport> for CorrelationResults {
 
 pub enum ScalingType {
     Weak,
-    Strong,
+    Strong(usize),
 }
 
 pub struct ScalingResults {
@@ -225,14 +225,35 @@ impl ScalingResults {
             .truncate(true)
             .open(match self.scaling_type {
                 ScalingType::Weak => "weak_scaling_tracking.csv",
-                ScalingType::Strong => "strong_scaling_tracking.csv",
+                ScalingType::Strong(_) => "strong_scaling_tracking.csv",
             })
             .unwrap();
         writeln!(
             file,
-            "n_threadsTrackingAvg,TrackingAvgIdeal,TrackingProcessAvg,TrackingSortAvg"
+            "n_threads,TrackingAvg,TrackingAvgIdeal,TrackingProcessAvg,TrackingSortAvg"
         )
         .unwrap();
+        let avg_ref = self.tracking_avgs[0];
+        let n_elem = self.n_threads.len();
+        assert_eq!(self.tracking_avgs.len(), n_elem);
+        assert_eq!(self.tracking_process_avgs.len(), n_elem);
+        assert_eq!(self.tracking_sort_avgs.len(), n_elem);
+        for idx in 0..n_elem {
+            let ideal = match self.scaling_type {
+                ScalingType::Weak => avg_ref,
+                ScalingType::Strong(factor) => avg_ref / (factor.pow(idx as u32) as f64),
+            };
+            writeln!(
+                file,
+                "{},{},{},{},{}",
+                self.n_threads[idx],
+                self.tracking_avgs[idx],
+                ideal,
+                self.tracking_process_avgs[idx],
+                self.tracking_sort_avgs[idx]
+            )
+            .unwrap();
+        }
     }
 
     pub fn save_others(&self) {
@@ -242,14 +263,10 @@ impl ScalingResults {
             .truncate(true)
             .open(match self.scaling_type {
                 ScalingType::Weak => "weak_scaling_others.csv",
-                ScalingType::Strong => "strong_scaling_others.csv",
+                ScalingType::Strong(_) => "strong_scaling_others.csv",
             })
             .unwrap();
-        writeln!(
-            file,
-            "n_threadsTrackingAvg,TotalExecTime,PopulationControlAvg,SyncAvg"
-        )
-        .unwrap();
+        writeln!(file, "n_threads,TotalExecTime,PopulationControlAvg,SyncAvg").unwrap();
     }
 
     pub fn plot_tracking(&self) {
