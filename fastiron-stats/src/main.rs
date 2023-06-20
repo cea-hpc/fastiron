@@ -48,11 +48,13 @@ fn main() {
         // Get data, process it, save results
         let results =
             ScalingResults::from((root_path.as_str(), &cli.scaling_params, ScalingType::Weak));
-        results.save();
+        results.save_tracking();
+        results.save_others();
         println!("Done!");
 
         if cli.plot {
-            results.plot();
+            results.plot_tracking();
+            results.plot_others();
             println!("Plotted results");
         }
     }
@@ -61,11 +63,13 @@ fn main() {
         println!("Processing strong scaling data...");
         let results =
             ScalingResults::from((root_path.as_str(), &cli.scaling_params, ScalingType::Strong));
-        results.save();
+        results.save_tracking();
+        results.save_others();
         println!("Done!");
 
         if cli.plot {
-            results.plot();
+            results.plot_tracking();
+            results.plot_others();
             println!("Plotted results");
         }
     }

@@ -218,11 +218,45 @@ pub struct ScalingResults {
 }
 
 impl ScalingResults {
-    pub fn save(&self) {
+    pub fn save_tracking(&self) {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(match self.scaling_type {
+                ScalingType::Weak => "weak_scaling_tracking.csv",
+                ScalingType::Strong => "strong_scaling_tracking.csv",
+            })
+            .unwrap();
+        writeln!(
+            file,
+            "n_threadsTrackingAvg,TrackingAvgIdeal,TrackingProcessAvg,TrackingSortAvg"
+        )
+        .unwrap();
+    }
+
+    pub fn save_others(&self) {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(match self.scaling_type {
+                ScalingType::Weak => "weak_scaling_others.csv",
+                ScalingType::Strong => "strong_scaling_others.csv",
+            })
+            .unwrap();
+        writeln!(
+            file,
+            "n_threadsTrackingAvg,TotalExecTime,PopulationControlAvg,SyncAvg"
+        )
+        .unwrap();
+    }
+
+    pub fn plot_tracking(&self) {
         todo!()
     }
 
-    pub fn plot(&self) {
+    pub fn plot_others(&self) {
         todo!()
     }
 }
