@@ -24,6 +24,10 @@ fn main() {
         let new_timer_report = read_timers(new_timers);
         let percents = compare(old_timer_report, new_timer_report);
         save_percents(&percents);
+
+        if cli.plot {
+            // plot results
+        }
     }
 
     if let Some(tallies_report) = cli.correlation {
@@ -33,6 +37,10 @@ fn main() {
         let popsync_res = processing::build_popsync_results(&tallies_data);
         save_tracking_results(&tracking_res);
         save_popsync_results(&popsync_res);
+
+        if cli.plot {
+            // plot results
+        }
     }
 
     if let Some(root_path) = cli.weak_scaling_root {
@@ -41,6 +49,10 @@ fn main() {
         let timers = get_scaling_data(root, n_start, step, n_iter, progression);
         compile_scaling_data(&timers);
         */
+
+        if cli.plot {
+            // plot results
+        }
     }
 
     if let Some(root_path) = cli.strong_scaling_root {
@@ -49,6 +61,10 @@ fn main() {
         let timers = get_scaling_data(root, n_start, step, n_iter, progression);
         compile_scaling_data(&timers);
         */
+
+        if cli.plot {
+            // plot results
+        }
     }
     println!("Finished! All data is ready for use.")
 }

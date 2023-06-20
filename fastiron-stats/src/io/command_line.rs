@@ -32,6 +32,10 @@ pub struct Cli {
 
     #[command(flatten)]
     scaling_params: ScalingParams,
+
+    /// if present, plot the results of all computed metrics
+    #[arg(short = 'p', long = "plot", num_args(0))]
+    pub plot: bool,
 }
 
 #[derive(Args, Debug)]
