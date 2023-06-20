@@ -132,7 +132,42 @@ pub struct CorrelationResults {
 
 impl CorrelationResults {
     pub fn save(&self) {
-        todo!()
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open("correlation.csv")
+            .unwrap();
+        writeln!(
+            file,
+            ",Start,Rr,Split,Absorb,Scatter,Fission,Produce,Collision,Escape,Census,NumSeg"
+        )
+        .unwrap();
+        (0..4).for_each(|idx: usize| {
+            writeln!(
+                file,
+                "{},{},{},{},{},{},{},{},{},{},{},{}",
+                match idx {
+                    0 => "Cycle",
+                    1 => "PopulationControl",
+                    2 => "CycleTracking",
+                    3 => "CycleSync",
+                    _ => unreachable!(),
+                },
+                self.corr_data[11 * idx],
+                self.corr_data[1 + 11 * idx],
+                self.corr_data[2 + 11 * idx],
+                self.corr_data[3 + 11 * idx],
+                self.corr_data[4 + 11 * idx],
+                self.corr_data[5 + 11 * idx],
+                self.corr_data[6 + 11 * idx],
+                self.corr_data[7 + 11 * idx],
+                self.corr_data[8 + 11 * idx],
+                self.corr_data[9 + 11 * idx],
+                self.corr_data[10 + 11 * idx],
+            )
+            .unwrap();
+        });
     }
 
     pub fn plot(&self) {

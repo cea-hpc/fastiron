@@ -1,15 +1,11 @@
 use std::fs::File;
 
 use fastiron_stats::{
-    io::{
-        command_line::Cli,
-        files::{
-            compile_scaling_data, get_scaling_data, read_tallies, save_popsync_results,
-            save_tracking_results,
-        },
+    io::command_line::Cli,
+    structures::{
+        processed::{ComparisonResults, CorrelationResults},
+        raw::{TalliesReport, TimerReport},
     },
-    processing::{self},
-    structures::{processed::ComparisonResults, raw::TimerReport},
 };
 
 use clap::Parser;
@@ -36,16 +32,13 @@ fn main() {
     if let Some(tallies_report) = cli.correlation {
         println!("Processing tallied data...");
         // Get data, process it, save results
-        let tallies_data = read_tallies(&tallies_report);
-        let tracking_res = processing::build_tracking_results(&tallies_data);
-        let popsync_res = processing::build_popsync_results(&tallies_data);
-        save_tracking_results(&tracking_res);
-        save_popsync_results(&popsync_res);
+        let tallies_data = TalliesReport::from(File::open(tallies_report).unwrap());
+        let results = CorrelationResults::from(tallies_data);
+        results.save();
         println!("Done!");
 
         if cli.plot {
-            // plot results
-
+            results.plot();
             println!("Plotted results");
         }
     }
