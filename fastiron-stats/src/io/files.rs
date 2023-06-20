@@ -8,7 +8,7 @@ use std::{
     io::Write,
 };
 
-use crate::structures::raw::{FiniteDiscreteRV, TimerReport, TimerSV, N_TALLIED_DATA, N_TIMERS};
+use crate::structures::raw::{TalliedVariable, TimerReport, TimerSV, N_TALLIED_DATA, N_TIMERS};
 
 // =======
 // Reading
@@ -21,7 +21,7 @@ use crate::structures::raw::{FiniteDiscreteRV, TimerReport, TimerSV, N_TALLIED_D
 ///
 /// Any change done to the tallied data / its representation will
 /// demand an update of this function.
-pub fn read_tallies(file_name: &str) -> [FiniteDiscreteRV; N_TALLIED_DATA] {
+pub fn read_tallies(file_name: &str) -> [TalliedVariable; N_TALLIED_DATA] {
     let file = File::open(file_name).unwrap();
     let mut reader = csv::ReaderBuilder::new().delimiter(b';').from_reader(file);
     let mut values: [Vec<f64>; N_TALLIED_DATA] = Default::default();
@@ -37,7 +37,7 @@ pub fn read_tallies(file_name: &str) -> [FiniteDiscreteRV; N_TALLIED_DATA] {
         })
     }
     // convert value vectors to our structure
-    values.map(|val| FiniteDiscreteRV::new(&val))
+    values.map(|val| TalliedVariable::new(&val))
 }
 
 /// Builds an organized structure from a (formatted) list of timers reports.

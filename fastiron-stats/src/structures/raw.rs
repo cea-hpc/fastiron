@@ -40,7 +40,7 @@ pub enum TalliedData {
 /// This structure is not meant to be modified. It should be initialized with all
 /// values using the provided constructor.
 #[derive(Debug)]
-pub struct FiniteDiscreteRV {
+pub struct TalliedVariable {
     /// Values taken by the random variables.
     pub values: Vec<f64>,
     /// Associated mean.
@@ -49,7 +49,7 @@ pub struct FiniteDiscreteRV {
     pub variance: f64,
 }
 
-impl FiniteDiscreteRV {
+impl TalliedVariable {
     /// Constructor. Takes a slice as values and computes key associated values
     /// before returning the object.
     pub fn new(values: &[f64]) -> Self {
@@ -74,7 +74,7 @@ impl FiniteDiscreteRV {
 }
 
 /// Returns the covariance of two given [FiniteDiscreteRV].
-pub fn covariance(x: &FiniteDiscreteRV, y: &FiniteDiscreteRV) -> f64 {
+pub fn covariance(x: &TalliedVariable, y: &TalliedVariable) -> f64 {
     assert_eq!(x.n_val(), y.n_val());
     let iter = zip(x.values.iter(), y.values.iter());
     let mut cov = iter.map(|(xi, yi)| (xi - x.mean) * (yi - y.mean)).sum();
@@ -87,7 +87,7 @@ pub fn covariance(x: &FiniteDiscreteRV, y: &FiniteDiscreteRV) -> f64 {
 /// The function checks if `x` and `y` have non-zero variance. If this is the case,
 /// 0 is returned. It means variables are independent. While this may be technically
 /// false, it allows for generic computations
-pub fn correlation(x: &FiniteDiscreteRV, y: &FiniteDiscreteRV) -> f64 {
+pub fn correlation(x: &TalliedVariable, y: &TalliedVariable) -> f64 {
     if (x.variance == 0.0) | (y.variance == 0.0) {
         //
         return 0.0;
@@ -97,7 +97,7 @@ pub fn correlation(x: &FiniteDiscreteRV, y: &FiniteDiscreteRV) -> f64 {
 }
 
 pub struct TalliesReport {
-    pub tallies_data: [FiniteDiscreteRV; N_TALLIED_DATA],
+    pub tallies_data: [TalliedVariable; N_TALLIED_DATA],
 }
 
 impl From<File> for TalliesReport {
@@ -117,13 +117,13 @@ impl From<File> for TalliesReport {
         }
         // convert value vectors to our structure
         Self {
-            tallies_data: values.map(|val| FiniteDiscreteRV::new(&val)),
+            tallies_data: values.map(|val| TalliedVariable::new(&val)),
         }
     }
 }
 
 impl Index<TalliedData> for TalliesReport {
-    type Output = FiniteDiscreteRV;
+    type Output = TalliedVariable;
 
     fn index(&self, tallied_data: TalliedData) -> &Self::Output {
         &self.tallies_data[tallied_data as usize]

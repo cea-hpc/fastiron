@@ -1,8 +1,18 @@
-use super::raw::TalliedData;
+use super::raw::{TalliedData, TimerReport, N_TIMERS};
 
-//~~~~~~~~~~~~~~
-// Tallies data
-//~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~
+// Comparison data
+//~~~~~~~~~~~~~~~~~
+
+pub struct ComparisonResults {
+    pub old: TimerReport,
+    pub new: TimerReport,
+    pub percents: [f64; N_TIMERS],
+}
+
+//~~~~~~~~~~~~~~~~~~
+// Correlation data
+//~~~~~~~~~~~~~~~~~~
 
 pub const CORRELATIONS: ([TalliedData; 11], [TalliedData; 4]) = (
     [
@@ -25,7 +35,3 @@ pub const CORRELATIONS: ([TalliedData; 11], [TalliedData; 4]) = (
         TalliedData::CycleSync,
     ],
 );
-
-//~~~~~~~~~~~~~
-// Timers data
-//~~~~~~~~~~~~~

@@ -3,7 +3,7 @@
 //! This module contains all functions used for data processing.
 
 use crate::structures::raw::{
-    correlation, FiniteDiscreteRV, TalliedData, TimerReport, TimerSV, N_TIMERS,
+    correlation, TalliedData, TalliedVariable, TimerReport, TimerSV, N_TIMERS,
 };
 
 /// Pairs of tallied data to be correlated.
@@ -55,7 +55,7 @@ pub fn compare(old: &TimerReport, new: &TimerReport) -> [f64; N_TIMERS] {
 ///
 /// This function computes coefficient for the `PopulationControl`/`CycleSync`
 /// section of the correlation study.
-pub fn build_popsync_results(tallies_data: &[FiniteDiscreteRV]) -> Vec<f64> {
+pub fn build_popsync_results(tallies_data: &[TalliedVariable]) -> Vec<f64> {
     // The table is something like this
     //
     //                   | Source | Rr | Split
@@ -95,7 +95,7 @@ pub fn build_popsync_results(tallies_data: &[FiniteDiscreteRV]) -> Vec<f64> {
 ///
 /// This function computes coefficient for the `CycleTracking` section
 /// of the correlation study.
-pub fn build_tracking_results(tallies_data: &[FiniteDiscreteRV]) -> Vec<f64> {
+pub fn build_tracking_results(tallies_data: &[TalliedVariable]) -> Vec<f64> {
     vec![
         correlation(
             &tallies_data[TalliedData::Absorb as usize],
