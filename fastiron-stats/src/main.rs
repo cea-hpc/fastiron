@@ -1,12 +1,15 @@
+use std::fs::File;
+
 use fastiron_stats::{
     io::{
         command_line::Cli,
         files::{
-            compile_scaling_data, get_scaling_data, read_tallies, read_timers, save_percents,
+            compile_scaling_data, get_scaling_data, read_tallies, save_percents,
             save_popsync_results, save_tracking_results,
         },
     },
     processing::{self, compare},
+    structures::raw::TimerReport,
 };
 
 use clap::Parser;
@@ -17,12 +20,11 @@ fn main() {
 
     if let Some(filenames) = cli.comparison {
         println!("Comparing timers...");
+        // Get data, process it, save results
         let old_timers = &filenames[0];
         let new_timers = &filenames[1];
-
-        // Get data, process it, save results
-        let old_timer_report = read_timers(old_timers);
-        let new_timer_report = read_timers(new_timers);
+        let old_timer_report = TimerReport::from(File::open(old_timers).unwrap());
+        let new_timer_report = TimerReport::from(File::open(new_timers).unwrap());
         let percents = compare(&old_timer_report, &new_timer_report);
         save_percents(old_timer_report, new_timer_report, &percents);
         println!("Done!");

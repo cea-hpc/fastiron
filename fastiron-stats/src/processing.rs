@@ -2,7 +2,7 @@
 //!
 //! This module contains all functions used for data processing.
 
-use crate::structures::{
+use crate::structures::raw::{
     correlation, FiniteDiscreteRV, TalliedData, TimerReport, TimerSV, N_TIMERS,
 };
 

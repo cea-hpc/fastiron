@@ -8,9 +8,7 @@ use std::{
     io::Write,
 };
 
-use crate::structures::{
-    FiniteDiscreteRV, SummarizedVariable, TimerReport, TimerSV, N_TALLIED_DATA, N_TIMERS,
-};
+use crate::structures::raw::{FiniteDiscreteRV, TimerReport, TimerSV, N_TALLIED_DATA, N_TIMERS};
 
 // =======
 // Reading
@@ -42,33 +40,6 @@ pub fn read_tallies(file_name: &str) -> [FiniteDiscreteRV; N_TALLIED_DATA] {
     values.map(|val| FiniteDiscreteRV::new(&val))
 }
 
-/// Builds an organized structure from a timers report saved by the
-/// `fastiron` binary.
-///
-/// This function is a general reading function,
-/// not all the data will necessarly be used.
-///
-/// Any change done to the timers data / its representation will
-/// demand an update of this function.
-pub fn read_timers(file_name: &str) -> TimerReport {
-    let mut res = [SummarizedVariable::default(); N_TIMERS];
-    let file = File::open(file_name).unwrap();
-    let mut reader = csv::ReaderBuilder::new().delimiter(b';').from_reader(file);
-
-    // for each line
-    for (timer_idx, result) in reader.records().enumerate() {
-        let mut record = result.unwrap();
-        record.trim();
-        // lmao
-        res[timer_idx].lowest = record.get(2).unwrap().parse().unwrap();
-        res[timer_idx].mean = record.get(3).unwrap().parse().unwrap();
-        res[timer_idx].highest = record.get(4).unwrap().parse().unwrap();
-        res[timer_idx].total = record.get(5).unwrap().parse().unwrap();
-    }
-
-    TimerReport { timers_data: res }
-}
-
 /// Builds an organized structure from a (formatted) list of timers reports.
 ///
 /// Any change done to the timers data / its representation will
@@ -83,7 +54,7 @@ pub fn get_scaling_data(
     n_threads
         .map(|n_thread| {
             let filename = format!("{}{}.csv", root, n_thread);
-            (read_timers(&filename), n_thread)
+            (TimerReport::from(File::open(filename).unwrap()), n_thread)
         })
         .collect()
 }
