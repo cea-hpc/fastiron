@@ -5,6 +5,7 @@ Simulation:
    loadBalance: 0
    cycleTimers: 0
    debugThreads: 0
+   nSteps: 50
    lx: 32
    ly: 32
    lz: 32
