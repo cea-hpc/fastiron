@@ -4,17 +4,18 @@
 //! simulation. Input reading is located in the [`crate::utils`] module,
 //! while parsing is done here.
 
+use rustc_hash::FxHashMap;
+
 use crate::{
     constants::CustomFloat,
     utils::io_utils::{parse_input_file, Cli, InputError},
 };
-use std::collections::HashMap;
 
-/// Alias for a `<String, String>` [`HashMap`]. See here for detailed
+/// Alias for a `<String, String>` [`FxHashMap`]. See here for detailed
 /// structure of input blocks.
 ///
 /// TODO: Add a breakdown of the input structure
-pub type Block = HashMap<String, String>;
+pub type Block = FxHashMap<String, String>;
 
 /// Enum used to categorize inconsistencies within parameters
 #[derive(Debug, PartialEq)]
@@ -454,9 +455,9 @@ pub struct Parameters<T: CustomFloat> {
     /// List of geometries. See [GeometryParameters] for more.
     pub geometry_params: Vec<GeometryParameters<T>>,
     /// Map of materials. See [MaterialParameters] for more.
-    pub material_params: HashMap<String, MaterialParameters<T>>,
+    pub material_params: FxHashMap<String, MaterialParameters<T>>,
     /// Map of cross sections. See [CrossSectionParameters] for more.
-    pub cross_section_params: HashMap<String, CrossSectionParameters<T>>,
+    pub cross_section_params: FxHashMap<String, CrossSectionParameters<T>>,
 }
 
 impl<T: CustomFloat> Parameters<T> {
@@ -469,8 +470,8 @@ impl<T: CustomFloat> Parameters<T> {
         let mut params = Self {
             simulation_params: SimulationParameters::from_cli(&cli),
             geometry_params: Vec::new(),
-            material_params: HashMap::new(),
-            cross_section_params: HashMap::new(),
+            material_params: FxHashMap::default(),
+            cross_section_params: FxHashMap::default(),
         };
 
         if let Some(filename) = cli.input_file {

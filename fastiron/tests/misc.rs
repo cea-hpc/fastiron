@@ -1,11 +1,12 @@
-use std::{collections::HashMap, hint::black_box};
+use std::hint::black_box;
 
 use num::{Float, ToPrimitive};
+use rustc_hash::FxHashMap;
 
 #[test]
 fn map_behavior() {
-    let mut map: HashMap<usize, usize> = Default::default();
-    let mut complementary_map: HashMap<usize, usize> = Default::default();
+    let mut map: FxHashMap<usize, usize> = Default::default();
+    let mut complementary_map: FxHashMap<usize, usize> = Default::default();
     (0..10).for_each(|jj| {
         (0..5).for_each(|ii| {
             map.insert(jj * 12 + ii, jj * 12 + ii);

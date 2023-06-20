@@ -2,7 +2,9 @@
 //!
 //!
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
+
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     constants::{CustomFloat, Tuple3},
@@ -11,7 +13,8 @@ use crate::{
 
 use super::{global_fcc_grid::GlobalFccGrid, grid_assignment_object::GridAssignmentObject};
 
-type MapType = HashMap<usize, CellInfo>;
+type MapType = FxHashMap<usize, CellInfo>;
+type SetType = FxHashSet<usize>;
 
 /// Structure used to hold cell information.
 #[derive(Debug, Clone, Copy, Default)]
@@ -37,7 +40,7 @@ pub struct MeshPartition {
     pub foreman: usize,
     /// Map linking cell global identifier to their [CellInfo] structure
     pub cell_info_map: MapType,
-    /// List of neighboring domain identifiers. **Should be replaced by a set**.
+    /// List of neighboring domain identifiers.
     pub nbr_domains: Vec<usize>,
 }
 
@@ -71,12 +74,12 @@ impl MeshPartition {
     ) {
         let mut assigner = GridAssignmentObject::new(domain_center);
         let mut flood_queue: VecDeque<usize> = VecDeque::new();
-        let mut wet_cells: Vec<usize> = Vec::new();
+        let mut wet_cells: SetType = SetType::default();
 
         let root = grid.which_cell(&domain_center[self.domain_gid]);
 
         flood_queue.push_back(root);
-        wet_cells.push(root);
+        wet_cells.insert(root);
         Self::add_nbrs_to_flood(root, grid, &mut flood_queue, &mut wet_cells);
 
         while !flood_queue.is_empty() {
@@ -104,7 +107,7 @@ impl MeshPartition {
         &mut self,
         grid: &GlobalFccGrid<T>,
     ) -> Vec<(usize, usize)> {
-        let mut remote_cells: Vec<(usize, usize)> = Vec::new();
+        let mut remote_cells: Vec<(usize, usize)> = Default::default();
 
         let mut n_local_cells: usize = 0;
 
@@ -147,26 +150,58 @@ impl MeshPartition {
         cell_idx: usize,
         grid: &GlobalFccGrid<T>,
         flood_queue: &mut VecDeque<usize>,
-        wet_cells: &mut Vec<usize>,
+        wet_cells: &mut SetType,
     ) {
         let tt: Tuple3 = grid.cell_idx_to_tuple(cell_idx);
+        const NBR_COORDS: [(i32, i32, i32); 26] = [
+            // (-1, x, y)
+            (-1, -1, -1),
+            (-1, -1, 0),
+            (-1, -1, 1),
+            (-1, 0, -1),
+            (-1, 0, 0),
+            (-1, 0, 1),
+            (-1, 1, -1),
+            (-1, 1, 0),
+            (-1, 1, 1),
+            // (0, x, y) except (0, 0, 0)
+            (0, -1, -1),
+            (0, -1, 0),
+            (0, -1, 1),
+            (0, 0, -1),
+            (0, 0, 1),
+            (0, 1, -1),
+            (0, 1, 0),
+            (0, 1, 1),
+            // (1, x, y)
+            (1, -1, -1),
+            (1, -1, 0),
+            (1, -1, 1),
+            (1, 0, -1),
+            (1, 0, 0),
+            (1, 0, 1),
+            (1, 1, -1),
+            (1, 1, 0),
+            (1, 1, 1),
+        ];
 
-        (-1..2).for_each(|ii: i32| {
-            (-1..2).for_each(|jj: i32| {
-                (-1..2).for_each(|kk: i32| {
-                    if (ii == 0) & (jj == 0) & (kk == 0) {
-                        return;
-                    }
-                    let nbr_tuple = (tt.0 as i32 + ii, tt.1 as i32 + jj, tt.2 as i32 + kk);
-                    let snaped_nbr_tuple = grid.snap_turtle(nbr_tuple);
-                    let nbr_idx = grid.cell_tuple_to_idx(&snaped_nbr_tuple);
-                    if !wet_cells.contains(&nbr_idx) {
-                        flood_queue.push_back(nbr_idx);
-                        wet_cells.push(nbr_idx);
-                    }
-                });
+        NBR_COORDS
+            .iter()
+            .map(|offset| {
+                let snaped = grid.snap_turtle((
+                    tt.0 as i32 + offset.0,
+                    tt.1 as i32 + offset.1,
+                    tt.2 as i32 + offset.2,
+                ));
+                grid.cell_tuple_to_idx(&snaped)
+            })
+            .for_each(|nbr_idx| {
+                if wet_cells.insert(nbr_idx) {
+                    // the method return true if the object was inserted,
+                    // i.e. if it was abent before
+                    flood_queue.push_back(nbr_idx);
+                }
             });
-        });
     }
 }
 

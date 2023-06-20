@@ -70,7 +70,7 @@ pub struct MonteCarloUnit<T: CustomFloat> {
     pub fast_timer: MCFastTimerContainer,
     /// Weight of the particles at creation in a source zone.
     pub unit_weight: T,
-    /// HashMap used to lazily compute cross-sections.
+    /// Structure used to lazily compute cross-sections.
     pub xs_cache: XSCache<T>,
 }
 

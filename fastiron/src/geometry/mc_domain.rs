@@ -2,9 +2,8 @@
 //!
 //!
 
-use std::collections::HashMap;
-
-use num::{one, zero, FromPrimitive};
+use num::{one, FromPrimitive};
+use rustc_hash::FxHashMap;
 
 use crate::{
     constants::CustomFloat,
@@ -15,8 +14,8 @@ use crate::{
 };
 
 use super::{
+    facets::MCFacetGeometryCell,
     facets::{MCFacetAdjacency, MCFacetAdjacencyCell, MCSubfacetAdjacencyEvent},
-    facets::{MCFacetGeometryCell, MCGeneralPlane},
     global_fcc_grid::GlobalFccGrid,
     mc_cell_state::MCCellState,
     mc_location::MCLocation,
@@ -95,10 +94,10 @@ impl<T: CustomFloat> MCMeshDomain<T> {
         let nbr_domain_gid: Vec<usize> = mesh_partition.nbr_domains.clone();
 
         // nbr_rank
-        let mut nbr_rank: Vec<usize> = Vec::with_capacity(nbr_domain_gid.len());
-        (0..nbr_domain_gid.len()).for_each(|ii| {
-            nbr_rank.push(ddc.rank[nbr_domain_gid[ii]]);
-        });
+        let nbr_rank: Vec<usize> = nbr_domain_gid
+            .iter()
+            .map(|domain_gid| ddc.rank[*domain_gid])
+            .collect();
 
         // cell_connectivity
         let node_idx_map = bootstrap_node_map(mesh_partition, grid);
@@ -117,17 +116,10 @@ impl<T: CustomFloat> MCMeshDomain<T> {
         });
 
         // cell_geometry
-        let mut cell_geometry: Vec<MCFacetGeometryCell<T>> =
-            vec![MCFacetGeometryCell::default(); cell_connectivity.len()];
-        // fill with correct value
-        (0..cell_connectivity.len()).for_each(|cell_idx| {
-            (0..N_FACETS_OUT).for_each(|facet_idx| {
-                let r0: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[0]];
-                let r1: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[1]];
-                let r2: MCVector<T> = node[cell_connectivity[cell_idx].facet[facet_idx].point[2]];
-                cell_geometry[cell_idx][facet_idx] = MCGeneralPlane::new(&r0, &r1, &r2);
-            });
-        });
+        let cell_geometry: Vec<MCFacetGeometryCell<T>> = cell_connectivity
+            .iter()
+            .map(|facet_adjacency_cell| facet_adjacency_cell.get_planes(&node))
+            .collect();
 
         Self {
             domain_gid: mesh_partition.domain_gid,
@@ -175,29 +167,25 @@ impl<T: CustomFloat> MCDomain<T> {
     ) -> Self {
         let mesh = MCMeshDomain::new(mesh_partition, grid, ddc, &get_boundary_conditions(params));
         let cell_state: Vec<MCCellState<T>> = (0..mesh.cell_geometry.len())
-            .map(|_| MCCellState::default())
+            .map(|cell_idx| {
+                let rr = cell_position_3dg(&mesh, cell_idx);
+                let mat_name = Self::find_material(&params.geometry_params, &rr);
+                let cell_center: MCVector<T> = Self::cell_center(&mesh, cell_idx);
+                MCCellState {
+                    material: mat_db.find_material(&mat_name).unwrap(),
+                    volume: Self::cell_volume(&mesh, cell_idx),
+                    cell_number_density: one(),
+                    id: grid.which_cell(&cell_center) * 0x0100000000,
+                    source_tally: 0,
+                }
+            })
             .collect();
-        let mut mcdomain = MCDomain {
+
+        MCDomain {
             global_domain: mesh.domain_gid,
             cell_state,
             mesh,
-        };
-
-        (0..mcdomain.cell_state.len()).for_each(|ii| {
-            mcdomain.cell_state[ii].volume = mcdomain.cell_volume(ii);
-
-            let rr = cell_position_3dg(&mcdomain.mesh, ii);
-            let mat_name = Self::find_material(&params.geometry_params, &rr);
-            mcdomain.cell_state[ii].material = mat_db.find_material(&mat_name).unwrap();
-
-            mcdomain.cell_state[ii].cell_number_density = one();
-
-            let cell_center: MCVector<T> = mcdomain.cell_center(ii);
-            mcdomain.cell_state[ii].id = grid.which_cell(&cell_center) * 0x0100000000; // ?
-            mcdomain.cell_state[ii].source_tally = 0;
-        });
-
-        mcdomain
+        }
     }
 
     fn find_material(geometry_params: &[GeometryParameters<T>], rr: &MCVector<T>) -> String {
@@ -235,33 +223,31 @@ impl<T: CustomFloat> MCDomain<T> {
 
     /// Returns the coordinates of the center of
     /// the specified cell.
-    fn cell_center(&self, cell_idx: usize) -> MCVector<T> {
-        let cell = &self.mesh.cell_connectivity[cell_idx];
-        let node = &self.mesh.node;
-        let mut center: MCVector<T> = MCVector::default();
-
-        (0..N_POINTS_INTERSEC).for_each(|ii| {
-            center += node[cell.point[ii]];
-        });
+    fn cell_center(mesh: &MCMeshDomain<T>, cell_idx: usize) -> MCVector<T> {
+        let cell = &mesh.cell_connectivity[cell_idx];
+        let node = &mesh.node;
+        let mut center: MCVector<T> = (0..N_POINTS_INTERSEC).map(|ii| node[cell.point[ii]]).sum();
         center /= FromPrimitive::from_usize(cell.point.len()).unwrap();
         center
     }
 
     /// Computes the volume of the specified cell.
-    fn cell_volume(&self, cell_idx: usize) -> T {
-        let center = self.cell_center(cell_idx);
-        let cell = &self.mesh.cell_connectivity[cell_idx];
-        let node = &self.mesh.node;
+    fn cell_volume(mesh: &MCMeshDomain<T>, cell_idx: usize) -> T {
+        let center = Self::cell_center(mesh, cell_idx);
+        let cell = &mesh.cell_connectivity[cell_idx];
+        let node = &mesh.node;
 
-        let mut volume: T = zero();
-
-        (0..N_FACETS_OUT).for_each(|facet_idx| {
-            let corners = &cell.facet[facet_idx].point;
-            let aa: MCVector<T> = node[corners[0]] - center;
-            let bb: MCVector<T> = node[corners[1]] - center;
-            let cc: MCVector<T> = node[corners[2]] - center;
-            volume += aa.dot(&bb.cross(&cc)).abs();
-        });
+        let mut volume: T = cell
+            .facet
+            .iter()
+            .map(|facet_adj| {
+                let corners = &facet_adj.point;
+                let aa: MCVector<T> = node[corners[0]] - center;
+                let bb: MCVector<T> = node[corners[1]] - center;
+                let cc: MCVector<T> = node[corners[2]] - center;
+                aa.dot(&bb.cross(&cc)).abs()
+            })
+            .sum();
         volume /= FromPrimitive::from_f64(6.0).unwrap();
         volume
     }
@@ -270,11 +256,11 @@ impl<T: CustomFloat> MCDomain<T> {
 fn bootstrap_node_map<T: CustomFloat>(
     partition: &MeshPartition,
     grid: &GlobalFccGrid<T>,
-) -> HashMap<usize, usize> {
+) -> FxHashMap<usize, usize> {
     // res
-    let mut node_idx_map: HashMap<usize, usize> = Default::default();
+    let mut node_idx_map: FxHashMap<usize, usize> = Default::default();
     // intermediate struct
-    let mut face_centers: HashMap<usize, usize> = Default::default();
+    let mut face_centers: FxHashMap<usize, usize> = Default::default();
 
     for (k, v) in &partition.cell_info_map {
         // only process partition of our domain
@@ -306,14 +292,14 @@ fn bootstrap_node_map<T: CustomFloat>(
 
 /// Build the cells object of the mesh.
 fn build_cells<T: CustomFloat>(
-    node_idx_map: &HashMap<usize, usize>,
+    node_idx_map: &FxHashMap<usize, usize>,
     nbr_domain: &[usize],
     partition: &MeshPartition,
     grid: &GlobalFccGrid<T>,
     boundary_cond: &[MCSubfacetAdjacencyEvent],
 ) -> Vec<MCFacetAdjacencyCell> {
     // nbr_domain_idx[domain_gid] = local_nbr_idx
-    let mut nbr_domain_idx: HashMap<usize, Option<usize>> = Default::default();
+    let mut nbr_domain_idx: FxHashMap<usize, Option<usize>> = Default::default();
     (0..nbr_domain.len()).for_each(|ii| {
         nbr_domain_idx.insert(nbr_domain[ii], Some(ii));
     });
