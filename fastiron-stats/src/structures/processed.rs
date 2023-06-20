@@ -208,10 +208,21 @@ pub struct ScalingResults {
     pub population_control_avgs: Vec<f64>,
     pub tracking_avgs: Vec<f64>,
     pub sync_avgs: Vec<f64>,
+    pub scaling_type: ScalingType,
 }
 
-impl From<(&str, &ScalingParams)> for ScalingResults {
-    fn from((root_path, params): (&str, &ScalingParams)) -> Self {
+impl ScalingResults {
+    pub fn save(&self) {
+        todo!()
+    }
+
+    pub fn plot(&self) {
+        todo!()
+    }
+}
+
+impl From<(&str, &ScalingParams, ScalingType)> for ScalingResults {
+    fn from((root_path, params, scaling_type): (&str, &ScalingParams, ScalingType)) -> Self {
         todo!()
     }
 }

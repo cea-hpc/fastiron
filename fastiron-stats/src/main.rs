@@ -3,7 +3,7 @@ use std::fs::File;
 use fastiron_stats::{
     io::command_line::Cli,
     structures::{
-        processed::{ComparisonResults, CorrelationResults},
+        processed::{ComparisonResults, CorrelationResults, ScalingResults, ScalingType},
         raw::{TalliesReport, TimerReport},
     },
 };
@@ -46,31 +46,26 @@ fn main() {
     if let Some(root_path) = cli.weak_scaling_root {
         println!("Processing weak scaling data...");
         // Get data, process it, save results
-        /*
-        let timers = get_scaling_data(root, n_start, step, n_iter, progression);
-        compile_scaling_data(&timers);
-        */
+        let results =
+            ScalingResults::from((root_path.as_str(), &cli.scaling_params, ScalingType::Weak));
+        results.save();
         println!("Done!");
 
         if cli.plot {
-            // plot results
-
+            results.plot();
             println!("Plotted results");
         }
     }
 
     if let Some(root_path) = cli.strong_scaling_root {
         println!("Processing strong scaling data...");
-        // Get data, process it, save results
-        /*
-        let timers = get_scaling_data(root, n_start, step, n_iter, progression);
-        compile_scaling_data(&timers);
-        */
+        let results =
+            ScalingResults::from((root_path.as_str(), &cli.scaling_params, ScalingType::Strong));
+        results.save();
         println!("Done!");
 
         if cli.plot {
-            // plot results
-
+            results.plot();
             println!("Plotted results");
         }
     }
