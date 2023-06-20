@@ -323,6 +323,7 @@ dependencies = [
 name = "fastiron-stats"
 version = "1.0.0"
 dependencies = [
+ "clap 4.3.0",
  "csv",
 ]
 

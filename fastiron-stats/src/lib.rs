@@ -37,6 +37,6 @@
 //!
 //! [Fastiron]: https://github.com/cea-hpc/fastiron
 
-pub mod io_utils;
+pub mod io;
 pub mod processing;
 pub mod structures;

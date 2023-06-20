@@ -1,7 +1,7 @@
 use std::io::{self, stdout, Write};
 
 use fastiron_stats::{
-    io_utils::{
+    io::files::{
         compile_scaling_data, get_scaling_data, read_tallies, read_timers, save_percents,
         save_popsync_results, save_tracking_results,
     },
