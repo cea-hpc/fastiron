@@ -16,6 +16,7 @@ fn main() {
     let cli = Cli::parse();
 
     if let Some(filenames) = cli.comparison {
+        println!("Comparing timers...");
         let old_timers = &filenames[0];
         let new_timers = &filenames[1];
 
@@ -24,46 +25,61 @@ fn main() {
         let new_timer_report = read_timers(new_timers);
         let percents = compare(&old_timer_report, &new_timer_report);
         save_percents(old_timer_report, new_timer_report, &percents);
+        println!("Done!");
 
         if cli.plot {
             // plot results
+
+            println!("Plotted results");
         }
     }
 
     if let Some(tallies_report) = cli.correlation {
+        println!("Processing tallied data...");
         // Get data, process it, save results
         let tallies_data = read_tallies(&tallies_report);
         let tracking_res = processing::build_tracking_results(&tallies_data);
         let popsync_res = processing::build_popsync_results(&tallies_data);
         save_tracking_results(&tracking_res);
         save_popsync_results(&popsync_res);
+        println!("Done!");
 
         if cli.plot {
             // plot results
+
+            println!("Plotted results");
         }
     }
 
     if let Some(root_path) = cli.weak_scaling_root {
+        println!("Processing weak scaling data...");
         // Get data, process it, save results
         /*
         let timers = get_scaling_data(root, n_start, step, n_iter, progression);
         compile_scaling_data(&timers);
         */
+        println!("Done!");
 
         if cli.plot {
             // plot results
+
+            println!("Plotted results");
         }
     }
 
     if let Some(root_path) = cli.strong_scaling_root {
+        println!("Processing strong scaling data...");
         // Get data, process it, save results
         /*
         let timers = get_scaling_data(root, n_start, step, n_iter, progression);
         compile_scaling_data(&timers);
         */
+        println!("Done!");
 
         if cli.plot {
             // plot results
+
+            println!("Plotted results");
         }
     }
     println!("Finished! All data is ready for use.")
