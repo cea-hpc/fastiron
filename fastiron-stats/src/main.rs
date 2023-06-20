@@ -4,12 +4,12 @@ use fastiron_stats::{
     io::{
         command_line::Cli,
         files::{
-            compile_scaling_data, get_scaling_data, read_tallies, save_percents,
-            save_popsync_results, save_tracking_results,
+            compile_scaling_data, get_scaling_data, read_tallies, save_popsync_results,
+            save_tracking_results,
         },
     },
-    processing::{self, compare},
-    structures::raw::TimerReport,
+    processing::{self},
+    structures::{processed::ComparisonResults, raw::TimerReport},
 };
 
 use clap::Parser;
@@ -21,17 +21,14 @@ fn main() {
     if let Some(filenames) = cli.comparison {
         println!("Comparing timers...");
         // Get data, process it, save results
-        let old_timers = &filenames[0];
-        let new_timers = &filenames[1];
-        let old_timer_report = TimerReport::from(File::open(old_timers).unwrap());
-        let new_timer_report = TimerReport::from(File::open(new_timers).unwrap());
-        let percents = compare(&old_timer_report, &new_timer_report);
-        save_percents(old_timer_report, new_timer_report, &percents);
+        let old_timer_report = TimerReport::from(File::open(&filenames[0]).unwrap());
+        let new_timer_report = TimerReport::from(File::open(&filenames[1]).unwrap());
+        let results = ComparisonResults::from((old_timer_report, new_timer_report));
+        results.save();
         println!("Done!");
 
         if cli.plot {
-            // plot results
-
+            results.plot();
             println!("Plotted results");
         }
     }
