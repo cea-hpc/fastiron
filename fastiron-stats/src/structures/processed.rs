@@ -1,4 +1,7 @@
-use std::{fs::OpenOptions, io::Write};
+use std::{
+    fs::{File, OpenOptions},
+    io::Write,
+};
 
 use crate::io::command_line::ScalingParams;
 
@@ -205,8 +208,11 @@ pub enum ScalingType {
 
 pub struct ScalingResults {
     pub n_threads: Vec<usize>,
+    pub total_exec_times: Vec<f64>,
     pub population_control_avgs: Vec<f64>,
     pub tracking_avgs: Vec<f64>,
+    pub tracking_process_avgs: Vec<f64>,
+    pub tracking_sort_avgs: Vec<f64>,
     pub sync_avgs: Vec<f64>,
     pub scaling_type: ScalingType,
 }
@@ -223,6 +229,44 @@ impl ScalingResults {
 
 impl From<(&str, &ScalingParams, ScalingType)> for ScalingResults {
     fn from((root_path, params, scaling_type): (&str, &ScalingParams, ScalingType)) -> Self {
-        todo!()
+        // fetch data from files
+        let n_threads: Vec<usize> = (0..params.t_iter.unwrap())
+            .map(|idx| params.t_init.unwrap() * params.t_factor.unwrap().pow(idx as u32))
+            .collect();
+        let reports: Vec<TimerReport> = n_threads
+            .iter()
+            .map(|n_thread| {
+                let filename = format!("{}{}.csv", root_path, n_thread);
+                TimerReport::from(File::open(filename).unwrap())
+            })
+            .collect();
+
+        // use data to init structure
+        let mut total_exec_times: Vec<f64> = Vec::with_capacity(n_threads.len());
+        let mut population_control_avgs: Vec<f64> = Vec::with_capacity(n_threads.len());
+        let mut tracking_avgs: Vec<f64> = Vec::with_capacity(n_threads.len());
+        let mut tracking_process_avgs: Vec<f64> = Vec::with_capacity(n_threads.len());
+        let mut tracking_sort_avgs: Vec<f64> = Vec::with_capacity(n_threads.len());
+        let mut sync_avgs: Vec<f64> = Vec::with_capacity(n_threads.len());
+
+        reports.iter().for_each(|report| {
+            total_exec_times.push(report[TimerSV::Main].mean);
+            population_control_avgs.push(report[TimerSV::PopulationControl].mean);
+            tracking_avgs.push(report[TimerSV::CycleTracking].mean);
+            tracking_process_avgs.push(report[TimerSV::CycleTrackingProcess].mean);
+            tracking_sort_avgs.push(report[TimerSV::CycleTrackingSort].mean);
+            sync_avgs.push(report[TimerSV::CycleSync].mean);
+        });
+
+        Self {
+            n_threads,
+            total_exec_times,
+            population_control_avgs,
+            tracking_avgs,
+            tracking_process_avgs,
+            tracking_sort_avgs,
+            sync_avgs,
+            scaling_type,
+        }
     }
 }
