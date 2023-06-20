@@ -22,8 +22,8 @@ fastiron \
     -r 1 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r1n40960.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r1n40960.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r1.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r1.csv
 
 # 81920 particles -- 32*16*16 mesh -- 2 threads
 fastiron \
@@ -38,8 +38,8 @@ fastiron \
     -r 2 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r2n81920.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r2n81920.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r2.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r2.csv
 
 # 163840 particles -- 32*32*16 mesh -- 4 threads 
 fastiron \
@@ -54,8 +54,8 @@ fastiron \
     -r 4 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r4n163840.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r4n163840.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r4.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r4.csv
 
 # 327680 particles -- 32*32*32 mesh -- 8 threads 
 fastiron \
@@ -70,8 +70,8 @@ fastiron \
     -r 8 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r8n327680.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r8n327680.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r8.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r8.csv
 
 # 655360 particles -- 64*32*32 mesh -- 16 threads 
 fastiron \
@@ -86,8 +86,8 @@ fastiron \
     -r 16 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r16n655360.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r16n655360.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r16.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r16.csv
 
 # 1310720 particles -- 64*64*32 mesh -- 32 threads
 fastiron \
@@ -102,8 +102,8 @@ fastiron \
     -r 32 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r32n1310720.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r32n1310720.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r32.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r32.csv
 
 # QS original scripts only went up to this for CTS2 benchmark
 # 1474560 particles -- 48*48*64 mesh -- 36 threads 
@@ -119,8 +119,8 @@ fastiron \
     -r 36 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r36n1474560.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r36n1474560.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r36.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r36.csv
 
 # 2621440 particles -- 64*64*64 mesh -- 64 threads
 fastiron \
@@ -135,8 +135,8 @@ fastiron \
     -r 64 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r64n2621440.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r64n2621440.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r64.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r64.csv
 
 # 5242880 particles -- 128*64*64 mesh -- 128 threads
 fastiron \
@@ -151,8 +151,8 @@ fastiron \
     -r 128 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r128n5242880.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r128n5242880.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r128.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r128.csv
 
 # 10485760 particles -- 128*128*64 mesh -- 256 threads
 fastiron \
@@ -167,5 +167,5 @@ fastiron \
     -r 256 \
     -c \
 
-mv tallies_report.csv $TARGET_FOLDER/tallies_r256n10485760.csv
-mv timers_report.csv $TARGET_FOLDER/timers_r256n10485760.csv
+mv tallies_report.csv $TARGET_FOLDER/tallies_r256.csv
+mv timers_report.csv $TARGET_FOLDER/timers_r256.csv
