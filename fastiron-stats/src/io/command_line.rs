@@ -4,9 +4,13 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 #[command(author, version, about, arg_required_else_help(true))]
 pub struct Cli {
-    /// name of input file
-    #[arg(short = 'i', long = "input-file", num_args(1))]
-    pub input_file: Option<String>,
+    /// name of the two timers report files to compare - old report first, new report second
+    #[arg(short = 't', long = "timers-comparison", num_args(2))]
+    pub comparison: Option<Vec<String>>,
+
+    /// name of the tallies file to analyze
+    #[arg(short = 'e', long = "event-correlation", num_args(1))]
+    pub correlation: Option<String>,
 
     /// root path of timers file for weak scaling data
     #[arg(short = 'W', long = "weak-scaling", num_args(1))]
