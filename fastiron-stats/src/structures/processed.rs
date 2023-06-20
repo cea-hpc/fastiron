@@ -1,5 +1,7 @@
 use std::{fs::OpenOptions, io::Write};
 
+use crate::io::command_line::ScalingParams;
+
 use super::raw::{correlation, TalliedData, TalliesReport, TimerReport, TimerSV, N_TIMERS};
 
 //~~~~~~~~~~~~~~~~~
@@ -120,10 +122,10 @@ pub const CORRELATION_COLS: [TalliedData; 11] = [
 ];
 
 pub const CORRELATION_ROWS: [TalliedData; 4] = [
-    TalliedData::Cycle,
-    TalliedData::PopulationControl,
-    TalliedData::CycleTracking,
     TalliedData::CycleSync,
+    TalliedData::CycleTracking,
+    TalliedData::PopulationControl,
+    TalliedData::Cycle,
 ];
 
 pub struct CorrelationResults {
@@ -148,10 +150,10 @@ impl CorrelationResults {
                 file,
                 "{},{},{},{},{},{},{},{},{},{},{},{}",
                 match idx {
-                    0 => "Cycle",
-                    1 => "PopulationControl",
-                    2 => "CycleTracking",
-                    3 => "CycleSync",
+                    0 => "CycleSync",
+                    1 => "CycleTracking",
+                    2 => "PopulationControl",
+                    3 => "Cycle",
                     _ => unreachable!(),
                 },
                 self.corr_data[11 * idx],
@@ -189,5 +191,27 @@ impl From<TalliesReport> for CorrelationResults {
         Self {
             corr_data: *flat_table,
         }
+    }
+}
+
+//~~~~~~~~~~~~~~
+// Scaling data
+//~~~~~~~~~~~~~~
+
+pub enum ScalingType {
+    Weak,
+    Strong,
+}
+
+pub struct ScalingResults {
+    pub n_threads: Vec<usize>,
+    pub population_control_avgs: Vec<f64>,
+    pub tracking_avgs: Vec<f64>,
+    pub sync_avgs: Vec<f64>,
+}
+
+impl From<(&str, &ScalingParams)> for ScalingResults {
+    fn from((root_path, params): (&str, &ScalingParams)) -> Self {
+        todo!()
     }
 }
