@@ -497,6 +497,7 @@ version = "1.0.0"
 dependencies = [
  "clap 4.3.0",
  "csv",
+ "gnuplot",
  "plotters",
 ]
 
@@ -605,6 +606,15 @@ checksum = "80792593675e051cf94a4b111980da2ba60d4a83e43e0048c5693baab3977045"
 dependencies = [
  "color_quant",
  "weezl",
+]
+
+[[package]]
+name = "gnuplot"
+version = "0.0.38"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3980f1547c7c19b51b5a89fbc6b8913a7d441c7f017547d5b40079ba7ca0321"
+dependencies = [
+ "byteorder",
 ]
 
 [[package]]

@@ -3,6 +3,8 @@ use std::{
     io::Write,
 };
 
+use gnuplot::Figure;
+
 use crate::io::command_line::ScalingParams;
 
 use super::raw::{correlation, TalliedData, TalliesReport, TimerReport, TimerSV, N_TIMERS};
