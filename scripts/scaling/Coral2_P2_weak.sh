@@ -28,7 +28,7 @@ mv timers_report.csv $TARGET_FOLDER/timers_r1.csv
 # 106480 particles -- 22*11*11 mesh -- 2 threads 
 fastiron \
     -i ./input_files/profiling/Coral2_P2.inp \
-    -n 53240 \
+    -n 106480 \
     -X 2 \
     -Y 1 \
     -Z 1 \
