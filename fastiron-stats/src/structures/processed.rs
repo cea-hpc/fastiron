@@ -267,6 +267,21 @@ impl ScalingResults {
             })
             .unwrap();
         writeln!(file, "n_threads,TotalExecTime,PopulationControlAvg,SyncAvg").unwrap();
+        let n_elem = self.n_threads.len();
+        assert_eq!(self.total_exec_times.len(), n_elem);
+        assert_eq!(self.population_control_avgs.len(), n_elem);
+        assert_eq!(self.sync_avgs.len(), n_elem);
+        for idx in 0..n_elem {
+            writeln!(
+                file,
+                "{},{},{},{}",
+                self.n_threads[idx],
+                self.total_exec_times[idx],
+                self.population_control_avgs[idx],
+                self.sync_avgs[idx]
+            )
+            .unwrap();
+        }
     }
 
     pub fn plot_tracking(&self) {
