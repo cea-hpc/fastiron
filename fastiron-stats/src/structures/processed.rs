@@ -3,7 +3,10 @@ use std::{
     io::Write,
 };
 
-use gnuplot::Figure;
+use gnuplot::{
+    Figure,
+    PlotOption::{BorderColor, Color, LineWidth},
+};
 
 use crate::io::command_line::ScalingParams;
 
@@ -85,7 +88,57 @@ impl ComparisonResults {
     }
 
     pub fn plot(&self) {
-        todo!()
+        // create figure & adjust characteristics
+        let mut fg = Figure::new();
+        fg.set_terminal("pngcairo", "comparison.png")
+            .set_title("Program Execution Time Comparison");
+
+        // prepare data
+        let base_x: [usize; N_TIMERS] = core::array::from_fn(|i| i);
+        let old_y: [f64; N_TIMERS] = [
+            TimerSV::Main,
+            TimerSV::PopulationControl,
+            TimerSV::CycleTracking,
+            TimerSV::CycleTrackingProcess,
+            TimerSV::CycleTrackingSort,
+            TimerSV::CycleSync,
+        ]
+        .map(|t| self.old[t].total);
+        let new_y: [f64; N_TIMERS] = [
+            TimerSV::Main,
+            TimerSV::PopulationControl,
+            TimerSV::CycleTracking,
+            TimerSV::CycleTrackingProcess,
+            TimerSV::CycleTrackingSort,
+            TimerSV::CycleSync,
+        ]
+        .map(|t| self.new[t].total);
+        let width = 0.25;
+        let line_w = LineWidth(0.01);
+        let line_color = BorderColor("#000000");
+        let old_color = Color("#0000FF"); // blue
+        let new_color = if self.percents[0] > 0.0 {
+            Color("#FF0000") // total exec time increase => red
+        } else {
+            Color("#00FF00") // total exec time decrease => green
+        };
+
+        // plot data
+        fg.axes2d()
+            .boxes_set_width(
+                base_x.iter().map(|x| *x as f64 - width / 2.0),
+                &old_y,
+                &[width; N_TIMERS],
+                &[line_w, line_color, old_color],
+            )
+            .boxes_set_width(
+                base_x.iter().map(|x| *x as f64 + width / 2.0),
+                &new_y,
+                &[width; N_TIMERS],
+                &[line_w, line_color, new_color],
+            );
+
+        fg.show();
     }
 }
 
