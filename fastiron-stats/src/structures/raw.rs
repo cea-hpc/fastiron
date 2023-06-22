@@ -35,6 +35,34 @@ pub enum TalliedData {
     CycleSync = 16,
 }
 
+impl Display for TalliedData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match *self {
+                TalliedData::Cycle => "Cycle",
+                TalliedData::Start => "Start",
+                TalliedData::Source => "Source",
+                TalliedData::Rr => "Rr",
+                TalliedData::Split => "Split",
+                TalliedData::Absorb => "Absorb",
+                TalliedData::Scatter => "Scatter",
+                TalliedData::Fission => "Fission",
+                TalliedData::Produce => "Produce",
+                TalliedData::Collision => "Collision",
+                TalliedData::Escape => "Escape",
+                TalliedData::Census => "Census",
+                TalliedData::NumSeg => "NumSeg",
+                TalliedData::ScalarFlux => "ScalarFlux",
+                TalliedData::PopulationControl => "PopulationControl",
+                TalliedData::CycleTracking => "CycleTracking",
+                TalliedData::CycleSync => "CycleSync",
+            }
+        )
+    }
+}
+
 /// Structure used to model finite discrete random variables.
 ///
 /// This structure is not meant to be modified. It should be initialized with all

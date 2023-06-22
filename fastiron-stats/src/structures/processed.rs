@@ -4,11 +4,12 @@ use std::{
 };
 
 use gnuplot::{
-    AutoOption, AxesCommon, Figure,
+    AutoOption, AxesCommon, DashType, Figure,
     LabelOption::{Rotate, TextOffset},
-    PlotOption::{Caption, Color},
+    PaletteType,
+    PlotOption::{Caption, Color, LineStyle},
     Tick,
-    TickOption::Inward,
+    TickOption::{Inward, Mirror},
 };
 
 use crate::io::command_line::ScalingParams;
@@ -191,14 +192,68 @@ impl CorrelationResults {
     }
 
     pub fn plot(&self) {
-        todo!()
+        // create figure & adjust characteristics
+        let mut fg = Figure::new();
+        fg.set_terminal("pngcairo size 1300, 600", "correlation.png")
+            .set_title("Event Correlation Matrix");
+        // prepare data
+        let n_col = CORRELATION_COLS.len();
+        let n_row = CORRELATION_ROWS.len();
+        let x: [usize; CORRELATION_COLS.len()] = core::array::from_fn(|i| i);
+        let y: [usize; CORRELATION_ROWS.len()] = core::array::from_fn(|i| i);
+        let x_tics = x.map(|event_idx| {
+            Tick::Major(
+                event_idx as f64,
+                AutoOption::Fix(CORRELATION_COLS[event_idx].to_string()),
+            )
+        });
+        let y_tics = y.map(|event_idx| {
+            Tick::Major(
+                event_idx as f64,
+                AutoOption::Fix(CORRELATION_ROWS[event_idx].to_string()),
+            )
+        });
+
+        // necessary padding because of the shitty interpreter of .surface() method
+        let mut tmp = vec![0.0; n_col + 1];
+        (0..n_row).for_each(|row_idx| {
+            tmp.push(0.0);
+            tmp.extend_from_slice(&self.corr_data[row_idx * n_col..(row_idx + 1) * n_col]);
+        });
+
+        fg.axes3d()
+            .set_aspect_ratio(AutoOption::Fix(0.35))
+            .set_x_ticks_custom(
+                x_tics,
+                &[Inward(false), Mirror(false)],
+                &[Rotate(-45.0), TextOffset(5.0, -1.0)],
+            )
+            .set_y_ticks_custom(
+                y_tics,
+                &[Inward(false), Mirror(false)],
+                &[Rotate(45.0), TextOffset(0.0, 2.0)],
+            )
+            .set_cb_grid(true)
+            .set_x_grid(true)
+            .set_y_grid(true)
+            .set_grid_options(true, &[LineStyle(DashType::Solid)])
+            .set_palette(PaletteType::Custom(vec![
+                (-5.0, 0.0, 0.0, 1.0),
+                (0.0, 1.0, 1.0, 1.0),
+                (5.0, 1.0, 0.0, 0.0),
+            ]))
+            .set_grid_options(true, &[LineStyle(DashType::Solid)])
+            .surface(&tmp, n_row + 1, n_col + 1, None, &[Caption("%f.2")])
+            .set_view_map();
+
+        fg.show().unwrap();
     }
 }
 
 impl From<TalliesReport> for CorrelationResults {
     fn from(report: TalliesReport) -> Self {
         // compute correlations
-        let table = CORRELATION_ROWS.map(|tallied_data| {
+        let table: [[f64; 11]; 4] = CORRELATION_ROWS.map(|tallied_data| {
             CORRELATION_COLS
                 .map(|tallied_event| correlation(&report[tallied_data], &report[tallied_event]))
         });
