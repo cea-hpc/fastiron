@@ -223,6 +223,7 @@ impl CorrelationResults {
             tmp.extend_from_slice(&self.corr_data[row_idx * n_col..(row_idx + 1) * n_col]);
         });
 
+        // plot data
         fg.axes3d()
             .set_aspect_ratio(AutoOption::Fix(0.35))
             .set_x_ticks_custom(
@@ -356,11 +357,45 @@ impl ScalingResults {
     }
 
     pub fn plot_tracking(&self) {
-        todo!()
+        // create figure & adjust characteristics
+        let mut fg = Figure::new();
+        let (out, title) = match self.scaling_type {
+            ScalingType::Weak => (
+                "weak_scaling_tracking.png",
+                "Weak Scaling of the Tracking Section",
+            ),
+            ScalingType::Strong(_) => (
+                "strong_scaling_tracking.png",
+                "Strong Scaling of the Tracking Section",
+            ),
+        };
+        fg.set_terminal("pngcairo", out).set_title(title);
+        // prepare data
+
+        // plot data
+
+        fg.show().unwrap();
     }
 
     pub fn plot_others(&self) {
-        todo!()
+        // create figure & adjust characteristics
+        let mut fg = Figure::new();
+        let (out, title) = match self.scaling_type {
+            ScalingType::Weak => (
+                "weak_scaling_others.png",
+                "Weak Scaling of the Other Sections",
+            ),
+            ScalingType::Strong(_) => (
+                "strong_scaling_others.png",
+                "Strong Scaling of the Other Sections",
+            ),
+        };
+        fg.set_terminal("pngcairo", out).set_title(title);
+        // prepare data
+
+        // plot data
+
+        fg.show().unwrap();
     }
 }
 
