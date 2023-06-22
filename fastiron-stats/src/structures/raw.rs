@@ -136,6 +136,15 @@ impl Index<TalliedData> for TalliesReport {
 
 pub const N_TIMERS: usize = 6;
 
+pub const TIMERS_ARR: [TimerSV; N_TIMERS] = [
+    TimerSV::Main,
+    TimerSV::PopulationControl,
+    TimerSV::CycleTracking,
+    TimerSV::CycleTrackingProcess,
+    TimerSV::CycleTrackingSort,
+    TimerSV::CycleSync,
+];
+
 /// Enum used to represent & map timers breakdown and their indexes.
 #[derive(Debug, Clone, Copy)]
 pub enum TimerSV {

@@ -4,13 +4,18 @@ use std::{
 };
 
 use gnuplot::{
-    Figure,
-    PlotOption::{BorderColor, Color, LineWidth},
+    AutoOption, AxesCommon, Figure,
+    LabelOption::{Rotate, TextOffset},
+    PlotOption::{Caption, Color},
+    Tick,
+    TickOption::Inward,
 };
 
 use crate::io::command_line::ScalingParams;
 
-use super::raw::{correlation, TalliedData, TalliesReport, TimerReport, TimerSV, N_TIMERS};
+use super::raw::{
+    correlation, TalliedData, TalliesReport, TimerReport, TimerSV, N_TIMERS, TIMERS_ARR,
+};
 
 //~~~~~~~~~~~~~~~~~
 // Comparison data
@@ -31,114 +36,69 @@ impl ComparisonResults {
             .open("comparison.csv")
             .unwrap();
         writeln!(file, "section,old,new,change").unwrap();
-        writeln!(
-            file,
-            "{},{},{},{}",
-            TimerSV::Main,
-            self.old[TimerSV::Main].mean,
-            self.new[TimerSV::Main].mean,
-            self.percents[0]
-        )
-        .unwrap();
-        writeln!(
-            file,
-            "{},{},{},{}",
-            TimerSV::PopulationControl,
-            self.old[TimerSV::PopulationControl].mean,
-            self.new[TimerSV::PopulationControl].mean,
-            self.percents[1]
-        )
-        .unwrap();
-        writeln!(
-            file,
-            "{},{},{},{}",
-            TimerSV::CycleTracking,
-            self.old[TimerSV::CycleTracking].mean,
-            self.new[TimerSV::CycleTracking].mean,
-            self.percents[2]
-        )
-        .unwrap();
-        writeln!(
-            file,
-            "{},{},{},{}",
-            TimerSV::CycleTrackingProcess,
-            self.old[TimerSV::CycleTrackingProcess].mean,
-            self.new[TimerSV::CycleTrackingProcess].mean,
-            self.percents[3]
-        )
-        .unwrap();
-        writeln!(
-            file,
-            "{},{},{},{}",
-            TimerSV::CycleTrackingSort,
-            self.old[TimerSV::CycleTrackingSort].mean,
-            self.new[TimerSV::CycleTrackingSort].mean,
-            self.percents[4]
-        )
-        .unwrap();
-        writeln!(
-            file,
-            "{},{},{},{}",
-            TimerSV::CycleSync,
-            self.old[TimerSV::CycleSync].mean,
-            self.new[TimerSV::CycleSync].mean,
-            self.percents[5]
-        )
-        .unwrap();
+        TIMERS_ARR.iter().for_each(|section| {
+            writeln!(
+                file,
+                "{},{},{},{}",
+                *section,
+                self.old[*section].total,
+                self.new[*section].total,
+                self.percents[*section as usize]
+            )
+            .unwrap();
+        });
     }
 
     pub fn plot(&self) {
         // create figure & adjust characteristics
         let mut fg = Figure::new();
-        fg.set_terminal("pngcairo", "comparison.png")
-            .set_title("Program Execution Time Comparison");
-
+        fg.set_terminal("pngcairo size 800, 800", "comparison.png")
+            .set_title("Timers Reports Comparison");
         // prepare data
-        let base_x: [usize; N_TIMERS] = core::array::from_fn(|i| i);
-        let old_y: [f64; N_TIMERS] = [
-            TimerSV::Main,
-            TimerSV::PopulationControl,
-            TimerSV::CycleTracking,
-            TimerSV::CycleTrackingProcess,
-            TimerSV::CycleTrackingSort,
-            TimerSV::CycleSync,
-        ]
-        .map(|t| self.old[t].total);
-        let new_y: [f64; N_TIMERS] = [
-            TimerSV::Main,
-            TimerSV::PopulationControl,
-            TimerSV::CycleTracking,
-            TimerSV::CycleTrackingProcess,
-            TimerSV::CycleTrackingSort,
-            TimerSV::CycleSync,
-        ]
-        .map(|t| self.new[t].total);
+        let x_coords: [usize; N_TIMERS] = core::array::from_fn(|i| i);
+        let x_tics = TIMERS_ARR.map(|section| {
+            Tick::Major(
+                section as usize,
+                AutoOption::Fix(match section {
+                    TimerSV::Main => "Main Program",
+                    TimerSV::PopulationControl => "Population Control",
+                    TimerSV::CycleTracking => "Tracking Phase",
+                    TimerSV::CycleTrackingProcess => "Process Phase",
+                    TimerSV::CycleTrackingSort => "Sorting Phase",
+                    TimerSV::CycleSync => "Sync Phase",
+                }),
+            )
+        });
         let width = 0.25;
-        let line_w = LineWidth(0.01);
-        let line_color = BorderColor("#000000");
-        let old_color = Color("#0000FF"); // blue
+
+        let old_y: [f64; N_TIMERS] = TIMERS_ARR.map(|t| self.old[t].total / 1.0e6);
+        let new_y: [f64; N_TIMERS] = TIMERS_ARR.map(|t| self.new[t].total / 1.0e6);
         let new_color = if self.percents[0] > 0.0 {
             Color("#FF0000") // total exec time increase => red
         } else {
-            Color("#00FF00") // total exec time decrease => green
+            Color("#00BB00") // total exec time decrease => green
         };
 
         // plot data
         fg.axes2d()
+            .set_x_ticks_custom(x_tics, &[Inward(false)], &[Rotate(-45.0)])
+            .set_x_label("Section", &[TextOffset(0.0, 1.5)])
+            .set_y_grid(true)
+            .set_y_label("Total Time Spent in Section (s)", &[])
             .boxes_set_width(
-                base_x.iter().map(|x| *x as f64 - width / 2.0),
+                x_coords.iter().map(|x| *x as f64 - width / 2.0),
                 &old_y,
                 &[width; N_TIMERS],
-                &[line_w, line_color, old_color],
+                &[Caption("Old times"), Color("#000077")],
             )
             .boxes_set_width(
-                base_x.iter().map(|x| *x as f64 + width / 2.0),
+                x_coords.iter().map(|x| *x as f64 + width / 2.0),
                 &new_y,
                 &[width; N_TIMERS],
-                &[line_w, line_color, new_color],
+                &[Caption("New times"), new_color],
             );
 
-        fg.show();
+        fg.show().unwrap();
     }
 }
 
