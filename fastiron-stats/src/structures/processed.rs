@@ -7,7 +7,7 @@ use gnuplot::{
     AutoOption, AxesCommon, DashType, Figure,
     LabelOption::{Rotate, TextOffset},
     PaletteType,
-    PlotOption::{Caption, Color, LineStyle},
+    PlotOption::{Caption, Color, LineStyle, PointSymbol},
     Tick,
     TickOption::{Inward, Mirror},
 };
@@ -371,8 +371,63 @@ impl ScalingResults {
         };
         fg.set_terminal("pngcairo", out).set_title(title);
         // prepare data
+        // let x = self.n_threads.clone();
+        let y_ideal: Vec<f64> = self
+            .n_threads
+            .iter()
+            .enumerate()
+            .map(|(idx, n_thread)| match self.scaling_type {
+                ScalingType::Weak => self.tracking_avgs[0],
+                ScalingType::Strong(factor) => {
+                    self.tracking_avgs[0] / (factor.pow(idx as u32) as f64)
+                }
+            })
+            .collect();
 
         // plot data
+        fg.axes2d()
+            .set_x_log(Some(self.n_threads[1] as f64 / self.n_threads[0] as f64))
+            .set_y_log(match self.scaling_type {
+                ScalingType::Weak => None,
+                ScalingType::Strong(_) => Some(self.n_threads[1] as f64 / self.n_threads[0] as f64),
+            })
+            .set_y_grid(true)
+            .lines_points(
+                &self.n_threads,
+                &y_ideal,
+                &[
+                    Caption("Ideal Average Tracking time"),
+                    Color("#00FF00"),
+                    PointSymbol('x'),
+                ],
+            )
+            .lines_points(
+                &self.n_threads,
+                &self.tracking_avgs,
+                &[
+                    Caption("Average Tracking time"),
+                    Color("#008800"),
+                    PointSymbol('x'),
+                ],
+            )
+            .lines_points(
+                &self.n_threads,
+                &self.tracking_process_avgs,
+                &[
+                    Caption("Average Processing time"),
+                    Color("#FF00FF"),
+                    PointSymbol('x'),
+                ],
+            )
+            .lines_points(
+                &self.n_threads,
+                &self.tracking_sort_avgs,
+                &[
+                    Caption("Average Sorting time"),
+                    Color("#00AAAA"),
+                    PointSymbol('x'),
+                ],
+            );
 
         fg.show().unwrap();
     }
