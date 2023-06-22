@@ -82,10 +82,12 @@ impl ComparisonResults {
 
         // plot data
         fg.axes2d()
-            .set_x_ticks_custom(x_tics, &[Inward(false)], &[Rotate(-45.0)])
+            .set_x_ticks_custom(x_tics, &[Inward(false), Mirror(false)], &[Rotate(-45.0)])
             .set_x_label("Section", &[TextOffset(0.0, 1.5)])
             .set_y_grid(true)
+            .set_y_minor_grid(true)
             .set_y_label("Total Time Spent in Section (s)", &[])
+            .set_y_log(Some(10.0))
             .boxes_set_width(
                 x_coords.iter().map(|x| *x as f64 - width / 2.0),
                 &old_y,
@@ -236,7 +238,6 @@ impl CorrelationResults {
             .set_cb_grid(true)
             .set_x_grid(true)
             .set_y_grid(true)
-            .set_grid_options(true, &[LineStyle(DashType::Solid)])
             .set_palette(PaletteType::Custom(vec![
                 (-5.0, 0.0, 0.0, 1.0),
                 (0.0, 1.0, 1.0, 1.0),
