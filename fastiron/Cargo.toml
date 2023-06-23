@@ -1,24 +1,24 @@
 [package]
 name = "fastiron"
-version = "1.2.0"
+version = "1.3.0"
 edition = "2021"
 
 # DEPENDENCIES
 
 [dependencies]
-clap = {version="4.1.4", features=["cargo", "derive"]}
-serde_yaml = {version="0.9.17", features=[]}
+clap = {version="4.3.5", features=["cargo", "derive"]}
+serde_yaml = {version="0.9.21", features=[]}
 num = {version="0.4.0"}
 rand = {version="0.8.5", features=["small_rng"]}
 tinyvec = {version="1.6.0"}
 rayon= {version="1.7.0"}
-atomic = {version="0.5"}
+atomic = {version="0.5.3"}
 hwloc2 = {version="2.2.0"}
 libc = {version="0.2.146"}
 rustc-hash = {version="1.1.0"}
 
 [dev-dependencies]
-criterion = {version="0.3.4", features=["html_reports"]}
+criterion = {version="0.5.1", features=["html_reports"]}
 
 # FEATURES
 [features]
