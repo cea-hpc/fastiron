@@ -4,7 +4,9 @@ use std::{
 };
 
 use gnuplot::{
-    AutoOption, AxesCommon, DashType, Figure,
+    AutoOption, AxesCommon,
+    Coordinate::Graph,
+    DashType, Figure,
     LabelOption::{Rotate, TextOffset},
     MarginSide::MarginLeft,
     PaletteType,
@@ -354,13 +356,10 @@ impl ScalingResults {
         // create figure & adjust characteristics
         let mut fg = Figure::new();
         let (out, title) = match self.scaling_type {
-            ScalingType::Weak => (
-                "weak_scaling_tracking.png",
-                "Weak Scaling of the Tracking Section",
-            ),
+            ScalingType::Weak => ("weak_scaling_tracking.png", "Weak Scaling Characteristics"),
             ScalingType::Strong(_) => (
                 "strong_scaling_tracking.png",
-                "Strong Scaling of the Tracking Section",
+                "Strong Scaling Characteristics",
             ),
         };
         fg.set_terminal("pngcairo", out).set_title(title);
@@ -381,6 +380,8 @@ impl ScalingResults {
         // plot data
         fg.axes2d()
             .set_x_log(Some(self.n_threads[1] as f64 / self.n_threads[0] as f64))
+            .set_x_label("Number of Threads Used for Execution", &[])
+            .set_x_ticks(Some((AutoOption::Auto, 0)), &[Inward(false)], &[])
             .set_y_log(match self.scaling_type {
                 ScalingType::Weak => None,
                 ScalingType::Strong(_) => Some(self.n_threads[1] as f64 / self.n_threads[0] as f64),
@@ -409,7 +410,7 @@ impl ScalingResults {
                 &self.tracking_process_avgs,
                 &[
                     Caption("Average Processing time"),
-                    Color("#FF00FF"),
+                    Color("#CCCC00"),
                     PointSymbol('x'),
                 ],
             )
@@ -418,7 +419,7 @@ impl ScalingResults {
                 &self.tracking_sort_avgs,
                 &[
                     Caption("Average Sorting time"),
-                    Color("#00AAAA"),
+                    Color("#999900"),
                     PointSymbol('x'),
                 ],
             );
@@ -430,19 +431,44 @@ impl ScalingResults {
         // create figure & adjust characteristics
         let mut fg = Figure::new();
         let (out, title) = match self.scaling_type {
-            ScalingType::Weak => (
-                "weak_scaling_others.png",
-                "Weak Scaling of the Other Sections",
-            ),
+            ScalingType::Weak => ("weak_scaling_others.png", "Weak Scaling Characteristics"),
             ScalingType::Strong(_) => (
                 "strong_scaling_others.png",
-                "Strong Scaling of the Other Sections",
+                "Strong Scaling Characteristics",
             ),
         };
         fg.set_terminal("pngcairo", out).set_title(title);
-        // prepare data
 
         // plot data
+        fg.axes2d()
+            .set_x_log(Some(self.n_threads[1] as f64 / self.n_threads[0] as f64))
+            .set_x_label("Number of Threads Used for Execution", &[])
+            .set_x_ticks(
+                Some((AutoOption::Auto, 0)),
+                &[Inward(false), Mirror(false)],
+                &[],
+            )
+            .set_y_range(AutoOption::Auto, AutoOption::Auto)
+            .set_y_grid(true)
+            .set_legend(Graph(1.0), Graph(0.2), &[], &[])
+            .lines_points(
+                &self.n_threads,
+                &self.population_control_avgs,
+                &[
+                    Caption("Average Pop. Control time"),
+                    Color("#00AA00"),
+                    PointSymbol('x'),
+                ],
+            )
+            .lines_points(
+                &self.n_threads,
+                &self.sync_avgs,
+                &[
+                    Caption("Average Synchronization time"),
+                    Color("#AAAA00"),
+                    PointSymbol('x'),
+                ],
+            );
 
         fg.show().unwrap();
     }
