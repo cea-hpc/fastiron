@@ -6,6 +6,7 @@ use std::{
 use gnuplot::{
     AutoOption, AxesCommon, DashType, Figure,
     LabelOption::{Rotate, TextOffset},
+    MarginSide::MarginLeft,
     PaletteType,
     PlotOption::{Caption, Color, LineStyle, PointSymbol},
     Tick,
@@ -169,7 +170,7 @@ impl CorrelationResults {
         (0..4).for_each(|idx: usize| {
             writeln!(
                 file,
-                "{},{},{},{},{},{},{},{},{},{},{},{}",
+                "{},{:.6},{:.6},{:.6},{:.6},{:.6},{:.6},{:.6},{:.6},{:.6},{:.6},{:.6}",
                 match idx {
                     0 => "CycleSync",
                     1 => "CycleTracking",
@@ -205,31 +206,25 @@ impl CorrelationResults {
         let y: [usize; CORRELATION_ROWS.len()] = core::array::from_fn(|i| i);
         let x_tics = x.map(|event_idx| {
             Tick::Major(
-                event_idx as f64,
+                event_idx as f64 - 0.5,
                 AutoOption::Fix(CORRELATION_COLS[event_idx].to_string()),
             )
         });
         let y_tics = y.map(|event_idx| {
             Tick::Major(
-                event_idx as f64,
+                event_idx as f64 - 0.5,
                 AutoOption::Fix(CORRELATION_ROWS[event_idx].to_string()),
             )
         });
 
-        // necessary padding because of the shitty interpreter of .surface() method
-        let mut tmp = vec![0.0; n_col + 1];
-        (0..n_row).for_each(|row_idx| {
-            tmp.push(0.0);
-            tmp.extend_from_slice(&self.corr_data[row_idx * n_col..(row_idx + 1) * n_col]);
-        });
-
         // plot data
-        fg.axes3d()
+        fg.axes2d()
             .set_aspect_ratio(AutoOption::Fix(0.35))
+            .set_margins(&[MarginLeft(0.10)])
             .set_x_ticks_custom(
                 x_tics,
                 &[Inward(false), Mirror(false)],
-                &[Rotate(-45.0), TextOffset(5.0, -1.0)],
+                &[Rotate(-45.0), TextOffset(4.0, -1.0)],
             )
             .set_y_ticks_custom(
                 y_tics,
@@ -237,6 +232,7 @@ impl CorrelationResults {
                 &[Rotate(45.0), TextOffset(0.0, 2.0)],
             )
             .set_cb_grid(true)
+            .set_grid_options(true, &[LineStyle(DashType::Solid)])
             .set_x_grid(true)
             .set_y_grid(true)
             .set_palette(PaletteType::Custom(vec![
@@ -244,9 +240,7 @@ impl CorrelationResults {
                 (0.0, 1.0, 1.0, 1.0),
                 (5.0, 1.0, 0.0, 0.0),
             ]))
-            .set_grid_options(true, &[LineStyle(DashType::Solid)])
-            .surface(&tmp, n_row + 1, n_col + 1, None, &[Caption("%f.2")])
-            .set_view_map();
+            .image(&self.corr_data, n_row, n_col, None, &[]);
 
         fg.show().unwrap();
     }
@@ -376,7 +370,7 @@ impl ScalingResults {
             .n_threads
             .iter()
             .enumerate()
-            .map(|(idx, n_thread)| match self.scaling_type {
+            .map(|(idx, _)| match self.scaling_type {
                 ScalingType::Weak => self.tracking_avgs[0],
                 ScalingType::Strong(factor) => {
                     self.tracking_avgs[0] / (factor.pow(idx as u32) as f64)
