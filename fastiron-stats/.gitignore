@@ -3,4 +3,4 @@
 /*.dat
 /*.png
 tmp/
-!sample_data/*
+!sample_data/*/*
