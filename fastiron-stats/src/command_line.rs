@@ -1,4 +1,4 @@
-//! Module used fo I/O handling
+//! Module used for I/O handling
 //!
 //! This module holds all the code defining the CLI, i.e. the entire I/O system of
 //! the program.

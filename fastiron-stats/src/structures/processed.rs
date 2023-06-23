@@ -296,7 +296,7 @@ pub enum ScalingType {
     Strong(usize),
 }
 
-/// Structure used to hold correlation study results.
+/// Structure used to hold scaling study results.
 pub struct ScalingResults {
     /// Number of threads used for each simulation run.
     pub n_threads: Vec<usize>,
