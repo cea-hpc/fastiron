@@ -1,3 +1,8 @@
+//! Processed data structures code
+//!
+//! This module contains code to process, save and optionally plot the raw data provided
+//! by the user.
+
 use std::{
     fs::{File, OpenOptions},
     io::Write,
@@ -15,7 +20,7 @@ use gnuplot::{
     TickOption::{Inward, Mirror},
 };
 
-use crate::io::command_line::ScalingParams;
+use crate::command_line::ScalingParams;
 
 use super::raw::{
     correlation, TalliedData, TalliesReport, TimerReport, TimerSV, N_TIMERS, TIMERS_ARR,
@@ -25,13 +30,18 @@ use super::raw::{
 // Comparison data
 //~~~~~~~~~~~~~~~~~
 
+/// Structure used to hold comparison study results.
 pub struct ComparisonResults {
+    /// Old timer data.
     pub old: TimerReport,
+    /// New timer data.
     pub new: TimerReport,
+    /// Relative change in percents.
     pub percents: [f64; N_TIMERS],
 }
 
 impl ComparisonResults {
+    /// Serializing function.
     pub fn save(&self) {
         let mut file = OpenOptions::new()
             .write(true)
@@ -53,6 +63,7 @@ impl ComparisonResults {
         });
     }
 
+    /// Plotting function.
     pub fn plot(&self) {
         // create figure & adjust characteristics
         let mut fg = Figure::new();
@@ -108,6 +119,7 @@ impl ComparisonResults {
     }
 }
 
+/// Custom [`From`] implementation used to process the raw data at initialization.
 impl From<(TimerReport, TimerReport)> for ComparisonResults {
     fn from((old, new): (TimerReport, TimerReport)) -> Self {
         let relative_change =
@@ -131,6 +143,7 @@ impl From<(TimerReport, TimerReport)> for ComparisonResults {
 // Correlation data
 //~~~~~~~~~~~~~~~~~~
 
+/// Columns of the computed correlation matrix.
 pub const CORRELATION_COLS: [TalliedData; 11] = [
     TalliedData::Start,
     TalliedData::Rr,
@@ -145,6 +158,7 @@ pub const CORRELATION_COLS: [TalliedData; 11] = [
     TalliedData::NumSeg,
 ];
 
+/// Rows of the computed correlation matrix.
 pub const CORRELATION_ROWS: [TalliedData; 4] = [
     TalliedData::CycleSync,
     TalliedData::CycleTracking,
@@ -152,11 +166,14 @@ pub const CORRELATION_ROWS: [TalliedData; 4] = [
     TalliedData::Cycle,
 ];
 
+/// Structure used to hold correlation study results.
 pub struct CorrelationResults {
+    /// Raw data.
     pub corr_data: [f64; 11 * 4],
 }
 
 impl CorrelationResults {
+    /// Serializing function.
     pub fn save(&self) {
         let mut file = OpenOptions::new()
             .write(true)
@@ -196,6 +213,7 @@ impl CorrelationResults {
         });
     }
 
+    /// Plotting function.
     pub fn plot(&self) {
         // create figure & adjust characteristics
         let mut fg = Figure::new();
@@ -248,6 +266,7 @@ impl CorrelationResults {
     }
 }
 
+/// Custom [`From`] implementation used to process the raw data at initialization.
 impl From<TalliesReport> for CorrelationResults {
     fn from(report: TalliesReport) -> Self {
         // compute correlations
@@ -269,23 +288,36 @@ impl From<TalliesReport> for CorrelationResults {
 // Scaling data
 //~~~~~~~~~~~~~~
 
+/// Enum used to represent the type of scaling study.
 pub enum ScalingType {
+    /// Weak scaling, i.e. the size of the problem grows with the number of threads.
     Weak,
+    /// Strong scaling, i.e. the size of the problem does not grow with the number of threads.
     Strong(usize),
 }
 
+/// Structure used to hold correlation study results.
 pub struct ScalingResults {
+    /// Number of threads used for each simulation run.
     pub n_threads: Vec<usize>,
+    /// Total execution time of each simulation run.
     pub total_exec_times: Vec<f64>,
+    /// Average population control time of each simulation run.
     pub population_control_avgs: Vec<f64>,
+    /// Average tracking time of each simulation run.
     pub tracking_avgs: Vec<f64>,
+    /// Average processing time of each simulation run.
     pub tracking_process_avgs: Vec<f64>,
+    /// Average sorting time of each simulation run.
     pub tracking_sort_avgs: Vec<f64>,
+    /// Average synchronization time of each simulation run.
     pub sync_avgs: Vec<f64>,
+    /// Scaling type.
     pub scaling_type: ScalingType,
 }
 
 impl ScalingResults {
+    /// Serializing function.
     pub fn save_tracking(&self) {
         let mut file = OpenOptions::new()
             .write(true)
@@ -324,6 +356,7 @@ impl ScalingResults {
         }
     }
 
+    /// Serializing function.
     pub fn save_others(&self) {
         let mut file = OpenOptions::new()
             .write(true)
@@ -352,6 +385,7 @@ impl ScalingResults {
         }
     }
 
+    /// Plotting function.
     pub fn plot_tracking(&self) {
         // create figure & adjust characteristics
         let mut fg = Figure::new();
@@ -428,6 +462,7 @@ impl ScalingResults {
         fg.show().unwrap();
     }
 
+    /// Plotting function.
     pub fn plot_others(&self) {
         // create figure & adjust characteristics
         let mut fg = Figure::new();
@@ -477,6 +512,7 @@ impl ScalingResults {
     }
 }
 
+/// Custom [`From`] implementation used to process the raw data at initialization.
 impl From<(&str, &ScalingParams, ScalingType)> for ScalingResults {
     fn from((root_path, params, scaling_type): (&str, &ScalingParams, ScalingType)) -> Self {
         // fetch data from files

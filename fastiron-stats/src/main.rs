@@ -1,7 +1,7 @@
 use std::fs::File;
 
 use fastiron_stats::{
-    io::command_line::Cli,
+    command_line::Cli,
     structures::{
         processed::{ComparisonResults, CorrelationResults, ScalingResults, ScalingType},
         raw::{TalliesReport, TimerReport},
