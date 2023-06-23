@@ -1,167 +1,81 @@
-use std::io::{self, stdout, Write};
+use std::fs::File;
 
 use fastiron_stats::{
-    io_utils::{
-        compile_scaling_data, get_scaling_data, read_tallies, read_timers, save_percents,
-        save_popsync_results, save_tracking_results,
+    command_line::Cli,
+    structures::{
+        processed::{ComparisonResults, CorrelationResults, ScalingResults, ScalingType},
+        raw::{TalliesReport, TimerReport},
     },
-    processing::{self, compare},
-    structures::ProgressionType,
 };
+
+use clap::Parser;
 
 fn main() {
     // Input handling
-    let mut txt_input = String::new();
+    let cli = Cli::parse();
 
-    while (txt_input.trim() != "y") & (txt_input.trim() != "n") {
-        txt_input.clear();
-        print!("Version comparison? (y/n): ");
-        stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut txt_input)
-            .expect("Problem reading input.");
-        println!("{}", txt_input.trim());
-    }
-    let comparison = txt_input.trim() == "y";
-
-    txt_input.clear();
-    while (txt_input.trim() != "y") & (txt_input.trim() != "n") {
-        txt_input.clear();
-        print!("Correlation study? (y/n): ");
-        stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut txt_input)
-            .expect("Problem reading input.");
-        println!("{}", txt_input.trim());
-    }
-    let correlation = txt_input.trim() == "y";
-
-    txt_input.clear();
-    while (txt_input.trim() != "y") & (txt_input.trim() != "n") {
-        txt_input.clear();
-        print!("Scaling study? (y/n): ");
-        stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut txt_input)
-            .expect("Problem reading input.");
-        println!("{}", txt_input.trim());
-    }
-    let scaling = txt_input.trim() == "y";
-
-    txt_input.clear();
-
-    if comparison {
-        println!("+---------------------------------------+");
-        println!("|Performance Comparison Between Versions|");
-        println!("+---------------------------------------+");
-        // Get old report file
-        print!("Old timers report .csv file: ");
-        stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut txt_input)
-            .expect("Problem reading input.");
-        println!("{}", txt_input.trim());
-        let old_timers = txt_input.trim().to_owned();
-        txt_input.clear();
-        // Get new report file
-        print!("New timers report .csv file: ");
-        stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut txt_input)
-            .expect("Problem reading input.");
-        println!("{}", txt_input.trim());
-        let new_timers = txt_input.trim().to_owned();
-        txt_input.clear();
-
+    if let Some(filenames) = cli.comparison {
+        println!("Comparing timers...");
         // Get data, process it, save results
-        let old_timer_report = read_timers(&old_timers);
-        let new_timer_report = read_timers(&new_timers);
-        let percents = compare(old_timer_report, new_timer_report);
-        save_percents(&percents);
-    }
+        let old_timer_report = TimerReport::from(File::open(&filenames[0]).unwrap());
+        let new_timer_report = TimerReport::from(File::open(&filenames[1]).unwrap());
+        let results = ComparisonResults::from((old_timer_report, new_timer_report));
+        results.save();
+        println!("Done!");
 
-    if correlation {
-        println!("+-----------------+");
-        println!("|Correlation Study|");
-        println!("+-----------------+");
-        // Get tallied data
-        print!("Tallies report .csv file: ");
-        stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut txt_input)
-            .expect("Problem reading input.");
-        println!("{}", txt_input.trim());
-        let tallies_report = txt_input.trim().to_owned();
-        txt_input.clear();
-
-        // Get data, process it, save results
-        let tallies_data = read_tallies(&tallies_report);
-        let tracking_res = processing::build_tracking_results(&tallies_data);
-        let popsync_res = processing::build_popsync_results(&tallies_data);
-        save_tracking_results(&tracking_res);
-        save_popsync_results(&popsync_res);
-    }
-
-    if scaling {
-        println!("+-------------+");
-        println!("|Scaling Study|");
-        println!("+-------------+");
-        // Get naming root
-        print!("Name root of the timers report .csv file: ");
-        stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut txt_input)
-            .expect("Problem reading input.");
-        println!("{}", txt_input.trim());
-        let root = txt_input.trim().to_owned();
-        txt_input.clear();
-        // get progression type
-        while (txt_input.trim() != "a") & (txt_input.trim() != "g") {
-            txt_input.clear();
-            print!("Arithmetic or geometric progrssion? (a/g): ");
-            stdout().flush().unwrap();
-            io::stdin()
-                .read_line(&mut txt_input)
-                .expect("Problem reading input.");
-            println!("{}", txt_input.trim());
+        if cli.plot {
+            results.plot();
+            println!("Plotted results");
         }
-        let progression = if txt_input.trim() == "a" {
-            ProgressionType::Arithmetic
-        } else {
-            ProgressionType::Geometric
-        };
-        txt_input.clear();
-        // get starting number of particles
-        print!("Starting number of particles: ");
-        stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut txt_input)
-            .expect("Problem reading input.");
-        println!("{}", txt_input.trim());
-        let n_start: usize = txt_input.trim().parse().unwrap();
-        txt_input.clear();
-        // get step
-        print!("Step: ");
-        stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut txt_input)
-            .expect("Problem reading input.");
-        println!("{}", txt_input.trim());
-        let step: usize = txt_input.trim().parse().unwrap();
-        txt_input.clear();
-        // get number of iterations
-        print!("Number of iterations: ");
-        stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut txt_input)
-            .expect("Problem reading input.");
-        println!("{}", txt_input.trim());
-        let n_iter: usize = txt_input.trim().parse().unwrap();
-        txt_input.clear();
+    }
 
+    if let Some(tallies_report) = cli.correlation {
+        println!("Processing tallied data...");
         // Get data, process it, save results
-        let timers = get_scaling_data(root, n_start, step, n_iter, progression);
-        compile_scaling_data(&timers);
+        let tallies_data = TalliesReport::from(File::open(tallies_report).unwrap());
+        let results = CorrelationResults::from(tallies_data);
+        results.save();
+        println!("Done!");
+
+        if cli.plot {
+            results.plot();
+            println!("Plotted results");
+        }
+    }
+
+    if let Some(root_path) = cli.weak_scaling_root {
+        println!("Processing weak scaling data...");
+        // Get data, process it, save results
+        let results =
+            ScalingResults::from((root_path.as_str(), &cli.scaling_params, ScalingType::Weak));
+        results.save_tracking();
+        results.save_others();
+        println!("Done!");
+
+        if cli.plot {
+            results.plot_tracking();
+            results.plot_others();
+            println!("Plotted results");
+        }
+    }
+
+    if let Some(root_path) = cli.strong_scaling_root {
+        println!("Processing strong scaling data...");
+        let factor = cli.scaling_params.t_factor.unwrap();
+        let results = ScalingResults::from((
+            root_path.as_str(),
+            &cli.scaling_params,
+            ScalingType::Strong(factor),
+        ));
+        results.save_tracking();
+        results.save_others();
+        println!("Done!");
+
+        if cli.plot {
+            results.plot_tracking();
+            results.plot_others();
+            println!("Plotted results");
+        }
     }
     println!("Finished! All data is ready for use.")
 }

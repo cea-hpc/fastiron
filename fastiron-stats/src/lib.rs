@@ -7,36 +7,37 @@
 //! cargo run --release --bin=fastiron-stats
 //! ```
 //!
-//! The executable does not take any argument through the command line. Instead,
-//! prompts are used to fetch the necessary inputs. There are currently three
-//! supported computations:
-//!
-//! - **Version comparison**: Simple relative differences computation between two timer
-//!   reports. This is useful to have numbers quickly and easily. The presented
-//!   results are percentages and **positiveness / negativeness have meaning**.
-//! - **Correlation study**: Computes correlation coefficients between tallied events
-//!   and section lengths. The results are formatted in a `.dat` file that can be
-//!   visualized using the corresponding `gnuplot` scripts.
-//! - **Scaling study**: Compiles data from a collection of timer to a `.dat` file
-//!   that can be used to plot section lengths depending on total number of particles
-//!   using a `gnuplot` script. Currently, only arithmetic progression is supported
-//!   for the scaling number of particle. Geometric progression support will be added
-//!   in the future, as well as a specific script to plot this data using a logarithmic
-//!   scale.
-//!
-//! The user will be prompted first on which computations he wishes to do, only then
-//! will specific data be requested for processing. Additionally, the user can
-//! automatically provide inputs by redirecting a file to the program:
+//! This will print out the command line help message:
 //!
 //! ```shell
-//! cargo run --release --bin=fastiron-stats -- < sample_data/auto_input_example
-//! ```
+//! fastiron-stats, a profiling companion for Fastiron
 //!
-//! The control flow being simple, it is easy to pre-write a set of answer to achieve
-//! the desired results.
+//! Usage: fastiron-stats [OPTIONS]
+//!
+//! Options:
+//!   -T, --timers-comparison <COMPARISON> <COMPARISON>
+//!           name of the two timers report files to compare - old report first, new report second
+//!   -E, --event-correlation <CORRELATION>
+//!           name of the tallies file to analyze
+//!   -W, --weak-scaling <WEAK_SCALING_ROOT>
+//!           root path of timers file for weak scaling data
+//!   -S, --strong-scaling <STRONG_SCALING_ROOT>
+//!           root path of timers file for strong scaling data
+//!   -t, --thread_init_n <T_INIT>
+//!           starting number of threads for scaling data
+//!   -i, --thread_iter_n <T_ITER>
+//!           starting number of threads for scaling data
+//!   -f, --thread_step_factor <T_FACTOR>
+//!           starting number of threads for scaling data
+//!   -p, --plot
+//!           if present, plot the results of all computed metrics
+//!   -h, --help
+//!           Print help
+//!   -V, --version
+//!           Print version
+//! ```
 //!
 //! [Fastiron]: https://github.com/cea-hpc/fastiron
 
-pub mod io_utils;
-pub mod processing;
+pub mod command_line;
 pub mod structures;
