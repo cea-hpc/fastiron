@@ -5,7 +5,7 @@ use std::{
 
 use gnuplot::{
     AutoOption, AxesCommon,
-    Coordinate::{Axis2, Graph},
+    Coordinate::Graph,
     DashType, Figure,
     LabelOption::{Rotate, TextOffset},
     MarginSide::{MarginLeft, MarginTop},
@@ -386,6 +386,7 @@ impl ScalingResults {
                 ScalingType::Weak => None,
                 ScalingType::Strong(_) => Some(self.n_threads[1] as f64 / self.n_threads[0] as f64),
             })
+            .set_y_label("Time (µs)", &[])
             .set_y_grid(true)
             .lines_points(
                 &self.n_threads,
@@ -449,6 +450,7 @@ impl ScalingResults {
                 &[],
             )
             .set_y_range(AutoOption::Auto, AutoOption::Auto)
+            .set_y_label("Time (µs)", &[])
             .set_y_grid(true)
             .set_margins(&[MarginTop(0.8)])
             .set_legend(Graph(1.0), Graph(1.15), &[], &[])
@@ -456,7 +458,7 @@ impl ScalingResults {
                 &self.n_threads,
                 &self.population_control_avgs,
                 &[
-                    Caption("Average Pop. Control time"),
+                    Caption("Average Pop. Control Time"),
                     Color("#00AA00"),
                     PointSymbol('x'),
                 ],
@@ -465,7 +467,7 @@ impl ScalingResults {
                 &self.n_threads,
                 &self.sync_avgs,
                 &[
-                    Caption("Average Synchronization time"),
+                    Caption("Average Synchronization Time"),
                     Color("#AAAA00"),
                     PointSymbol('x'),
                 ],
