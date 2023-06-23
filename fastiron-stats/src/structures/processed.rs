@@ -93,14 +93,14 @@ impl ComparisonResults {
             .set_y_log(Some(10.0))
             .boxes_set_width(
                 x_coords.iter().map(|x| *x as f64 - width / 2.0),
-                &old_y,
-                &[width; N_TIMERS],
+                old_y,
+                [width; N_TIMERS],
                 &[Caption("Old times"), Color("#000077")],
             )
             .boxes_set_width(
                 x_coords.iter().map(|x| *x as f64 + width / 2.0),
-                &new_y,
-                &[width; N_TIMERS],
+                new_y,
+                [width; N_TIMERS],
                 &[Caption("New times"), new_color],
             );
 
@@ -242,7 +242,7 @@ impl CorrelationResults {
                 (0.0, 1.0, 1.0, 1.0),
                 (5.0, 1.0, 0.0, 0.0),
             ]))
-            .image(&self.corr_data, n_row, n_col, None, &[]);
+            .image(self.corr_data, n_row, n_col, None, &[]);
 
         fg.show().unwrap();
     }
