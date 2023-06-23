@@ -72,7 +72,7 @@ fastiron \
     -i ./input_files/profiling/Coral2_P1_sized.inp \
     -n $N_PARTICLES \
     -r 32 \
-    -c \2
+    -c \
 
 mv tallies_report.csv $TARGET_FOLDER/tallies_r32.csv
 mv timers_report.csv $TARGET_FOLDER/timers_r32.csv
