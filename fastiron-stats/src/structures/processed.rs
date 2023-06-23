@@ -5,10 +5,10 @@ use std::{
 
 use gnuplot::{
     AutoOption, AxesCommon,
-    Coordinate::Graph,
+    Coordinate::{Axis2, Graph},
     DashType, Figure,
     LabelOption::{Rotate, TextOffset},
-    MarginSide::MarginLeft,
+    MarginSide::{MarginLeft, MarginTop},
     PaletteType,
     PlotOption::{Caption, Color, LineStyle, PointSymbol},
     Tick,
@@ -450,7 +450,8 @@ impl ScalingResults {
             )
             .set_y_range(AutoOption::Auto, AutoOption::Auto)
             .set_y_grid(true)
-            .set_legend(Graph(1.0), Graph(0.2), &[], &[])
+            .set_margins(&[MarginTop(0.8)])
+            .set_legend(Graph(1.0), Graph(1.15), &[], &[])
             .lines_points(
                 &self.n_threads,
                 &self.population_control_avgs,
