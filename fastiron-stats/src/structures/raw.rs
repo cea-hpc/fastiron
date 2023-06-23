@@ -1,7 +1,6 @@
 //! Modelling code
 //!
-//! This module contains all structures used to model the data and
-//! structure the computations.
+//! This module contains all code used to model data produced by the main executable.
 
 use std::{fmt::Display, fs::File, iter::zip, ops::Index};
 
@@ -16,25 +15,43 @@ pub const N_TALLIED_DATA: usize = 17;
 /// Enum used to represent & map tallied data and their indexes.
 #[derive(Debug, Clone, Copy)]
 pub enum TalliedData {
+    /// Cycle index.
     Cycle = 0,
+    /// Number of particles at the start of the cycle.
     Start = 1,
+    /// Number of particles sourced.
     Source = 2,
+    /// Number of particles Russian-Rouletted.
     Rr = 3,
+    /// Number of split particles.
     Split = 4,
+    /// Number of absorbed particles.
     Absorb = 5,
+    /// Number of particles that underwent a scatter reaction.
     Scatter = 6,
+    /// Number of particles that underwent a fission reaction.
     Fission = 7,
+    /// Number of particles produced by a fission reaction.
     Produce = 8,
+    /// Number of particles that underwent a reaction.
     Collision = 9,
+    /// Number of particles that escaped the problem.
     Escape = 10,
+    /// Number of particles that reached census.
     Census = 11,
+    /// Number of segments computed this cycle.
     NumSeg = 12,
+    /// Overall sclaarflux value this cycle.
     ScalarFlux = 13,
+    /// Time spent section this cycle.
     PopulationControl = 14,
+    /// Time spent section this cycle.
     CycleTracking = 15,
+    /// Time spent section this cycle.
     CycleSync = 16,
 }
 
+/// Custom [`Display`] implementation for easier tics generation when plotting.
 impl Display for TalliedData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -63,7 +80,8 @@ impl Display for TalliedData {
     }
 }
 
-/// Structure used to model finite discrete random variables.
+/// Structure used to model tallied events, interpreted as discrete finite random
+/// variables.
 ///
 /// This structure is not meant to be modified. It should be initialized with all
 /// values using the provided constructor.
@@ -124,10 +142,13 @@ pub fn correlation(x: &TalliedVariable, y: &TalliedVariable) -> f64 {
     cov / (x.variance * y.variance).sqrt()
 }
 
+/// Structure modelling a report produced by the main executable.
 pub struct TalliesReport {
+    /// Data represented as variable.
     pub tallies_data: [TalliedVariable; N_TALLIED_DATA],
 }
 
+/// Custom [`From`] implementation for processing at initialization.
 impl From<File> for TalliesReport {
     fn from(file: File) -> Self {
         let mut reader = csv::ReaderBuilder::new().delimiter(b';').from_reader(file);
@@ -162,8 +183,10 @@ impl Index<TalliedData> for TalliesReport {
 // Timer data
 //~~~~~~~~~~~~
 
+/// Number of sections in a timers report.
 pub const N_TIMERS: usize = 6;
 
+/// Array of the sections of a timers report.
 pub const TIMERS_ARR: [TimerSV; N_TIMERS] = [
     TimerSV::Main,
     TimerSV::PopulationControl,
@@ -184,6 +207,7 @@ pub enum TimerSV {
     CycleSync = 5,
 }
 
+/// Custom [`Display`] implementation for easier tics generation when plotting.
 impl Display for TimerSV {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -220,6 +244,7 @@ pub struct TimerReport {
     pub timers_data: [SummarizedVariable; N_TIMERS],
 }
 
+/// Custom [`From`] implementation for processing at initialization.
 impl From<File> for TimerReport {
     fn from(file: File) -> Self {
         let mut res = [SummarizedVariable::default(); N_TIMERS];

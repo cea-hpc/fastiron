@@ -1,3 +1,8 @@
+//! Module used fo I/O handling
+//!
+//! This module holds all the code defining the CLI, i.e. the entire I/O system of
+//! the program.
+
 use clap::{Args, Parser};
 
 /// fastiron-stats, a profiling companion for Fastiron
@@ -38,6 +43,7 @@ pub struct Cli {
     pub plot: bool,
 }
 
+/// Structure used to hold all scaling parameters.
 #[derive(Args, Debug)]
 pub struct ScalingParams {
     /// starting number of threads for scaling data
