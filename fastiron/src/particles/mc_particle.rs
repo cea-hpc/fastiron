@@ -79,6 +79,8 @@ pub struct MCParticle<T: CustomFloat> {
     pub facet: usize,
     /// Normal dot product value kept when crossing a facet.
     pub facet_normal: MCVector<T>,
+    pub mat_gid: usize,
+    pub cell_nb_density: T,
 }
 
 impl<T: CustomFloat> MCParticle<T> {

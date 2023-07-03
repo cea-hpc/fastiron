@@ -126,12 +126,10 @@ pub fn outcome<T: CustomFloat>(
         pcxs
     } else {
         // compute & cache value
-        let mat_gid: usize = mcunit.domain.cell_state[particle.cell].material;
-        let cell_nb_density: T = mcunit.domain.cell_state[particle.cell].cell_number_density;
         let tmp = weighted_macroscopic_cross_section(
             mcdata,
-            mat_gid,
-            cell_nb_density,
+            particle.mat_gid,
+            particle.cell_nb_density,
             particle.energy_group,
         );
         mcunit.xs_cache[(particle.cell, particle.energy_group)].store(tmp, Ordering::Release);
@@ -202,6 +200,9 @@ pub fn outcome<T: CustomFloat>(
                     particle.domain = facet_adjacency.adjacent.domain.unwrap();
                     particle.cell = facet_adjacency.adjacent.cell.unwrap();
                     particle.facet = facet_adjacency.adjacent.facet.unwrap();
+                    particle.mat_gid = mcunit.domain.cell_state[particle.cell].material;
+                    particle.cell_nb_density =
+                        mcunit.domain.cell_state[particle.cell].cell_number_density;
                     particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
                 }
                 MCSubfacetAdjacencyEvent::BoundaryEscape => {
@@ -221,6 +222,9 @@ pub fn outcome<T: CustomFloat>(
                     particle.domain = facet_adjacency.adjacent.domain.unwrap();
                     particle.cell = facet_adjacency.adjacent.cell.unwrap();
                     particle.facet = facet_adjacency.adjacent.facet.unwrap();
+                    particle.mat_gid = mcunit.domain.cell_state[particle.cell].material;
+                    particle.cell_nb_density =
+                        mcunit.domain.cell_state[particle.cell].cell_number_density;
                     particle.last_event = MCTallyEvent::FacetCrossingCommunication;
                 }
                 MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),

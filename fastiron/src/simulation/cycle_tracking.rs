@@ -42,6 +42,8 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     particle.energy_group = mcdata
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
+    particle.mat_gid = mcunit.domain.cell_state[particle.cell].material;
+    particle.cell_nb_density = mcunit.domain.cell_state[particle.cell].cell_number_density;
 
     cycle_tracking_function(mcdata, mcunit, particle, balance, extra);
 }
@@ -70,11 +72,14 @@ fn cycle_tracking_function<T: CustomFloat>(
 
         match particle.last_event {
             MCTallyEvent::Collision => {
-                let mat_gid = mcunit.domain.cell_state[particle.cell].material;
-                let cell_nb_density = mcunit.domain.cell_state[particle.cell].cell_number_density;
-
-                keep_tracking =
-                    collision_event(mcdata, balance, mat_gid, cell_nb_density, particle, extra);
+                keep_tracking = collision_event(
+                    mcdata,
+                    balance,
+                    particle.mat_gid,
+                    particle.cell_nb_density,
+                    particle,
+                    extra,
+                );
 
                 particle.energy_group = mcdata
                     .nuclear_data
