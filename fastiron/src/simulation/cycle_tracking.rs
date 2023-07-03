@@ -5,7 +5,7 @@
 
 use std::sync::atomic::Ordering;
 
-use num::{one, zero};
+use num::zero;
 
 use crate::{
     constants::CustomFloat,
@@ -60,7 +60,6 @@ fn cycle_tracking_function<T: CustomFloat>(
         particle.outcome(mcdata, mcunit);
         // update # of segments
         balance[TalliedEvent::NumSegments] += 1;
-        particle.num_segments += one();
 
         // update scalar flux tally
         mcunit.tallies.scalar_flux_domain[(particle.cell, particle.energy_group)]
