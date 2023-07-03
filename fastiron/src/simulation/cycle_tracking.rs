@@ -17,7 +17,7 @@ use crate::{
     },
 };
 
-use super::{collision_event::collision_event, mc_segment_outcome::outcome};
+use super::mc_segment_outcome::outcome;
 
 /// Main steps of the `CycleTracking` section.
 ///
@@ -72,14 +72,7 @@ fn cycle_tracking_function<T: CustomFloat>(
 
         match particle.last_event {
             MCTallyEvent::Collision => {
-                keep_tracking = collision_event(
-                    mcdata,
-                    balance,
-                    particle.mat_gid,
-                    particle.cell_nb_density,
-                    particle,
-                    extra,
-                );
+                keep_tracking = particle.collision_event(mcdata, balance, extra);
 
                 particle.energy_group = mcdata
                     .nuclear_data
@@ -96,7 +89,6 @@ fn cycle_tracking_function<T: CustomFloat>(
             }
             MCTallyEvent::FacetCrossingEscape => {
                 balance[TalliedEvent::Escape] += 1;
-                particle.last_event = MCTallyEvent::FacetCrossingEscape;
                 particle.species = Species::Unknown;
                 keep_tracking = false
             }

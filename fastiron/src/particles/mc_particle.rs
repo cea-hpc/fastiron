@@ -13,8 +13,9 @@ use crate::{
     data::{
         mc_vector::MCVector,
         nuclear_data::{NuclearDataReaction, ReactionType},
-        tallies::MCTallyEvent,
+        tallies::{Balance, MCTallyEvent, TalliedEvent},
     },
+    montecarlo::MonteCarloData,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
 };
 
@@ -206,8 +207,83 @@ impl<T: CustomFloat> MCParticle<T> {
     }
 }
 
-// Collision methods
+// Event methods
 impl<T: CustomFloat> MCParticle<T> {
+    /// Transforms a given particle according to an internally drawn type of collision.
+    ///
+    /// The function calls method from [`super::macro_cross_section`] module to pick
+    /// the reaction the particle will undergo (See [`ReactionType`]). The particle is then updated and the
+    /// collision tallied. Finally, particles are created / invalidated accordingly to
+    /// the picked reaction:
+    ///
+    /// - Absorption reaction: the particle is invalidated.
+    /// - Fission reaction: offspring particles are created from the colliding one.
+    /// - Scattering reaction: no additional modifications occur.
+    pub fn collision_event(
+        &mut self,
+        mcdata: &MonteCarloData<T>,
+        balance: &mut Balance,
+        extra: &mut ParticleCollection<T>,
+    ) -> bool {
+        // ==========================
+        // Pick an isotope & reaction
+
+        let mut current_xsection: T = self.get_current_xs();
+        let mut reaction = None;
+
+        while current_xsection >= zero() {
+            for isotope in &mcdata.material_database.mat[self.mat_gid].iso {
+                let atom_fraction = isotope.atom_fraction;
+                for curr_reaction in &mcdata.nuclear_data.isotopes[isotope.gid][0].reactions {
+                    if (atom_fraction == zero()) | (self.cell_nb_density == zero()) {
+                        current_xsection -= FromPrimitive::from_f64(1e-20).unwrap();
+                    } else {
+                        current_xsection -= atom_fraction
+                            * self.cell_nb_density
+                            * curr_reaction.cross_section[self.energy_group];
+                    }
+                    if current_xsection < zero() {
+                        reaction = Some(curr_reaction);
+                        break;
+                    }
+                }
+                if current_xsection < zero() {
+                    break;
+                }
+            }
+        }
+        assert!(reaction.is_some());
+        let reaction = reaction.unwrap();
+
+        let mat_mass = mcdata.material_database.mat[self.mat_gid].mass;
+
+        // ================
+        // Do the collision
+        //
+        // number of particles resulting from the collision, including the original
+        // e.g. zero means the original particle was absorbed or invalidated in some way
+        let n_out = self.sample_collision(reaction, mat_mass, extra);
+
+        //====================
+        // Tally the collision
+
+        balance[TalliedEvent::Collision] += 1;
+        match reaction.reaction_type {
+            ReactionType::Scatter => {
+                balance[TalliedEvent::Scatter] += 1;
+            }
+            ReactionType::Absorption => {
+                balance[TalliedEvent::Absorb] += 1;
+            }
+            ReactionType::Fission => {
+                balance[TalliedEvent::Fission] += 1;
+                balance[TalliedEvent::Produce] += n_out as u64;
+            }
+        };
+
+        n_out >= 1
+    }
+
     /// Uses a PRNG to sample new energy & angle after a reaction.
     ///
     /// Since reaction type is specified when the method is called, we assume
