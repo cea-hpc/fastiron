@@ -140,6 +140,72 @@ impl<T: CustomFloat> MCParticle<T> {
         self.total_cross_section * rng_sample::<T>(&mut self.random_number_seed)
     }
 
+    /// Sample the number of mean free paths to a collision.
+    pub fn sample_num_mfp(&mut self) {
+        self.num_mean_free_paths = -one::<T>() * rng_sample::<T>(&mut self.random_number_seed).ln();
+    }
+
+    /// Sample a random direction for the particle to face.
+    pub fn sample_isotropic(&mut self) {
+        let one: T = one();
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+        let pi: T = T::pi();
+
+        // sample gamma
+        self.direction.z = one - two * rng_sample(&mut self.random_number_seed);
+        let sine_gamma = (one - self.direction.z * self.direction.z).sqrt();
+
+        // sample phi and set the other angles using it
+        let phi = pi * (two * rng_sample(&mut self.random_number_seed) - one);
+
+        self.direction.x = sine_gamma * phi.cos();
+        self.direction.y = sine_gamma * phi.sin();
+    }
+
+    /// Rotates a 3D vector that is defined by the angles Theta and Phi
+    /// in a local coordinate frame about a polar angle and azimuthal angle
+    /// described by the direction cosine. Hence, caller passes in
+    /// `sin_Theta` and `cos_Theta` referenced from the local z-axis and `sin_Phi`
+    /// and `cos_Phi` referenced from the local x-axis to describe the vector V
+    /// to be rotated. The direction cosine describes global theta and phi
+    /// angles that the vector V is to be rotated about.
+    /// `cos_theta_zero`/`sin_theta_zero` and `cos_phi_zero`/`sin_phi_zero`
+    /// model the initial position while the arguments of the method caracterize
+    /// the rotation. See [this][1] for explanation on the formula.
+    ///
+    /// [1]: https://en.wikipedia.org/wiki/Spherical_coordinate_system#Integration_and_differentiation_in_spherical_coordinates
+    pub fn rotate_direction(&mut self, sine_theta: T, cosine_theta: T, sine_phi: T, cosine_phi: T) {
+        let one: T = one();
+        let threshold: T = FromPrimitive::from_f64(1e-6).unwrap(); // order of TINY_FLOAT.sqrt()
+
+        let cos_theta_zero = self.direction.z;
+        let sin_theta_zero = (one - cos_theta_zero * cos_theta_zero).sqrt();
+
+        let (cos_phi_zero, sin_phi_zero): (T, T) = if sin_theta_zero < threshold {
+            (one, zero())
+        } else {
+            (
+                self.direction.x / sin_theta_zero,
+                self.direction.y / sin_theta_zero,
+            )
+        };
+
+        // compute the rotation
+        self.direction.x = cos_theta_zero * cos_phi_zero * (sine_theta * cosine_phi)
+            - sin_phi_zero * (sine_theta * sine_phi)
+            + sin_theta_zero * cos_phi_zero * cosine_theta;
+
+        self.direction.y = cos_theta_zero * sin_phi_zero * (sine_theta * cosine_phi)
+            + cos_phi_zero * (sine_theta * sine_phi)
+            + sin_theta_zero * sin_phi_zero * cosine_theta;
+
+        self.direction.z =
+            -sin_theta_zero * (sine_theta * cosine_phi) + zero() + cos_theta_zero * cosine_theta;
+    }
+}
+
+// Collision methods
+impl<T: CustomFloat> MCParticle<T> {
     /// Uses a PRNG to sample new energy & angle after a reaction.
     ///
     /// Since reaction type is specified when the method is called, we assume
@@ -216,70 +282,10 @@ impl<T: CustomFloat> MCParticle<T> {
             }
         }
     }
+}
 
-    /// Sample the number of mean free paths to a collision.
-    pub fn sample_num_mfp(&mut self) {
-        self.num_mean_free_paths = -one::<T>() * rng_sample::<T>(&mut self.random_number_seed).ln();
-    }
-
-    /// Sample a random direction for the particle to face.
-    pub fn sample_isotropic(&mut self) {
-        let one: T = one();
-        let two: T = FromPrimitive::from_f64(2.0).unwrap();
-        let pi: T = T::pi();
-
-        // sample gamma
-        self.direction.z = one - two * rng_sample(&mut self.random_number_seed);
-        let sine_gamma = (one - self.direction.z * self.direction.z).sqrt();
-
-        // sample phi and set the other angles using it
-        let phi = pi * (two * rng_sample(&mut self.random_number_seed) - one);
-
-        self.direction.x = sine_gamma * phi.cos();
-        self.direction.y = sine_gamma * phi.sin();
-    }
-
-    /// Rotates a 3D vector that is defined by the angles Theta and Phi
-    /// in a local coordinate frame about a polar angle and azimuthal angle
-    /// described by the direction cosine. Hence, caller passes in
-    /// `sin_Theta` and `cos_Theta` referenced from the local z-axis and `sin_Phi`
-    /// and `cos_Phi` referenced from the local x-axis to describe the vector V
-    /// to be rotated. The direction cosine describes global theta and phi
-    /// angles that the vector V is to be rotated about.
-    /// `cos_theta_zero`/`sin_theta_zero` and `cos_phi_zero`/`sin_phi_zero`
-    /// model the initial position while the arguments of the method caracterize
-    /// the rotation. See [this][1] for explanation on the formula.
-    ///
-    /// [1]: https://en.wikipedia.org/wiki/Spherical_coordinate_system#Integration_and_differentiation_in_spherical_coordinates
-    pub fn rotate_direction(&mut self, sine_theta: T, cosine_theta: T, sine_phi: T, cosine_phi: T) {
-        let one: T = one();
-        let threshold: T = FromPrimitive::from_f64(1e-6).unwrap(); // order of TINY_FLOAT.sqrt()
-
-        let cos_theta_zero = self.direction.z;
-        let sin_theta_zero = (one - cos_theta_zero * cos_theta_zero).sqrt();
-
-        let (cos_phi_zero, sin_phi_zero): (T, T) = if sin_theta_zero < threshold {
-            (one, zero())
-        } else {
-            (
-                self.direction.x / sin_theta_zero,
-                self.direction.y / sin_theta_zero,
-            )
-        };
-
-        // compute the rotation
-        self.direction.x = cos_theta_zero * cos_phi_zero * (sine_theta * cosine_phi)
-            - sin_phi_zero * (sine_theta * sine_phi)
-            + sin_theta_zero * cos_phi_zero * cosine_theta;
-
-        self.direction.y = cos_theta_zero * sin_phi_zero * (sine_theta * cosine_phi)
-            + cos_phi_zero * (sine_theta * sine_phi)
-            + sin_theta_zero * sin_phi_zero * cosine_theta;
-
-        self.direction.z =
-            -sin_theta_zero * (sine_theta * cosine_phi) + zero() + cos_theta_zero * cosine_theta;
-    }
-
+// Population control methods
+impl<T: CustomFloat> MCParticle<T> {
     /// Returns an iterator over particles created from a split of the original one (caller).
     /// This is used in the population control algorithm.
     pub fn under_populated_split(
