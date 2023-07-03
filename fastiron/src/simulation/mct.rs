@@ -99,26 +99,6 @@ pub fn cell_position_3dg<T: CustomFloat>(mesh: &MCMeshDomain<T>, cell_idx: usize
     coordinate
 }
 
-/// Reflects a particle off a reflection-type boundary.
-///
-/// This function is called when a particle undergo a reflectionevent at the
-/// boundary of the problem. Note that the reflection does not result in a
-/// loss of energy.
-pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MCGeneralPlane<T>) {
-    let facet_normal: MCVector<T> = MCVector {
-        x: plane.a,
-        y: plane.b,
-        z: plane.c,
-    };
-
-    let two: T = FromPrimitive::from_f64(2.0).unwrap();
-    let dot: T = two * particle.direction.dot(&facet_normal);
-
-    if dot > zero() {
-        particle.direction -= facet_normal * dot;
-    }
-}
-
 // ==============================
 //       Private functions
 // ==============================
@@ -169,7 +149,7 @@ fn mct_nf_3dg<T: CustomFloat>(
                 }
             });
 
-        let nearest_facet = mct_nf_compute_nearest(distance_to_facet);
+        let mut nearest_facet = mct_nf_compute_nearest(distance_to_facet);
         let retry = check_nearest_validity(
             particle,
             mesh,
@@ -177,6 +157,8 @@ fn mct_nf_3dg<T: CustomFloat>(
             &mut move_factor,
             &nearest_facet,
         );
+
+        nearest_facet.facet_normal = mesh.cell_geometry[particle.cell][particle.facet].get_normal();
 
         if !retry {
             return nearest_facet;

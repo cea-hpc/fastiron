@@ -166,7 +166,6 @@ pub fn outcome<T: CustomFloat>(
     );
     // nearest facet
     let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, &mcunit.domain.mesh);
-    particle.normal_dot = nearest_facet.dot_product;
     distance_handler.update(
         MCSegmentOutcome::FacetCrossing,
         nearest_facet.distance_to_facet,
@@ -211,7 +210,10 @@ pub fn outcome<T: CustomFloat>(
                 }
                 MCSubfacetAdjacencyEvent::BoundaryReflection => {
                     // particle reflect off a system boundary
-                    particle.last_event = MCTallyEvent::FacetCrossingReflection
+                    particle.last_event = MCTallyEvent::FacetCrossingReflection;
+                    particle.facet_normal = mcunit.domain.mesh.cell_geometry[particle.cell]
+                        [particle.facet]
+                        .get_normal();
                 }
                 MCSubfacetAdjacencyEvent::TransitOffProcessor => {
                     // particle enters an adjacent cell that belongs to

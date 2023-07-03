@@ -78,7 +78,7 @@ pub struct MCParticle<T: CustomFloat> {
     /// Nearest facet.
     pub facet: usize,
     /// Normal dot product value kept when crossing a facet.
-    pub normal_dot: T,
+    pub facet_normal: MCVector<T>,
 }
 
 impl<T: CustomFloat> MCParticle<T> {
@@ -107,6 +107,19 @@ impl<T: CustomFloat> MCParticle<T> {
         self.kinetic_energy = energy;
         self.rotate_direction(sin_theta, cos_theta, sin_phi, cos_phi);
         self.sample_num_mfp();
+    }
+
+    /// Reflects a particle off a reflection-type boundary.
+    ///
+    /// This function is called when a particle undergo a reflection event at
+    /// the boundary of the problem. Note that the reflection does not result
+    /// in a loss of energy.
+    pub fn reflect(&mut self) {
+        let two: T = FromPrimitive::from_f64(2.0).unwrap();
+        let dot: T = two * self.direction.dot(&self.facet_normal);
+        if dot > zero() {
+            self.direction -= self.facet_normal * dot;
+        }
     }
 
     /// Computes the particle speed from its energy. Note that this computation

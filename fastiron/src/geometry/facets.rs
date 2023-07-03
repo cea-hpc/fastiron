@@ -56,6 +56,14 @@ impl<T: CustomFloat> MCGeneralPlane<T> {
 
         Self { a, b, c, d }
     }
+
+    pub fn get_normal(&self) -> MCVector<T> {
+        MCVector {
+            x: self.a,
+            y: self.b,
+            z: self.c,
+        }
+    }
 }
 
 /// List of planes associated with the outward-facing facets of a cell.
@@ -74,7 +82,7 @@ pub struct MCNearestFacet<T: CustomFloat> {
     /// Distance between facet and particle.
     pub distance_to_facet: T,
     /// Dot product between facet and direction vector.
-    pub dot_product: T,
+    pub facet_normal: MCVector<T>,
 }
 
 impl<T: CustomFloat> Default for MCNearestFacet<T> {
@@ -82,7 +90,7 @@ impl<T: CustomFloat> Default for MCNearestFacet<T> {
         Self {
             facet: 0,
             distance_to_facet: T::huge_float(),
-            dot_product: zero(),
+            facet_normal: Default::default(),
         }
     }
 }

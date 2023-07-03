@@ -15,7 +15,6 @@ use crate::{
         mc_particle::{MCParticle, Species},
         particle_collection::ParticleCollection,
     },
-    simulation::mct::reflect_particle,
 };
 
 use super::{collision_event::collision_event, mc_segment_outcome::outcome};
@@ -98,9 +97,7 @@ fn cycle_tracking_function<T: CustomFloat>(
             }
             MCTallyEvent::FacetCrossingReflection => {
                 // plane on which particle is reflected
-                let plane = &mcunit.domain.mesh.cell_geometry[particle.cell][particle.facet];
-
-                reflect_particle(particle, plane);
+                particle.reflect();
                 keep_tracking = true;
             }
             MCTallyEvent::FacetCrossingCommunication => unimplemented!(),
