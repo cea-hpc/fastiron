@@ -87,168 +87,172 @@ impl<T: CustomFloat> Default for DistanceHandler<T> {
     }
 }
 
-/// Computes the outcome of the current segment for a given particle.
-///
-/// Three outcomes are possible for a given particle: census, facet crossing or
-/// collision. The distances are computed as follows:
-///
-/// - Census: The distance is simply equal to the speed of the particle multiplied
-///   by the time left until census.
-/// - Facet crossing: The distance is computed in a similar way by the function
-///   [`nearest_facet()`].
-/// - Collision: The distance is computed using probabilities.
-pub fn outcome<T: CustomFloat>(
-    mcdata: &MonteCarloData<T>,
-    mcunit: &MonteCarloUnit<T>,
-    particle: &mut MCParticle<T>,
-) {
-    //==========
-    // Prep work
+impl<T: CustomFloat> MCParticle<T> {
+    /// Computes the outcome of the current segment for a given particle.
+    ///
+    /// Three outcomes are possible for a given particle: census, facet crossing or
+    /// collision. The distances are computed as follows:
+    ///
+    /// - Census: The distance is simply equal to the speed of the particle multiplied
+    ///   by the time left until census.
+    /// - Facet crossing: The distance is computed in a similar way by the function
+    ///   [`nearest_facet()`].
+    /// - Collision: The distance is computed using probabilities.
+    pub fn outcome(&mut self, mcdata: &MonteCarloData<T>, mcunit: &MonteCarloUnit<T>) {
+        //==========
+        // Prep work
+        self.num_segments += one();
+        // update scalar flux tally
+        /*mcunit.tallies.scalar_flux_domain[(self.cell, self.energy_group)]
+                    .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| {
+                        Some(x + self.segment_path_length * self.weight)
+                    })
+                    .unwrap();
+        */
+        // initialize distances and constants
+        let small_f: T = T::small_float();
+        let mut distance_handler = DistanceHandler::default();
 
-    // initialize distances and constants
-    let small_f: T = T::small_float();
-    let mut distance_handler = DistanceHandler::default();
+        let particle_speed = self.get_speed();
 
-    let particle_speed = particle.get_speed();
-
-    let mut force_collision = false;
-    if particle.num_mean_free_paths < zero() {
-        force_collision = true;
-        particle.num_mean_free_paths = small_f;
-    }
-
-    // get cross section
-    // lazily computed
-    // This ordering should make it so that we dont compute a XS multiple times?
-    let pcxs = mcunit.xs_cache[(particle.cell, particle.energy_group)].load(Ordering::Acquire);
-    let macroscopic_total_xsection = if pcxs > zero() {
-        // use precomputed value
-        pcxs
-    } else {
-        // compute & cache value
-        let tmp = weighted_macroscopic_cross_section(
-            mcdata,
-            particle.mat_gid,
-            particle.cell_nb_density,
-            particle.energy_group,
-        );
-        mcunit.xs_cache[(particle.cell, particle.energy_group)].store(tmp, Ordering::Release);
-        tmp
-    };
-
-    // prepare particle
-    particle.total_cross_section = macroscopic_total_xsection;
-    if macroscopic_total_xsection == zero() {
-        particle.mean_free_path = T::huge_float();
-    } else {
-        particle.mean_free_path = one::<T>() / macroscopic_total_xsection;
-    }
-
-    // if zero
-    if particle.num_mean_free_paths == zero() {
-        particle.sample_num_mfp();
-    }
-
-    //===========================
-    // Compute distances to event
-
-    // collision
-    distance_handler.update(
-        MCSegmentOutcome::Collision,
-        particle.num_mean_free_paths * particle.mean_free_path,
-    );
-    // census
-    distance_handler.update(
-        MCSegmentOutcome::Census,
-        particle_speed * particle.time_to_census,
-    );
-    // nearest facet
-    let nearest_facet: MCNearestFacet<T> = nearest_facet(particle, &mcunit.domain.mesh);
-    distance_handler.update(
-        MCSegmentOutcome::FacetCrossing,
-        nearest_facet.distance_to_facet,
-    );
-
-    // force a collision if needed
-    if force_collision {
-        distance_handler.force_collision();
-    }
-
-    //============================================
-    // Pick the outcome & update particle, tallies
-
-    let segment_outcome = distance_handler.outcome;
-    assert!(distance_handler.min_dist >= zero());
-
-    // general update
-    particle.segment_path_length = distance_handler.min_dist;
-    particle.num_mean_free_paths -= particle.segment_path_length / particle.mean_free_path;
-
-    // outcome-specific updates
-    match segment_outcome {
-        MCSegmentOutcome::Collision => {
-            particle.num_mean_free_paths = zero();
-            particle.last_event = MCTallyEvent::Collision;
+        let mut force_collision = false;
+        if self.num_mean_free_paths < zero() {
+            force_collision = true;
+            self.num_mean_free_paths = small_f;
         }
-        MCSegmentOutcome::FacetCrossing => {
-            particle.facet = nearest_facet.facet;
-            let facet_adjacency =
-                &mcunit.domain.mesh.cell_connectivity[particle.cell].facet[particle.facet].subfacet;
-            match facet_adjacency.event {
-                MCSubfacetAdjacencyEvent::TransitOnProcessor => {
-                    // particle enters an adjacent cell
-                    particle.domain = facet_adjacency.adjacent.domain.unwrap();
-                    particle.cell = facet_adjacency.adjacent.cell.unwrap();
-                    particle.facet = facet_adjacency.adjacent.facet.unwrap();
-                    particle.mat_gid = mcunit.domain.cell_state[particle.cell].material;
-                    particle.cell_nb_density =
-                        mcunit.domain.cell_state[particle.cell].cell_number_density;
-                    particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
+
+        // get cross section
+        // lazily computed
+        // This ordering should make it so that we dont compute a XS multiple times?
+        let pcxs = mcunit.xs_cache[(self.cell, self.energy_group)].load(Ordering::Acquire);
+        let macroscopic_total_xsection = if pcxs > zero() {
+            // use precomputed value
+            pcxs
+        } else {
+            // compute & cache value
+            let tmp = weighted_macroscopic_cross_section(
+                mcdata,
+                self.mat_gid,
+                self.cell_nb_density,
+                self.energy_group,
+            );
+            mcunit.xs_cache[(self.cell, self.energy_group)].store(tmp, Ordering::Release);
+            tmp
+        };
+
+        // prepare particle
+        self.total_cross_section = macroscopic_total_xsection;
+        if macroscopic_total_xsection == zero() {
+            self.mean_free_path = T::huge_float();
+        } else {
+            self.mean_free_path = one::<T>() / macroscopic_total_xsection;
+        }
+
+        // if zero
+        if self.num_mean_free_paths == zero() {
+            self.sample_num_mfp();
+        }
+
+        //===========================
+        // Compute distances to event
+
+        // collision
+        distance_handler.update(
+            MCSegmentOutcome::Collision,
+            self.num_mean_free_paths * self.mean_free_path,
+        );
+        // census
+        distance_handler.update(
+            MCSegmentOutcome::Census,
+            particle_speed * self.time_to_census,
+        );
+        // nearest facet
+        let nearest_facet: MCNearestFacet<T> = nearest_facet(self, &mcunit.domain.mesh);
+        distance_handler.update(
+            MCSegmentOutcome::FacetCrossing,
+            nearest_facet.distance_to_facet,
+        );
+
+        // force a collision if needed
+        if force_collision {
+            distance_handler.force_collision();
+        }
+
+        //============================================
+        // Pick the outcome & update particle, tallies
+
+        let segment_outcome = distance_handler.outcome;
+        assert!(distance_handler.min_dist >= zero());
+
+        // general update
+        self.segment_path_length = distance_handler.min_dist;
+        self.num_mean_free_paths -= self.segment_path_length / self.mean_free_path;
+
+        // outcome-specific updates
+        match segment_outcome {
+            MCSegmentOutcome::Collision => {
+                self.num_mean_free_paths = zero();
+                self.last_event = MCTallyEvent::Collision;
+            }
+            MCSegmentOutcome::FacetCrossing => {
+                self.facet = nearest_facet.facet;
+                let facet_adjacency =
+                    &mcunit.domain.mesh.cell_connectivity[self.cell].facet[self.facet].subfacet;
+                match facet_adjacency.event {
+                    MCSubfacetAdjacencyEvent::TransitOnProcessor => {
+                        // particle enters an adjacent cell
+                        self.domain = facet_adjacency.adjacent.domain.unwrap();
+                        self.cell = facet_adjacency.adjacent.cell.unwrap();
+                        self.facet = facet_adjacency.adjacent.facet.unwrap();
+                        self.mat_gid = mcunit.domain.cell_state[self.cell].material;
+                        self.cell_nb_density =
+                            mcunit.domain.cell_state[self.cell].cell_number_density;
+                        self.last_event = MCTallyEvent::FacetCrossingTransitExit;
+                    }
+                    MCSubfacetAdjacencyEvent::BoundaryEscape => {
+                        // particle escape the system
+                        self.last_event = MCTallyEvent::FacetCrossingEscape;
+                    }
+                    MCSubfacetAdjacencyEvent::BoundaryReflection => {
+                        // particle reflect off a system boundary
+                        self.last_event = MCTallyEvent::FacetCrossingReflection;
+                        self.facet_normal =
+                            mcunit.domain.mesh.cell_geometry[self.cell][self.facet].get_normal();
+                    }
+                    MCSubfacetAdjacencyEvent::TransitOffProcessor => {
+                        // particle enters an adjacent cell that belongs to
+                        // a domain managed by another processor.
+                        self.domain = facet_adjacency.adjacent.domain.unwrap();
+                        self.cell = facet_adjacency.adjacent.cell.unwrap();
+                        self.facet = facet_adjacency.adjacent.facet.unwrap();
+                        self.mat_gid = mcunit.domain.cell_state[self.cell].material;
+                        self.cell_nb_density =
+                            mcunit.domain.cell_state[self.cell].cell_number_density;
+                        self.last_event = MCTallyEvent::FacetCrossingCommunication;
+                    }
+                    MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
                 }
-                MCSubfacetAdjacencyEvent::BoundaryEscape => {
-                    // particle escape the system
-                    particle.last_event = MCTallyEvent::FacetCrossingEscape;
-                }
-                MCSubfacetAdjacencyEvent::BoundaryReflection => {
-                    // particle reflect off a system boundary
-                    particle.last_event = MCTallyEvent::FacetCrossingReflection;
-                    particle.facet_normal = mcunit.domain.mesh.cell_geometry[particle.cell]
-                        [particle.facet]
-                        .get_normal();
-                }
-                MCSubfacetAdjacencyEvent::TransitOffProcessor => {
-                    // particle enters an adjacent cell that belongs to
-                    // a domain managed by another processor.
-                    particle.domain = facet_adjacency.adjacent.domain.unwrap();
-                    particle.cell = facet_adjacency.adjacent.cell.unwrap();
-                    particle.facet = facet_adjacency.adjacent.facet.unwrap();
-                    particle.mat_gid = mcunit.domain.cell_state[particle.cell].material;
-                    particle.cell_nb_density =
-                        mcunit.domain.cell_state[particle.cell].cell_number_density;
-                    particle.last_event = MCTallyEvent::FacetCrossingCommunication;
-                }
-                MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
+            }
+            MCSegmentOutcome::Census => {
+                self.time_to_census = zero::<T>().min(self.time_to_census);
+                self.last_event = MCTallyEvent::Census;
             }
         }
-        MCSegmentOutcome::Census => {
-            particle.time_to_census = zero::<T>().min(particle.time_to_census);
-            particle.last_event = MCTallyEvent::Census;
+
+        // skip tallies & early return if the path length is 0
+        if self.segment_path_length == zero() {
+            return;
         }
-    }
 
-    // skip tallies & early return if the path length is 0
-    if particle.segment_path_length == zero() {
-        return;
-    }
+        // move particle to the end of the segment
+        self.move_particle_along_segment();
 
-    // move particle to the end of the segment
-    particle.move_particle_along_segment();
-
-    // decrement time to census & increment age
-    let segment_path_time = particle.segment_path_length / particle_speed;
-    particle.time_to_census -= segment_path_time;
-    particle.age += segment_path_time;
-    if particle.time_to_census < zero() {
-        particle.time_to_census = zero();
+        // decrement time to census & increment age
+        let segment_path_time = self.segment_path_length / particle_speed;
+        self.time_to_census -= segment_path_time;
+        self.age += segment_path_time;
+        if self.time_to_census < zero() {
+            self.time_to_census = zero();
+        }
     }
 }

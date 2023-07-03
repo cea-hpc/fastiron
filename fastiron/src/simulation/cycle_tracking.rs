@@ -17,8 +17,6 @@ use crate::{
     },
 };
 
-use super::mc_segment_outcome::outcome;
-
 /// Main steps of the `CycleTracking` section.
 ///
 /// The particle at the specified index is loaded, tracked and updated accordingly.
@@ -38,7 +36,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     if particle.age < zero() {
         particle.age = zero();
     }
-    // update energy & task
+    // update internal data
     particle.energy_group = mcdata
         .nuclear_data
         .get_energy_groups(particle.kinetic_energy);
@@ -59,10 +57,11 @@ fn cycle_tracking_function<T: CustomFloat>(
 
     loop {
         // compute event for segment
-        outcome(mcdata, mcunit, particle);
+        particle.outcome(mcdata, mcunit);
         // update # of segments
         balance[TalliedEvent::NumSegments] += 1;
         particle.num_segments += one();
+
         // update scalar flux tally
         mcunit.tallies.scalar_flux_domain[(particle.cell, particle.energy_group)]
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| {
