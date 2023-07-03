@@ -74,9 +74,6 @@ fn cycle_tracking_function<T: CustomFloat>(
             MCTallyEvent::Collision => {
                 keep_tracking = particle.collision_event(mcdata, balance, extra);
 
-                particle.energy_group = mcdata
-                    .nuclear_data
-                    .get_energy_groups(particle.kinetic_energy);
                 if !keep_tracking {
                     particle.species = Species::Unknown;
                 }

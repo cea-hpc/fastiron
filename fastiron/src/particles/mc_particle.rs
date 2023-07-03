@@ -263,6 +263,7 @@ impl<T: CustomFloat> MCParticle<T> {
         // number of particles resulting from the collision, including the original
         // e.g. zero means the original particle was absorbed or invalidated in some way
         let n_out = self.sample_collision(reaction, mat_mass, extra);
+        self.energy_group = mcdata.nuclear_data.get_energy_groups(self.kinetic_energy);
 
         //====================
         // Tally the collision
