@@ -81,8 +81,6 @@ pub struct MCNearestFacet<T: CustomFloat> {
     pub facet: usize,
     /// Distance between facet and particle.
     pub distance_to_facet: T,
-    /// Dot product between facet and direction vector.
-    pub facet_normal: MCVector<T>,
 }
 
 impl<T: CustomFloat> Default for MCNearestFacet<T> {
@@ -90,7 +88,6 @@ impl<T: CustomFloat> Default for MCNearestFacet<T> {
         Self {
             facet: 0,
             distance_to_facet: T::huge_float(),
-            facet_normal: Default::default(),
         }
     }
 }

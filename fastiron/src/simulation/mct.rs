@@ -149,7 +149,7 @@ fn mct_nf_3dg<T: CustomFloat>(
                 }
             });
 
-        let mut nearest_facet = mct_nf_compute_nearest(distance_to_facet);
+        let nearest_facet = mct_nf_compute_nearest(distance_to_facet);
         let retry = check_nearest_validity(
             particle,
             mesh,
@@ -157,8 +157,6 @@ fn mct_nf_3dg<T: CustomFloat>(
             &mut move_factor,
             &nearest_facet,
         );
-
-        nearest_facet.facet_normal = mesh.cell_geometry[particle.cell][particle.facet].get_normal();
 
         if !retry {
             return nearest_facet;
