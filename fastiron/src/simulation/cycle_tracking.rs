@@ -15,7 +15,7 @@ use crate::{
         mc_particle::{MCParticle, Species},
         particle_collection::ParticleCollection,
     },
-    simulation::{mc_facet_crossing_event::facet_crossing_event, mct::reflect_particle},
+    simulation::mct::reflect_particle,
 };
 
 use super::{
@@ -88,13 +88,6 @@ fn cycle_tracking_function<T: CustomFloat>(
                 }
             }
             MCSegmentOutcome::FacetCrossing => {
-                // crossed facet data
-                let facet_adjacency = &mcunit.domain.mesh.cell_connectivity[particle.cell].facet
-                    [particle.facet]
-                    .subfacet;
-
-                facet_crossing_event(particle, facet_adjacency);
-
                 keep_tracking = match particle.last_event {
                     // ~~~ on unit case
                     // on-unit transit

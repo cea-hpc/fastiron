@@ -17,7 +17,7 @@ use num::{one, zero};
 use crate::{
     constants::CustomFloat,
     data::tallies::MCTallyEvent,
-    geometry::facets::MCNearestFacet,
+    geometry::facets::{MCNearestFacet, MCSubfacetAdjacencyEvent},
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::mc_particle::MCParticle,
     simulation::{macro_cross_section::weighted_macroscopic_cross_section, mct::nearest_facet},
@@ -195,7 +195,34 @@ pub fn outcome<T: CustomFloat>(
         }
         MCSegmentOutcome::FacetCrossing => {
             particle.facet = nearest_facet.facet;
-            particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
+            let facet_adjacency =
+                &mcunit.domain.mesh.cell_connectivity[particle.cell].facet[particle.facet].subfacet;
+            match facet_adjacency.event {
+                MCSubfacetAdjacencyEvent::TransitOnProcessor => {
+                    // particle enters an adjacent cell
+                    particle.domain = facet_adjacency.adjacent.domain.unwrap();
+                    particle.cell = facet_adjacency.adjacent.cell.unwrap();
+                    particle.facet = facet_adjacency.adjacent.facet.unwrap();
+                    particle.last_event = MCTallyEvent::FacetCrossingTransitExit;
+                }
+                MCSubfacetAdjacencyEvent::BoundaryEscape => {
+                    // particle escape the system
+                    particle.last_event = MCTallyEvent::FacetCrossingEscape;
+                }
+                MCSubfacetAdjacencyEvent::BoundaryReflection => {
+                    // particle reflect off a system boundary
+                    particle.last_event = MCTallyEvent::FacetCrossingReflection
+                }
+                MCSubfacetAdjacencyEvent::TransitOffProcessor => {
+                    // particle enters an adjacent cell that belongs to
+                    // a domain managed by another processor.
+                    particle.domain = facet_adjacency.adjacent.domain.unwrap();
+                    particle.cell = facet_adjacency.adjacent.cell.unwrap();
+                    particle.facet = facet_adjacency.adjacent.facet.unwrap();
+                    particle.last_event = MCTallyEvent::FacetCrossingCommunication;
+                }
+                MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
+            }
         }
         MCSegmentOutcome::Census => {
             particle.time_to_census = zero::<T>().min(particle.time_to_census);
