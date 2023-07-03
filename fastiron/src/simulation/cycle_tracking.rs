@@ -18,10 +18,7 @@ use crate::{
     simulation::mct::reflect_particle,
 };
 
-use super::{
-    collision_event::collision_event,
-    mc_segment_outcome::{outcome, MCSegmentOutcome},
-};
+use super::{collision_event::collision_event, mc_segment_outcome::outcome};
 
 /// Main steps of the `CycleTracking` section.
 ///
@@ -61,7 +58,7 @@ fn cycle_tracking_function<T: CustomFloat>(
 
     loop {
         // compute event for segment
-        let segment_outcome = outcome(mcdata, mcunit, particle);
+        outcome(mcdata, mcunit, particle);
         // update # of segments
         balance[TalliedEvent::NumSegments] += 1;
         particle.num_segments += one();
@@ -72,8 +69,8 @@ fn cycle_tracking_function<T: CustomFloat>(
             })
             .unwrap();
 
-        match segment_outcome {
-            MCSegmentOutcome::Collision => {
+        match particle.last_event {
+            MCTallyEvent::Collision => {
                 let mat_gid = mcunit.domain.cell_state[particle.cell].material;
                 let cell_nb_density = mcunit.domain.cell_state[particle.cell].cell_number_density;
 
@@ -87,52 +84,26 @@ fn cycle_tracking_function<T: CustomFloat>(
                     particle.species = Species::Unknown;
                 }
             }
-            MCSegmentOutcome::FacetCrossing => {
-                keep_tracking = match particle.last_event {
-                    // ~~~ on unit case
-                    // on-unit transit
-                    MCTallyEvent::FacetCrossingTransitExit => true,
-                    // bound reflection
-                    MCTallyEvent::FacetCrossingReflection => {
-                        // plane on which particle is reflected
-                        let plane =
-                            &mcunit.domain.mesh.cell_geometry[particle.cell][particle.facet];
-
-                        reflect_particle(particle, plane);
-                        true
-                    }
-                    // ~~~ off unit case
-                    // off-unit transit
-                    MCTallyEvent::FacetCrossingCommunication => {
-                        // get destination neighbor
-                        unimplemented!()
-                        /*
-                        let neighbor_rank: usize = mcunit.domain
-                            [facet_adjacency.current.domain.unwrap()]
-                        .mesh
-                        .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
-                        // add to sendqueue
-                        send_queue.lock().unwrap().push(neighbor_rank, particle);
-                        particle.species = Species::Unknown;
-                        false
-                        */
-                    }
-                    // bound escape
-                    MCTallyEvent::FacetCrossingEscape => {
-                        balance[TalliedEvent::Escape] += 1;
-                        particle.last_event = MCTallyEvent::FacetCrossingEscape;
-                        particle.species = Species::Unknown;
-                        false
-                    }
-                    // ~~~ other enum values are for collision & census, not facet crossing
-                    _ => unreachable!(),
-                };
-            }
-            MCSegmentOutcome::Census => {
+            MCTallyEvent::FacetCrossingTransitExit => keep_tracking = true,
+            MCTallyEvent::Census => {
                 balance[TalliedEvent::Census] += 1;
                 // we're done tracking the particle FOR THIS STEP; Species stays valid
                 keep_tracking = false;
             }
+            MCTallyEvent::FacetCrossingEscape => {
+                balance[TalliedEvent::Escape] += 1;
+                particle.last_event = MCTallyEvent::FacetCrossingEscape;
+                particle.species = Species::Unknown;
+                keep_tracking = false
+            }
+            MCTallyEvent::FacetCrossingReflection => {
+                // plane on which particle is reflected
+                let plane = &mcunit.domain.mesh.cell_geometry[particle.cell][particle.facet];
+
+                reflect_particle(particle, plane);
+                keep_tracking = true;
+            }
+            MCTallyEvent::FacetCrossingCommunication => unimplemented!(),
         }
 
         if !keep_tracking {

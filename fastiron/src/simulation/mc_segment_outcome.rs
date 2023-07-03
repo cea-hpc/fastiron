@@ -101,7 +101,7 @@ pub fn outcome<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunit: &MonteCarloUnit<T>,
     particle: &mut MCParticle<T>,
-) -> MCSegmentOutcome {
+) {
     //==========
     // Prep work
 
@@ -232,7 +232,7 @@ pub fn outcome<T: CustomFloat>(
 
     // skip tallies & early return if the path length is 0
     if particle.segment_path_length == zero() {
-        return segment_outcome;
+        return;
     }
 
     // move particle to the end of the segment
@@ -245,6 +245,4 @@ pub fn outcome<T: CustomFloat>(
     if particle.time_to_census < zero() {
         particle.time_to_census = zero();
     }
-
-    segment_outcome
 }
