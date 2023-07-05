@@ -86,8 +86,8 @@ fn cycle_tracking_function<T: CustomFloat>(
                 // e.g. zero means the original particle was absorbed or invalidated in some way
                 let mat_mass = mcdata.material_database.mat[particle.mat_gid].mass;
                 let n_out = particle.sample_collision(reaction, mat_mass, extra);
-                //====================
-                // Tally the collision
+                //=================
+                // Tally the event
                 match reaction.reaction_type {
                     ReactionType::Scatter => {
                         balance[TalliedEvent::Scatter] += 1;
@@ -112,11 +112,15 @@ fn cycle_tracking_function<T: CustomFloat>(
             }
             MCTallyEvent::FacetCrossingTransitExit => keep_tracking = true,
             MCTallyEvent::Census => {
+                //=================
+                // Tally the event
                 balance[TalliedEvent::Census] += 1;
                 // we're done tracking the particle FOR THIS STEP; Species stays valid
                 keep_tracking = false;
             }
             MCTallyEvent::FacetCrossingEscape => {
+                //=================
+                // Tally the event
                 balance[TalliedEvent::Escape] += 1;
                 particle.species = Species::Unknown;
                 keep_tracking = false

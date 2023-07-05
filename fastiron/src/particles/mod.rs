@@ -6,3 +6,4 @@
 pub mod mc_particle;
 pub mod particle_collection;
 pub mod particle_container;
+pub mod particle_grinder;
