@@ -9,7 +9,10 @@ use num::zero;
 
 use crate::{
     constants::CustomFloat,
-    data::tallies::{Balance, MCTallyEvent, TalliedEvent},
+    data::{
+        nuclear_data::ReactionType,
+        tallies::{Balance, MCTallyEvent, TalliedEvent},
+    },
     montecarlo::{MonteCarloData, MonteCarloUnit},
     particles::{
         mc_particle::{MCParticle, Species},
@@ -59,6 +62,8 @@ fn cycle_tracking_function<T: CustomFloat>(
         // compute event for segment
         particle.outcome(mcdata, mcunit);
         // update # of segments
+        // with new structure, this won't be necessary
+        // we'll be able to increment the balance by array.len()
         balance[TalliedEvent::NumSegments] += 1;
 
         // update scalar flux tally
@@ -70,9 +75,38 @@ fn cycle_tracking_function<T: CustomFloat>(
 
         match particle.last_event {
             MCTallyEvent::Collision => {
-                keep_tracking = particle.collision_event(mcdata, balance, extra);
+                balance[TalliedEvent::Collision] += 1;
+                // ==========================
+                // Pick an isotope & reaction
+                let reaction = particle.collision_event(mcdata);
+                // ================
+                // Do the collision
+                //
+                // number of particles resulting from the collision, including the original
+                // e.g. zero means the original particle was absorbed or invalidated in some way
+                let mat_mass = mcdata.material_database.mat[particle.mat_gid].mass;
+                let n_out = particle.sample_collision(reaction, mat_mass, extra);
+                //====================
+                // Tally the collision
+                match reaction.reaction_type {
+                    ReactionType::Scatter => {
+                        balance[TalliedEvent::Scatter] += 1;
+                    }
+                    ReactionType::Absorption => {
+                        balance[TalliedEvent::Absorb] += 1;
+                    }
+                    ReactionType::Fission => {
+                        balance[TalliedEvent::Fission] += 1;
+                        balance[TalliedEvent::Produce] += n_out as u64;
+                    }
+                };
 
-                if !keep_tracking {
+                keep_tracking = n_out >= 1;
+                if keep_tracking {
+                    particle.energy_group = mcdata
+                        .nuclear_data
+                        .get_energy_groups(particle.kinetic_energy);
+                } else {
                     particle.species = Species::Unknown;
                 }
             }

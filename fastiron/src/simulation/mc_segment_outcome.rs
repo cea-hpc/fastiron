@@ -222,6 +222,8 @@ impl<T: CustomFloat> MCParticle<T> {
                     MCSubfacetAdjacencyEvent::TransitOffProcessor => {
                         // particle enters an adjacent cell that belongs to
                         // a domain managed by another processor.
+                        unimplemented!()
+                        /*
                         self.domain = facet_adjacency.adjacent.domain.unwrap();
                         self.cell = facet_adjacency.adjacent.cell.unwrap();
                         self.facet = facet_adjacency.adjacent.facet.unwrap();
@@ -229,6 +231,7 @@ impl<T: CustomFloat> MCParticle<T> {
                         self.cell_nb_density =
                             mcunit.domain.cell_state[self.cell].cell_number_density;
                         self.last_event = MCTallyEvent::FacetCrossingCommunication;
+                        */
                     }
                     MCSubfacetAdjacencyEvent::AdjacencyUndefined => panic!(),
                 }
@@ -239,7 +242,7 @@ impl<T: CustomFloat> MCParticle<T> {
             }
         }
 
-        // skip tallies & early return if the path length is 0
+        // early return to prevent rounding errors
         if self.segment_path_length == zero() {
             return;
         }

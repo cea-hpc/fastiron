@@ -13,7 +13,7 @@ use crate::{
     data::{
         mc_vector::MCVector,
         nuclear_data::{NuclearDataReaction, ReactionType},
-        tallies::{Balance, MCTallyEvent, TalliedEvent},
+        tallies::MCTallyEvent,
     },
     montecarlo::MonteCarloData,
     utils::mc_rng_state::{rng_sample, spawn_rn_seed},
@@ -219,15 +219,10 @@ impl<T: CustomFloat> MCParticle<T> {
     /// - Absorption reaction: the particle is invalidated.
     /// - Fission reaction: offspring particles are created from the colliding one.
     /// - Scattering reaction: no additional modifications occur.
-    pub fn collision_event(
+    pub fn collision_event<'a>(
         &mut self,
-        mcdata: &MonteCarloData<T>,
-        balance: &mut Balance,
-        extra: &mut ParticleCollection<T>,
-    ) -> bool {
-        // ==========================
-        // Pick an isotope & reaction
-
+        mcdata: &'a MonteCarloData<T>,
+    ) -> &'a NuclearDataReaction<T> {
         let mut current_xsection: T = self.get_current_xs();
         let mut reaction = None;
 
@@ -253,36 +248,7 @@ impl<T: CustomFloat> MCParticle<T> {
             }
         }
         assert!(reaction.is_some());
-        let reaction = reaction.unwrap();
-
-        let mat_mass = mcdata.material_database.mat[self.mat_gid].mass;
-
-        // ================
-        // Do the collision
-        //
-        // number of particles resulting from the collision, including the original
-        // e.g. zero means the original particle was absorbed or invalidated in some way
-        let n_out = self.sample_collision(reaction, mat_mass, extra);
-        self.energy_group = mcdata.nuclear_data.get_energy_groups(self.kinetic_energy);
-
-        //====================
-        // Tally the collision
-
-        balance[TalliedEvent::Collision] += 1;
-        match reaction.reaction_type {
-            ReactionType::Scatter => {
-                balance[TalliedEvent::Scatter] += 1;
-            }
-            ReactionType::Absorption => {
-                balance[TalliedEvent::Absorb] += 1;
-            }
-            ReactionType::Fission => {
-                balance[TalliedEvent::Fission] += 1;
-                balance[TalliedEvent::Produce] += n_out as u64;
-            }
-        };
-
-        n_out >= 1
+        reaction.unwrap()
     }
 
     /// Uses a PRNG to sample new energy & angle after a reaction.
