@@ -385,6 +385,61 @@ impl ScalingResults {
         }
     }
 
+    /// Computes & plot the speedup / efficiency (depending on the scaling type).
+    pub fn plot_se(&self) {
+        let mut fg = Figure::new();
+        let (out, title) = match self.scaling_type {
+            ScalingType::Weak => ("efficiency.png", "Ideal vs Real Efficiency"),
+            ScalingType::Strong(_) => ("speedup.png", "Ideal vs Real Speedup"),
+        };
+        fg.set_terminal("pngcairo", out).set_title(title);
+
+        let y_ideal: Vec<f64> = self
+            .n_threads
+            .iter()
+            .map(|n_thread| match self.scaling_type {
+                ScalingType::Weak => 1.0,
+                ScalingType::Strong(_) => *n_thread as f64,
+            })
+            .collect();
+
+        let y_real: Vec<f64> = self
+            .n_threads
+            .iter()
+            .enumerate()
+            .map(|(idx, _)| self.tracking_avgs[0] / self.tracking_avgs[idx])
+            .collect();
+
+        fg.axes2d()
+            .set_x_log(Some(self.n_threads[1] as f64 / self.n_threads[0] as f64))
+            .set_x_label("Number of Threads Used for Execution", &[])
+            .set_x_ticks(Some((AutoOption::Auto, 0)), &[Inward(false)], &[])
+            .set_y_log(match self.scaling_type {
+                ScalingType::Weak => None,
+                ScalingType::Strong(factor) => Some(factor as f64),
+            })
+            .set_y_label(
+                match self.scaling_type {
+                    ScalingType::Weak => "Efficiency",
+                    ScalingType::Strong(_) => "Speedup",
+                },
+                &[],
+            )
+            .set_y_grid(true)
+            .lines_points(
+                &self.n_threads,
+                &y_ideal,
+                &[Caption("Ideal"), Color("#00FF00"), PointSymbol('x')],
+            )
+            .lines_points(
+                &self.n_threads,
+                &y_real,
+                &[Caption("Real"), Color("#008800"), PointSymbol('x')],
+            );
+
+        fg.show().unwrap();
+    }
+
     /// Plotting function.
     pub fn plot_tracking(&self) {
         // create figure & adjust characteristics
