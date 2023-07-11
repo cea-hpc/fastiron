@@ -54,6 +54,7 @@ fn main() {
 
         if cli.plot {
             results.plot_tracking();
+            results.plot_se();
             results.plot_others();
             println!("Plotted results");
         }
@@ -73,6 +74,7 @@ fn main() {
 
         if cli.plot {
             results.plot_tracking();
+            results.plot_se();
             results.plot_others();
             println!("Plotted results");
         }
