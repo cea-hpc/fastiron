@@ -111,10 +111,12 @@ impl MeshPartition {
 
         let mut n_local_cells: usize = 0;
 
+        // TWICE THE MEMORY
         let read_map = self.cell_info_map.clone();
 
         for (cell_gid, cell_info) in &mut self.cell_info_map {
             let domain_gid: usize = cell_info.domain_gid.unwrap();
+            // Always true when not distributed
             if domain_gid == self.domain_gid {
                 // local cell
                 cell_info.cell_index = Some(n_local_cells);
@@ -122,8 +124,10 @@ impl MeshPartition {
                 cell_info.domain_index = Some(self.domain_gid);
                 cell_info.foreman = Some(self.foreman);
             } else {
+                // THIS IS THE PART THAT USES TWICE THE MEMORY
+                // WILL REMOVE WHEN REMOVING ALL TRACES OF DISTRIBUTED IMPLEMENTATION
+                println!("test");
                 let face_nbr = grid.get_face_nbr_gids(*cell_gid);
-
                 for j_cell_gid in face_nbr {
                     if let Some(c_info) = read_map.get(&j_cell_gid) {
                         if c_info.domain_gid != Some(self.domain_gid) {
