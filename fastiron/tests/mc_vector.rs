@@ -162,7 +162,7 @@ fn div_assign_zero() {
 
 #[test]
 fn sum_owned() {
-    let vec = vec![
+    let vec = [
         MCVector {
             x: 2.0,
             y: 2.0,
@@ -199,7 +199,7 @@ fn sum_owned() {
 
 #[test]
 fn sum_borrowed() {
-    let vec = vec![
+    let vec = [
         MCVector {
             x: 2.0,
             y: 2.0,
