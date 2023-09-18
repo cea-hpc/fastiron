@@ -189,9 +189,9 @@ impl<T: CustomFloat> GlobalFccGrid<T> {
     pub fn snap_turtle(&self, tt: (i32, i32, i32)) -> Tuple3 {
         // set tt such that (0 <= tt.* < n*)
         (
-            (tt.0.max(0) as usize).min(self.nx - 1),
-            (tt.1.max(0) as usize).min(self.ny - 1),
-            (tt.2.max(0) as usize).min(self.nz - 1),
+            tt.0.clamp(0, (self.nx - 1) as i32) as usize,
+            tt.1.clamp(0, (self.ny - 1) as i32) as usize,
+            tt.2.clamp(0, (self.nz - 1) as i32) as usize,
         )
     }
 }
