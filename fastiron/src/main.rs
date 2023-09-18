@@ -40,6 +40,15 @@ fn main() {
     let params: Parameters<FloatType> = Parameters::get_parameters(cli).unwrap();
     println!("[Simulation Parameters]\n{:#?}", params.simulation_params);
 
+    let n_cells_tot =
+        params.simulation_params.nx * params.simulation_params.ny * params.simulation_params.nz;
+
+    if params.simulation_params.n_particles as usize / n_cells_tot < 10 {
+        println!("[ERROR] TOO FEW PARTICLES PER CELL OVERALL");
+        println!("[ERROR] Need at least 10 particles per cell of the mesh overall");
+        return;
+    }
+
     //===============
     // Initialization
     //===============
