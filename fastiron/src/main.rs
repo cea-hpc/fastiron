@@ -281,25 +281,19 @@ pub fn cycle_process<T: CustomFloat>(
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::PopulationControl);
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
 
-    loop {
-        while !container.is_done_processing() {
-            // sort particles
-            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
-            container.sort_processing();
-            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
+    while !container.is_done_processing() {
+        // sort particles
+        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
+        container.sort_processing();
+        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
 
-            // track particles
-            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
-            container.process_particles(mcdata, mcunit);
-            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
+        // track particles
+        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
+        container.process_particles(mcdata, mcunit);
+        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
 
-            // clean extra here
-            container.clean_extra_vaults();
-        }
-
-        if container.is_done_processing() {
-            break;
-        }
+        // clean extra here
+        container.clean_extra_vaults();
     }
 
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTracking);
