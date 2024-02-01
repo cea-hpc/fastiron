@@ -283,30 +283,13 @@ impl<T: CustomFloat> NuclearData<T> {
         low
     }
 
-    /// Returns the number of reactions for a given isotope.
-    pub fn get_number_reactions(&self, isotope_index: usize) -> usize {
-        self.isotopes[isotope_index][0].reactions.len()
-    }
-
     /// Returns the total cross section for a given energy group.
     pub fn get_total_cross_section(&self, isotope_index: usize, group: usize) -> T {
-        let num_reactions = self.isotopes[isotope_index][0].reactions.len();
-        let mut total_xsection: T = zero();
-
-        (0..num_reactions).for_each(|r_idx| {
-            total_xsection += self.isotopes[isotope_index][0].reactions[r_idx].cross_section[group];
-        });
-
-        total_xsection
-    }
-
-    /// Returns the reaction-specific cross section for a given energy group.
-    pub fn get_reaction_cross_section(
-        &self,
-        react_index: usize,
-        isotope_index: usize,
-        group: usize,
-    ) -> T {
-        self.isotopes[isotope_index][0].reactions[react_index].cross_section[group]
+        // sum all reaction's xsection for a given isotope at a given energy level
+        self.isotopes[isotope_index][0]
+            .reactions
+            .iter()
+            .map(|reaction| reaction.cross_section[group])
+            .sum()
     }
 }
