@@ -171,9 +171,13 @@ pub fn bind_threads(thread_id: usize, topo: &Arc<Mutex<Topology>>) {
         unit.cpuset().unwrap()
     };
 
-    locked_topo
-        .set_cpubind_for_thread(pthread_id, cpu_set, CpuBindFlags::CPUBIND_THREAD)
-        .unwrap();
+    match locked_topo.set_cpubind_for_thread(pthread_id, cpu_set, CpuBindFlags::CPUBIND_THREAD) {
+        Ok(_) => {}
+        Err(e) => {
+            println!("Could not bind threads to cpu cores:");
+            println!("{e:#?}");
+        }
+    }
 }
 
 fn has_ancestor(object: &TopologyObject, ancestor: &TopologyObject) -> bool {
