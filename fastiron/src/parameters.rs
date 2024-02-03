@@ -368,7 +368,7 @@ impl<T: CustomFloat> SimulationParameters<T> {
     ///
     /// ```rust
     /// use clap::Parser;
-    /// use fastiron::utils::io_utils::Cli;
+    /// use fastiron::utils::input::Cli;
     /// use fastiron::parameters::SimulationParameters;
     ///
     ///

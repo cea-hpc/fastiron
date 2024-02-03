@@ -20,7 +20,7 @@ use crate::constants::CustomFloat;
 /// assert_eq!(v + w, MCVector {x: 3.0, y: 3.0, z: 3.0});
 /// // w/2 == v
 /// w /= 2.0;
-/// assert!(w.is_almost_equal(&v));
+/// assert_eq!(v, w);
 ///
 /// ```
 #[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Default)]
