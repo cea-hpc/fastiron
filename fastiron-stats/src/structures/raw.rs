@@ -119,7 +119,7 @@ impl TalliedVariable {
     }
 }
 
-/// Returns the covariance of two given [FiniteDiscreteRV].
+/// Returns the covariance of two given [TalliedVariable].
 pub fn covariance(x: &TalliedVariable, y: &TalliedVariable) -> f64 {
     assert_eq!(x.n_val(), y.n_val());
     let iter = zip(x.values.iter(), y.values.iter());
@@ -128,11 +128,11 @@ pub fn covariance(x: &TalliedVariable, y: &TalliedVariable) -> f64 {
     cov
 }
 
-/// Returns the correlation coefficient of two given [FiniteDiscreteRV].
+/// Returns the correlation coefficient of two given [TalliedVariable].
 ///
 /// The function checks if `x` and `y` have non-zero variance. If this is the case,
 /// 0 is returned. It means variables are independent. While this may be technically
-/// false, it allows for generic computations
+/// false, it allows for generic computations.
 pub fn correlation(x: &TalliedVariable, y: &TalliedVariable) -> f64 {
     if (x.variance == 0.0) | (y.variance == 0.0) {
         //
