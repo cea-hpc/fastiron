@@ -39,9 +39,7 @@ pub fn cycle_tracking_guts<T: CustomFloat>(
     if particle.time_to_census <= zero() {
         particle.time_to_census += mcdata.params.simulation_params.dt;
     }
-    if particle.age < zero() {
-        particle.age = zero();
-    }
+    particle.age = particle.age.max(zero());
     // update energy & task
     particle.energy_group = mcdata
         .nuclear_data
@@ -111,18 +109,7 @@ fn cycle_tracking_function<T: CustomFloat>(
                     // ~~~ off unit case
                     // off-unit transit
                     MCTallyEvent::FacetCrossingCommunication => {
-                        // get destination neighbor
                         unimplemented!()
-                        /*
-                        let neighbor_rank: usize = mcunit.domain
-                            [facet_adjacency.current.domain.unwrap()]
-                        .mesh
-                        .nbr_rank[facet_adjacency.neighbor_index.unwrap()];
-                        // add to sendqueue
-                        send_queue.lock().unwrap().push(neighbor_rank, particle);
-                        particle.species = Species::Unknown;
-                        false
-                        */
                     }
                     // bound escape
                     MCTallyEvent::FacetCrossingEscape => {

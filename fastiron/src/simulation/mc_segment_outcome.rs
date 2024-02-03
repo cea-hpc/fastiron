@@ -111,9 +111,8 @@ pub fn outcome<T: CustomFloat>(
 
     let particle_speed = particle.get_speed();
 
-    let mut force_collision = false;
-    if particle.num_mean_free_paths < zero() {
-        force_collision = true;
+    let force_collision = particle.num_mean_free_paths < zero();
+    if force_collision {
         particle.num_mean_free_paths = small_f;
     }
 
@@ -140,11 +139,11 @@ pub fn outcome<T: CustomFloat>(
 
     // prepare particle
     particle.total_cross_section = macroscopic_total_xsection;
-    if macroscopic_total_xsection == zero() {
-        particle.mean_free_path = T::huge_float();
+    particle.mean_free_path = if macroscopic_total_xsection == zero() {
+        T::huge_float()
     } else {
-        particle.mean_free_path = one::<T>() / macroscopic_total_xsection;
-    }
+        one::<T>() / macroscopic_total_xsection
+    };
 
     // if zero
     if particle.num_mean_free_paths == zero() {
@@ -215,9 +214,7 @@ pub fn outcome<T: CustomFloat>(
     let segment_path_time = particle.segment_path_length / particle_speed;
     particle.time_to_census -= segment_path_time;
     particle.age += segment_path_time;
-    if particle.time_to_census < zero() {
-        particle.time_to_census = zero();
-    }
+    particle.time_to_census = particle.time_to_census.max(zero());
 
     segment_outcome
 }
