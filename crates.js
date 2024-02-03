@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["fastiron","fastiron_stats"];

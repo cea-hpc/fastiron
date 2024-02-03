@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ReactionType"],"struct":["NuclearData","NuclearDataReaction","NuclearDataSpecies","Polynomial"],"type":["NuclearDataIsotope"]};

@@ -1,0 +1,92 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A Rust port of the Monte-Carlo particle transport proxy-app Quicksilver."><title>fastiron - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fastiron" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fastiron/index.html">fastiron</a><span class="version">1.3.2</span></h2></div><div class="sidebar-elems"><ul class="block">
+            <li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#modules">Modules</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">fastiron</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../src/fastiron/lib.rs.html#1-116">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A Rust port of the Monte-Carlo particle transport proxy-app <a href="https://github.com/LLNL/Quicksilver">Quicksilver</a>.</p>
+<p>Fastiron mimics Monte-Carlo particle transport code to study their behavior on
+various hardware architectures. The aim of this port is to evaluate Rust’s
+capabilities and performances in the context of parallel programming and
+scaling problem size.</p>
+<h2 id="quickstart"><a href="#quickstart">Quickstart</a></h2>
+<p>After cloning the <a href="https://github.com/cea-hpc/fastiron">repository</a>, fastiron can be executed like any other Rust
+program using cargo. Run the following:</p>
+<div class="example-wrap"><pre class="language-shell"><code>$ cargo build --release
+$ cargo run --bin=fastiron
+</code></pre></div>
+<p>And see the CLI’s usage:</p>
+<div class="example-wrap"><pre class="language-shell"><code>$ cargo run --bin=fastiron
+
+Fastiron, a Rust port of the Quicksilver proxy-app
+
+Usage: fastiron [OPTIONS]
+
+Options:
+  -i, --input-file &lt;INPUT_FILE&gt;
+          name of input file
+  -e, --energy-spectrum &lt;ENERGY_SPECTRUM&gt;
+          name of energy spectrum output file
+  -S, --cross-sections &lt;CROSS_SECTIONS_OUT&gt;
+          name of cross-section output file
+  -D, --dt &lt;DT&gt;
+          time step in seconds
+  -l, --load-balance
+          enable load balancing if present
+  -c, --csv
+          write tallies &amp; timer data into csv files if present
+  -t, --debug-threads
+          enable thread debugging if present
+  -p, --single-precision
+          enable single-precision float type usage if present
+  -X, --lx &lt;LX&gt;
+          x-size of simulation in cm
+  -Y, --ly &lt;LY&gt;
+          y-size of simulation in cm
+  -Z, --lz &lt;LZ&gt;
+          z-size of simulation in cm
+  -n, --n-particles &lt;N_PARTICLES&gt;
+          total number of particules
+  -C, --chunk-size &lt;CHUNK_SIZE&gt;
+          size of the chunks when executing in parallel -- if absent or set to 0, use dynamic chunk size
+  -r, --rayon &lt;N_RAYON_THREADS&gt;
+          number of rayon threads that should be used to run the simulation -- set to 0 for rayon&#39;s default config
+  -u, --units &lt;N_UNITS&gt;
+          number of units that should be used to run the simulation
+  -N, --n-steps &lt;N_STEPS&gt;
+          number of steps simulated
+  -x, --nx &lt;NX&gt;
+          number of mesh elements along x
+  -y, --ny &lt;NY&gt;
+          number of mesh elements along y
+  -z, --nz &lt;NZ&gt;
+          number of mesh elements along z
+  -s, --seed &lt;SEED&gt;
+          random number seed
+  -h, --help
+         Print help
+  -V, --version
+          Print version
+
+</code></pre></div><h2 id="example"><a href="#example">Example</a></h2>
+<p>You can run one of the examples available using its input file. Note that the
+parameters specified in the file take priority over the one specified as arguments:</p>
+<div class="example-wrap"><pre class="language-shell"><code>$ cargo run --bin=fastiron --release -- -i input_files/QS_originals/Homogeneous/homogeneousProblem_v7_ts.inp -e energy -S section -n 10000
+</code></pre></div>
+<p>Fastiron will print the parameters and run the simulation. Two reports will
+be printed at run-time and, if file names are specified, two files will be
+created. These four outputs contain data such as event counts, timers value,
+or final state of the system. To see more about these reports:</p>
+<ul>
+<li><a href="data/tallies/struct.Tallies.html#method.print_summary" title="method fastiron::data::tallies::Tallies::print_summary"><code>Tallies::print_summary()</code></a></li>
+<li><a href="utils/mc_fast_timer/struct.MCFastTimerContainer.html#method.cumulative_report" title="method fastiron::utils::mc_fast_timer::MCFastTimerContainer::cumulative_report"><code>MCFastTimerContainer::cumulative_report()</code></a></li>
+<li><a href="data/energy_spectrum/struct.EnergySpectrum.html" title="struct fastiron::data::energy_spectrum::EnergySpectrum"><code>EnergySpectrum</code></a></li>
+<li><a href="init/fn.check_cross_sections.html" title="fn fastiron::init::check_cross_sections"><code>init::check_cross_sections()</code></a></li>
+</ul>
+<h2 id="features"><a href="#features">Features</a></h2>
+<p>Fastiron currently implements one feature:</p>
+<ul>
+<li><strong>single-precision</strong> - When enabled, all computations done during the simulation will be done using the
+single-precision float type <a href="https://doc.rust-lang.org/1.75.0/std/primitive.f32.html" title="primitive f32"><code>f32</code></a>. By default, every computation is done using <a href="https://doc.rust-lang.org/1.75.0/std/primitive.f64.html" title="primitive f64"><code>f64</code></a>.</li>
+</ul>
+<h2 id="useful-links"><a href="#useful-links">Useful Links</a></h2>
+<ul>
+<li>Fastiron <a href="https://github.com/cea-hpc/fastiron">GitHub repository</a></li>
+<li>Quicksilver <a href="https://github.com/LLNL/Quicksilver">GitHub repository</a></li>
+</ul>
+</div></details><h2 id="modules" class="small-section-header"><a href="#modules">Modules</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="constants/index.html" title="mod fastiron::constants">constants</a></div><div class="desc docblock-short">Hardcoded constants used by the simulation</div></li><li><div class="item-name"><a class="mod" href="data/index.html" title="mod fastiron::data">data</a></div><div class="desc docblock-short">Data structures</div></li><li><div class="item-name"><a class="mod" href="geometry/index.html" title="mod fastiron::geometry">geometry</a></div><div class="desc docblock-short">Mesh &amp; modelling-related structures$</div></li><li><div class="item-name"><a class="mod" href="init/index.html" title="mod fastiron::init">init</a></div><div class="desc docblock-short">Initialization code for the problem</div></li><li><div class="item-name"><a class="mod" href="montecarlo/index.html" title="mod fastiron::montecarlo">montecarlo</a></div><div class="desc docblock-short">Super-structure used to store the problem’s data</div></li><li><div class="item-name"><a class="mod" href="parameters/index.html" title="mod fastiron::parameters">parameters</a></div><div class="desc docblock-short">Parameters-related code</div></li><li><div class="item-name"><a class="mod" href="particles/index.html" title="mod fastiron::particles">particles</a></div><div class="desc docblock-short">Particle modelling code</div></li><li><div class="item-name"><a class="mod" href="simulation/index.html" title="mod fastiron::simulation">simulation</a></div><div class="desc docblock-short">Computation &amp; simulation-related code</div></li><li><div class="item-name"><a class="mod" href="utils/index.html" title="mod fastiron::utils">utils</a></div><div class="desc docblock-short">Utilities used both to setup and run the simulation.</div></li></ul></section></div></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["N_TALLIED_EVENT"],"enum":["MCTallyEvent","TalliedEvent"],"struct":["Balance","FluenceDomain","ScalarFluxDomain","Tallies"]};
