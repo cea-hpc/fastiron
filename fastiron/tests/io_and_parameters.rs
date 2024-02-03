@@ -1,7 +1,7 @@
 use fastiron::{
     parameters::{GeometryParameters, ParameterError, Parameters, Shape, SimulationParameters},
     utils::{
-        io_utils::{parse_input_file, Cli, InputError},
+        input::{parse_input_file, Cli, InputError},
         mc_processor_info::{ExecPolicy, MCProcessorInfo},
     },
 };

@@ -154,7 +154,7 @@ pub fn fluence_test<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
         .iter()
         .for_each(|val| local_sum += *val);
 
-    let average: T = local_sum / FromPrimitive::from_usize(mcresults.fluence.size()).unwrap();
+    let average: T = local_sum / FromPrimitive::from_usize(mcresults.fluence.cell.len()).unwrap();
     mcresults.fluence.cell.iter().for_each(|cell_value| {
         let percent_diff: T = (*cell_value - average).abs()
             / ((*cell_value + average) / FromPrimitive::from_f64(2.0).unwrap())

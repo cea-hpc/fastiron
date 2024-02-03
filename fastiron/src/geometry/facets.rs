@@ -32,21 +32,20 @@ impl<T: CustomFloat> MCGeneralPlane<T> {
     pub fn new(points: &[MCVector<T>]) -> Self {
         let one: T = one();
         assert_eq!(points.len(), 3);
-        let r0 = points[0];
-        let r1 = points[1];
-        let r2 = points[2];
+        let (r0, r1, r2) = (points[0], points[1], points[2]);
 
         let mut a = ((r1.y - r0.y) * (r2.z - r0.z)) - ((r1.z - r0.z) * (r2.y - r0.y));
         let mut b = ((r1.z - r0.z) * (r2.x - r0.x)) - ((r1.x - r0.x) * (r2.z - r0.z));
         let mut c = ((r1.x - r0.x) * (r2.y - r0.y)) - ((r1.y - r0.y) * (r2.x - r0.x));
         let mut d = -one * (a * r0.x + b * r0.y + c * r0.z);
 
-        let mut magnitude: T = (a * a + b * b + c * c).sqrt();
+        let magnitude: T = (a * a + b * b + c * c).sqrt();
 
         // if magnitude == 0
         if magnitude == zero() {
             a = one;
-            magnitude = one;
+            // early return should prevent fp error
+            return Self { a, b, c, d };
         }
         // normalize
         a /= magnitude;

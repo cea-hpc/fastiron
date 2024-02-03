@@ -65,10 +65,6 @@ impl<T: CustomFloat> FluenceDomain<T> {
             *fl_cell += sum;
         })
     }
-
-    pub fn size(&self) -> usize {
-        self.cell.len()
-    }
 }
 
 //========
@@ -127,13 +123,17 @@ impl Index<TalliedEvent> for Balance {
     type Output = u64;
 
     fn index(&self, index: TalliedEvent) -> &Self::Output {
-        &self.data[index as usize]
+        let idx = index as usize;
+        assert!(idx < self.data.len());
+        &self.data[idx]
     }
 }
 
 impl IndexMut<TalliedEvent> for Balance {
     fn index_mut(&mut self, index: TalliedEvent) -> &mut Self::Output {
-        &mut self.data[index as usize]
+        let idx = index as usize;
+        assert!(idx < self.data.len());
+        &mut self.data[idx]
     }
 }
 
@@ -184,17 +184,18 @@ impl<T: CustomFloat> ScalarFluxDomain<T> {
     }
 }
 
-// maybe make theses accesses unchecked?
 impl<T: CustomFloat> Index<(usize, usize)> for ScalarFluxDomain<T> {
     type Output = Atomic<T>;
 
     fn index(&self, index: (usize, usize)) -> &Self::Output {
+        assert!(index.0 * self.num_groups + index.1 < self.cell.len());
         &self.cell[index.0 * self.num_groups + index.1]
     }
 }
 
 impl<T: CustomFloat> IndexMut<(usize, usize)> for ScalarFluxDomain<T> {
     fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        assert!(index.0 * self.num_groups + index.1 < self.cell.len());
         &mut self.cell[index.0 * self.num_groups + index.1]
     }
 }

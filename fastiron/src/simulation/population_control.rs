@@ -29,8 +29,6 @@ pub fn compute_split_factor<T: CustomFloat>(
     num_threads: usize,
     load_balance: bool,
 ) -> T {
-    let mut split_rr_factor: T = one();
-
     if load_balance {
         // unit-specific modifications to reach uniform distribution
         if local_n_particles != 0 {
@@ -39,16 +37,19 @@ pub fn compute_split_factor<T: CustomFloat>(
                     / FromPrimitive::from_usize(num_threads).unwrap();
                 tmp.ceil().to_usize().unwrap()
             };
-            split_rr_factor = <T as FromPrimitive>::from_usize(local_target_n_particles).unwrap()
-                / FromPrimitive::from_usize(local_n_particles).unwrap();
+            // return
+            <T as FromPrimitive>::from_usize(local_target_n_particles).unwrap()
+                / FromPrimitive::from_usize(local_n_particles).unwrap()
+        } else {
+            // return
+            one()
         }
     } else {
         // uniform modifications across units without regards to distribution
-        split_rr_factor = <T as FromPrimitive>::from_usize(global_target_n_particles).unwrap()
-            / FromPrimitive::from_usize(global_n_particles).unwrap();
+        // return
+        <T as FromPrimitive>::from_usize(global_target_n_particles).unwrap()
+            / FromPrimitive::from_usize(global_n_particles).unwrap()
     }
-
-    split_rr_factor
 }
 
 /// Simulates the sources according to the problem's parameters.

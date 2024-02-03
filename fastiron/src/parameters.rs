@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     constants::CustomFloat,
-    utils::io_utils::{parse_input_file, Cli, InputError},
+    utils::input::{parse_input_file, Cli, InputError},
 };
 
 /// Alias for a `<String, String>` [`FxHashMap`]. See here for detailed
@@ -368,7 +368,7 @@ impl<T: CustomFloat> SimulationParameters<T> {
     ///
     /// ```rust
     /// use clap::Parser;
-    /// use fastiron::utils::io_utils::Cli;
+    /// use fastiron::utils::input::Cli;
     /// use fastiron::parameters::SimulationParameters;
     ///
     ///

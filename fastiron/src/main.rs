@@ -16,7 +16,7 @@ use fastiron::parameters::Parameters;
 use fastiron::particles::particle_container::ParticleContainer;
 use fastiron::simulation::population_control;
 use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
-use fastiron::utils::io_utils::Cli;
+use fastiron::utils::input::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
 
@@ -39,6 +39,15 @@ fn main() {
 
     let params: Parameters<FloatType> = Parameters::get_parameters(cli).unwrap();
     println!("[Simulation Parameters]\n{:#?}", params.simulation_params);
+
+    let n_cells_tot =
+        params.simulation_params.nx * params.simulation_params.ny * params.simulation_params.nz;
+
+    if params.simulation_params.n_particles as usize / n_cells_tot < 10 {
+        println!("[ERROR] TOO FEW PARTICLES PER CELL OVERALL");
+        println!("[ERROR] Need at least 10 particles per cell of the mesh overall");
+        return;
+    }
 
     //===============
     // Initialization
@@ -162,9 +171,13 @@ pub fn bind_threads(thread_id: usize, topo: &Arc<Mutex<Topology>>) {
         unit.cpuset().unwrap()
     };
 
-    locked_topo
-        .set_cpubind_for_thread(pthread_id, cpu_set, CpuBindFlags::CPUBIND_THREAD)
-        .unwrap();
+    match locked_topo.set_cpubind_for_thread(pthread_id, cpu_set, CpuBindFlags::CPUBIND_THREAD) {
+        Ok(_) => {}
+        Err(e) => {
+            println!("[Error]: Could not bind threads to cpu cores:");
+            println!("{e:#?}");
+        }
+    }
 }
 
 fn has_ancestor(object: &TopologyObject, ancestor: &TopologyObject) -> bool {
@@ -281,25 +294,19 @@ pub fn cycle_process<T: CustomFloat>(
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::PopulationControl);
     mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTracking);
 
-    loop {
-        while !container.is_done_processing() {
-            // sort particles
-            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
-            container.sort_processing();
-            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
+    while !container.is_done_processing() {
+        // sort particles
+        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingSort);
+        container.sort_processing();
+        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingSort);
 
-            // track particles
-            mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
-            container.process_particles(mcdata, mcunit);
-            mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
+        // track particles
+        mc_fast_timer::start(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
+        container.process_particles(mcdata, mcunit);
+        mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTrackingProcess);
 
-            // clean extra here
-            container.clean_extra_vaults();
-        }
-
-        if container.is_done_processing() {
-            break;
-        }
+        // clean extra here
+        container.clean_extra_vaults();
     }
 
     mc_fast_timer::stop(&mut mcunit.fast_timer, Section::CycleTracking);

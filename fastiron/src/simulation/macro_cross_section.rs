@@ -46,18 +46,17 @@ pub fn weighted_macroscopic_cross_section<T: CustomFloat>(
     cell_nb_density: T,
     energy_group: usize,
 ) -> T {
-    let mut sum: T = zero();
     let n_isotopes: usize = mcdata.material_database.mat[mat_gid].iso.len();
 
-    (0..n_isotopes).for_each(|isotope_idx| {
-        sum += macroscopic_total_cross_section(
-            mcdata,
-            mat_gid,
-            isotope_idx,
-            cell_nb_density,
-            energy_group,
-        )
-    });
-
-    sum
+    (0..n_isotopes)
+        .map(|isotope_idx| {
+            macroscopic_total_cross_section(
+                mcdata,
+                mat_gid,
+                isotope_idx,
+                cell_nb_density,
+                energy_group,
+            )
+        })
+        .sum()
 }

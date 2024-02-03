@@ -135,9 +135,10 @@ fn mct_nf_3dg<T: CustomFloat>(
     let mut move_factor: T = <T as FromPrimitive>::from_f64(0.5).unwrap() * T::small_float();
 
     let tmp: T = FromPrimitive::from_f64(1e-16).unwrap();
-    let planes = &mesh.cell_geometry[particle.cell];
     let plane_tolerance: T =
         tmp * (coords.x * coords.x + coords.y * coords.y + coords.z * coords.z);
+
+    let planes = &mesh.cell_geometry[particle.cell];
     let mut distance_to_facet: [T; N_FACETS_OUT] = [T::huge_float(); N_FACETS_OUT];
 
     loop {
