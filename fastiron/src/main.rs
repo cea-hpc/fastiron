@@ -16,7 +16,7 @@ use fastiron::parameters::Parameters;
 use fastiron::particles::particle_container::ParticleContainer;
 use fastiron::simulation::population_control;
 use fastiron::utils::coral_benchmark_correctness::coral_benchmark_correctness;
-use fastiron::utils::io_utils::Cli;
+use fastiron::utils::input::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
 
