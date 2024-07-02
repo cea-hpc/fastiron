@@ -1,5 +1,13 @@
-/config
+# IDE
+/.idea
+/.vscode
+
+# Rust
+Cargo.lock
 /target
+
+# Fastiron
+/config
 /tmp
 /out
 *.csv
