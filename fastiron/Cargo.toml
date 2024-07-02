@@ -6,19 +6,19 @@ edition = "2021"
 # DEPENDENCIES
 
 [dependencies]
-clap = { version = "*", features = ["cargo", "derive"] }
-serde_yaml = { version = "*", features = [] }
-num = { version = "*" }
-rand = { version = "*", features = ["small_rng"] }
-tinyvec = { version = "*" }
-rayon = { version = "*" }
+clap = { version = "4.5.8", features = ["cargo", "derive"] }
+serde_yaml = { version = "0.9.34+deprecated", features = [] }
+num = { version = "0.4.3" }
+rand = { version = "0.8.5", features = ["small_rng"] }
+tinyvec = { version = "1.6.1" }
+rayon = { version = "1.10.0" }
 atomic = { version = "0.5.3" } # further upgrade == breaking change
-hwloc2 = { version = "2.2.0" }
-libc = { version = "*" }
-rustc-hash = { version = "*" }
+hwloc2 = { version = "2.2.0" } # should be replaced with hwlocality
+libc = { version = "0.2.155" }
+rustc-hash = { version = "2.0.0" }
 
 [dev-dependencies]
-criterion = { version = "*", features = ["html_reports"] }
+criterion = { version = "0.5.1", features = ["html_reports"] }
 
 # FEATURES
 [features]
