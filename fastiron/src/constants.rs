@@ -157,11 +157,10 @@ impl CustomFloat for f64 {
 //===================
 
 /// Simulation-related constants
+///
+/// The constants here have no physical grounding and are just related to the nature of
+/// the running simulation.
 pub mod sim {
-    //!
-    //! The constants here have no physical grounding and are just related to
-    //! the nature of the running simulation.
-
     /// Fraction of the target number of particles to spawn at each cycle,
     /// independently of the state of the system.
     pub const SRC_FRACTION: f64 = 0.1;
