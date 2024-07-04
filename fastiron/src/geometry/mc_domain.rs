@@ -194,7 +194,7 @@ impl<T: CustomFloat> MCDomain<T> {
         geometry_params.iter().rev().for_each(|geom| {
             if Self::is_inside(geom, rr) {
                 // cant return directly because of the behavior of original function
-                mat_name = geom.material_name.to_owned();
+                mat_name.clone_from(&geom.material_name);
             }
         });
 

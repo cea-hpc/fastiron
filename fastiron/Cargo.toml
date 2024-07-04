@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.8", features = ["cargo", "derive"] }
-serde_yaml = { version = "0.9.34+deprecated", features = [] }
+serde_yaml = { version = "0.9.34", features = [] }
 num = { version = "0.4.3" }
 rand = { version = "0.8.5", features = ["small_rng"] }
 tinyvec = { version = "1.6.1" }
