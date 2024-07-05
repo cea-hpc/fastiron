@@ -16,7 +16,7 @@ use super::mc_particle::MCParticle;
 // Base structures & methods
 //==========================
 
-/// Custome data structure used to implement [rayon]'s iterator.
+/// Custom data structure used to implement [rayon]'s iterator.
 #[derive(Debug, Clone)]
 pub struct ParticleCollection<T: CustomFloat> {
     /// Vector holding all the particles of the collection.
