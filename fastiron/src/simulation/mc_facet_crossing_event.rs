@@ -12,7 +12,7 @@ use crate::{
 
 /// Computes and transform accordingly a [MCParticle] object crossing a facet.
 ///
-/// This functions update a particle's locational data according to one of the
+/// This function updates a particle's locational data according to one of the
 /// four defined adjacency events ([MCSubfacetAdjacencyEvent]). Note that in a
 /// sequential or a memory-shared parallelism context, there are no off-processor
 /// transit as the mesh is not divided for management.

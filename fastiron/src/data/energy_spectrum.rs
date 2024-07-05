@@ -37,7 +37,7 @@ impl EnergySpectrum {
     }
 
     /// Print the spectrum. This function does nothing if no output file were
-    /// specififed at launch.
+    /// specified at launch.
     pub fn print_spectrum<T: CustomFloat>(&self, mcdata: &MonteCarloData<T>) {
         if self.file_name.is_empty() {
             return;

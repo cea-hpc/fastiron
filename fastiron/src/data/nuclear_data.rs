@@ -45,7 +45,7 @@ impl<T: CustomFloat> Polynomial<T> {
 
 /// Lowest-level structure to represent a reaction.
 ///
-/// A reaction is caracterized by three elements: a probability density
+/// A reaction is characterized by three elements: a probability density
 /// (cross-section), the type of the reaction and a statistical offset
 /// (nu bar).
 #[derive(Debug)]
@@ -107,7 +107,7 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
 
 /// Structure used to hold a list of reactions.
 ///
-/// The list of reaction held by the structure is specififc to a particle species.
+/// The list of reaction held by the structure is specific to a particle species.
 /// At the current time there is only one type of particle in the simulation.
 #[derive(Debug, Default)]
 pub struct NuclearDataSpecies<T: CustomFloat> {
@@ -149,7 +149,7 @@ pub struct NuclearData<T: CustomFloat> {
     pub num_energy_groups: usize,
     /// Isotope-sorted reaction list.
     pub isotopes: Vec<NuclearDataIsotope<T>>,
-    /// Discretized value of the energy spectrum.
+    /// Discrete value of the energy spectrum.
     pub energies: Vec<T>,
 }
 
@@ -180,7 +180,7 @@ impl<T: CustomFloat> NuclearData<T> {
 
     /// Adds an isotope to the internal list.
     ///
-    /// The isotope is built from the material data and cross sections
+    /// The isotope is built from the material data and cross-sections
     /// specified in the material.
     pub fn add_isotope(
         &mut self,
@@ -283,7 +283,7 @@ impl<T: CustomFloat> NuclearData<T> {
         low
     }
 
-    /// Returns the total cross section for a given energy group.
+    /// Returns the total cross-section for a given energy group.
     pub fn get_total_cross_section(&self, isotope_index: usize, group: usize) -> T {
         // sum all reaction's xsection for a given isotope at a given energy level
         self.isotopes[isotope_index][0]

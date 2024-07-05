@@ -1,4 +1,4 @@
-//! Code for cross-section computation a.k.a probability density computation
+//! Code for cross-section computation a.k.a. probability density computation
 //!
 //! This module contains function used to compute cross-section data from known
 //! physical quantities of the material and reacting isotope.
@@ -8,7 +8,7 @@ use num::{zero, FromPrimitive};
 use crate::{constants::CustomFloat, montecarlo::MonteCarloData};
 
 /// Computes the total number-density-weighted macroscopic
-/// cross section in the cell.
+/// cross-section in the cell.
 ///
 /// Note that this function is isotope-specific; However the proxy-app
 /// only accounts for simulation of a single isotope type.
@@ -35,7 +35,7 @@ fn macroscopic_total_cross_section<T: CustomFloat>(
     atom_fraction * cell_nb_density * micro_cross_section
 }
 
-/// Computes the number-density-weighted macroscopic cross section
+/// Computes the number-density-weighted macroscopic cross-section
 /// of a collection of isotopes in the cell.
 ///
 /// Note that there is not really any weighting, this comes from the original

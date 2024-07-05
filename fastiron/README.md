@@ -19,12 +19,12 @@ cargo run --bin=fastiron -- -i input_files/QS_originals/AllEscape/allEscape.inp 
 
 ## Outputs
 
-By default, the program will print to the terminal the tallies report and the timers report. Three additional 
+By default, the program will print to the terminal the tallies report and the timers report. Three additional
 options are provided to the user:
 
-- `-c, --csv`: The aforementionned reports will be saved as csv files. The files can directly be used by the 
+- `-c, --csv`: The aforementioned reports will be saved as csv files. The files can directly be used by the
   stats tool.
-- `-e, --energy-spectrum <ENERGY_SPECTRUM>`: Save the endstate energy spectrum in a file named according to
+- `-e, --energy-spectrum <ENERGY_SPECTRUM>`: Save the end-state energy spectrum in a file named according to
   the specified argument.
 - `-S, --cross-sections <CROSS_SECTIONS_OUT`: Save the values of cross-sections of the mesh.
 
@@ -36,4 +36,5 @@ Fastiron currently implements one feature:
   single-precision float type `f32`. By default, every computation is done using `f64`.
 
 [fastiron]: https://github.com/cea-hpc/fastiron
+
 [quicksilver]: https://github.com/LLNL/Quicksilver

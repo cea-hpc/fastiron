@@ -53,7 +53,7 @@ pub struct MCParticle<T: CustomFloat> {
     /// Age.
     pub age: T,
 
-    /// Cache-ing the current total cross section/
+    /// Cache-ing the current total cross-section.
     pub total_cross_section: T,
     /// Distance to a collision.
     pub mean_free_path: T,
@@ -122,7 +122,7 @@ impl<T: CustomFloat> MCParticle<T> {
                 .sqrt()
     }
 
-    /// Return the starting cross section for reaction sampling.
+    /// Return the starting cross-section for reaction sampling.
     pub fn get_current_xs(&mut self) -> T {
         self.total_cross_section * rng_sample::<T>(&mut self.random_number_seed)
     }
@@ -234,7 +234,7 @@ impl<T: CustomFloat> MCParticle<T> {
     /// to be rotated. The direction cosine describes global theta and phi
     /// angles that the vector V is to be rotated about.
     /// `cos_theta_zero`/`sin_theta_zero` and `cos_phi_zero`/`sin_phi_zero`
-    /// model the initial position while the arguments of the method caracterize
+    /// model the initial position while the arguments of the method characterize
     /// the rotation. See [this][1] for explanation on the formula.
     ///
     /// [1]: https://en.wikipedia.org/wiki/Spherical_coordinate_system#Integration_and_differentiation_in_spherical_coordinates
@@ -280,7 +280,7 @@ impl<T: CustomFloat> MCParticle<T> {
         self.weight /= split_rr_factor;
 
         let n_split: usize = split_factor.to_usize().unwrap();
-        // return an iterating object so we can use .flat_map() method
+        // return an iterating object, so we can use .flat_map() method
         (0..n_split).map(|_| {
             let mut split_pp = self.clone();
             split_pp.random_number_seed = spawn_rn_seed::<T>(&mut self.random_number_seed);

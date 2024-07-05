@@ -46,7 +46,7 @@
 //!   -Z, --lz <LZ>
 //!           z-size of simulation in cm
 //!   -n, --n-particles <N_PARTICLES>
-//!           total number of particules
+//!           total number of particles
 //!   -C, --chunk-size <CHUNK_SIZE>
 //!           size of the chunks when executing in parallel -- if absent or set to 0, use dynamic chunk size
 //!   -r, --rayon <N_RAYON_THREADS>

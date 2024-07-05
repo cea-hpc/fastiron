@@ -22,17 +22,17 @@ struct GridCell {
 /// Structure used to locate vectors, i.e. coordinates, in the grid.
 #[derive(Debug)]
 pub struct GridAssignmentObject<T: CustomFloat> {
-    /// Number of cells along the x axis.
+    /// Number of cells along the x-axis.
     pub nx: usize,
-    /// Number of cells along the y axis.
+    /// Number of cells along the y-axis.
     pub ny: usize,
-    /// Number of cells along the z axis.
+    /// Number of cells along the z-axis.
     pub nz: usize,
-    /// Size of a mesh cell along the x axis (cm).
+    /// Size of a mesh cell along the x-axis (cm).
     pub dx: T,
-    /// Size of a mesh cell along the y axis (cm).
+    /// Size of a mesh cell along the y-axis (cm).
     pub dy: T,
-    /// Size of a mesh cell along the z axis (cm).
+    /// Size of a mesh cell along the z-axis (cm).
     pub dz: T,
 
     /// List of corners.
@@ -105,7 +105,7 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
 
     /// Returns the closest center to a given coordinate. This is done by browsing
     /// through the cell, doing a tweaked breadth-first search on the graph. The
-    /// algorithm is essentially the same, with just one additionnal condition
+    /// algorithm is essentially the same, with just one additional condition
     /// to keep searching "towards" a given direction: for the minimal distance
     /// to diminish.
     pub fn nearest_center(&mut self, rr: MCVector<T>) -> usize {
@@ -117,7 +117,7 @@ impl<T: CustomFloat> GridAssignmentObject<T> {
         while !self.flood_queue.is_empty() {
             // next cell to check
             let cell_idx: usize = self.flood_queue.pop_front().unwrap();
-            // if cell is too far away, dont even try
+            // if cell is too far away, don't even try
             if self.min_dist2(rr, cell_idx) > r2_min {
                 continue;
             }

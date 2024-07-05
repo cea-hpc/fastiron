@@ -2,7 +2,7 @@
 //!
 //! This module contains code related to the mesh structure used to simulate the problem.
 //! This includes the mesh itself as well as objects used for navigating it. The
-//! caracteristics of the mesh are defined as constants.
+//! characteristics of the mesh are defined as constants.
 //!
 //! The used mesh is made of cells (hexahedron), each divided in 12 sub-cells (tetrahedron).
 //! TODO: insert an image?

@@ -41,7 +41,7 @@ pub enum TalliedData {
     Census = 11,
     /// Number of segments computed this cycle.
     NumSeg = 12,
-    /// Overall sclaarflux value this cycle.
+    /// Overall scalar flux value this cycle.
     ScalarFlux = 13,
     /// Time spent section this cycle.
     PopulationControl = 14,
@@ -238,7 +238,7 @@ pub struct SummarizedVariable {
     pub total: f64,
 }
 
-/// Structure used to reprensent the entire timer report of a single simulation
+/// Structure used to represent the entire timer report of a single simulation
 pub struct TimerReport {
     /// Array of the section timers.
     pub timers_data: [SummarizedVariable; N_TIMERS],

@@ -202,7 +202,7 @@ impl MeshPartition {
             .for_each(|nbr_idx| {
                 if wet_cells.insert(nbr_idx) {
                     // the method return true if the object was inserted,
-                    // i.e. if it was abent before
+                    // i.e. if it was absent before
                     flood_queue.push_back(nbr_idx);
                 }
             });
@@ -224,7 +224,7 @@ mod tests {
     fn partition_building() {
         // simple grid 2*2*2 grid, each cell dim is 1
         let grid = GlobalFccGrid::new(2, 2, 2, 2.0, 2.0, 2.0);
-        // 2 symetrical centers
+        // 2 symmetrical centers
         let c1 = MCVector {
             x: 0.0,
             y: 0.0,
@@ -264,8 +264,8 @@ mod tests {
         });
 
         // NOTE: only the belonging and neighboring cells are initialized
-        // NOTE: is there a way to test this or remove non neighboring cells? is it worth it?
-        // for this simple case, non neighboring cell are gid 0 in domain 1 and
+        // NOTE: is there a way to test this or remove non-neighboring cells? is it worth it?
+        // for this simple case, non-neighboring cell are gid 0 in domain 1 and
         // gid 7 in domain 0
         partition.iter().for_each(|part| {
             part.cell_info_map.iter().for_each(|(cell_gid, cell_info)| {

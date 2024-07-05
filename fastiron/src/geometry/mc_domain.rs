@@ -26,7 +26,7 @@ use super::{
 /// Structure used to hold information related a cell's face.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FaceInfo {
-    /// Event asociated to the crossing of the face.
+    /// Event associated to the crossing of the face.
     pub event: MCSubfacetAdjacencyEvent,
     /// Current cell's data.
     pub cell_info: CellInfo,

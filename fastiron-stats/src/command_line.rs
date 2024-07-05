@@ -17,7 +17,7 @@ pub struct Cli {
     #[arg(short = 'E', long = "event-correlation", num_args(1))]
     pub correlation: Option<String>,
 
-    /// root path of timers file for weak scaling data
+    /// root path of timer files for weak scaling data
     #[arg(
         short = 'W',
         long = "weak-scaling",
@@ -26,7 +26,7 @@ pub struct Cli {
     )]
     pub weak_scaling_root: Option<String>,
 
-    /// root path of timers file for strong scaling data
+    /// root path of timer files for strong scaling data
     #[arg(
         short = 'S',
         long = "strong-scaling",

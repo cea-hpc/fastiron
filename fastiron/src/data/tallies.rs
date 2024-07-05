@@ -221,7 +221,7 @@ impl<T: CustomFloat> Tallies<T> {
 
     /// Prints summarized data recorded by the tallies.
     ///
-    /// This function prints the number of recorded events & additionnal data
+    /// This function prints the number of recorded events & additional data
     /// at each cycle of the simulation. After five cycle, the printed output
     /// would look like the following:
     ///

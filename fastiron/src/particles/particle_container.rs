@@ -125,12 +125,13 @@ impl<T: CustomFloat> ParticleContainer<T> {
                     .par_iter_mut()
                     .chunks(chunk_size)
                     .map(|mut particles| {
-                        // Strategy used to reduce ressource (memory) contention
+                        // Strategy used to reduce resource (memory) contention
                         // 1. Give each chunks (==thread with our chunk_size value) its own balance
                         //    This removes the need for atomics type. The tradeoff: folding results
                         //    of the iterators
                         // 2. Use a local extra collection that is later used to extend the global
-                        //    container. This reduces the total number of lock (and prolly lock time)
+                        //    container. This reduces the total number of lock (and probably
+                        //    lock time)
                         let mut local_balance: Balance = Balance::default();
                         // chunk_size * 5 is enough capacity to handle all particles undergoing
                         // fission & splitting into the max possible nb of particles.

@@ -245,7 +245,7 @@ pub fn start(timer_container: &mut MCFastTimerContainer, section: Section) {
     timer_container.timers[index].start_clock = Instant::now();
 }
 
-/// Stop the specified timer and record internally the duration sicne start.
+/// Stop the specified timer and record internally the duration since start.
 pub fn stop(timer_container: &mut MCFastTimerContainer, section: Section) {
     let index = section as usize;
     timer_container.timers[index].end_clock = Instant::now();

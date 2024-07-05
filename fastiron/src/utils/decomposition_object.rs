@@ -9,7 +9,7 @@
 ///
 /// Indexing between `rank` and `index` fields is coherent meaning that all
 /// the domains indexing is held by these two vectors: the global identifier of
-/// a given domain can computed using the rank it belongs to and its local index.
+/// a given domain can be computed using the rank it belongs to and its local index.
 /// Global identifiers of the assigned domains are computed this way.
 #[derive(Debug)]
 pub struct DecompositionObject {
