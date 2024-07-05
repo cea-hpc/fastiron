@@ -1,6 +1,10 @@
-name: DevJobs
+name: Rust CI
 
-on: [ pull_request, workflow_dispatch ]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -44,5 +48,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get install -y libhwloc-dev
       - name: Build the crate
         run: cargo build --all
