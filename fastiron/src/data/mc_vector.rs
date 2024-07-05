@@ -1,6 +1,6 @@
 //! 3D vectors
 //!
-//! This modules contains a custom type for 3D vectors.
+//! This module contains a custom type for 3D vectors.
 
 use std::{fmt::Debug, iter::Sum};
 
@@ -49,7 +49,7 @@ impl<T: CustomFloat> MCVector<T> {
         (*self - *vv).is_almost_zero()
     }
 
-    /// Return the vector's euclidian norm.
+    /// Return the vector's Euclidean norm.
     pub fn length(&self) -> T {
         // using num implem might be the safest since x,y,z are T: Float
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
@@ -125,7 +125,7 @@ impl<T: CustomFloat> core::ops::Mul<T> for MCVector<T> {
     }
 }
 
-// Assign-operations implems
+// Assign-operations implementations
 
 impl<T: CustomFloat> core::ops::AddAssign<MCVector<T>> for MCVector<T> {
     fn add_assign(&mut self, vv: MCVector<T>) {

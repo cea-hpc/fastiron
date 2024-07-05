@@ -100,11 +100,11 @@ pub enum MCSubfacetAdjacencyEvent {
     /// correctly.
     #[default]
     AdjacencyUndefined = 0,
-    /// Value correspnding to an escape event. The facet is located at the
+    /// Value corresponding to an escape event. The facet is located at the
     /// edge of the problem and the behavior is set to allow escape.
     BoundaryEscape,
-    /// Value correspnding to an reflection event. The facet is located at the
-    /// edge of the problem and the behavior of the facet is set to relfect.
+    /// Value corresponding to a reflection event. The facet is located at the
+    /// edge of the problem and the behavior of the facet is set to reflect.
     BoundaryReflection,
     /// Value corresponding to an intra-problem crossing event. The neighboring
     /// facet belongs to a cell managed by the same processor.
