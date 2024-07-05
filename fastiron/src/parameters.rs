@@ -27,9 +27,9 @@ pub enum ParameterError {
     /// There is a missing reference to a material; The string
     /// contains the name of the aforementioned material.
     MissingMaterial(String),
-    /// There is a missing reference to a cross section; The string
-    /// contains the name of the aforementionned cross section and
-    /// the material refering to it.
+    /// There is a missing reference to a cross-section; The string
+    /// contains the name of the aforementioned cross-section and
+    /// the material referring to it.
     MissingCrossSection(String),
 }
 
@@ -39,9 +39,9 @@ pub enum BenchType {
     /// No additional tests are executed. This is the default mode.
     #[default]
     Standard,
-    /// First configuration for the additionnal tests.
+    /// First configuration for the additional tests.
     Coral1,
-    /// Second configuration for the additionnal tests.
+    /// Second configuration for the additional tests.
     Coral2,
 }
 
@@ -68,7 +68,7 @@ pub struct GeometryParameters<T: CustomFloat> {
     /// - A sphere-shaped geometry will only use radius and coordinates of the center.
     /// - A brick-shaped geometry will only use bounds on the axes.
     pub shape: Shape,
-    /// Radius of a shere-shaped geometry.
+    /// Radius of a sphere-shaped geometry.
     pub radius: T,
     /// x-coordinate of the center of a sphere-shaped geometry.
     pub x_center: T,
@@ -146,7 +146,7 @@ pub struct MaterialParameters<T: CustomFloat> {
     pub name: String,
     /// Mass of the material in grams.
     pub mass: T,
-    /// Total value of the cross section.
+    /// Total value of the cross-section.
     pub total_cross_section: T,
     /// Number of isotopes.
     pub n_isotopes: usize,
@@ -154,17 +154,17 @@ pub struct MaterialParameters<T: CustomFloat> {
     pub n_reactions: usize,
     /// Rate of particle sourcing.
     pub source_rate: T,
-    /// Scattering reaction cross section name.
+    /// Scattering reaction cross-section name.
     pub scattering_cross_section: String,
-    /// Absorption reaction cross section name.
+    /// Absorption reaction cross-section name.
     pub absorption_cross_section: String,
-    /// Fission reaction cross section name.
+    /// Fission reaction cross-section name.
     pub fission_cross_section: String,
-    /// Scattering reaction cross section ratio i.e. its relative weight.
+    /// Scattering reaction cross-section ratio i.e. its relative weight.
     pub scattering_cross_section_ratio: T,
-    /// Absorption reaction cross section ratio i.e. its relative weight.
+    /// Absorption reaction cross-section ratio i.e. its relative weight.
     pub absorbtion_cross_section_ratio: T,
-    /// Fission reaction cross section ratio i.e. its relative weight.
+    /// Fission reaction cross-section ratio i.e. its relative weight.
     pub fission_cross_section_ratio: T,
 }
 
@@ -229,14 +229,14 @@ impl<T: CustomFloat> Default for MaterialParameters<T> {
     }
 }
 
-/// Structure used to describe a cross section, i.e. a probability density
+/// Structure used to describe a cross-section, i.e. a probability density
 /// representation.
 ///
 /// The probability density functions are represented using degree 4 polynomial
 /// functions.
 #[derive(Debug)]
 pub struct CrossSectionParameters<T: CustomFloat> {
-    /// Name of the cross section.
+    /// Name of the cross-section.
     pub name: String,
     /// Leading coefficient of the polynomial function.
     pub aa: T,
@@ -313,7 +313,7 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub input_file: String,
     /// Name of the output file the energy spectrum may be saved to.
     pub energy_spectrum: String,
-    /// Name of the output file the cross sections may be saved to.
+    /// Name of the output file the cross-sections may be saved to.
     pub cross_sections_out: String,
     /// Boundary conditions of the problem. Mesh is initialized according to this value.
     pub boundary_condition: String,
@@ -323,7 +323,7 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub csv: bool,
     /// Switch used to print thread-debugging information. Currently unused.
     pub debug_threads: bool,
-    /// Target number of particle for the simulation. Population will be controled
+    /// Target number of particle for the simulation. Population will be controlled
     /// according to this value.
     pub n_particles: u64,
     /// Size of the chunks used when executing in parallel.
@@ -334,21 +334,21 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub n_units: u64,
     /// Number of steps simulated by the program.
     pub n_steps: usize,
-    /// Number of cells along the x axis.
+    /// Number of cells along the x-axis.
     pub nx: usize,
-    /// Number of cells along the y axis.
+    /// Number of cells along the y-axis.
     pub ny: usize,
-    /// Number of cells along the z axis.
+    /// Number of cells along the z-axis.
     pub nz: usize,
     /// Random number seed for the PRNG used by the simulation.
     pub seed: u64,
     /// Value of the time step in seconds.
     pub dt: T,
-    /// Size of the simulation along the x axis.
+    /// Size of the simulation along the x-axis.
     pub lx: T,
-    /// Size of the simulation along the y axis.
+    /// Size of the simulation along the y-axis.
     pub ly: T,
-    /// Size of the simulation along the z axis.
+    /// Size of the simulation along the z-axis.
     pub lz: T,
     /// Energy value of the lowest energy group.
     pub e_min: T,
@@ -370,7 +370,6 @@ impl<T: CustomFloat> SimulationParameters<T> {
     /// use clap::Parser;
     /// use fastiron::utils::input::Cli;
     /// use fastiron::parameters::SimulationParameters;
-    ///
     ///
     /// let cli = Cli::parse_from("./fastiron -i somefile -c -l".split(' '));
     /// let simulation_params = SimulationParameters::<f64>::from_cli(&cli);
@@ -456,7 +455,7 @@ pub struct Parameters<T: CustomFloat> {
     pub geometry_params: Vec<GeometryParameters<T>>,
     /// Map of materials. See [MaterialParameters] for more.
     pub material_params: FxHashMap<String, MaterialParameters<T>>,
-    /// Map of cross sections. See [CrossSectionParameters] for more.
+    /// Map of cross-sections. See [CrossSectionParameters] for more.
     pub cross_section_params: FxHashMap<String, CrossSectionParameters<T>>,
 }
 
@@ -501,7 +500,7 @@ impl<T: CustomFloat> Parameters<T> {
             return;
         }
 
-        // add a flat cross section
+        // add a flat cross-section
         let flat_cross_section = CrossSectionParameters {
             name: "flat".to_string(),
             ..Default::default()
@@ -540,7 +539,7 @@ impl<T: CustomFloat> Parameters<T> {
     /// 1. There is at least one geometry
     /// 2. All geometries shape are defined, i.e. set as brick or sphere
     /// 3. All material referenced in geometries exist in the material list
-    /// 4. All cross sections referenced in materials exist in the cross section list
+    /// 4. All cross-sections referenced in materials exist in the cross-section list
     pub fn check_parameters_integrity(&self) -> Result<(), Vec<ParameterError>> {
         let mut errors: Vec<ParameterError> = Vec::new();
         // 1.

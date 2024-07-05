@@ -179,7 +179,7 @@ fn init_nuclear_data<T: CustomFloat>(mcdata: &mut MonteCarloData<T>) {
 /// Check the consistency of the domain list passed as argument.
 ///
 /// This function goes through the given domain list and check for inconsistencies
-/// by checking adjacencies coherence.
+/// by checking adjacency coherence.
 pub fn consistency_check<T: CustomFloat>(units: &[MonteCarloUnit<T>]) {
     units
         .iter()
