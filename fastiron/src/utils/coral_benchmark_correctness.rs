@@ -1,4 +1,4 @@
-//! Code used to run additionnal tests when becnhmarking
+//! Code used to run additional tests when benchmarking
 //!
 //! This code is only called if the running examples are specific benchmarks.
 //! If there is a need for additional checks on data yielded by a _homemade_
@@ -11,7 +11,7 @@ use crate::{
     parameters::BenchType,
 };
 
-/// Runs additionnal tests according to the [BenchType].
+/// Runs additional tests according to the [BenchType].
 pub fn coral_benchmark_correctness<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
     if mcresults.bench_type == BenchType::Standard {
         return;
@@ -31,7 +31,7 @@ pub fn coral_benchmark_correctness<T: CustomFloat>(mcresults: &MonteCarloResults
 /// Expected ratios of absorbs, fissions, scatters are maintained
 /// withing some tolerance, based on input expectation.
 pub fn balance_ratio_test<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
-    println!("Testing if ratios for absorbtion, fission & scattering are maintained...");
+    println!("Testing if ratios for absorption, fission & scattering are maintained...");
 
     let balance_tally = &mcresults.balance_cumulative;
     let absorb: T = FromPrimitive::from_u64(balance_tally[TalliedEvent::Absorb]).unwrap();
@@ -117,7 +117,7 @@ pub fn balance_event_test<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
 ///
 /// This test should always succeed unless test for
 /// done was broken, or we are running with 1 MPI rank
-/// and so never preform this test duing test_for_done
+/// and so never preform this test during test_for_done
 pub fn missing_particle_test<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
     println!("Testing for lost / unaccounted for particles in this simulation...");
 
@@ -142,7 +142,7 @@ pub fn missing_particle_test<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
 
 /// Test that the scalar flux is homogenous across cells for the problem.
 ///
-/// This test really requires alot of particles or cycles or both
+/// This test really requires a slot of particles or cycles or both
 /// This solution should converge to a homogenous solution
 pub fn fluence_test<T: CustomFloat>(mcresults: &MonteCarloResults<T>) {
     println!("Testing fluence for homogeneity across the cells");

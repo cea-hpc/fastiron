@@ -1,8 +1,8 @@
 //! Hardcoded constants used by the simulation
 //!
-//! Constants are sorted in sub-modules according to their nature.
+//! Constants are sorted in submodules according to their nature.
 //! Are also included aliases, as well as the custom trait used to
-//! introduce a generic floatting point type in the code.
+//! introduce a generic floating point type in the code.
 //!
 //! The below text is taken directly from a Quicksilver [source file][1]:
 //!
@@ -45,9 +45,9 @@ pub type Tuple4 = (usize, usize, usize, usize);
 
 // generic float type
 
-/// Custom trait for floatting point number
+/// Custom trait for floating point number
 pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
-/// Custom trait for floatting point number
+/// Custom trait for floating point number
 pub trait UtilsFloat:
     Default
     + Debug
@@ -61,7 +61,7 @@ pub trait UtilsFloat:
     + Sync
 {
 }
-/// Custom super-trait for floatting point number
+/// Custom super-trait for floating point number
 pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {
     // floating ref
 

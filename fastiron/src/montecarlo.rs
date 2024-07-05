@@ -75,7 +75,7 @@ pub struct MonteCarloUnit<T: CustomFloat> {
 }
 
 impl<T: CustomFloat> MonteCarloUnit<T> {
-    /// Clear the cross section cache for each domain.
+    /// Clear the cross-section cache for each domain.
     pub fn clear_cross_section_cache(&mut self) {
         self.xs_cache
             .cache
@@ -108,15 +108,15 @@ impl<T: CustomFloat> MonteCarloUnit<T> {
 /// Structure used to lazily compute cross-sections during simulation.
 #[derive(Debug, Default)]
 pub struct XSCache<T: CustomFloat> {
-    /// Number of energy groups in the discretized spectrum. Used to compute
-    /// index when acessing a cross-section.
+    /// Number of energy groups in the discrete spectrum. Used to compute
+    /// index when accessing a cross-section.
     pub num_groups: usize,
-    /// Flattened cache for cross-setion storage. The structure is indexed using
+    /// Flattened cache for cross-section storage. The structure is indexed using
     /// cell ID & energy group.
     pub cache: Vec<Atomic<T>>,
 }
 
-// maybe make theses accesses unchecked?
+// maybe make these accesses unchecked?
 impl<T: CustomFloat> Index<(usize, usize)> for XSCache<T> {
     type Output = Atomic<T>;
 

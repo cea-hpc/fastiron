@@ -116,9 +116,9 @@ pub fn outcome<T: CustomFloat>(
         particle.num_mean_free_paths = small_f;
     }
 
-    // get cross section
+    // get cross-section
     // lazily computed
-    // This ordering should make it so that we dont compute a XS multiple times?
+    // This ordering should make it so that we don't compute a XS multiple times?
     let pcxs = mcunit.xs_cache[(particle.cell, particle.energy_group)].load(Ordering::Acquire);
     let macroscopic_total_xsection = if pcxs > zero() {
         // use precomputed value

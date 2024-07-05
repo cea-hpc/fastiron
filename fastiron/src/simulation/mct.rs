@@ -101,7 +101,7 @@ pub fn cell_position_3dg<T: CustomFloat>(mesh: &MCMeshDomain<T>, cell_idx: usize
 
 /// Reflects a particle off a reflection-type boundary.
 ///
-/// This function is called when a particle undergo a reflectionevent at the
+/// This function is called when a particle undergo a reflection event at the
 /// boundary of the problem. Note that the reflection does not result in a
 /// loss of energy.
 pub fn reflect_particle<T: CustomFloat>(particle: &mut MCParticle<T>, plane: &MCGeneralPlane<T>) {
@@ -186,7 +186,7 @@ fn mct_nf_3dg<T: CustomFloat>(
 }
 
 /// Returns the volume defined by `v3v0`, `v3v1`, `v3v2` using
-/// vectorial operations.
+/// vector operations.
 fn compute_volume<T: CustomFloat>(vertices: &[MCVector<T>], origin: &MCVector<T>) -> T {
     assert_eq!(vertices.len(), N_POINTS_PER_FACET);
     let tmp0 = vertices[0] - *origin;

@@ -1,4 +1,4 @@
-//! Utilities used both to setup and run the simulation.
+//! Utilities used both to set up and run the simulation.
 
 pub mod comm_object;
 pub mod coral_benchmark_correctness;

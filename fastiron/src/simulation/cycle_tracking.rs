@@ -26,7 +26,7 @@ use super::{
 /// Main steps of the `CycleTracking` section.
 ///
 /// The particle at the specified index is loaded, tracked and updated accordingly.
-/// Depeding on the outcome of the tracking, it is either set as processed or
+/// Depending on the outcome of the tracking, it is either set as processed or
 /// invalidated.
 pub fn cycle_tracking_guts<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
