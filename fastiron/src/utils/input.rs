@@ -70,7 +70,7 @@ pub struct Cli {
     #[arg(short = 'Z', long = "lz", num_args(1), allow_negative_numbers(false))]
     pub lz: Option<f32>,
 
-    /// total number of particules
+    /// total number of particles
     #[arg(
         short = 'n',
         long = "n-particles",
