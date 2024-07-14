@@ -20,10 +20,6 @@ use fastiron::utils::input::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
 
-//================================
-// Which float type are we using ?
-//================================
-
 //=====
 // Main
 //=====
