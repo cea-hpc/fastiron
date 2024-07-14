@@ -32,9 +32,11 @@ fn main() {
     let cli = Cli::parse();
 
     if cli.single_precision {
-        run::<f32>(cli)
+        println!("[INFO] Running simulation using `f32`");
+        run::<f32>(cli);
     } else {
-        run::<f64>(cli)
+        println!("[INFO] Running simulation using `f64`");
+        run::<f64>(cli);
     }
 }
 
