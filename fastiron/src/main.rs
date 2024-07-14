@@ -71,7 +71,10 @@ fn main() {
     if mcdata.exec_info.exec_policy == ExecPolicy::Rayon {
         // custom thread-pool init in this case
         if mcdata.exec_info.n_rayon_threads != 0 && mcdata.exec_info.bind_threads {
-            let topo = Arc::new(Mutex::new(Topology::new().unwrap()));
+            let topology = Topology::new().unwrap();
+            // todo: add railguards for arch that do not support thread binding
+            let topo = Arc::new(Mutex::new(topology));
+
             ThreadPoolBuilder::new()
                 .num_threads(mcdata.exec_info.n_rayon_threads)
                 .start_handler(move |thread_id| bind_threads(thread_id, &topo))
