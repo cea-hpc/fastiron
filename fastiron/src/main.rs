@@ -24,12 +24,6 @@ use fastiron::utils::mc_processor_info::ExecPolicy;
 // Which float type are we using ?
 //================================
 
-#[cfg(feature = "single-precision")]
-type FloatType = f32;
-
-#[cfg(not(feature = "single-precision"))]
-type FloatType = f64;
-
 //=====
 // Main
 //=====
@@ -37,7 +31,11 @@ type FloatType = f64;
 fn main() {
     let cli = Cli::parse();
 
-    run::<FloatType>(cli)
+    if cli.single_precision {
+        run::<f32>(cli)
+    } else {
+        run::<f64>(cli)
+    }
 }
 
 //============

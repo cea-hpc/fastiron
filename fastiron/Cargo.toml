@@ -22,7 +22,6 @@ criterion = { version = "0.5.1", features = ["html_reports"] }
 
 # FEATURES
 [features]
-single-precision = []
 
 # BENCH
 

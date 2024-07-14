@@ -84,11 +84,8 @@ pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {
     fn light_speed<T: CustomFloat>() -> T;
 }
 
-#[cfg(feature = "single-precision")]
 impl OpsFloat for f32 {}
-#[cfg(feature = "single-precision")]
 impl UtilsFloat for f32 {}
-#[cfg(feature = "single-precision")]
 impl CustomFloat for f32 {
     /// Threshold value for decimal number when using [f32]. May need adjustment.
     fn huge_float<T: CustomFloat>() -> T {
@@ -118,11 +115,8 @@ impl CustomFloat for f32 {
     }
 }
 
-#[cfg(not(feature = "single-precision"))]
 impl OpsFloat for f64 {}
-#[cfg(not(feature = "single-precision"))]
 impl UtilsFloat for f64 {}
-#[cfg(not(feature = "single-precision"))]
 impl CustomFloat for f64 {
     /// Threshold value for decimal number when using [f64].
     fn huge_float<T: CustomFloat>() -> T {
