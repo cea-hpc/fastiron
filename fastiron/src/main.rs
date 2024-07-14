@@ -3,13 +3,17 @@ use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 use clap::Parser;
-use fastiron::data::tallies::TalliedEvent;
-use hwloc2::{CpuBindFlags, ObjectType, Topology, TopologyObject};
 use num::{one, zero, FromPrimitive};
+
+use hwlocality::cpu::binding::CpuBindingFlags;
+use hwlocality::object::types::ObjectType;
+use hwlocality::object::TopologyObject;
+use hwlocality::Topology;
 use rayon::ThreadPoolBuilder;
 
 use fastiron::constants::sim::SRC_FRACTION;
 use fastiron::constants::CustomFloat;
+use fastiron::data::tallies::TalliedEvent;
 use fastiron::init::{init_mcdata, init_mcunits, init_particle_containers, init_results};
 use fastiron::montecarlo::{MonteCarloData, MonteCarloResults, MonteCarloUnit};
 use fastiron::parameters::Parameters;
@@ -128,6 +132,10 @@ fn main() {
     coral_benchmark_correctness(&mcresults);
 }
 
+//==========================
+// End of simulation cleanup
+//==========================
+
 pub fn game_over<T: CustomFloat>(
     mcdata: &MonteCarloData<T>,
     mcunits: &mut [MonteCarloUnit<T>],
@@ -149,21 +157,25 @@ pub fn game_over<T: CustomFloat>(
     }
 }
 
+//========================
+// Thread binding routines
+//========================
+
 pub fn bind_threads(thread_id: usize, topo: &Arc<Mutex<Topology>>) {
     // get thread id
     let pthread_id = unsafe { libc::pthread_self() };
     // get cpu topology
-    let mut locked_topo = topo.lock().unwrap();
+    let locked_topo = topo.lock().unwrap();
     // get current thread's cpu affinity
     let cpu_set = {
         let ancestor_lvl = locked_topo
-            .depth_or_above_for_type(&ObjectType::NUMANode)
-            .unwrap_or(0);
-        let targets = locked_topo.objects_at_depth(ancestor_lvl);
-        let ancestor = targets.first().expect("No common ancestor found");
-        let processing_units = locked_topo.objects_with_type(&ObjectType::PU).unwrap();
+            .depth_or_above_for_type(ObjectType::NUMANode)
+            .unwrap_or_default();
+        let mut targets = locked_topo.objects_at_depth(ancestor_lvl);
+        let ancestor = targets.next().expect("No common ancestor found");
+        let processing_units = locked_topo.objects_with_type(ObjectType::PU);
         let unit = processing_units
-            .iter()
+            .into_iter()
             .filter(|pu| has_ancestor(pu, ancestor))
             .cycle()
             .nth(thread_id)
@@ -171,7 +183,7 @@ pub fn bind_threads(thread_id: usize, topo: &Arc<Mutex<Topology>>) {
         unit.cpuset().unwrap()
     };
 
-    match locked_topo.set_cpubind_for_thread(pthread_id, cpu_set, CpuBindFlags::CPUBIND_THREAD) {
+    match locked_topo.bind_thread_cpu(pthread_id, cpu_set, CpuBindingFlags::THREAD) {
         Ok(_) => {}
         Err(e) => {
             println!("[Error]: Could not bind threads to cpu cores:");
