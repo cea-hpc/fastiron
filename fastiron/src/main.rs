@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 use clap::Parser;
+use hwlocality::topology::support::{DiscoverySupport, FeatureSupport};
 use num::{one, zero, FromPrimitive};
 
 use hwlocality::cpu::binding::CpuBindingFlags;
@@ -72,14 +73,25 @@ fn main() {
         // custom thread-pool init in this case
         if mcdata.exec_info.n_rayon_threads != 0 && mcdata.exec_info.bind_threads {
             let topology = Topology::new().unwrap();
-            // todo: add railguards for arch that do not support thread binding
-            let topo = Arc::new(Mutex::new(topology));
-
-            ThreadPoolBuilder::new()
-                .num_threads(mcdata.exec_info.n_rayon_threads)
-                .start_handler(move |thread_id| bind_threads(thread_id, &topo))
-                .build_global()
-                .unwrap();
+            // these railguards were taken from the bind_threads_cpu of hwlocality
+            if !topology.supports(FeatureSupport::discovery, DiscoverySupport::pu_count) {
+                println!("[Warning] cannot bind threads to core -- reporting of PU objects not supported");
+            } else if topology.feature_support().cpu_binding().is_none() {
+                println!("[Warning] cannot bind threads to core -- CPU binding not supported");
+            } else {
+                let cpu_support = topology.feature_support().cpu_binding().unwrap();
+                if !(cpu_support.get_thread() && cpu_support.set_thread()) {
+                    println!("[Warning] cannot bind threads to core -- CPU binding queries not supported");
+                } else {
+                    // we can get to work
+                    let topo = Arc::new(Mutex::new(topology));
+                    ThreadPoolBuilder::new()
+                        .num_threads(mcdata.exec_info.n_rayon_threads)
+                        .start_handler(move |thread_id| bind_threads(thread_id, &topo))
+                        .build_global()
+                        .unwrap();
+                }
+            }
         }
         mcdata.exec_info.n_rayon_threads = rayon::current_num_threads();
     }
