@@ -37,7 +37,15 @@ type FloatType = f64;
 fn main() {
     let cli = Cli::parse();
 
-    let params: Parameters<FloatType> = Parameters::get_parameters(cli).unwrap();
+    run::<FloatType>(cli)
+}
+
+//============
+// Main runner
+//============
+
+pub fn run<T: CustomFloat>(cli: Cli) {
+    let params: Parameters<T> = Parameters::get_parameters(cli).unwrap();
     println!("[Simulation Parameters]\n{:#?}", params.simulation_params);
 
     let n_cells_tot =
