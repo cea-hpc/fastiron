@@ -52,7 +52,7 @@ pub struct Cli {
 
     /// enable thread debugging if present
     #[arg(short = 't', long = "debug-threads", num_args(0))]
-    pub debug_threads: bool,
+    pub debug_threads: bool, // currently unused
 
     /// enable single-precision float type usage if present
     #[arg(short = 'p', long = "single-precision", num_args(0))]
@@ -96,6 +96,10 @@ pub struct Cli {
         allow_negative_numbers(false)
     )]
     pub n_rayon_threads: Option<u64>,
+
+    /// bind rayon threads to physical cores -- can improve performance on large scale NUMA systems
+    #[arg(long = "bind-threads", num_args(0))]
+    pub bind_threads: bool,
 
     /// number of units that should be used to run the simulation
     #[arg(

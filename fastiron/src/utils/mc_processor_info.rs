@@ -38,6 +38,8 @@ pub struct MCProcessorInfo {
     pub n_processors: usize,
     /// Number of thread(s) used for execution.
     pub n_rayon_threads: usize,
+    /// Switch to bind rayon threads to physical cores.
+    pub bind_threads: bool,
     /// Size of the chunks used by rayon.
     pub chunk_size: usize,
     /// Number of unit(s) used for (distributed) execution.
@@ -59,6 +61,7 @@ impl MCProcessorInfo {
             }
         } else if sim_params.n_rayon_threads != 1 {
             res.n_rayon_threads = sim_params.n_rayon_threads as usize;
+            res.bind_threads = sim_params.bind_threads;
             res.exec_policy = ExecPolicy::Rayon;
         };
         res.chunk_size = sim_params.chunk_size as usize;
@@ -78,6 +81,7 @@ impl Default for MCProcessorInfo {
             exec_policy: Default::default(),
             n_processors: 1,
             n_rayon_threads: 1,
+            bind_threads: false,
             chunk_size: 0,
             n_units: 1,
         }

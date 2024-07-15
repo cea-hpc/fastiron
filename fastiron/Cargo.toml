@@ -13,7 +13,7 @@ rand = { version = "0.8.5", features = ["small_rng"] }
 tinyvec = { version = "1.6.1" }
 rayon = { version = "1.10.0" }
 atomic = { version = "0.5.3" } # further upgrade == breaking change
-hwloc2 = { version = "2.2.0" } # should be replaced with hwlocality
+hwlocality = { version = "1.0.0-alpha.5" } 
 libc = { version = "0.2.155" }
 rustc-hash = { version = "2.0.0" }
 

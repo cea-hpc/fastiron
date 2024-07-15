@@ -330,6 +330,8 @@ pub struct SimulationParameters<T: CustomFloat> {
     pub chunk_size: u64,
     /// Number of threads that should be used to run the simulation.
     pub n_rayon_threads: u64,
+    /// Switch used to bind rayon threads to physical cores.
+    pub bind_threads: bool,
     /// Number of units that should be used to run the simulation.
     pub n_units: u64,
     /// Number of steps simulated by the program.
@@ -403,6 +405,7 @@ impl<T: CustomFloat> SimulationParameters<T> {
         fetch_from_cli!(n_particles);
         fetch_from_cli!(chunk_size);
         fetch_from_cli!(n_rayon_threads);
+        simulation_params.bind_threads = cli.bind_threads;
         fetch_from_cli!(n_units);
         fetch_from_cli!(n_steps);
         fetch_from_cli!(nx);
@@ -427,6 +430,7 @@ impl<T: CustomFloat> Default for SimulationParameters<T> {
             n_particles: 1000000,
             chunk_size: 0,
             n_rayon_threads: 1,
+            bind_threads: false,
             n_units: 1,
             n_steps: 10,
             nx: 10,
