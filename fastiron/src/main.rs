@@ -20,16 +20,6 @@ use fastiron::utils::input::Cli;
 use fastiron::utils::mc_fast_timer::{self, Section};
 use fastiron::utils::mc_processor_info::ExecPolicy;
 
-//================================
-// Which float type are we using ?
-//================================
-
-#[cfg(feature = "single-precision")]
-type FloatType = f32;
-
-#[cfg(not(feature = "single-precision"))]
-type FloatType = f64;
-
 //=====
 // Main
 //=====
@@ -37,7 +27,21 @@ type FloatType = f64;
 fn main() {
     let cli = Cli::parse();
 
-    let params: Parameters<FloatType> = Parameters::get_parameters(cli).unwrap();
+    if cli.single_precision {
+        println!("[INFO] Running simulation using `f32`");
+        run::<f32>(cli);
+    } else {
+        println!("[INFO] Running simulation using `f64`");
+        run::<f64>(cli);
+    }
+}
+
+//============
+// Main runner
+//============
+
+pub fn run<T: CustomFloat>(cli: Cli) {
+    let params: Parameters<T> = Parameters::get_parameters(cli).unwrap();
     println!("[Simulation Parameters]\n{:#?}", params.simulation_params);
 
     let n_cells_tot =

@@ -88,13 +88,6 @@
 //! - [`EnergySpectrum`][crate::data::energy_spectrum::EnergySpectrum]
 //! - [`init::check_cross_sections()`]
 //!
-//! # Features
-//!
-//! Fastiron currently implements one feature:
-//!
-//! - **single-precision** - When enabled, all computations done during the simulation will be done using the
-//!   single-precision float type [`f32`]. By default, every computation is done using [`f64`].
-//!
 //! # Useful Links
 //!
 //! - Fastiron [GitHub repository][2]
