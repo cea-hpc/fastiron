@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt-get install -y libhwloc-dev libudev-dev
       - name: Generate Rust Docs
         run: cargo doc --all --no-deps
       - run: sudo ./docs/build.sh
