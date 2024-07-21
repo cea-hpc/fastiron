@@ -45,6 +45,19 @@ pub type Tuple4 = (usize, usize, usize, usize);
 
 // generic float type
 
+/// Associated reference value used for compute approximation.
+/// 
+/// This is the only trait that should be manually implemented for custom types. The `CustomFloat` trait is then 
+/// automatically implemented via a blanket implementation.
+pub trait CustomReferenceFloat: Float + FromPrimitive {
+    /// Threshold upper-value for decimal number.
+    fn huge_float<T: CustomFloat>() -> T;
+    /// Threshold low-ish-value for decimal number.
+    fn small_float<T: CustomFloat>() -> T;
+    /// Threshold lower-value for decimal number.
+    fn tiny_float<T: CustomFloat>() -> T;
+}
+
 /// Custom trait for floating point number
 pub trait CustomFloat:
     Float
@@ -66,84 +79,68 @@ pub trait CustomFloat:
     + Send
     + Sync
 {
-    // floating ref
-
     /// Threshold upper-value for decimal number.
-    fn huge_float<T: CustomFloat>() -> T;
+    fn huge_float<T: CustomFloat>() -> T {
+        T::huge_float()
+    }
     /// Threshold low-ish-value for decimal number.
-    fn small_float<T: CustomFloat>() -> T;
+    fn small_float<T: CustomFloat>() -> T {
+        T::small_float()
+    }
     /// Threshold lower-value for decimal number.
-    fn tiny_float<T: CustomFloat>() -> T;
+    fn tiny_float<T: CustomFloat>() -> T {
+        T::tiny_float()
+    } 
 
-    // physical constants
+    fn neutron_mass_energy<T: CustomFloat>() -> T {
+        T::from(9.39565e+2).unwrap()
+    }
 
-    /// Neutron mass energy equivalent (MeV)
-    fn neutron_mass_energy<T: CustomFloat>() -> T;
-    /// [Pick your definition][3]
-    ///
-    /// [3]: https://en.wikipedia.org/wiki/Pi
-    fn pi<T: CustomFloat>() -> T;
-    /// Speed of light (cm/s)
-    fn light_speed<T: CustomFloat>() -> T;
+    fn pi<T: CustomFloat>() -> T {
+        T::from(std::f32::consts::PI).unwrap()
+    }
+
+    fn light_speed<T: CustomFloat>() -> T {
+        T::from(2.99792e+10).unwrap()
+    }
 }
 
-impl CustomFloat for f32 {
+impl CustomReferenceFloat for f32 {
     /// Threshold value for decimal number when using [f32]. May need adjustment.
     fn huge_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(10e35_f32).unwrap()
+        T::from(10e35_f32).unwrap()
     }
 
     /// Threshold value for decimal number when using [f32]. May need adjustment.
     fn small_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(1e-10_f32).unwrap()
+        T::from(1e-10_f32).unwrap()
     }
 
     /// Threshold value for decimal number when using [f32]. May need adjustment.
     fn tiny_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(1e-13_f32).unwrap()
-    }
-
-    fn neutron_mass_energy<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(9.39565e+2).unwrap()
-    }
-
-    fn pi<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(std::f32::consts::PI).unwrap()
-    }
-
-    fn light_speed<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(2.99792e+10).unwrap()
+        T::from(1e-13_f32).unwrap()
     }
 }
 
-impl CustomFloat for f64 {
+impl CustomReferenceFloat for f64 {
     /// Threshold value for decimal number when using [f64].
     fn huge_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(10e75_f64).unwrap()
+        T::from(10e75_f64).unwrap()
     }
 
     /// Threshold value for decimal number when using [f64].
     fn small_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(1e-10).unwrap()
+        T::from(1e-10).unwrap()
     }
 
     /// Threshold value for decimal number when using [f64].
     fn tiny_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(1e-13).unwrap()
-    }
-
-    fn neutron_mass_energy<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(9.395656981095e+2).unwrap()
-    }
-
-    fn pi<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(std::f64::consts::PI).unwrap()
-    }
-
-    fn light_speed<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(2.99792458e+10).unwrap()
+        T::from(1e-13).unwrap()
     }
 }
+
+impl CustomFloat for f32 {}
+impl CustomFloat for f64 {}
 
 //===================
 // constants modules
