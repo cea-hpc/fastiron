@@ -7,3 +7,25 @@ members = ["fastiron", "fastiron-stats"]
 #lto = true
 #codegen-units = 1
 debug = true
+
+[workspace.dependencies]
+# common
+clap = { version = "4.5.8" }
+
+# fastiron
+serde_yaml = { version = "0.9.34" }
+num = { version = "0.4.3" }
+rand = { version = "0.8.5" }
+tinyvec = { version = "1.6.1" }
+rayon = { version = "1.10.0" }
+atomic = { version = "0.5.3" } # further upgrade == breaking change
+hwlocality = { version = "1.0.0-alpha.5" } 
+libc = { version = "0.2.155" }
+rustc-hash = { version = "2.0.0" }
+
+# fastiron-stats
+csv = { version = "1.3.0" }
+gnuplot = { version = "0.0.43" }
+
+[workspace.dev-dependencies]
+criterion = { version = "0.5.1" }
