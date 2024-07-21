@@ -51,16 +51,17 @@ pub type Tuple4 = (usize, usize, usize, usize);
 /// automatically implemented via a blanket implementation.
 pub trait CustomReferenceFloat: Float + FromPrimitive {
     /// Threshold upper-value for decimal number.
-    fn huge_float<T: CustomFloat>() -> T;
+    const HUGE_FLOAT: Self;
     /// Threshold low-ish-value for decimal number.
-    fn small_float<T: CustomFloat>() -> T;
+    const SMALL_FLOAT: Self;
     /// Threshold lower-value for decimal number.
-    fn tiny_float<T: CustomFloat>() -> T;
+    const TINY_FLOAT: Self;
 }
 
 /// Custom trait for floating point number
 pub trait CustomFloat:
     Float
+    + CustomReferenceFloat
     + Default
     // conversions
     + FromPrimitive
@@ -81,15 +82,15 @@ pub trait CustomFloat:
 {
     /// Threshold upper-value for decimal number.
     fn huge_float<T: CustomFloat>() -> T {
-        T::huge_float()
+        T::from(T::HUGE_FLOAT).unwrap()
     }
     /// Threshold low-ish-value for decimal number.
     fn small_float<T: CustomFloat>() -> T {
-        T::small_float()
+        T::from(T::SMALL_FLOAT).unwrap()
     }
     /// Threshold lower-value for decimal number.
     fn tiny_float<T: CustomFloat>() -> T {
-        T::tiny_float()
+        T::from(T::TINY_FLOAT).unwrap()
     } 
 
     fn neutron_mass_energy<T: CustomFloat>() -> T {
@@ -107,40 +108,45 @@ pub trait CustomFloat:
 
 impl CustomReferenceFloat for f32 {
     /// Threshold value for decimal number when using [f32]. May need adjustment.
-    fn huge_float<T: CustomFloat>() -> T {
-        T::from(10e35_f32).unwrap()
-    }
+    const HUGE_FLOAT: Self = 10e35_f32;
 
     /// Threshold value for decimal number when using [f32]. May need adjustment.
-    fn small_float<T: CustomFloat>() -> T {
-        T::from(1e-10_f32).unwrap()
-    }
+    const SMALL_FLOAT: Self = 1e-10_f32;
 
     /// Threshold value for decimal number when using [f32]. May need adjustment.
-    fn tiny_float<T: CustomFloat>() -> T {
-        T::from(1e-13_f32).unwrap()
-    }
+    const TINY_FLOAT: Self = 1e-13_f32;
 }
 
 impl CustomReferenceFloat for f64 {
     /// Threshold value for decimal number when using [f64].
-    fn huge_float<T: CustomFloat>() -> T {
-        T::from(10e75_f64).unwrap()
-    }
+    const HUGE_FLOAT: Self = 10e75_f64;
 
     /// Threshold value for decimal number when using [f64].
-    fn small_float<T: CustomFloat>() -> T {
-        T::from(1e-10).unwrap()
-    }
+    const SMALL_FLOAT: Self = 1e-10;
 
     /// Threshold value for decimal number when using [f64].
-    fn tiny_float<T: CustomFloat>() -> T {
-        T::from(1e-13).unwrap()
-    }
+    const TINY_FLOAT: Self = 1e-13;
 }
 
-impl CustomFloat for f32 {}
-impl CustomFloat for f64 {}
+
+// blanket impl
+impl<T: 
+    Float
+    + CustomReferenceFloat
+    + Default
+    + FromPrimitive
+    + FromStr
+    + AddAssign
+    + SubAssign
+    + MulAssign
+    + DivAssign
+    + Sum
+    + Debug
+    + Display
+    + LowerExp
+    + Send
+    + Sync
+> CustomFloat for T {}
 
 //===================
 // constants modules
