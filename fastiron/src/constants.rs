@@ -46,14 +46,26 @@ pub type Tuple4 = (usize, usize, usize, usize);
 // generic float type
 
 /// Custom trait for floating point number
-pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
-/// Custom trait for floating point number
-pub trait UtilsFloat:
-    Default + Debug + Display + LowerExp + FromStr + Sum + for<'a> Sum<&'a Self> + Send + Sync
+pub trait CustomFloat:
+    Float
+    + Default
+    // conversions
+    + FromPrimitive
+    + FromStr
+    // operations
+    + AddAssign
+    + SubAssign
+    + MulAssign
+    + DivAssign
+    + Sum
+    // display
+    + Debug
+    + Display
+    + LowerExp
+    // parallel-safe
+    + Send
+    + Sync
 {
-}
-/// Custom super-trait for floating point number
-pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {
     // floating ref
 
     /// Threshold upper-value for decimal number.
@@ -75,8 +87,6 @@ pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {
     fn light_speed<T: CustomFloat>() -> T;
 }
 
-impl OpsFloat for f32 {}
-impl UtilsFloat for f32 {}
 impl CustomFloat for f32 {
     /// Threshold value for decimal number when using [f32]. May need adjustment.
     fn huge_float<T: CustomFloat>() -> T {
@@ -106,8 +116,6 @@ impl CustomFloat for f32 {
     }
 }
 
-impl OpsFloat for f64 {}
-impl UtilsFloat for f64 {}
 impl CustomFloat for f64 {
     /// Threshold value for decimal number when using [f64].
     fn huge_float<T: CustomFloat>() -> T {
