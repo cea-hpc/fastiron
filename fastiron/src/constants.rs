@@ -46,8 +46,8 @@ pub type Tuple4 = (usize, usize, usize, usize);
 // generic float type
 
 /// Associated reference value used for compute approximation.
-/// 
-/// This is the only trait that should be manually implemented for custom types. The `CustomFloat` trait is then 
+///
+/// This is the only trait that should be manually implemented for custom types. The `CustomFloat` trait is then
 /// automatically implemented via a blanket implementation.
 pub trait CustomReferenceFloat: Float + FromPrimitive {
     /// Threshold upper-value for decimal number.
@@ -91,7 +91,7 @@ pub trait CustomFloat:
     /// Threshold lower-value for decimal number.
     fn tiny_float<T: CustomFloat>() -> T {
         T::from(T::TINY_FLOAT).unwrap()
-    } 
+    }
 
     fn neutron_mass_energy<T: CustomFloat>() -> T {
         T::from(9.39565e+2).unwrap()
@@ -128,25 +128,26 @@ impl CustomReferenceFloat for f64 {
     const TINY_FLOAT: Self = 1e-13;
 }
 
-
 // blanket impl
-impl<T: 
-    Float
-    + CustomReferenceFloat
-    + Default
-    + FromPrimitive
-    + FromStr
-    + AddAssign
-    + SubAssign
-    + MulAssign
-    + DivAssign
-    + Sum
-    + Debug
-    + Display
-    + LowerExp
-    + Send
-    + Sync
-> CustomFloat for T {}
+impl<
+        T: Float
+            + CustomReferenceFloat
+            + Default
+            + FromPrimitive
+            + FromStr
+            + AddAssign
+            + SubAssign
+            + MulAssign
+            + DivAssign
+            + Sum
+            + Debug
+            + Display
+            + LowerExp
+            + Send
+            + Sync,
+    > CustomFloat for T
+{
+}
 
 //===================
 // constants modules
