@@ -56,6 +56,8 @@ pub trait CustomReferenceFloat: Float + FromPrimitive {
     const SMALL_FLOAT: Self;
     /// Threshold lower-value for decimal number.
     const TINY_FLOAT: Self;
+    /// Pi value.
+    const PI: Self;
 }
 
 /// Custom trait for floating point number
@@ -98,7 +100,7 @@ pub trait CustomFloat:
     }
 
     fn pi<T: CustomFloat>() -> T {
-        T::from(std::f32::consts::PI).unwrap()
+        T::from(T::PI).unwrap()
     }
 
     fn light_speed<T: CustomFloat>() -> T {
@@ -115,6 +117,9 @@ impl CustomReferenceFloat for f32 {
 
     /// Threshold value for decimal number when using [f32]. May need adjustment.
     const TINY_FLOAT: Self = 1e-13_f32;
+
+    /// Pi value when using [f32].
+    const PI: Self = std::f32::consts::PI;
 }
 
 impl CustomReferenceFloat for f64 {
@@ -126,6 +131,9 @@ impl CustomReferenceFloat for f64 {
 
     /// Threshold value for decimal number when using [f64].
     const TINY_FLOAT: Self = 1e-13;
+
+    /// Pi value when using [f64].
+    const PI: Self = std::f64::consts::PI;
 }
 
 // blanket impl
