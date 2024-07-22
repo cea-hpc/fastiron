@@ -62,7 +62,7 @@ pub trait UtilsFloat:
 {
 }
 /// Custom super-trait for floating point number
-pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {
+pub trait CustomFloat: Float + bytemuck::Pod + FromPrimitive + OpsFloat + UtilsFloat {
     // floating ref
 
     /// Threshold upper-value for decimal number.
