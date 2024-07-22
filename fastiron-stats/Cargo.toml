@@ -6,6 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.5.8", features = ["cargo", "derive"] }
-csv = "1.3.0"
-gnuplot = "0.0.43"
+clap = { workspace = true, features = ["cargo", "derive"] }
+csv = { workspace = true }
+gnuplot = { workspace = true }

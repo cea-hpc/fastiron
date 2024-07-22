@@ -6,19 +6,19 @@ edition = "2021"
 # DEPENDENCIES
 
 [dependencies]
-clap = { version = "4.5.8", features = ["cargo", "derive"] }
-serde_yaml = { version = "0.9.34", features = [] }
-num = { version = "0.4.3" }
-rand = { version = "0.8.5", features = ["small_rng"] }
-tinyvec = { version = "1.6.1" }
-rayon = { version = "1.10.0" }
-atomic = { version = "0.5.3" } # further upgrade == breaking change
-hwlocality = { version = "1.0.0-alpha.5" } 
-libc = { version = "0.2.155" }
-rustc-hash = { version = "2.0.0" }
+clap = { workspace = true, features = ["cargo", "derive"] }
+serde_yaml = { workspace = true }
+num = { workspace = true }
+rand = { workspace = true, features = ["small_rng"] }
+tinyvec = { workspace = true }
+rayon = { workspace = true }
+atomic = { workspace = true } # further upgrade == breaking change
+hwlocality = { workspace = true } 
+libc = { workspace = true }
+rustc-hash = { workspace = true }
 
 [dev-dependencies]
-criterion = { version = "0.5.1", features = ["html_reports"] }
+criterion = { workspace = true, features = ["html_reports"] }
 
 # BENCH
 
