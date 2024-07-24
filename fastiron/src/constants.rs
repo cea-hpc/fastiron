@@ -84,15 +84,15 @@ pub trait CustomFloat:
 {
     /// Threshold upper-value for decimal number.
     fn huge_float<T: CustomFloat>() -> T {
-        T::from(T::HUGE_FLOAT).unwrap()
+        T::HUGE_FLOAT
     }
     /// Threshold low-ish-value for decimal number.
     fn small_float<T: CustomFloat>() -> T {
-        T::from(T::SMALL_FLOAT).unwrap()
+        T::SMALL_FLOAT
     }
     /// Threshold lower-value for decimal number.
     fn tiny_float<T: CustomFloat>() -> T {
-        T::from(T::TINY_FLOAT).unwrap()
+        T::TINY_FLOAT
     }
 
     fn neutron_mass_energy<T: CustomFloat>() -> T {
@@ -109,13 +109,13 @@ pub trait CustomFloat:
 }
 
 impl CustomReferenceFloat for f32 {
-    /// Threshold value for decimal number when using [f32]. May need adjustment.
+    /// Threshold value when using [f32]. May need adjustment.
     const HUGE_FLOAT: Self = 10e35_f32;
 
-    /// Threshold value for decimal number when using [f32]. May need adjustment.
+    /// Threshold value when using [f32]. May need adjustment.
     const SMALL_FLOAT: Self = 1e-10_f32;
 
-    /// Threshold value for decimal number when using [f32]. May need adjustment.
+    /// Threshold value when using [f32]. May need adjustment.
     const TINY_FLOAT: Self = 1e-13_f32;
 
     /// Pi value when using [f32].
@@ -123,13 +123,13 @@ impl CustomReferenceFloat for f32 {
 }
 
 impl CustomReferenceFloat for f64 {
-    /// Threshold value for decimal number when using [f64].
+    /// Threshold value when using [f64].
     const HUGE_FLOAT: Self = 10e75_f64;
 
-    /// Threshold value for decimal number when using [f64].
+    /// Threshold value when using [f64].
     const SMALL_FLOAT: Self = 1e-10;
 
-    /// Threshold value for decimal number when using [f64].
+    /// Threshold value when using [f64].
     const TINY_FLOAT: Self = 1e-13;
 
     /// Pi value when using [f64].
