@@ -45,105 +45,116 @@ pub type Tuple4 = (usize, usize, usize, usize);
 
 // generic float type
 
+/// Associated reference value used for compute approximation.
+///
+/// This is the only trait that should be manually implemented for custom types. The `CustomFloat` trait is then
+/// automatically implemented via a blanket implementation.
+pub trait CustomReferenceFloat: Float + FromPrimitive {
+    /// Threshold upper-value for decimal number.
+    const HUGE_FLOAT: Self;
+    /// Threshold low-ish-value for decimal number.
+    const SMALL_FLOAT: Self;
+    /// Threshold lower-value for decimal number.
+    const TINY_FLOAT: Self;
+    /// Pi value.
+    const PI: Self;
+}
+
 /// Custom trait for floating point number
-pub trait OpsFloat: AddAssign + SubAssign + MulAssign + DivAssign + Sized {}
-/// Custom trait for floating point number
-pub trait UtilsFloat:
-    Default
+pub trait CustomFloat:
+    Float
+    + CustomReferenceFloat
+    + Default
+    // conversions
+    + FromPrimitive
+    + FromStr
+    // operations
+    + AddAssign
+    + SubAssign
+    + MulAssign
+    + DivAssign
+    + Sum
+    // display
     + Debug
     + Display
     + LowerExp
-    + FromStr
-    + From<f32>
-    + Sum
-    + for<'a> Sum<&'a Self>
+    // parallel-safe
     + Send
     + Sync
 {
-}
-/// Custom super-trait for floating point number
-pub trait CustomFloat: Float + FromPrimitive + OpsFloat + UtilsFloat {
-    // floating ref
-
     /// Threshold upper-value for decimal number.
-    fn huge_float<T: CustomFloat>() -> T;
+    fn huge_float<T: CustomFloat>() -> T {
+        T::HUGE_FLOAT
+    }
     /// Threshold low-ish-value for decimal number.
-    fn small_float<T: CustomFloat>() -> T;
+    fn small_float<T: CustomFloat>() -> T {
+        T::SMALL_FLOAT
+    }
     /// Threshold lower-value for decimal number.
-    fn tiny_float<T: CustomFloat>() -> T;
-
-    // physical constants
-
-    /// Neutron mass energy equivalent (MeV)
-    fn neutron_mass_energy<T: CustomFloat>() -> T;
-    /// [Pick your definition][3]
-    ///
-    /// [3]: https://en.wikipedia.org/wiki/Pi
-    fn pi<T: CustomFloat>() -> T;
-    /// Speed of light (cm/s)
-    fn light_speed<T: CustomFloat>() -> T;
-}
-
-impl OpsFloat for f32 {}
-impl UtilsFloat for f32 {}
-impl CustomFloat for f32 {
-    /// Threshold value for decimal number when using [f32]. May need adjustment.
-    fn huge_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(10e35_f32).unwrap()
-    }
-
-    /// Threshold value for decimal number when using [f32]. May need adjustment.
-    fn small_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(1e-10_f32).unwrap()
-    }
-
-    /// Threshold value for decimal number when using [f32]. May need adjustment.
     fn tiny_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(1e-13_f32).unwrap()
+        T::TINY_FLOAT
     }
 
     fn neutron_mass_energy<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(9.39565e+2).unwrap()
+        T::from(9.39565e+2).unwrap()
     }
 
     fn pi<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(std::f32::consts::PI).unwrap()
+        T::from(T::PI).unwrap()
     }
 
     fn light_speed<T: CustomFloat>() -> T {
-        FromPrimitive::from_f32(2.99792e+10).unwrap()
+        T::from(2.99792e+10).unwrap()
     }
 }
 
-impl OpsFloat for f64 {}
-impl UtilsFloat for f64 {}
-impl CustomFloat for f64 {
-    /// Threshold value for decimal number when using [f64].
-    fn huge_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(10e75_f64).unwrap()
-    }
+impl CustomReferenceFloat for f32 {
+    /// Threshold value when using [f32]. May need adjustment.
+    const HUGE_FLOAT: Self = 10e35_f32;
 
-    /// Threshold value for decimal number when using [f64].
-    fn small_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(1e-10).unwrap()
-    }
+    /// Threshold value when using [f32]. May need adjustment.
+    const SMALL_FLOAT: Self = 1e-10_f32;
 
-    /// Threshold value for decimal number when using [f64].
-    fn tiny_float<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(1e-13).unwrap()
-    }
+    /// Threshold value when using [f32]. May need adjustment.
+    const TINY_FLOAT: Self = 1e-13_f32;
 
-    fn neutron_mass_energy<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(9.395656981095e+2).unwrap()
-    }
+    /// Pi value when using [f32].
+    const PI: Self = std::f32::consts::PI;
+}
 
-    fn pi<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(std::f64::consts::PI).unwrap()
-    }
+impl CustomReferenceFloat for f64 {
+    /// Threshold value when using [f64].
+    const HUGE_FLOAT: Self = 10e75_f64;
 
-    fn light_speed<T: CustomFloat>() -> T {
-        FromPrimitive::from_f64(2.99792458e+10).unwrap()
-    }
+    /// Threshold value when using [f64].
+    const SMALL_FLOAT: Self = 1e-10;
+
+    /// Threshold value when using [f64].
+    const TINY_FLOAT: Self = 1e-13;
+
+    /// Pi value when using [f64].
+    const PI: Self = std::f64::consts::PI;
+}
+
+// blanket impl
+impl<
+        T: Float
+            + CustomReferenceFloat
+            + Default
+            + FromPrimitive
+            + FromStr
+            + AddAssign
+            + SubAssign
+            + MulAssign
+            + DivAssign
+            + Sum
+            + Debug
+            + Display
+            + LowerExp
+            + Send
+            + Sync,
+    > CustomFloat for T
+{
 }
 
 //===================
