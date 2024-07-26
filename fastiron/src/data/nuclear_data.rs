@@ -83,7 +83,7 @@ impl<T: CustomFloat> NuclearDataReaction<T> {
             // this here gives a value too big for f32
             xsection[ii] = 10.0_f64.powf(polynomial.val(energy.log10()).to_f64().unwrap());
 
-            if (energies[ii + 1] >= 1.0.into()) & (normal_value == 0.0) {
+            if (energies[ii + 1] >= T::one()) & (normal_value == 0.0) {
                 normal_value = xsection[ii];
             }
         });

@@ -391,17 +391,25 @@ impl<T: CustomFloat> SimulationParameters<T> {
                 }
             };
         }
+        macro_rules! fetch_t_from_cli {
+            ($f: ident) => {
+                match &cli.$f {
+                    Some(val) => simulation_params.$f = T::from(*val).unwrap(),
+                    None => (),
+                }
+            };
+        }
         // same order as the struct declaration
         fetch_from_cli!(input_file);
         fetch_from_cli!(energy_spectrum);
         fetch_from_cli!(cross_sections_out);
-        fetch_from_cli!(dt);
+        fetch_t_from_cli!(dt);
         simulation_params.load_balance = cli.load_balance;
         simulation_params.csv = cli.csv;
         simulation_params.debug_threads = cli.debug_threads;
-        fetch_from_cli!(lx);
-        fetch_from_cli!(ly);
-        fetch_from_cli!(lz);
+        fetch_t_from_cli!(lx);
+        fetch_t_from_cli!(ly);
+        fetch_t_from_cli!(lz);
         fetch_from_cli!(n_particles);
         fetch_from_cli!(chunk_size);
         fetch_from_cli!(n_rayon_threads);
