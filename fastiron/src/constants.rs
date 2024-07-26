@@ -64,6 +64,7 @@ pub trait CustomReferenceFloat: Float + FromPrimitive {
 pub trait CustomFloat:
     Float
     + CustomReferenceFloat
+    + bytemuck::Pod
     + Default
     // conversions
     + FromPrimitive
@@ -140,6 +141,7 @@ impl CustomReferenceFloat for f64 {
 impl<
         T: Float
             + CustomReferenceFloat
+            + bytemuck::Pod
             + Default
             + FromPrimitive
             + FromStr

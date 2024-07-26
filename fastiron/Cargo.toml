@@ -12,7 +12,8 @@ num = { workspace = true }
 rand = { workspace = true, features = ["small_rng"] }
 tinyvec = { workspace = true }
 rayon = { workspace = true }
-atomic = { workspace = true } # further upgrade == breaking change
+atomic = { workspace = true }
+bytemuck = { workspace = true }
 hwlocality = { workspace = true } 
 libc = { workspace = true }
 rustc-hash = { workspace = true }
