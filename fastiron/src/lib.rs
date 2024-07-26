@@ -97,6 +97,7 @@
 //! [2]: https://github.com/cea-hpc/fastiron
 
 #![warn(clippy::disallowed_types)]
+#![allow(clippy::doc_lazy_continuation)] // TODO: remove & fix lints
 
 pub mod constants;
 pub mod data;
