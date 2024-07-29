@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Section"],"fn":["get_last_cycle","start","stop"],"struct":["MCFastTimer","MCFastTimerContainer"]};
