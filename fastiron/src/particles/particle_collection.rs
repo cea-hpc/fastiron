@@ -116,7 +116,7 @@ impl<'a, T: CustomFloat> ParallelIterator for ParParIter<'a, T> {
     }
 }
 
-impl<'a, T: CustomFloat> IndexedParallelIterator for ParParIter<'a, T> {
+impl<T: CustomFloat> IndexedParallelIterator for ParParIter<'_, T> {
     fn with_producer<CB: rayon::iter::plumbing::ProducerCallback<Self::Item>>(
         self,
         callback: CB,
@@ -162,7 +162,7 @@ impl<'a, T: CustomFloat> ParallelIterator for ParParIterMut<'a, T> {
     }
 }
 
-impl<'a, T: CustomFloat> IndexedParallelIterator for ParParIterMut<'a, T> {
+impl<T: CustomFloat> IndexedParallelIterator for ParParIterMut<'_, T> {
     fn with_producer<CB: rayon::iter::plumbing::ProducerCallback<Self::Item>>(
         self,
         callback: CB,
