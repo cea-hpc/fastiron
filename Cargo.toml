@@ -20,7 +20,7 @@ tinyvec = { version = "1.6.1" }
 rayon = { version = "1.10.0" }
 atomic = { version = "0.6.0" }
 bytemuck = { version = "1.16.1" }
-hwlocality = { version = "1.0.0-alpha.5" } 
+hwlocality = { version = "1.0.0-alpha.7" } 
 libc = { version = "0.2.155" }
 rustc-hash = { version = "2.0.0" }
 criterion = { version = "0.5.1" }
