@@ -1,5 +1,5 @@
 {
-  description = "Nix flake for Rust project with hwloc";
+  description = "Fastiron Nix flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -27,6 +27,7 @@
             pkg-config
           ];
           buildInputs = with pkgs; [
+            gnuplot
             hwloc.dev # Provides hwloc library
           ];
           shellHook = ''
