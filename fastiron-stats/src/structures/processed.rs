@@ -9,7 +9,7 @@ use std::{
 };
 
 use gnuplot::{
-    AutoOption, AxesCommon,
+    AutoOption, AxesCommon, ColorType,
     Coordinate::Graph,
     DashType, Figure,
     LabelOption::{Rotate, TextOffset},
@@ -89,9 +89,9 @@ impl ComparisonResults {
         let old_y: [f64; N_TIMERS] = TIMERS_ARR.map(|t| self.old[t].total / 1.0e6);
         let new_y: [f64; N_TIMERS] = TIMERS_ARR.map(|t| self.new[t].total / 1.0e6);
         let new_color = if self.percents[0] > 0.0 {
-            Color("#FF0000") // total exec time increase => red
+            Color(ColorType::RGBString("#FF0000")) // total exec time increase => red
         } else {
-            Color("#00BB00") // total exec time decrease => green
+            Color(ColorType::RGBString("#00BB00")) // total exec time decrease => green
         };
 
         // plot data
@@ -102,18 +102,17 @@ impl ComparisonResults {
             .set_y_minor_grid(true)
             .set_y_label("Total Time Spent in Section (s)", &[])
             .set_y_log(Some(10.0))
-            .boxes_set_width(
+            .boxes(
                 x_coords.iter().map(|x| *x as f64 - width / 2.0),
                 old_y,
-                [width; N_TIMERS],
-                &[Caption("Old times"), Color("#000077")],
+                &[Caption("Old times"), Color(ColorType::RGBString("#000077"))],
             )
-            .boxes_set_width(
+            .boxes(
                 x_coords.iter().map(|x| *x as f64 + width / 2.0),
                 new_y,
-                [width; N_TIMERS],
                 &[Caption("New times"), new_color],
-            );
+            )
+            .set_box_width(width, false);
 
         fg.show().unwrap();
     }
@@ -429,12 +428,20 @@ impl ScalingResults {
             .lines_points(
                 &self.n_threads,
                 &y_ideal,
-                &[Caption("Ideal"), Color("#00FF00"), PointSymbol('x')],
+                &[
+                    Caption("Ideal"),
+                    Color(ColorType::RGBString("#00FF00")),
+                    PointSymbol('x'),
+                ],
             )
             .lines_points(
                 &self.n_threads,
                 &y_real,
-                &[Caption("Real"), Color("#008800"), PointSymbol('x')],
+                &[
+                    Caption("Real"),
+                    Color(ColorType::RGBString("#008800")),
+                    PointSymbol('x'),
+                ],
             );
 
         fg.show().unwrap();
@@ -482,7 +489,7 @@ impl ScalingResults {
                 &y_ideal,
                 &[
                     Caption("Ideal Average Tracking time"),
-                    Color("#00FF00"),
+                    Color(ColorType::RGBString("#00FF00")),
                     PointSymbol('x'),
                 ],
             )
@@ -491,7 +498,7 @@ impl ScalingResults {
                 &self.tracking_avgs,
                 &[
                     Caption("Average Tracking time"),
-                    Color("#008800"),
+                    Color(ColorType::RGBString("#008800")),
                     PointSymbol('x'),
                 ],
             )
@@ -500,7 +507,7 @@ impl ScalingResults {
                 &self.tracking_process_avgs,
                 &[
                     Caption("Average Processing time"),
-                    Color("#CCCC00"),
+                    Color(ColorType::RGBString("#CCCC00")),
                     PointSymbol('x'),
                 ],
             )
@@ -509,7 +516,7 @@ impl ScalingResults {
                 &self.tracking_sort_avgs,
                 &[
                     Caption("Average Sorting time"),
-                    Color("#999900"),
+                    Color(ColorType::RGBString("#999900")),
                     PointSymbol('x'),
                 ],
             );
@@ -549,7 +556,7 @@ impl ScalingResults {
                 &self.population_control_avgs,
                 &[
                     Caption("Average Pop. Control Time"),
-                    Color("#00AA00"),
+                    Color(ColorType::RGBString("#00AA00")),
                     PointSymbol('x'),
                 ],
             )
@@ -558,7 +565,7 @@ impl ScalingResults {
                 &self.sync_avgs,
                 &[
                     Caption("Average Synchronization Time"),
-                    Color("#AAAA00"),
+                    Color(ColorType::RGBString("#AAAA00")),
                     PointSymbol('x'),
                 ],
             );
