@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["weighted_macroscopic_cross_section"]};

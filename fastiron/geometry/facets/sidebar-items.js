@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MCSubfacetAdjacencyEvent"],"struct":["MCFacetAdjacency","MCFacetAdjacencyCell","MCGeneralPlane","MCNearestFacet","SubfacetAdjacency"],"type":["MCFacetGeometryCell"]};
