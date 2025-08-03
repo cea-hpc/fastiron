@@ -584,7 +584,7 @@ impl From<(&str, &ScalingParams, ScalingType)> for ScalingResults {
         let reports: Vec<TimerReport> = n_threads
             .iter()
             .map(|n_thread| {
-                let filename = format!("{}{}.csv", root_path, n_thread);
+                let filename = format!("{root_path}{n_thread}.csv");
                 TimerReport::from(File::open(filename).unwrap())
             })
             .collect();
