@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["facet_crossing_event"]};

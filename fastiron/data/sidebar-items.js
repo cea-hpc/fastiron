@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["energy_spectrum","material_database","mc_vector","nuclear_data","tallies"]};

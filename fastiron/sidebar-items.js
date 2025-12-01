@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["constants","data","geometry","init","montecarlo","parameters","particles","simulation","utils"]};

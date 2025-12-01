@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BenchType","ParameterError","Shape"],"struct":["CrossSectionParameters","GeometryParameters","MaterialParameters","Parameters","SimulationParameters"],"type":["Block"]};

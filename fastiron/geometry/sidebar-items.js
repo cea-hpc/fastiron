@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CORNER_OFFSET","FACE_OFFSET","N_FACES","N_FACETS_OUT","N_POINTS_INTERSEC","N_POINTS_PER_FACET"],"mod":["facets","global_fcc_grid","grid_assignment_object","mc_cell_state","mc_domain","mc_location","mesh_partition"]};

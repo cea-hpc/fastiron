@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["N_TALLIED_DATA","N_TIMERS","TIMERS_ARR"],"enum":["TalliedData","TimerSV"],"fn":["correlation","covariance"],"struct":["SummarizedVariable","TalliedVariable","TalliesReport","TimerReport"]};
